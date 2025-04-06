@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppLayout } from "@/components/Layout/AppLayout";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -40,7 +41,9 @@ const App = () => (
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -49,7 +52,9 @@ const App = () => (
               path="/tasks"
               element={
                 <ProtectedRoute>
-                  <TasksPage />
+                  <AppLayout>
+                    <TasksPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -58,7 +63,9 @@ const App = () => (
               path="/time-tracking"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                  <TimeTrackingPage />
+                  <AppLayout>
+                    <TimeTrackingPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -67,7 +74,9 @@ const App = () => (
               path="/companies"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                  <CompaniesPage />
+                  <AppLayout>
+                    <CompaniesPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -76,7 +85,9 @@ const App = () => (
               path="/contracts"
               element={
                 <ProtectedRoute>
-                  <ContractsPage />
+                  <AppLayout>
+                    <ContractsPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -85,7 +96,9 @@ const App = () => (
               path="/deals"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                  <DealsPage />
+                  <AppLayout>
+                    <DealsPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -94,7 +107,9 @@ const App = () => (
               path="/user-management"
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
-                  <UserManagementPage />
+                  <AppLayout>
+                    <UserManagementPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -103,7 +118,9 @@ const App = () => (
               path="/settings"
               element={
                 <ProtectedRoute>
-                  <SettingsPage />
+                  <AppLayout>
+                    <SettingsPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
