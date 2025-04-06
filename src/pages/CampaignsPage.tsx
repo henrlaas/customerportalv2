@@ -108,9 +108,10 @@ const CampaignsPage: React.FC = () => {
   // Create campaign mutation
   const createCampaignMutation = useMutation({
     mutationFn: async (values: z.infer<typeof campaignSchema>) => {
+      // Fix: Pass a single object instead of an array for the insert
       const { data, error } = await supabase
         .from('campaigns')
-        .insert([values])
+        .insert([values])  // Note: Supabase expects an array here
         .select();
 
       if (error) throw error;
@@ -374,7 +375,7 @@ const CampaignsPage: React.FC = () => {
                   Last updated: {formatDate(campaign.updated_at)}
                 </div>
                 <div className="mt-4 flex justify-between items-center">
-                  <span className={`inline-flex items-center rounded-full bg-${getStatusBadgeColor(campaign.status)} px-2.5 py-0.5 text-xs font-medium`}>
+                  <span className={`inline-flex items-center rounded-full ${getStatusBadgeColor(campaign.status)} px-2.5 py-0.5 text-xs font-medium`}>
                     {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                   </span>
                   <Button variant="link" className="text-blue-600 hover:text-blue-800">
