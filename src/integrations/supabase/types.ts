@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      campaign_media: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_media_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           budget: number | null
@@ -248,6 +289,89 @@ export type Database = {
             columns: ["stage_id"]
             isOneToOne: false
             referencedRelation: "deal_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
