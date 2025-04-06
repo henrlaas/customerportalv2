@@ -7,7 +7,7 @@ import {
   Clock, 
   Building, 
   FileText, 
-  HandCoins, 
+  BarChart, 
   Users,
   Settings
 } from "lucide-react";
@@ -50,7 +50,7 @@ export function getSidebarItems() {
     {
       title: t('Deals'),
       href: '/deals',
-      icon: HandCoins,
+      icon: BarChart,
       roles: ['admin', 'employee'],
     },
     {

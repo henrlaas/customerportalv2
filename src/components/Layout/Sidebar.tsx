@@ -2,77 +2,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  BarChart,
-  Calendar,
-  Clock,
-  File,
-  Home,
-  Settings,
-  Users,
-  Briefcase,
-} from 'lucide-react';
-import { useTranslation } from '@/hooks/useTranslation';
+import { getSidebarItems } from './SidebarItems';
 
 export const Sidebar: React.FC = () => {
-  const { isAdmin, isEmployee } = useAuth();
   const location = useLocation();
-  const t = useTranslation();
-
-  // Define navigation items with role-based access
-  const navItems = [
-    {
-      name: t('Dashboard'),
-      href: '/dashboard',
-      icon: Home,
-      roles: ['admin', 'employee', 'client'],
-    },
-    {
-      name: t('Tasks'),
-      href: '/tasks',
-      icon: Calendar,
-      roles: ['admin', 'employee', 'client'],
-    },
-    {
-      name: t('Time Tracking'),
-      href: '/time-tracking',
-      icon: Clock,
-      roles: ['admin', 'employee'],
-    },
-    {
-      name: t('Companies'),
-      href: '/companies',
-      icon: Briefcase,
-      roles: ['admin', 'employee'],
-    },
-    {
-      name: t('Contracts'),
-      href: '/contracts',
-      icon: File,
-      roles: ['admin', 'employee', 'client'],
-    },
-    {
-      name: t('Deals'),
-      href: '/deals',
-      icon: BarChart,
-      roles: ['admin', 'employee'],
-    },
-    {
-      name: t('User Management'),
-      href: '/users',
-      icon: Users,
-      roles: ['admin'],
-    },
-    {
-      name: t('Settings'),
-      href: '/settings',
-      icon: Settings,
-      roles: ['admin', 'employee', 'client'],
-    },
-  ];
-
-  const userRole = isAdmin ? 'admin' : isEmployee ? 'employee' : 'client';
-  const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole));
+  const { isAdmin, isEmployee } = useAuth();
+  const sidebarItems = getSidebarItems();
 
   return (
     <aside className="bg-white border-r border-gray-200 w-64 flex-shrink-0 h-screen overflow-y-auto">
@@ -81,7 +16,7 @@ export const Sidebar: React.FC = () => {
       </div>
       <nav className="mt-4">
         <ul>
-          {filteredNavItems.map((item) => (
+          {sidebarItems.map((item) => (
             <li key={item.href}>
               <Link
                 to={item.href}
@@ -91,7 +26,7 @@ export const Sidebar: React.FC = () => {
                 )}
               >
                 <item.icon className="h-5 w-5 mr-3" />
-                <span>{item.name}</span>
+                <span>{item.title}</span>
               </Link>
             </li>
           ))}
