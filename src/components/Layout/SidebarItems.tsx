@@ -45,7 +45,7 @@ export function getSidebarItems() {
     },
     {
       title: t('Clients'),
-      href: '/clients',
+      href: '/companies',
       icon: Users,
       roles: ['admin', 'employee'],
     },
