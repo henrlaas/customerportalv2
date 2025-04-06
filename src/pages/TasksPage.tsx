@@ -125,9 +125,12 @@ export const TasksPage = () => {
         return [];
       }
       
-      // Add the related_to field to each task
+      // Add the related_to field to each task and ensure priority and status values are valid strings
       return data.map(task => ({
         ...task,
+        // Ensure priority and status are valid strings
+        priority: task.priority || 'medium',
+        status: task.status || 'todo',
         related_to: { type: 'none' as const, id: '' }
       })) as Task[];
     },
@@ -191,6 +194,12 @@ export const TasksPage = () => {
 
   const onSubmit = (data: z.infer<typeof taskSchema>) => {
     createTaskMutation.mutate(data);
+  };
+  
+  // Function to capitalize the first letter of a string safely
+  const capitalizeFirstLetter = (str: string | undefined | null) => {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
   };
   
   return (
@@ -395,7 +404,7 @@ export const TasksPage = () => {
                         ? 'bg-yellow-100 text-yellow-800' 
                         : 'bg-green-100 text-green-800'
                   }`}>
-                    {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                    {capitalizeFirstLetter(task.priority)}
                   </span>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${
                     task.status === 'completed' 
@@ -404,8 +413,7 @@ export const TasksPage = () => {
                         ? 'bg-blue-100 text-blue-800' 
                         : 'bg-gray-100 text-gray-800'
                   }`}>
-                    {task.status === 'in_progress' ? 'In Progress' : 
-                      task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                    {task.status === 'in_progress' ? 'In Progress' : capitalizeFirstLetter(task.status)}
                   </span>
                 </div>
               </CardContent>

@@ -52,7 +52,7 @@ export const TopBar: React.FC = () => {
               <DropdownMenuSeparator />
               {(isAdmin || isEmployee) && (
                 <DropdownMenuItem>
-                  <LanguageToggle className="w-full" />
+                  <LanguageToggle />
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onSelect={() => window.location.href = '/profile'}>
