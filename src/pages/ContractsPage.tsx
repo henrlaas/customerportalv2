@@ -1,39 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  FileText, 
-  Plus,
-  Search,
-  Calendar,
-  Building,
-  DollarSign,
-  Tag,
-  MoreVertical,
-  Trash2,
-  Edit,
-  Download,
-  Upload
-} from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
@@ -41,368 +31,295 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { FileUploader } from '../components/FileUploader';
+import { Calendar } from '@/components/ui/calendar';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
-// Contract form schema - Fix the status and value types
-const contractSchema = z.object({
-  title: z.string().min(1, { message: 'Title is required' }),
+// Define the form schema for contracts
+const contractFormSchema = z.object({
+  name: z.string().min(1, { message: 'Contract name is required' }),
   company_id: z.string().min(1, { message: 'Company is required' }),
-  status: z.enum(['draft', 'active', 'completed', 'cancelled']),
-  value: z.string().optional().transform(val => val ? parseFloat(val) : null),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
+  description: z.string().optional(),
+  start_date: z.string().min(1, { message: 'Start date is required' }),
+  end_date: z.string().min(1, { message: 'End date is required' }),
+  // Fix: Convert string value to number
+  value: z.string().transform(val => parseFloat(val) || 0),
+  status: z.string().min(1, { message: 'Status is required' }),
+  document_url: z.string().optional(),
 });
 
-type ContractFormValues = z.infer<typeof contractSchema>;
+type ContractFormValues = z.infer<typeof contractFormSchema>;
 
-// Contract type matching our database schema
-type Contract = {
-  id: string;
-  title: string;
-  company_id: string;
-  status: string;
-  value: number | null;
-  start_date: string | null;
-  end_date: string | null;
-  file_url: string | null;
-  created_at: string;
-  updated_at: string;
+const defaultContractValues: ContractFormValues = {
+  name: '',
+  company_id: '',
+  description: '',
+  start_date: '',
+  end_date: '',
+  value: '0', // String that will be transformed
+  status: 'draft',
+  document_url: '',
 };
 
-// Company type for selecting related companies
-type Company = {
-  id: string;
-  name: string;
-};
+// Define our status options
+const contractStatuses = [
+  { id: 'draft', name: 'Draft' },
+  { id: 'pending_signature', name: 'Pending Signature' },
+  { id: 'active', name: 'Active' },
+  { id: 'expired', name: 'Expired' },
+  { id: 'cancelled', name: 'Cancelled' },
+];
 
-const ContractsPage = () => {
+// Component for the contracts page
+const ContractsPage: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentContract, setCurrentContract] = useState<Contract | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<string>('all');
+  const [currentContract, setCurrentContract] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
   
   const { toast } = useToast();
-  const { isAdmin, isEmployee } = useAuth();
   const queryClient = useQueryClient();
+  const { isAdmin, isEmployee, user } = useAuth();
   
-  // Form for creating/editing contracts
-  const form = useForm<ContractFormValues>({
-    resolver: zodResolver(contractSchema),
-    defaultValues: {
-      title: '',
-      company_id: '',
-      status: 'draft',
-      value: '',
-      start_date: '',
-      end_date: '',
-    },
-  });
-
   // Fetch contracts
-  const { data: contracts = [], isLoading: isLoadingContracts } = useQuery({
+  const { data: contracts = [], isLoading } = useQuery({
     queryKey: ['contracts'],
     queryFn: async () => {
+      // For simplicity in this example, fetching all contracts
       const { data, error } = await supabase
         .from('contracts')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        toast({
-          title: 'Error fetching contracts',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return [];
-      }
-      
-      return data as Contract[];
+        .select('*, companies(name)');
+        
+      if (error) throw error;
+      return data || [];
     },
   });
   
-  // Fetch companies for the dropdown
-  const { data: companies = [], isLoading: isLoadingCompanies } = useQuery({
+  // Fetch companies for select dropdown
+  const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('companies')
         .select('id, name')
         .order('name');
-      
-      if (error) {
-        toast({
-          title: 'Error fetching companies',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return [];
-      }
-      
-      return data as Company[];
+        
+      if (error) throw error;
+      return data || [];
     },
   });
   
+  // Create Contract Form
+  const form = useForm<ContractFormValues>({
+    resolver: zodResolver(contractFormSchema),
+    defaultValues: defaultContractValues,
+  });
+  
+  // Edit Contract Form
+  const editForm = useForm<ContractFormValues>({
+    resolver: zodResolver(contractFormSchema),
+    defaultValues: defaultContractValues,
+  });
+  
+  // Set current contract data to edit form when editing
+  useEffect(() => {
+    if (currentContract && isEditing) {
+      editForm.reset({
+        name: currentContract.name || '',
+        company_id: currentContract.company_id || '',
+        description: currentContract.description || '',
+        start_date: currentContract.start_date || '',
+        end_date: currentContract.end_date || '',
+        value: currentContract.value?.toString() || '0', // Convert to string for form
+        status: currentContract.status || 'draft',
+        document_url: currentContract.document_url || '',
+      });
+    }
+  }, [currentContract, isEditing, editForm]);
+  
   // Create contract mutation
-  const createMutation = useMutation({
+  const createContractMutation = useMutation({
     mutationFn: async (values: ContractFormValues) => {
-      const { data, error } = await supabase
-        .from('contracts')
-        .insert([{
-          title: values.title,
-          company_id: values.company_id,
-          status: values.status,
-          value: values.value, // Will be properly transformed to number by zod
-          start_date: values.start_date || null,
-          end_date: values.end_date || null,
-        }])
-        .select();
+      const { data, error } = await insertWithUser('contracts', {
+        ...values,
+        // Fix: Ensure value is a number
+        value: typeof values.value === 'string' ? parseFloat(values.value) || 0 : values.value,
+      });
       
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      toast({
-        title: 'Contract created',
-        description: 'The contract has been created successfully.',
-      });
+      toast({ title: 'Contract created successfully!' });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       setIsCreating(false);
-      form.reset();
+      form.reset(defaultContractValues);
     },
-    onError: (error) => {
-      toast({
-        title: 'Error creating contract',
+    onError: (error: any) => {
+      toast({ 
+        title: 'Failed to create contract',
         description: error.message,
-        variant: 'destructive',
+        variant: 'destructive' 
       });
-    },
+    }
   });
   
   // Update contract mutation
-  const updateMutation = useMutation({
-    mutationFn: async (values: ContractFormValues & { id: string }) => {
-      const { id, ...contractData } = values;
-      const { data, error } = await supabase
-        .from('contracts')
-        .update({
-          title: contractData.title,
-          company_id: contractData.company_id,
-          status: contractData.status,
-          value: contractData.value, // Will be properly transformed to number by zod
-          start_date: contractData.start_date || null,
-          end_date: contractData.end_date || null,
-        })
-        .eq('id', id)
-        .select();
+  const updateContractMutation = useMutation({
+    mutationFn: async (values: ContractFormValues & { id?: string }) => {
+      if (!currentContract?.id) throw new Error('Contract ID is required');
+      
+      const { id, ...updateData } = values;
+      const { data, error } = await updateWithUser('contracts', currentContract.id, {
+        ...updateData,
+        // Fix: Ensure value is a number
+        value: typeof values.value === 'string' ? parseFloat(values.value) || 0 : values.value,
+      });
       
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      toast({
-        title: 'Contract updated',
-        description: 'The contract has been updated successfully.',
-      });
+      toast({ title: 'Contract updated successfully!' });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       setIsEditing(false);
       setCurrentContract(null);
-      form.reset();
     },
-    onError: (error) => {
-      toast({
-        title: 'Error updating contract',
+    onError: (error: any) => {
+      toast({ 
+        title: 'Failed to update contract',
         description: error.message,
-        variant: 'destructive',
+        variant: 'destructive' 
       });
-    },
+    }
   });
   
   // Delete contract mutation
-  const deleteMutation = useMutation({
+  const deleteContractMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('contracts')
         .delete()
         .eq('id', id);
-      
+        
       if (error) throw error;
+      return id;
     },
     onSuccess: () => {
-      toast({
-        title: 'Contract deleted',
-        description: 'The contract has been deleted successfully.',
-      });
+      toast({ title: 'Contract deleted successfully!' });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
-      setCurrentContract(null);
     },
-    onError: (error) => {
-      toast({
-        title: 'Error deleting contract',
+    onError: (error: any) => {
+      toast({ 
+        title: 'Failed to delete contract',
         description: error.message,
-        variant: 'destructive',
+        variant: 'destructive' 
       });
-    },
+    }
   });
   
-  // Submit handler for the form
-  const onSubmit = (values: ContractFormValues) => {
-    if (isEditing && currentContract) {
-      updateMutation.mutate({ ...values, id: currentContract.id });
-    } else {
-      createMutation.mutate(values);
+  // Form submission handlers
+  const onCreateContract = (data: ContractFormValues) => {
+    createContractMutation.mutate(data);
+  };
+  
+  const onUpdateContract = (data: ContractFormValues) => {
+    updateContractMutation.mutate(data);
+  };
+  
+  // Filter contracts based on search term and status
+  const filteredContracts = contracts.filter((contract: any) => {
+    const matchesSearch = contract.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = !filterStatus || contract.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+  
+  // Function to format date
+  const formatDate = (dateString: string) => {
+    try {
+      return format(parseISO(dateString), 'PPP');
+    } catch (error) {
+      return 'Invalid date';
     }
   };
   
-  // Edit contract
-  const handleEdit = (contract: Contract) => {
-    form.reset({
-      title: contract.title,
-      company_id: contract.company_id,
-      status: contract.status as 'draft' | 'active' | 'completed' | 'cancelled',
-      value: contract.value !== null ? contract.value.toString() : '',
-      start_date: contract.start_date || '',
-      end_date: contract.end_date || '',
-    });
-    setCurrentContract(contract);
-    setIsEditing(true);
-  };
-  
-  // Delete contract
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
-  };
-  
-  // Format currency
-  const formatCurrency = (value: number | null) => {
-    if (value === null) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  };
-  
-  // Format date
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return format(new Date(dateString), 'MMM d, yyyy');
-  };
-  
-  // Get company name by ID
-  const getCompanyName = (companyId: string) => {
-    const company = companies.find(c => c.id === companyId);
-    return company ? company.name : 'Unknown Company';
-  };
-  
-  // Get status badge
-  const getStatusBadge = (status: string) => {
+  // Function to get status badge color
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
-        return <Badge variant="outline">Draft</Badge>;
+        return 'bg-gray-200 text-gray-800';
+      case 'pending_signature':
+        return 'bg-yellow-100 text-yellow-800';
       case 'active':
-        return <Badge variant="default">Active</Badge>;
-      case 'completed':
-        return <Badge variant="secondary">Completed</Badge>;
+        return 'bg-green-100 text-green-800';
+      case 'expired':
+        return 'bg-red-100 text-red-800';
       case 'cancelled':
-        return <Badge variant="destructive">Cancelled</Badge>;
+        return 'bg-purple-100 text-purple-800';
       default:
-        return null;
+        return 'bg-gray-100 text-gray-800';
     }
   };
-  
-  // Filter contracts by status (if tab selected) and search query
-  const filteredContracts = contracts.filter(contract => {
-    const matchesStatus = activeTab === 'all' || contract.status === activeTab;
-    const matchesSearch = 
-      contract.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getCompanyName(contract.company_id).toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return matchesStatus && matchesSearch;
-  });
-  
-  // Check if user can modify contracts (admin or employee)
-  const canModify = isAdmin || isEmployee;
-  
-  // Count contracts by status
-  const contractCounts = {
-    all: contracts.length,
-    draft: contracts.filter(c => c.status === 'draft').length,
-    active: contracts.filter(c => c.status === 'active').length,
-    completed: contracts.filter(c => c.status === 'completed').length,
-    cancelled: contracts.filter(c => c.status === 'cancelled').length,
-  };
-  
+
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto px-4 py-8">
+      {/* Page header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Contracts</h1>
-        {canModify && (
+        <h1 className="text-2xl font-bold">Contracts</h1>
+        
+        {/* Only allow admin/employee to create contracts */}
+        {(isAdmin || isEmployee) && (
           <Dialog open={isCreating} onOpenChange={setIsCreating}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Contract
-              </Button>
+              <Button>New Contract</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
                 <DialogTitle>Create New Contract</DialogTitle>
                 <DialogDescription>
-                  Add a new contract to your database.
+                  Fill in the contract details and submit to create a new contract.
                 </DialogDescription>
               </DialogHeader>
+              
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onCreateContract)} className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="title"
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contract Title</FormLabel>
+                        <FormLabel>Contract Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Marketing Services Agreement" {...field} />
+                          <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={form.control}
                     name="company_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Company</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a company" />
+                              <SelectValue placeholder="Select company" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {companies.map(company => (
+                            {companies.map((company: any) => (
                               <SelectItem key={company.id} value={company.id}>
                                 {company.name}
                               </SelectItem>
@@ -413,32 +330,77 @@ const ContractsPage = () => {
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={form.control}
-                    name="status"
+                    name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="start_date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Start Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button variant="outline" className="w-full justify-start text-left">
+                                  {field.value ? formatDate(field.value) : "Select date"}
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={field.value ? new Date(field.value) : undefined}
+                                onSelect={(date) => field.onChange(date ? date.toISOString() : "")}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="end_date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>End Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button variant="outline" className="w-full justify-start text-left">
+                                  {field.value ? formatDate(field.value) : "Select date"}
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={field.value ? new Date(field.value) : undefined}
+                                onSelect={(date) => field.onChange(date ? date.toISOString() : "")}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
                   <FormField
                     control={form.control}
                     name="value"
@@ -446,52 +408,46 @@ const ContractsPage = () => {
                       <FormItem>
                         <FormLabel>Contract Value</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="10000" 
-                            {...field} 
-                          />
+                          <Input type="number" step="0.01" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="start_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Start Date</FormLabel>
+                  
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <Input type="date" {...field} />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="end_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>End Date</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline" onClick={() => form.reset()}>Cancel</Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={createMutation.isPending}>
-                      {createMutation.isPending ? 'Creating...' : 'Create Contract'}
+                          <SelectContent>
+                            {contractStatuses.map((status) => (
+                              <SelectItem key={status.id} value={status.id}>
+                                {status.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button type="button" variant="outline" onClick={() => setIsCreating(false)}>
+                      Cancel
                     </Button>
-                  </DialogFooter>
+                    <Button type="submit" disabled={createContractMutation.isPending}>
+                      {createContractMutation.isPending ? "Creating..." : "Create Contract"}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </DialogContent>
@@ -499,183 +455,122 @@ const ContractsPage = () => {
         )}
       </div>
       
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-grow">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+      {/* Search and Filter Section */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+        <div className="flex items-center mb-2 md:mb-0">
           <Input
-            type="search"
+            type="text"
             placeholder="Search contracts..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            className="mr-2"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
+          
+          <Select onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Statuses</SelectItem>
+              {contractStatuses.map((status) => (
+                <SelectItem key={status.id} value={status.id}>
+                  {status.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Tabs 
-          value={activeTab} 
-          onValueChange={setActiveTab} 
-          className="w-full sm:w-auto"
-        >
-          <TabsList className="grid grid-cols-5 w-full sm:w-[600px]">
-            <TabsTrigger value="all">
-              All ({contractCounts.all})
-            </TabsTrigger>
-            <TabsTrigger value="draft">
-              Draft ({contractCounts.draft})
-            </TabsTrigger>
-            <TabsTrigger value="active">
-              Active ({contractCounts.active})
-            </TabsTrigger>
-            <TabsTrigger value="completed">
-              Completed ({contractCounts.completed})
-            </TabsTrigger>
-            <TabsTrigger value="cancelled">
-              Cancelled ({contractCounts.cancelled})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
       
-      {isLoadingContracts || isLoadingCompanies ? (
-        <div className="flex justify-center p-8">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredContracts.length === 0 ? (
-            <div className="text-center p-8 text-gray-500">
-              No contracts found. Add your first contract to get started.
-            </div>
+      {/* Contract List */}
+      <ScrollArea className="rounded-md border h-[400px] w-full">
+        <div className="divide-y divide-gray-200">
+          {isLoading ? (
+            <div className="text-center py-4">Loading contracts...</div>
+          ) : filteredContracts.length === 0 ? (
+            <div className="text-center py-4">No contracts found.</div>
           ) : (
-            filteredContracts.map(contract => (
-              <Card key={contract.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-gray-500" />
-                      <CardTitle className="text-lg">{contract.title}</CardTitle>
-                      <div className="ml-2">{getStatusBadge(contract.status)}</div>
-                    </div>
-                    {canModify && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(contract)}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          {contract.file_url && (
-                            <DropdownMenuItem asChild>
-                              <a 
-                                href={contract.file_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                              >
-                                <Download className="mr-2 h-4 w-4" /> Download
-                              </a>
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem 
-                            onClick={() => handleDelete(contract.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
-                    <div className="flex items-center">
-                      <Building className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">Company:</span>
-                      <span className="font-medium ml-1">
-                        {getCompanyName(contract.company_id)}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">Value:</span>
-                      <span className="font-medium ml-1">
-                        {formatCurrency(contract.value)}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">Start Date:</span>
-                      <span className="font-medium ml-1">
-                        {formatDate(contract.start_date)}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">End Date:</span>
-                      <span className="font-medium ml-1">
-                        {formatDate(contract.end_date)}
-                      </span>
-                    </div>
-                  </div>
+            filteredContracts.map((contract: any) => (
+              <div key={contract.id} className="flex items-center justify-between p-4">
+                <div>
+                  <h2 className="text-lg font-semibold">{contract.name}</h2>
+                  <p className="text-sm text-gray-500">Company: {contract.companies?.name || 'N/A'}</p>
+                  <p className="text-sm text-gray-500">
+                    Start Date: {formatDate(contract.start_date)}, End Date: {formatDate(contract.end_date)}
+                  </p>
+                  <p className="text-sm text-gray-500">Value: ${contract.value}</p>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(contract.status)}`}>
+                    {contractStatuses.find(s => s.id === contract.status)?.name || 'Unknown'}
+                  </span>
                   
-                  {!contract.file_url && canModify && (
-                    <div className="mt-4">
-                      <Button variant="outline" size="sm" className="flex gap-1 items-center">
-                        <Upload className="h-4 w-4" />
-                        <span>Upload Document</span>
+                  {(isAdmin || isEmployee) && (
+                    <>
+                      <Button size="sm" onClick={() => {
+                        setCurrentContract(contract);
+                        setIsEditing(true);
+                      }}>
+                        Edit
                       </Button>
-                    </div>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => deleteContractMutation.mutate(contract.id)}
+                      >
+                        Delete
+                      </Button>
+                    </>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))
           )}
         </div>
-      )}
+      </ScrollArea>
       
       {/* Edit Contract Dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>Edit Contract</DialogTitle>
             <DialogDescription>
-              Update the contract information.
+              Edit the contract details and submit to update the contract.
             </DialogDescription>
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onUpdateContract)} className="space-y-4">
               <FormField
-                control={form.control}
-                name="title"
+                control={editForm.control}
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contract Title</FormLabel>
+                    <FormLabel>Contract Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Marketing Services Agreement" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              
               <FormField
-                control={form.control}
+                control={editForm.control}
                 name="company_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a company" />
+                          <SelectValue placeholder="Select company" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {companies.map(company => (
+                        {companies.map((company: any) => (
                           <SelectItem key={company.id} value={company.id}>
                             {company.name}
                           </SelectItem>
@@ -686,91 +581,127 @@ const ContractsPage = () => {
                   </FormItem>
                 )}
               />
+              
               <FormField
-                control={form.control}
+                control={editForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="start_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Start Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button variant="outline" className="w-full justify-start text-left">
+                              {field.value ? formatDate(field.value) : "Select date"}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? date.toISOString() : "")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="end_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>End Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button variant="outline" className="w-full justify-start text-left">
+                              {field.value ? formatDate(field.value) : "Select date"}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? date.toISOString() : "")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={editForm.control}
+                name="value"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract Value</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
                 name="status"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a status" />
+                          <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                        {contractStatuses.map((status) => (
+                          <SelectItem key={status.id} value={status.id}>
+                            {status.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="value"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contract Value</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="10000" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="start_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="end_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" onClick={() => {
-                    setIsEditing(false);
-                    setCurrentContract(null);
-                    form.reset();
-                  }}>
-                    Cancel
-                  </Button>
-                </DialogClose>
-                <Button type="submit" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+              
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => {
+                  setIsEditing(false);
+                  setCurrentContract(null);
+                }}>
+                  Cancel
                 </Button>
-              </DialogFooter>
+                <Button type="submit" disabled={updateContractMutation.isPending}>
+                  {updateContractMutation.isPending ? "Updating..." : "Update Contract"}
+                </Button>
+              </div>
             </form>
           </Form>
         </DialogContent>
