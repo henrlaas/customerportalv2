@@ -44,16 +44,27 @@ type Campaign = {
   updated_at: string;
 };
 
-// Campaign form schema
+// Campaign form schema - update to match Supabase requirements
 const campaignSchema = z.object({
   name: z.string().min(1, { message: 'Campaign name is required' }),
   description: z.string().optional(),
   status: z.string().default('draft'),
   company_id: z.string().min(1, { message: 'Company is required' }),
-  budget: z.number().optional(),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
+  budget: z.number().optional().nullable(),
+  start_date: z.string().optional().nullable(),
+  end_date: z.string().optional().nullable(),
 });
+
+// Define the insert type that matches what Supabase expects
+type CampaignInsert = {
+  name: string;
+  description?: string | null;
+  status: string;
+  company_id: string;
+  budget?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+};
 
 const CampaignsPage: React.FC = () => {
   const { toast } = useToast();
@@ -105,13 +116,23 @@ const CampaignsPage: React.FC = () => {
     },
   });
 
-  // Create campaign mutation
+  // Create campaign mutation - fixed to properly handle the types
   const createCampaignMutation = useMutation({
     mutationFn: async (values: z.infer<typeof campaignSchema>) => {
-      // Fix: Pass a single object instead of an array for the insert
+      // Convert form values to proper insert type
+      const campaignData: CampaignInsert = {
+        name: values.name,
+        company_id: values.company_id,
+        description: values.description || null,
+        status: values.status,
+        budget: values.budget || null,
+        start_date: values.start_date || null,
+        end_date: values.end_date || null
+      };
+      
       const { data, error } = await supabase
         .from('campaigns')
-        .insert([values])  // Note: Supabase expects an array here
+        .insert(campaignData)
         .select();
 
       if (error) throw error;
