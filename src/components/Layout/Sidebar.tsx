@@ -11,8 +11,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { Settings } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -20,10 +20,13 @@ export const Sidebar: React.FC = () => {
   const sidebarItems = getSidebarItems();
 
   return (
-    <ShadcnSidebar>
+    <ShadcnSidebar className="border-r bg-white">
       <SidebarHeader className="p-4">
         <div className="flex items-center space-x-2">
-          <h1 className="text-xl font-bold text-gray-800">Marketing Portal</h1>
+          <div className="bg-black text-white p-2 rounded">
+            <span className="text-xl font-bold">W</span>
+          </div>
+          <h1 className="text-xl font-bold text-gray-800">Workspace</h1>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -35,8 +38,15 @@ export const Sidebar: React.FC = () => {
                 isActive={location.pathname === item.href}
                 tooltip={item.title}
               >
-                <Link to={item.href} className="flex items-center gap-2">
-                  <item.icon className="h-5 w-5" />
+                <Link 
+                  to={item.href} 
+                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg ${
+                    location.pathname === item.href 
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <item.icon className={`h-5 w-5 ${location.pathname === item.href ? 'text-blue-600' : 'text-gray-500'}`} />
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
@@ -44,17 +54,24 @@ export const Sidebar: React.FC = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
-        {profile && (
-          <div className="p-4 border-t">
-            <div className="text-sm font-medium">
-              {profile.first_name} {profile.last_name}
-            </div>
-            <div className="text-xs text-gray-500">
-              {isAdmin ? 'Admin' : (isEmployee ? 'Employee' : 'Client')}
-            </div>
-          </div>
-        )}
+      <SidebarFooter className="border-t p-4 mt-auto">
+        <SidebarMenuButton 
+          asChild
+          isActive={location.pathname === '/settings'}
+          tooltip="Settings"
+        >
+          <Link 
+            to="/settings" 
+            className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg ${
+              location.pathname === '/settings' 
+                ? 'bg-blue-50 text-blue-600' 
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Settings className={`h-5 w-5 ${location.pathname === '/settings' ? 'text-blue-600' : 'text-gray-500'}`} />
+            <span>Settings</span>
+          </Link>
+        </SidebarMenuButton>
       </SidebarFooter>
     </ShadcnSidebar>
   );

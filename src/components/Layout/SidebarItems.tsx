@@ -5,11 +5,13 @@ import {
   LayoutDashboard, 
   CheckSquare, 
   Clock, 
-  Building, 
+  Users, 
   FileText, 
   BarChart, 
-  Users,
-  Settings
+  FolderArchive, 
+  DollarSign,
+  Settings,
+  BookOpen,
 } from "lucide-react";
 
 export function getSidebarItems() {
@@ -21,6 +23,12 @@ export function getSidebarItems() {
       title: t('Dashboard'),
       href: '/dashboard',
       icon: LayoutDashboard,
+      roles: ['admin', 'employee', 'client'],
+    },
+    {
+      title: t('Campaigns'),
+      href: '/campaigns',
+      icon: BookOpen,
       roles: ['admin', 'employee', 'client'],
     },
     {
@@ -36,9 +44,15 @@ export function getSidebarItems() {
       roles: ['admin', 'employee'],
     },
     {
-      title: t('Companies'),
-      href: '/companies',
-      icon: Building,
+      title: t('Clients'),
+      href: '/clients',
+      icon: Users,
+      roles: ['admin', 'employee'],
+    },
+    {
+      title: t('Deals'),
+      href: '/deals',
+      icon: BarChart,
       roles: ['admin', 'employee'],
     },
     {
@@ -48,9 +62,15 @@ export function getSidebarItems() {
       roles: ['admin', 'employee', 'client'],
     },
     {
-      title: t('Deals'),
-      href: '/deals',
-      icon: BarChart,
+      title: t('Media'),
+      href: '/media',
+      icon: FolderArchive,
+      roles: ['admin', 'employee', 'client'],
+    },
+    {
+      title: t('Finance'),
+      href: '/finance',
+      icon: DollarSign,
       roles: ['admin', 'employee'],
     },
     {
@@ -58,12 +78,6 @@ export function getSidebarItems() {
       href: '/user-management',
       icon: Users,
       roles: ['admin'],
-    },
-    {
-      title: t('Settings'),
-      href: '/settings',
-      icon: Settings,
-      roles: ['admin', 'employee', 'client'],
     },
   ];
 

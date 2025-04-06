@@ -30,6 +30,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { UserPlus } from 'lucide-react';
 
 // Define the schema for the invite form
 const inviteSchema = z.object({
@@ -39,6 +40,7 @@ const inviteSchema = z.object({
   role: z.enum(['admin', 'employee', 'client'], { 
     required_error: 'Please select a role' 
   }),
+  team: z.string().min(1, { message: 'Team is required' }),
 });
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
@@ -55,6 +57,7 @@ export function UserManagement() {
       firstName: '',
       lastName: '',
       role: 'client',
+      team: 'Client Services',
     },
   });
 
@@ -75,6 +78,7 @@ export function UserManagement() {
           firstName: data.firstName,
           lastName: data.lastName,
           role: data.role,
+          team: data.team,
         }
       });
 
@@ -102,9 +106,12 @@ export function UserManagement() {
   };
 
   return (
-    <Card className="max-w-md mx-auto">
+    <Card className="max-w-lg mx-auto bg-white border shadow-sm">
       <CardHeader>
-        <CardTitle>{t('Invite User')}</CardTitle>
+        <div className="flex items-center gap-2">
+          <UserPlus className="h-5 w-5 text-blue-500" />
+          <CardTitle>{t('Add New User')}</CardTitle>
+        </div>
         <CardDescription>
           {t('Send an invitation to a new user to join the platform')}
         </CardDescription>
@@ -181,10 +188,36 @@ export function UserManagement() {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="team"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('Team')}</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a team" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Executive Team">{t('Executive Team')}</SelectItem>
+                      <SelectItem value="Creative Team">{t('Creative Team')}</SelectItem>
+                      <SelectItem value="Client Services">{t('Client Services')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <Button 
               type="submit" 
-              className="w-full mt-4" 
+              className="w-full mt-4 bg-blue-500 hover:bg-blue-600" 
               disabled={isLoading}
             >
               {isLoading ? t('Sending...') : t('Send Invitation')}

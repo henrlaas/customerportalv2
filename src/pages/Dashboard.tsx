@@ -15,7 +15,7 @@ const Dashboard = () => {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Welcome Card */}
-        <Card className="col-span-full">
+        <Card className="col-span-full bg-white border shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle>
               {t('Welcome')}, {profile?.first_name} {profile?.last_name}
@@ -33,30 +33,30 @@ const Dashboard = () => {
         {/* Admin/Employee specific cards */}
         {(isAdmin || isEmployee) && (
           <>
-            <Card>
+            <Card className="bg-white border shadow-sm">
               <CardHeader>
-                <CardTitle>{t('Active Tasks')}</CardTitle>
+                <CardTitle className="text-lg font-medium">{t('Active Tasks')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">14</div>
+                <div className="text-3xl font-bold text-blue-600">14</div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white border shadow-sm">
               <CardHeader>
-                <CardTitle>{t('Active Campaigns')}</CardTitle>
+                <CardTitle className="text-lg font-medium">{t('Active Campaigns')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">5</div>
+                <div className="text-3xl font-bold text-blue-600">5</div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white border shadow-sm">
               <CardHeader>
-                <CardTitle>{t('Hours Logged This Week')}</CardTitle>
+                <CardTitle className="text-lg font-medium">{t('Hours Logged This Week')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">32.5</div>
+                <div className="text-3xl font-bold text-blue-600">32.5</div>
               </CardContent>
             </Card>
           </>
@@ -65,21 +65,21 @@ const Dashboard = () => {
         {/* Client specific cards */}
         {isClient && (
           <>
-            <Card>
+            <Card className="bg-white border shadow-sm">
               <CardHeader>
-                <CardTitle>{t('Active Campaigns')}</CardTitle>
+                <CardTitle className="text-lg font-medium">{t('Active Campaigns')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">2</div>
+                <div className="text-3xl font-bold text-blue-600">2</div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white border shadow-sm">
               <CardHeader>
-                <CardTitle>{t('Contracts')}</CardTitle>
+                <CardTitle className="text-lg font-medium">{t('Contracts')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">1</div>
+                <div className="text-3xl font-bold text-blue-600">1</div>
               </CardContent>
             </Card>
           </>

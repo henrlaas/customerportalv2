@@ -14,7 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import { TasksPage } from "./pages/TasksPage";
 import TimeTrackingPage from "./pages/TimeTrackingPage";
 import CompaniesPage from "./pages/CompaniesPage";
-import { ContractsPage } from "./pages/ContractsPage";  // Changed to named import
+import { ContractsPage } from "./pages/ContractsPage";
 import DealsPage from "./pages/DealsPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import SettingsPage from "./pages/SettingsPage";

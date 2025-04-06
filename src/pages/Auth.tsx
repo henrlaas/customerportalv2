@@ -8,13 +8,6 @@ import * as z from 'zod';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
   Form,
   FormControl,
   FormField,
@@ -61,60 +54,65 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md p-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('Marketing Agency Customer Portal')}</h1>
-          <p className="text-gray-600">{t('Sign In')}</p>
+    <div className="flex min-h-screen bg-white">
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          <div className="flex items-center space-x-3 mb-8">
+            <div className="bg-black text-white p-2 rounded">
+              <span className="text-xl font-bold">W</span>
+            </div>
+            <h1 className="text-xl font-bold text-gray-800">Workspace</h1>
+          </div>
+          
+          <h2 className="text-2xl font-bold mb-2">Sign in</h2>
+          <p className="text-gray-500 mb-6">Enter your credentials to access your account</p>
+          
+          <Form {...loginForm}>
+            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+              <FormField
+                control={loginForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700">{t('Email')}</FormLabel>
+                    <FormControl>
+                      <Input placeholder="email@example.com" className="border-gray-300 focus:ring-blue-500" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={loginForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700">{t('Password')}</FormLabel>
+                    <FormControl>
+                      <Input type="password" className="border-gray-300 focus:ring-blue-500" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 text-white">{t('Log In')}</Button>
+            </form>
+          </Form>
+          <p className="mt-6 text-center text-sm text-gray-500">
+            {t('Contact your administrator if you need access to the system')}
+          </p>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('Sign In')}</CardTitle>
-            <CardDescription>
-              {t('Enter your email and password to access your account')}
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-                <FormField
-                  control={loginForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('Email')}</FormLabel>
-                      <FormControl>
-                        <Input placeholder="email@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage>{t('Email is required')}</FormMessage>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={loginForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('Password')}</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormMessage>{t('Password is required')}</FormMessage>
-                    </FormItem>
-                  )}
-                />
-
-                <Button type="submit" className="w-full">{t('Log In')}</Button>
-              </form>
-            </Form>
-            <p className="mt-4 text-center text-sm text-gray-500">
-              {t('Contact your administrator if you need access to the system')}
-            </p>
-          </CardContent>
-        </Card>
+      </div>
+      
+      <div className="hidden lg:block lg:w-1/2 bg-gradient-to-br from-blue-500 to-blue-600">
+        <div className="h-full flex items-center justify-center text-white p-12">
+          <div className="max-w-lg">
+            <h2 className="text-3xl font-bold mb-4">Marketing Agency Customer Portal</h2>
+            <p className="text-lg opacity-80">Manage your marketing campaigns, tasks, and contracts all in one place.</p>
+          </div>
+        </div>
       </div>
     </div>
   );

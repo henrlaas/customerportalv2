@@ -5,7 +5,6 @@ import { Sidebar } from '@/components/Layout/Sidebar';
 import { TopBar } from '@/components/Layout/TopBar';
 import { 
   SidebarProvider, 
-  SidebarTrigger,
   SidebarInset
 } from '@/components/ui/sidebar';
 
@@ -22,17 +21,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-gray-50">
+      <div className="flex h-screen w-full bg-white">
         <Sidebar />
-        <SidebarInset>
+        <SidebarInset className="flex-1">
           <div className="flex-1 overflow-auto">
-            <div className="sticky top-0 z-10 bg-white border-b">
-              <div className="flex items-center px-4 h-14">
-                <SidebarTrigger className="mr-2" />
-                <TopBar />
-              </div>
-            </div>
-            <main className="p-6">{children}</main>
+            <TopBar />
+            <main className="p-8">{children}</main>
           </div>
         </SidebarInset>
       </div>
