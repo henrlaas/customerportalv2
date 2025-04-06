@@ -65,6 +65,7 @@ import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Slider } from '@/components/ui/slider';
 
 // Deal form schema
 const dealSchema = z.object({
@@ -114,6 +115,7 @@ type Profile = {
 };
 
 const DealsPage = () => {
+  
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
@@ -167,6 +169,8 @@ const DealsPage = () => {
       return data as Deal[];
     },
   });
+  
+  
   
   // Fetch companies for the dropdown
   const { data: companies = [] } = useQuery({
@@ -233,6 +237,8 @@ const DealsPage = () => {
       return data as Profile[];
     },
   });
+  
+  
   
   // Create deal mutation
   const createMutation = useMutation({
@@ -369,6 +375,8 @@ const DealsPage = () => {
       });
     },
   });
+  
+  
   
   // Submit handler for the create/edit form
   const onSubmit = (values: z.infer<typeof dealSchema>) => {
@@ -1057,7 +1065,4 @@ const DealCard = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <MoreVertical className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenu
+                  <MoreVertical className="h-3.5
