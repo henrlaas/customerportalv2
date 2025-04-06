@@ -112,13 +112,13 @@ const ContractsPage = () => {
     defaultValues: {
       title: '',
       company_id: '',
-      status: 'draft' as const,
+      status: 'draft',
       value: '',
       start_date: '',
       end_date: '',
     },
   });
-  
+
   // Fetch contracts
   const { data: contracts = [], isLoading: isLoadingContracts } = useQuery({
     queryKey: ['contracts'],
@@ -165,14 +165,14 @@ const ContractsPage = () => {
   
   // Create contract mutation
   const createMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof contractSchema>) => {
+    mutationFn: async (values: ContractFormValues) => {
       const { data, error } = await supabase
         .from('contracts')
         .insert([{
           title: values.title,
           company_id: values.company_id,
           status: values.status,
-          value: values.value, // This is now properly transformed to number by zod
+          value: values.value, // Will be properly transformed to number by zod
           start_date: values.start_date || null,
           end_date: values.end_date || null,
         }])
@@ -201,7 +201,7 @@ const ContractsPage = () => {
   
   // Update contract mutation
   const updateMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof contractSchema> & { id: string }) => {
+    mutationFn: async (values: ContractFormValues & { id: string }) => {
       const { id, ...contractData } = values;
       const { data, error } = await supabase
         .from('contracts')
@@ -209,7 +209,7 @@ const ContractsPage = () => {
           title: contractData.title,
           company_id: contractData.company_id,
           status: contractData.status,
-          value: contractData.value,
+          value: contractData.value, // Will be properly transformed to number by zod
           start_date: contractData.start_date || null,
           end_date: contractData.end_date || null,
         })

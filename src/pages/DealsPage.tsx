@@ -158,7 +158,7 @@ const DealsPage = () => {
     },
   });
 
-  // Fetch stages for the dropdown - fix table name
+  // Fetch stages for the dropdown - use the correct table name
   const { data: stages = [], isLoading: isLoadingStages } = useQuery({
     queryKey: ['stages'],
     queryFn: async () => {
@@ -206,14 +206,12 @@ const DealsPage = () => {
   const createMutation = useMutation({
     mutationFn: async (values: DealFormValues) => {
       // Make sure value is number or null
-      const numericValue = values.value !== undefined ? Number(values.value) : null;
-      
       const { data, error } = await insertWithUser('deals', {
         title: values.title,
         description: values.description || null,
         company_id: values.company_id || null,
         stage_id: values.stage_id || null,
-        value: numericValue,
+        value: values.value, // This is now handled by zod transform
         probability: values.probability || null,
         expected_close_date: values.expected_close_date || null,
         assigned_to: values.assigned_to || null,
@@ -244,15 +242,12 @@ const DealsPage = () => {
     mutationFn: async (values: DealFormValues & { id: string }) => {
       const { id, ...dealData } = values;
 
-      // Make sure value is number or null
-      const numericValue = dealData.value !== undefined ? Number(dealData.value) : null;
-
       const { data, error } = await updateWithUser('deals', id, {
         title: dealData.title,
         description: dealData.description || null,
         company_id: dealData.company_id || null,
         stage_id: dealData.stage_id || null,
-        value: numericValue,
+        value: dealData.value, // This is now handled by zod transform
         probability: dealData.probability || null,
         expected_close_date: dealData.expected_close_date || null,
         assigned_to: dealData.assigned_to || null,

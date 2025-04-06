@@ -45,6 +45,7 @@ type Task = {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  // Define related_to separately, as it's not part of the database schema
   related_to?: { type: "none" | "deal" | "company" | "contact"; id: string } | null;
 };
 
@@ -114,9 +115,10 @@ export const TasksPage = () => {
         return [];
       }
       
+      // Add the related_to field to each task
       return data.map(task => ({
         ...task,
-        related_to: task.related_to || { type: 'none', id: '' }
+        related_to: { type: 'none' as const, id: '' }
       })) as Task[];
     },
   });
