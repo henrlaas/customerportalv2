@@ -92,7 +92,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
-      // Use type assertion to avoid TypeScript errors with Supabase client
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -143,7 +142,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
     
     try {
-      // Use type assertion to avoid TypeScript errors with Supabase client
       const { error } = await supabase
         .from('profiles')
         .update({ language: lang })
@@ -152,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       // Update local profile state
-      setProfile((prev: any) => ({ ...prev, language: lang }));
+      setProfile((prev) => prev ? { ...prev, language: lang } : null);
       
       toast({
         title: 'Language updated',
