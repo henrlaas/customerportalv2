@@ -1,7 +1,6 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, insertWithUser } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -64,11 +64,27 @@ const MediaPage: React.FC = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [currentPath, setCurrentPath] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const { user, session } = useAuth();
+
+  // Check authentication status
+  useEffect(() => {
+    if (!session) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to access media files',
+        variant: 'destructive',
+      });
+    }
+  }, [session, toast]);
 
   // Fetch media files from Supabase storage
   const { data: mediaFiles = [], isLoading } = useQuery({
-    queryKey: ['mediaFiles', currentPath],
+    queryKey: ['mediaFiles', currentPath, session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) {
+        return [];
+      }
+      
       try {
         // First get folders
         const { data: folders, error: folderError } = await supabase
@@ -134,6 +150,7 @@ const MediaPage: React.FC = () => {
         return [];
       }
     },
+    enabled: !!session?.user?.id, // Only run query if user is authenticated
   });
   
   // Function to infer file type from name
@@ -153,6 +170,10 @@ const MediaPage: React.FC = () => {
   // Upload file mutation
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
+      if (!session?.user?.id) {
+        throw new Error('You must be logged in to upload files');
+      }
+      
       try {
         setIsUploading(true);
         
@@ -178,18 +199,13 @@ const MediaPage: React.FC = () => {
           .from('media')
           .getPublicUrl(filePath);
           
-        // Create metadata record
-        const { error: metadataError } = await supabase
-          .from('campaign_media')
-          .insert([
-            {
-              file_name: file.name,
-              file_url: publicUrl,
-              file_type: file.type,
-              file_size: file.size,
-              created_by: (await supabase.auth.getSession()).data.session?.user.id
-            }
-          ] as any); // Type assertion to any since the interface doesn't match
+        // Create metadata record using insertWithUser helper
+        const { error: metadataError } = await insertWithUser('campaign_media', {
+          file_name: file.name,
+          file_url: publicUrl,
+          file_type: file.type,
+          file_size: file.size
+        });
           
         if (metadataError) throw metadataError;
         
@@ -218,6 +234,10 @@ const MediaPage: React.FC = () => {
   // Create folder mutation
   const createFolderMutation = useMutation({
     mutationFn: async (folderName: string) => {
+      if (!session?.user?.id) {
+        throw new Error('You must be logged in to create folders');
+      }
+      
       if (!folderName.trim()) {
         throw new Error('Folder name cannot be empty');
       }
@@ -260,6 +280,10 @@ const MediaPage: React.FC = () => {
   // Delete file mutation
   const deleteFileMutation = useMutation({
     mutationFn: async ({ path, isFolder, name }: { path: string, isFolder: boolean, name: string }) => {
+      if (!session?.user?.id) {
+        throw new Error('You must be logged in to delete files');
+      }
+      
       if (isFolder) {
         // For folders, we need to list and delete all contents
         const folderPath = currentPath 
@@ -312,7 +336,7 @@ const MediaPage: React.FC = () => {
         await supabase
           .from('campaign_media')
           .delete()
-          .match({ file_name: name }) as any; // Type assertion to fix compatibility issue
+          .eq('file_name', name);
       }
     },
     onSuccess: () => {
@@ -386,6 +410,20 @@ const MediaPage: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Show authentication warning if not logged in
+  if (!session?.user?.id) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Media Library</h1>
+        <div className="text-center p-12 border rounded-lg bg-muted/50">
+          <h3 className="text-lg font-medium mb-2">Authentication Required</h3>
+          <p className="text-muted-foreground mb-4">Please log in to access the media library</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Rest of the component remains the same
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
