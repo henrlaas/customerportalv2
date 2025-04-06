@@ -21,7 +21,6 @@ type AuthContextType = {
   user: User | null;
   profile: Profile | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
   isAdmin: boolean;
@@ -123,38 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, userData: any) => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: userData.firstName,
-            last_name: userData.lastName
-          }
-        }
-      });
-
-      if (error) throw error;
-      
-      toast({
-        title: 'Account created',
-        description: 'Please check your email to confirm your account',
-      });
-      
-      return { error: null };
-    } catch (error: any) {
-      console.error('Error signing up:', error.message);
-      toast({
-        title: 'Sign up failed',
-        description: error.message,
-        variant: 'destructive'
-      });
-      return { error };
-    }
-  };
-
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -211,7 +178,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     profile,
     signIn,
-    signUp,
     signOut,
     loading,
     isAdmin,
