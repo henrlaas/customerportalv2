@@ -9,7 +9,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -62,17 +61,25 @@ export function UserManagement() {
   const onSubmit = async (data: InviteFormValues) => {
     setIsLoading(true);
     try {
-      // Use Supabase's built-in invite user function
-      const { data: inviteData, error } = await supabase.auth.admin.inviteUserByEmail(data.email, {
-        data: {
-          first_name: data.firstName,
-          last_name: data.lastName,
+      // Get the user's token for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session. Please log in.');
+      }
+
+      // Call our secure edge function to invite the user
+      const response = await supabase.functions.invoke('invite-user', {
+        body: {
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
           role: data.role,
-        },
+        }
       });
 
-      if (error) {
-        throw error;
+      if (response.error) {
+        throw new Error(response.error.message || 'Error inviting user');
       }
 
       toast({
