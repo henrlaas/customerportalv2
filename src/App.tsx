@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/Layout/AppLayout";
+import { UserManagement } from "@/components/UserManagement"; // Add import for UserManagement
 
 // Pages
 import Auth from "./pages/Auth";
