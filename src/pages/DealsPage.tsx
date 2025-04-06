@@ -1065,4 +1065,4 @@ const DealCard = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <MoreVertical className="h-
+                  <MoreVertical className="h-4 w-
