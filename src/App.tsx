@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import UserManagementPage from "./pages/UserManagementPage";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -24,8 +25,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public Route - Redirect to Dashboard if authenticated */}
-            <Route path="/" element={<Auth />} />
+            {/* Public Route - Redirect to Auth if not authenticated */}
+            <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             
             {/* Protected Routes */}
