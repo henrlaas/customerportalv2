@@ -23,7 +23,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 });
 
 // Helper function to add created_by for any table that needs it
-export const insertWithUser = async (table: string, data: any) => {
+export const insertWithUser = async <T extends keyof Database["public"]["Tables"]>(
+  table: T,
+  data: any
+) => {
   const { data: sessionData } = await supabase.auth.getSession();
   const userId = sessionData.session?.user?.id;
   
@@ -40,7 +43,11 @@ export const insertWithUser = async (table: string, data: any) => {
 };
 
 // Helper function to update with user check
-export const updateWithUser = async (table: string, id: string, data: any) => {
+export const updateWithUser = async <T extends keyof Database["public"]["Tables"]>(
+  table: T,
+  id: string,
+  data: any
+) => {
   const { data: sessionData } = await supabase.auth.getSession();
   const userId = sessionData.session?.user?.id;
   
