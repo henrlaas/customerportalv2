@@ -21,3 +21,35 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     },
   },
 });
+
+// Helper function to add created_by for any table that needs it
+export const insertWithUser = async (table: string, data: any) => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  
+  return supabase
+    .from(table)
+    .insert({
+      ...data,
+      created_by: userId
+    });
+};
+
+// Helper function to update with user check
+export const updateWithUser = async (table: string, id: string, data: any) => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  
+  return supabase
+    .from(table)
+    .update(data)
+    .eq('id', id);
+};

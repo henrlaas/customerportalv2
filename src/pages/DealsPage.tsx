@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, insertWithUser } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   BarChart, 
@@ -243,19 +243,16 @@ const DealsPage = () => {
   // Create deal mutation
   const createMutation = useMutation({
     mutationFn: async (values: z.infer<typeof dealSchema>) => {
-      const { data, error } = await supabase
-        .from('deals')
-        .insert([{
-          title: values.title,
-          description: values.description || null,
-          company_id: values.company_id || null,
-          stage_id: values.stage_id || null,
-          expected_close_date: values.expected_close_date || null,
-          value: values.value,
-          probability: values.probability || null,
-          assigned_to: values.assigned_to || null
-        }])
-        .select();
+      const { data, error } = await insertWithUser('deals', {
+        title: values.title,
+        description: values.description || null,
+        company_id: values.company_id || null,
+        stage_id: values.stage_id || null,
+        expected_close_date: values.expected_close_date || null,
+        value: values.value,
+        probability: values.probability || null,
+        assigned_to: values.assigned_to || null
+      });
       
       if (error) throw error;
       return data;
@@ -1065,4 +1062,5 @@ const DealCard = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <MoreVertical className="h-
+                  <MoreVertical className="h-4 w-4" />
+                </Button

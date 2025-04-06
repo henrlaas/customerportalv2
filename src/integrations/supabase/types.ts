@@ -125,6 +125,7 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string
+          created_by: string | null
           end_date: string | null
           file_url: string | null
           id: string
@@ -137,6 +138,7 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string
+          created_by?: string | null
           end_date?: string | null
           file_url?: string | null
           id?: string
@@ -149,6 +151,7 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string
+          created_by?: string | null
           end_date?: string | null
           file_url?: string | null
           id?: string
@@ -194,6 +197,7 @@ export type Database = {
           assigned_to: string | null
           company_id: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           expected_close_date: string | null
           id: string
@@ -207,6 +211,7 @@ export type Database = {
           assigned_to?: string | null
           company_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           expected_close_date?: string | null
           id?: string
@@ -220,6 +225,7 @@ export type Database = {
           assigned_to?: string | null
           company_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           expected_close_date?: string | null
           id?: string
@@ -284,6 +290,7 @@ export type Database = {
           assigned_to: string | null
           campaign_id: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           due_date: string | null
           id: string
@@ -296,6 +303,7 @@ export type Database = {
           assigned_to?: string | null
           campaign_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -308,6 +316,7 @@ export type Database = {
           assigned_to?: string | null
           campaign_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
