@@ -35,7 +35,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { FileUploader } from '../components/FileUploader';
+import { FileUploader } from '@/components/FileUploader';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,
@@ -58,7 +58,7 @@ const contractFormSchema = z.object({
 
 type ContractFormValues = z.infer<typeof contractFormSchema>;
 
-const defaultContractValues: ContractFormValues = {
+const defaultContractValues: Partial<ContractFormValues> = {
   name: '',
   company_id: '',
   description: '',
@@ -182,7 +182,7 @@ const ContractsPage: React.FC = () => {
       const { data, error } = await updateWithUser('contracts', currentContract.id, {
         ...updateData,
         // Fix: Ensure value is a number
-        value: typeof values.value === 'string' ? parseFloat(values.value) || 0 : values.value,
+        value: typeof updateData.value === 'string' ? parseFloat(updateData.value) || 0 : updateData.value,
       });
       
       if (error) throw error;
