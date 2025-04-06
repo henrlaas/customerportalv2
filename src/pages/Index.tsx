@@ -8,7 +8,7 @@ const Index = () => {
 
   useEffect(() => {
     // Redirect to auth page when visiting the root URL
-    navigate('/auth');
+    navigate('/auth', { replace: true });
   }, [navigate]);
 
   return (
