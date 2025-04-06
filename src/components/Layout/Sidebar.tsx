@@ -1,37 +1,61 @@
 
-import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSidebarItems } from './SidebarItems';
+import {
+  Sidebar as ShadcnSidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
-  const { isAdmin, isEmployee } = useAuth();
+  const { isAdmin, isEmployee, profile } = useAuth();
   const sidebarItems = getSidebarItems();
 
   return (
-    <aside className="bg-white border-r border-gray-200 w-64 flex-shrink-0 h-screen overflow-y-auto">
-      <div className="p-6">
-        <h1 className="text-xl font-bold text-gray-800">Marketing Portal</h1>
-      </div>
-      <nav className="mt-4">
-        <ul>
+    <ShadcnSidebar>
+      <SidebarHeader className="p-4">
+        <div className="flex items-center space-x-2">
+          <h1 className="text-xl font-bold text-gray-800">Marketing Portal</h1>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
           {sidebarItems.map((item) => (
-            <li key={item.href}>
-              <Link
-                to={item.href}
-                className={cn(
-                  "flex items-center px-6 py-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-                  location.pathname === item.href && "bg-gray-100 text-gray-900 font-medium"
-                )}
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton 
+                asChild
+                isActive={location.pathname === item.href}
+                tooltip={item.title}
               >
-                <item.icon className="h-5 w-5 mr-3" />
-                <span>{item.title}</span>
-              </Link>
-            </li>
+                <Link to={item.href} className="flex items-center gap-2">
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           ))}
-        </ul>
-      </nav>
-    </aside>
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter>
+        {profile && (
+          <div className="p-4 border-t">
+            <div className="text-sm font-medium">
+              {profile.first_name} {profile.last_name}
+            </div>
+            <div className="text-xs text-gray-500">
+              {isAdmin ? 'Admin' : (isEmployee ? 'Employee' : 'Client')}
+            </div>
+          </div>
+        )}
+      </SidebarFooter>
+    </ShadcnSidebar>
   );
 };

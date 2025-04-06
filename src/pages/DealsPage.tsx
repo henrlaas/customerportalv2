@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser } from '@/integrations/supabase/client';
@@ -7,115 +8,26 @@ import {
   Plus,
   Search,
   Filter,
-  DollarSign,
-  Building,
-  Calendar,
-  Percent,
-  User,
-  MoreVertical,
-  Trash2,
-  Edit,
-  ChevronRight,
-  MoveRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Slider } from '@/components/ui/slider';
-
-// Deal form schema
-const dealSchema = z.object({
-  title: z.string().min(1, { message: 'Title is required' }),
-  description: z.string().optional(),
-  company_id: z.string().optional(),
-  stage_id: z.string().optional(),
-  expected_close_date: z.string().optional(),
-  value: z.string().optional().transform(val => val ? parseFloat(val) : null),
-  probability: z.number().min(0).max(100).optional(),
-  assigned_to: z.string().optional(),
-});
-
-// Deal type matching our database schema
-type Deal = {
-  id: string;
-  title: string;
-  description: string | null;
-  company_id: string | null;
-  stage_id: string | null;
-  expected_close_date: string | null;
-  value: number | null;
-  probability: number | null;
-  assigned_to: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-// Company type for selecting related companies
-type Company = {
-  id: string;
-  name: string;
-};
-
-// Stage type for pipeline stages
-type Stage = {
-  id: string;
-  name: string;
-  position: number;
-};
-
-// User/Profile type for assigning deals
-type Profile = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-};
+import { DealCard, Deal, Company, Stage, Profile } from '@/components/Deals/DealCard';
+import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
+import { MoveDealForm } from '@/components/Deals/MoveDealForm';
 
 const DealsPage = () => {
-  
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
@@ -125,28 +37,6 @@ const DealsPage = () => {
   const { toast } = useToast();
   const { isAdmin, isEmployee, user } = useAuth();
   const queryClient = useQueryClient();
-  
-  // Form for creating/editing deals
-  const form = useForm({
-    resolver: zodResolver(dealSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      company_id: '',
-      stage_id: '',
-      expected_close_date: '',
-      value: '',
-      probability: 50,
-      assigned_to: '',
-    },
-  });
-  
-  // Simplified form for moving deals between stages
-  const moveForm = useForm({
-    defaultValues: {
-      stage_id: '',
-    },
-  });
   
   // Fetch deals
   const { data: deals = [], isLoading: isLoadingDeals } = useQuery({
@@ -169,8 +59,6 @@ const DealsPage = () => {
       return data as Deal[];
     },
   });
-  
-  
   
   // Fetch companies for the dropdown
   const { data: companies = [] } = useQuery({
@@ -238,11 +126,9 @@ const DealsPage = () => {
     },
   });
   
-  
-  
   // Create deal mutation
   const createMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof dealSchema>) => {
+    mutationFn: async (values: DealFormValues) => {
       const { data, error } = await insertWithUser('deals', {
         title: values.title,
         description: values.description || null,
@@ -264,7 +150,6 @@ const DealsPage = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['deals'] });
       setIsCreating(false);
-      form.reset();
     },
     onError: (error) => {
       toast({
@@ -277,7 +162,7 @@ const DealsPage = () => {
   
   // Update deal mutation
   const updateMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof dealSchema> & { id: string }) => {
+    mutationFn: async (values: DealFormValues & { id: string }) => {
       const { id, ...dealData } = values;
       const { data, error } = await supabase
         .from('deals')
@@ -305,7 +190,6 @@ const DealsPage = () => {
       queryClient.invalidateQueries({ queryKey: ['deals'] });
       setIsEditing(false);
       setCurrentDeal(null);
-      form.reset();
     },
     onError: (error) => {
       toast({
@@ -362,7 +246,6 @@ const DealsPage = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['deals'] });
       setIsMoving(false);
-      moveForm.reset();
     },
     onError: (error) => {
       toast({
@@ -373,10 +256,8 @@ const DealsPage = () => {
     },
   });
   
-  
-  
   // Submit handler for the create/edit form
-  const onSubmit = (values: z.infer<typeof dealSchema>) => {
+  const handleSubmit = (values: DealFormValues) => {
     if (isEditing && currentDeal) {
       updateMutation.mutate({ ...values, id: currentDeal.id });
     } else {
@@ -385,7 +266,7 @@ const DealsPage = () => {
   };
   
   // Submit handler for the move deal form
-  const onMoveSubmit = (values: { stage_id: string }) => {
+  const handleMoveSubmit = (values: { stage_id: string }) => {
     if (!currentDeal) return;
     
     moveDealMutation.mutate({
@@ -396,7 +277,7 @@ const DealsPage = () => {
   
   // Edit deal
   const handleEdit = (deal: Deal) => {
-    form.reset({
+    const formValues = {
       title: deal.title,
       description: deal.description || '',
       company_id: deal.company_id || '',
@@ -405,16 +286,14 @@ const DealsPage = () => {
       value: deal.value?.toString() || '',
       probability: deal.probability || 50,
       assigned_to: deal.assigned_to || '',
-    });
+    };
+    
     setCurrentDeal(deal);
     setIsEditing(true);
   };
   
   // Open move deal dialog
   const handleMove = (deal: Deal) => {
-    moveForm.reset({
-      stage_id: deal.stage_id || '',
-    });
     setCurrentDeal(deal);
     setIsMoving(true);
   };
@@ -433,32 +312,11 @@ const DealsPage = () => {
     }).format(value);
   };
   
-  // Format date
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Not set';
-    return format(new Date(dateString), 'MMM d, yyyy');
-  };
-  
-  // Get company name by ID
-  const getCompanyName = (companyId: string | null) => {
-    if (!companyId) return 'No company';
-    const company = companies.find(c => c.id === companyId);
-    return company ? company.name : 'Unknown Company';
-  };
-  
   // Get stage name by ID
   const getStageName = (stageId: string | null) => {
     if (!stageId) return 'No stage';
     const stage = stages.find(s => s.id === stageId);
     return stage ? stage.name : 'Unknown Stage';
-  };
-  
-  // Get user name by ID
-  const getAssigneeName = (userId: string | null) => {
-    if (!userId) return 'Unassigned';
-    const profile = profiles.find(p => p.id === userId);
-    if (!profile) return 'Unknown User';
-    return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
   };
   
   // Calculate total pipeline value
@@ -479,6 +337,13 @@ const DealsPage = () => {
         getCompanyName(deal.company_id).toLowerCase().includes(searchQuery.toLowerCase()))
     ),
   }));
+  
+  // Get company name by ID
+  const getCompanyName = (companyId: string | null) => {
+    if (!companyId) return 'No company';
+    const company = companies.find(c => c.id === companyId);
+    return company ? company.name : 'Unknown Company';
+  };
   
   // Check if user can modify deals (admin or employee)
   const canModify = isAdmin || isEmployee;
@@ -510,182 +375,15 @@ const DealsPage = () => {
                   Add a new deal to your pipeline.
                 </DialogDescription>
               </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Deal Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Marketing Campaign Deal" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="company_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Company</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a company (optional)" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="">No company</SelectItem>
-                              {companies.map(company => (
-                                <SelectItem key={company.id} value={company.id}>
-                                  {company.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="stage_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Deal Stage</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a stage" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {stages.map(stage => (
-                                <SelectItem key={stage.id} value={stage.id}>
-                                  {stage.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="value"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Deal Value</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="10000" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="expected_close_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Expected Close Date</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="probability"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          Deal Probability: {field.value}%
-                        </FormLabel>
-                        <FormControl>
-                          <Slider
-                            min={0}
-                            max={100}
-                            step={5}
-                            defaultValue={[field.value || 50]}
-                            onValueChange={(vals) => field.onChange(vals[0])}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="assigned_to"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Assigned To</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Assign to (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="">Unassigned</SelectItem>
-                            {profiles.map(profile => (
-                              <SelectItem key={profile.id} value={profile.id}>
-                                {`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.id}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Add any details about the deal"
-                            className="min-h-[100px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline" onClick={() => form.reset()}>Cancel</Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={createMutation.isPending}>
-                      {createMutation.isPending ? 'Creating...' : 'Create Deal'}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
+              <DealForm 
+                onSubmit={handleSubmit}
+                companies={companies}
+                stages={stages}
+                profiles={profiles}
+                isSubmitting={createMutation.isPending}
+                submitLabel="Create Deal"
+                onCancel={() => setIsCreating(false)}
+              />
             </DialogContent>
           </Dialog>
         )}
@@ -759,191 +457,30 @@ const DealsPage = () => {
               Update the deal information.
             </DialogDescription>
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Deal Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Marketing Campaign Deal" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="company_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a company (optional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">No company</SelectItem>
-                          {companies.map(company => (
-                            <SelectItem key={company.id} value={company.id}>
-                              {company.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="stage_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Deal Stage</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a stage" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {stages.map(stage => (
-                            <SelectItem key={stage.id} value={stage.id}>
-                              {stage.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="value"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Deal Value</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="10000" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="expected_close_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Expected Close Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="probability"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Deal Probability: {field.value}%
-                    </FormLabel>
-                    <FormControl>
-                      <Slider
-                        min={0}
-                        max={100}
-                        step={5}
-                        defaultValue={[field.value || 50]}
-                        onValueChange={(vals) => field.onChange(vals[0])}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="assigned_to"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assigned To</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Assign to (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">Unassigned</SelectItem>
-                        {profiles.map(profile => (
-                          <SelectItem key={profile.id} value={profile.id}>
-                            {`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.id}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Add any details about the deal"
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" onClick={() => {
-                    setIsEditing(false);
-                    setCurrentDeal(null);
-                    form.reset();
-                  }}>
-                    Cancel
-                  </Button>
-                </DialogClose>
-                <Button type="submit" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
+          {currentDeal && (
+            <DealForm 
+              onSubmit={(values) => handleSubmit(values)}
+              companies={companies}
+              stages={stages}
+              profiles={profiles}
+              defaultValues={{
+                title: currentDeal.title,
+                description: currentDeal.description || '',
+                company_id: currentDeal.company_id || '',
+                stage_id: currentDeal.stage_id || '',
+                expected_close_date: currentDeal.expected_close_date ? currentDeal.expected_close_date.split('T')[0] : '',
+                value: currentDeal.value?.toString() || '',
+                probability: currentDeal.probability || 50,
+                assigned_to: currentDeal.assigned_to || '',
+              }}
+              isSubmitting={updateMutation.isPending}
+              submitLabel="Save Changes"
+              onCancel={() => {
+                setIsEditing(false);
+                setCurrentDeal(null);
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
       
@@ -956,111 +493,21 @@ const DealsPage = () => {
               Move "{currentDeal?.title}" to another stage.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={moveForm.handleSubmit(onMoveSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Current Stage: {getStageName(currentDeal?.stage_id)}
-              </label>
-              <Select
-                onValueChange={(value) => moveForm.setValue('stage_id', value)}
-                defaultValue={currentDeal?.stage_id || ''}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a new stage" />
-                </SelectTrigger>
-                <SelectContent>
-                  {stages.map(stage => (
-                    <SelectItem key={stage.id} value={stage.id}>
-                      {stage.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline" onClick={() => {
-                  setIsMoving(false);
-                  setCurrentDeal(null);
-                  moveForm.reset();
-                }}>
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button
-                type="submit" 
-                disabled={moveDealMutation.isPending || moveForm.getValues().stage_id === currentDeal?.stage_id}
-              >
-                {moveDealMutation.isPending ? 'Moving...' : 'Move Deal'}
-              </Button>
-            </DialogFooter>
-          </form>
+          <MoveDealForm 
+            stages={stages}
+            currentDeal={currentDeal}
+            onSubmit={handleMoveSubmit}
+            isSubmitting={moveDealMutation.isPending}
+            onCancel={() => {
+              setIsMoving(false);
+              setCurrentDeal(null);
+            }}
+            getStageName={getStageName}
+          />
         </DialogContent>
       </Dialog>
     </div>
   );
 };
 
-// Deal Card Component
-interface DealCardProps {
-  deal: Deal;
-  companies: Company[];
-  stages: Stage[];
-  profiles: Profile[];
-  canModify: boolean;
-  onEdit: (deal: Deal) => void;
-  onDelete: (id: string) => void;
-  onMove: (deal: Deal) => void;
-}
-
-const DealCard = ({ 
-  deal, 
-  companies, 
-  stages, 
-  profiles,
-  canModify, 
-  onEdit, 
-  onDelete,
-  onMove
-}: DealCardProps) => {
-  // Get company name
-  const getCompanyName = (companyId: string | null) => {
-    if (!companyId) return 'No company';
-    const company = companies.find(c => c.id === companyId);
-    return company ? company.name : 'Unknown Company';
-  };
-  
-  // Get user name
-  const getAssigneeName = (userId: string | null) => {
-    if (!userId) return 'Unassigned';
-    const profile = profiles.find(p => p.id === userId);
-    if (!profile) return 'Unknown User';
-    return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
-  };
-  
-  // Format currency
-  const formatCurrency = (value: number | null) => {
-    if (value === null) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  };
-  
-  // Format date
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Not set';
-    return format(new Date(dateString), 'MMM d, yyyy');
-  };
-  
-  return (
-    <Card className="bg-white shadow-sm">
-      <CardHeader className="pb-2 pt-4 px-4">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-base font-semibold">{deal.title}</CardTitle>
-          {canModify && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <MoreVertical className="h-4 w-4" />
-                </Button
+export default DealsPage;
