@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -31,64 +31,15 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
-} from "@/components/ui/command"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+  Avatar, AvatarFallback, AvatarImage 
+} from "@/components/ui/avatar";
 
 const SettingsPage = () => {
-  const { user, profile, updateProfile, changePassword } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   // Profile form schema
   const profileSchema = z.object({
@@ -127,16 +78,18 @@ const SettingsPage = () => {
     },
   });
 
+  // Fix profile mutation
   const profileMutation = useMutation({
-    mutationFn: async (values: { first_name?: string; last_name?: string; email?: string; }) => {
-      // Function implementation
+    mutationFn: async (values: z.infer<typeof profileSchema>) => {
+      if (!user?.id) throw new Error("User not authenticated");
+      
       const { data, error } = await supabase
         .from('profiles')
         .update({
           first_name: values.first_name,
           last_name: values.last_name,
         })
-        .eq('id', user?.id);
+        .eq('id', user.id);
 
       if (error) throw error;
       return data;
@@ -146,9 +99,8 @@ const SettingsPage = () => {
         title: 'Profile updated',
         description: 'Your profile has been updated successfully.',
       });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error updating profile',
         description: error.message,
@@ -157,9 +109,11 @@ const SettingsPage = () => {
     },
   });
 
+  // Fix password mutation
   const passwordMutation = useMutation({
-    mutationFn: async (values: { old_password?: string; new_password?: string; confirm_password?: string; }) => {
-      // Function implementation
+    mutationFn: async (values: z.infer<typeof passwordSchema>) => {
+      if (!values.new_password) throw new Error("New password is required");
+      
       const { data, error } = await supabase.auth.updateUser({
         password: values.new_password,
       });
@@ -173,7 +127,7 @@ const SettingsPage = () => {
         description: 'Your password has been updated successfully.',
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error updating password',
         description: error.message,
@@ -183,18 +137,20 @@ const SettingsPage = () => {
   });
 
   // Fix handleSubmit functions to match the mutation functions
-  const handleProfileSubmit = (values: { first_name?: string; last_name?: string; email?: string; }) => {
+  const handleProfileSubmit = (values: z.infer<typeof profileSchema>) => {
     profileMutation.mutate(values);
   };
 
-  const handlePasswordSubmit = (values: { old_password?: string; new_password?: string; confirm_password?: string; }) => {
+  const handlePasswordSubmit = (values: z.infer<typeof passwordSchema>) => {
     passwordMutation.mutate(values);
   };
 
+  
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
 
+      {/* Profile Card */}
       <Card className="mb-4">
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
@@ -250,6 +206,7 @@ const SettingsPage = () => {
         </CardContent>
       </Card>
 
+      {/* Password Card */}
       <Card className="mb-4">
         <CardHeader>
           <CardTitle>Change Password</CardTitle>
@@ -305,6 +262,7 @@ const SettingsPage = () => {
         </CardContent>
       </Card>
 
+      {/* Preferences Card */}
       <Card>
         <CardHeader>
           <CardTitle>Preferences</CardTitle>

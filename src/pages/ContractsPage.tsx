@@ -73,6 +73,8 @@ const contractSchema = z.object({
   end_date: z.string().optional(),
 });
 
+type ContractFormValues = z.infer<typeof contractSchema>;
+
 // Contract type matching our database schema
 type Contract = {
   id: string;
@@ -105,7 +107,7 @@ const ContractsPage = () => {
   const queryClient = useQueryClient();
   
   // Form for creating/editing contracts
-  const form = useForm({
+  const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractSchema),
     defaultValues: {
       title: '',
@@ -264,7 +266,7 @@ const ContractsPage = () => {
   });
   
   // Submit handler for the form
-  const onSubmit = (values: z.infer<typeof contractSchema>) => {
+  const onSubmit = (values: ContractFormValues) => {
     if (isEditing && currentContract) {
       updateMutation.mutate({ ...values, id: currentContract.id });
     } else {

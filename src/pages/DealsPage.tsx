@@ -1,42 +1,118 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, insertWithUser } from '@/integrations/supabase/client';
+import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  BarChart, 
+import {
+  FileText,
   Plus,
   Search,
-  Filter,
+  Calendar,
+  Building,
+  DollarSign,
+  Tag,
+  MoreVertical,
+  Trash2,
+  Edit,
+  Download,
+  Upload,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  XCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
-import { Card } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { DealCard, Deal, Company, Stage, Profile } from '@/components/Deals/DealCard';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
-import { MoveDealForm } from '@/components/Deals/MoveDealForm';
+
+// Deal type matching our database schema
+export type Deal = {
+  id: string;
+  title: string;
+  description: string | null;
+  company_id: string | null;
+  stage_id: string | null;
+  value: number | null;
+  probability: number | null;
+  expected_close_date: string | null;
+  assigned_to: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// Company type for selecting related companies
+export type Company = {
+  id: string;
+  name: string;
+};
+
+// Stage type for deal stages
+export type Stage = {
+  id: string;
+  name: string;
+};
+
+// Profile type for assigned to
+export type Profile = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+};
 
 const DealsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [isMoving, setIsMoving] = useState(false);
   const [currentDeal, setCurrentDeal] = useState<Deal | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [activeTab, setActiveTab] = useState<string>('all');
+
   const { toast } = useToast();
-  const { isAdmin, isEmployee, user } = useAuth();
+  const { isAdmin, isEmployee } = useAuth();
   const queryClient = useQueryClient();
-  
+
   // Fetch deals
   const { data: deals = [], isLoading: isLoadingDeals } = useQuery({
     queryKey: ['deals'],
@@ -45,7 +121,7 @@ const DealsPage = () => {
         .from('deals')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) {
         toast({
           title: 'Error fetching deals',
@@ -54,20 +130,20 @@ const DealsPage = () => {
         });
         return [];
       }
-      
+
       return data as Deal[];
     },
   });
-  
+
   // Fetch companies for the dropdown
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('companies')
         .select('id, name')
         .order('name');
-      
+
       if (error) {
         toast({
           title: 'Error fetching companies',
@@ -76,67 +152,70 @@ const DealsPage = () => {
         });
         return [];
       }
-      
+
       return data as Company[];
     },
   });
-  
-  // Fetch pipeline stages
+
+  // Fetch stages for the dropdown
   const { data: stages = [], isLoading: isLoadingStages } = useQuery({
-    queryKey: ['deal_stages'],
+    queryKey: ['stages'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('deal_stages')
-        .select('*')
-        .order('position');
-      
+        .from('stages')
+        .select('id, name')
+        .order('name');
+
       if (error) {
         toast({
-          title: 'Error fetching pipeline stages',
+          title: 'Error fetching stages',
           description: error.message,
           variant: 'destructive',
         });
         return [];
       }
-      
+
       return data as Stage[];
     },
   });
-  
-  // Fetch users/profiles
-  const { data: profiles = [] } = useQuery({
+
+  // Fetch profiles for assigned to dropdown
+  const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name')
         .order('first_name');
-      
+
       if (error) {
         toast({
-          title: 'Error fetching users',
+          title: 'Error fetching profiles',
           description: error.message,
           variant: 'destructive',
         });
         return [];
       }
-      
+
       return data as Profile[];
     },
   });
-  
-  // Create deal mutation
+
+  // Fix the value property type issue
   const createMutation = useMutation({
     mutationFn: async (values: DealFormValues) => {
+      // Convert value from string to number if it exists
+      const numericValue = values.value ? parseFloat(String(values.value)) : null;
+      
       const { data, error } = await insertWithUser('deals', {
         title: values.title,
         description: values.description || null,
         company_id: values.company_id || null,
         stage_id: values.stage_id || null,
-        expected_close_date: values.expected_close_date || null,
-        value: values.value,
+        value: numericValue,
         probability: values.probability || null,
-        assigned_to: values.assigned_to || null
+        expected_close_date: values.expected_close_date || null,
+        assigned_to: values.assigned_to || null,
       });
       
       if (error) throw error;
@@ -150,7 +229,7 @@ const DealsPage = () => {
       queryClient.invalidateQueries({ queryKey: ['deals'] });
       setIsCreating(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error creating deal',
         description: error.message,
@@ -158,26 +237,26 @@ const DealsPage = () => {
       });
     },
   });
-  
+
   // Update deal mutation
   const updateMutation = useMutation({
     mutationFn: async (values: DealFormValues & { id: string }) => {
       const { id, ...dealData } = values;
-      const { data, error } = await supabase
-        .from('deals')
-        .update({
-          title: dealData.title,
-          description: dealData.description || null,
-          company_id: dealData.company_id || null,
-          stage_id: dealData.stage_id || null,
-          expected_close_date: dealData.expected_close_date || null,
-          value: dealData.value,
-          probability: dealData.probability || null,
-          assigned_to: dealData.assigned_to || null
-        })
-        .eq('id', id)
-        .select();
-      
+
+      // Convert value from string to number if it exists
+      const numericValue = dealData.value ? parseFloat(String(dealData.value)) : null;
+
+      const { data, error } = await updateWithUser('deals', id, {
+        title: dealData.title,
+        description: dealData.description || null,
+        company_id: dealData.company_id || null,
+        stage_id: dealData.stage_id || null,
+        value: numericValue,
+        probability: dealData.probability || null,
+        expected_close_date: dealData.expected_close_date || null,
+        assigned_to: dealData.assigned_to || null,
+      });
+
       if (error) throw error;
       return data;
     },
@@ -190,7 +269,7 @@ const DealsPage = () => {
       setIsEditing(false);
       setCurrentDeal(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error updating deal',
         description: error.message,
@@ -198,7 +277,7 @@ const DealsPage = () => {
       });
     },
   });
-  
+
   // Delete deal mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -206,7 +285,7 @@ const DealsPage = () => {
         .from('deals')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -217,7 +296,7 @@ const DealsPage = () => {
       queryClient.invalidateQueries({ queryKey: ['deals'] });
       setCurrentDeal(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error deleting deal',
         description: error.message,
@@ -225,83 +304,18 @@ const DealsPage = () => {
       });
     },
   });
-  
-  // Move deal to another stage mutation
-  const moveDealMutation = useMutation({
-    mutationFn: async ({ id, stage_id }: { id: string; stage_id: string }) => {
-      const { data, error } = await supabase
-        .from('deals')
-        .update({ stage_id })
-        .eq('id', id)
-        .select();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Deal moved',
-        description: 'The deal has been moved successfully.',
-      });
-      queryClient.invalidateQueries({ queryKey: ['deals'] });
-      setIsMoving(false);
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error moving deal',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-  
-  // Submit handler for the create/edit form
-  const handleSubmit = (values: DealFormValues) => {
-    if (isEditing && currentDeal) {
-      updateMutation.mutate({ ...values, id: currentDeal.id });
-    } else {
-      createMutation.mutate(values);
-    }
-  };
-  
-  // Submit handler for the move deal form
-  const handleMoveSubmit = (values: { stage_id: string }) => {
-    if (!currentDeal) return;
-    
-    moveDealMutation.mutate({
-      id: currentDeal.id,
-      stage_id: values.stage_id,
-    });
-  };
-  
+
   // Edit deal
   const handleEdit = (deal: Deal) => {
-    const formValues = {
-      title: deal.title,
-      description: deal.description || '',
-      company_id: deal.company_id || '',
-      stage_id: deal.stage_id || '',
-      expected_close_date: deal.expected_close_date ? deal.expected_close_date.split('T')[0] : '',
-      value: deal.value?.toString() || '',
-      probability: deal.probability || 50,
-      assigned_to: deal.assigned_to || '',
-    };
-    
     setCurrentDeal(deal);
     setIsEditing(true);
   };
-  
-  // Open move deal dialog
-  const handleMove = (deal: Deal) => {
-    setCurrentDeal(deal);
-    setIsMoving(true);
-  };
-  
+
   // Delete deal
   const handleDelete = (id: string) => {
     deleteMutation.mutate(id);
   };
-  
+
   // Format currency
   const formatCurrency = (value: number | null) => {
     if (value === null) return 'N/A';
@@ -310,55 +324,70 @@ const DealsPage = () => {
       currency: 'USD',
     }).format(value);
   };
-  
-  // Get stage name by ID
-  const getStageName = (stageId: string | null) => {
-    if (!stageId) return 'No stage';
-    const stage = stages.find(s => s.id === stageId);
-    return stage ? stage.name : 'Unknown Stage';
+
+  // Format date
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    return format(new Date(dateString), 'MMM d, yyyy');
   };
-  
-  // Calculate total pipeline value
-  const totalPipelineValue = deals.reduce((sum, deal) => sum + (deal.value || 0), 0);
-  
-  // Calculate weighted pipeline value (value * probability)
-  const weightedPipelineValue = deals.reduce((sum, deal) => 
-    sum + (deal.value || 0) * ((deal.probability || 0) / 100), 0
-  );
-  
-  // Group deals by stage for kanban view
-  const dealsByStage = stages.map(stage => ({
-    stage,
-    deals: deals.filter(deal => 
-      deal.stage_id === stage.id && 
-      (searchQuery === '' || 
-        deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        getCompanyName(deal.company_id).toLowerCase().includes(searchQuery.toLowerCase()))
-    ),
-  }));
-  
+
   // Get company name by ID
   const getCompanyName = (companyId: string | null) => {
-    if (!companyId) return 'No company';
+    if (!companyId) return 'No Company';
     const company = companies.find(c => c.id === companyId);
     return company ? company.name : 'Unknown Company';
   };
-  
+
+  // Get stage name by ID
+  const getStageName = (stageId: string | null) => {
+    if (!stageId) return 'No Stage';
+    const stage = stages.find(s => s.id === stageId);
+    return stage ? stage.name : 'Unknown Stage';
+  };
+
+  // Get assigned to name by ID
+  const getAssignedToName = (assignedTo: string | null) => {
+    if (!assignedTo) return 'Unassigned';
+    const profile = profiles.find(p => p.id === assignedTo);
+    return profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.id : 'Unknown User';
+  };
+
+  // Get status badge (example statuses, adjust as needed)
+  const getStatusBadge = (deal: Deal) => {
+    const { expected_close_date } = deal;
+    const closeDate = expected_close_date ? new Date(expected_close_date) : null;
+    const now = new Date();
+
+    if (!closeDate) {
+      return <Badge variant="outline">No Close Date</Badge>;
+    }
+
+    if (closeDate < now) {
+      return <Badge variant="destructive">Overdue</Badge>;
+    }
+
+    // You can add more sophisticated logic here based on your deal stages
+    return <Badge variant="default">Active</Badge>;
+  };
+
+  // Filter deals by search query
+  const filteredDeals = deals.filter(deal => {
+    const matchesSearch =
+      deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getCompanyName(deal.company_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getStageName(deal.stage_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getAssignedToName(deal.assigned_to).toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesSearch;
+  });
+
   // Check if user can modify deals (admin or employee)
   const canModify = isAdmin || isEmployee;
-  
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Deals</h1>
-          <div className="mt-2 text-gray-500">
-            Pipeline value: {formatCurrency(totalPipelineValue)} 
-            <span className="ml-2 text-sm">
-              (Expected: {formatCurrency(weightedPipelineValue)})
-            </span>
-          </div>
-        </div>
+        <h1 className="text-3xl font-bold">Deals</h1>
         {canModify && (
           <Dialog open={isCreating} onOpenChange={setIsCreating}>
             <DialogTrigger asChild>
@@ -367,15 +396,17 @@ const DealsPage = () => {
                 Add Deal
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Deal</DialogTitle>
                 <DialogDescription>
-                  Add a new deal to your pipeline.
+                  Add a new deal to your database.
                 </DialogDescription>
               </DialogHeader>
-              <DealForm 
-                onSubmit={handleSubmit}
+              <DealForm
+                onSubmit={(values) => {
+                  createMutation.mutate(values);
+                }}
                 companies={companies}
                 stages={stages}
                 profiles={profiles}
@@ -387,69 +418,110 @@ const DealsPage = () => {
           </Dialog>
         )}
       </div>
-      
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-grow">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              type="search"
-              placeholder="Search deals..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Button variant="outline" className="sm:w-auto">
-            <Filter className="mr-2 h-4 w-4" />
-            Filters
-          </Button>
+
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="relative flex-grow">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            type="search"
+            placeholder="Search deals..."
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
-      
-      {isLoadingDeals || isLoadingStages ? (
+
+      {isLoadingDeals || isLoadingCompanies || isLoadingStages || isLoadingProfiles ? (
         <div className="flex justify-center p-8">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
       ) : (
-        <div className="flex overflow-x-auto pb-6 gap-4">
-          {dealsByStage.map(({ stage, deals }) => (
-            <div 
-              key={stage.id} 
-              className="min-w-[320px] w-[320px] bg-gray-50 rounded-lg p-4 border"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-medium text-gray-700">{stage.name}</h3>
-                <Badge variant="outline">{deals.length}</Badge>
-              </div>
-              <div className="space-y-3">
-                {deals.map(deal => (
-                  <DealCard 
-                    key={deal.id} 
-                    deal={deal}
-                    companies={companies}
-                    stages={stages}
-                    profiles={profiles}
-                    canModify={canModify}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onMove={handleMove}
-                  />
-                ))}
-                {deals.length === 0 && (
-                  <div className="text-center py-4 text-gray-500 text-sm">
-                    No deals in this stage
-                  </div>
-                )}
-              </div>
+        <div className="space-y-4">
+          {filteredDeals.length === 0 ? (
+            <div className="text-center p-8 text-gray-500">
+              No deals found. Add your first deal to get started.
             </div>
-          ))}
+          ) : (
+            filteredDeals.map(deal => (
+              <Card key={deal.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-gray-500" />
+                      <CardTitle className="text-lg">{deal.title}</CardTitle>
+                      <div className="ml-2">{getStatusBadge(deal)}</div>
+                    </div>
+                    {canModify && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(deal)}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(deal.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
+                    <div className="flex items-center">
+                      <Building className="h-4 w-4 mr-2 text-gray-400" />
+                      <span className="text-gray-600">Company:</span>
+                      <span className="font-medium ml-1">
+                        {getCompanyName(deal.company_id)}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <Tag className="h-4 w-4 mr-2 text-gray-400" />
+                      <span className="text-gray-600">Stage:</span>
+                      <span className="font-medium ml-1">
+                        {getStageName(deal.stage_id)}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
+                      <span className="text-gray-600">Value:</span>
+                      <span className="font-medium ml-1">
+                        {formatCurrency(deal.value)}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                      <span className="text-gray-600">Close Date:</span>
+                      <span className="font-medium ml-1">
+                        {formatDate(deal.expected_close_date)}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                      <span className="text-gray-600">Assigned To:</span>
+                      <span className="font-medium ml-1">
+                        {getAssignedToName(deal.assigned_to)}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       )}
-      
+
       {/* Edit Deal Dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Deal</DialogTitle>
             <DialogDescription>
@@ -457,8 +529,10 @@ const DealsPage = () => {
             </DialogDescription>
           </DialogHeader>
           {currentDeal && (
-            <DealForm 
-              onSubmit={(values) => handleSubmit(values)}
+            <DealForm
+              onSubmit={(values) => {
+                updateMutation.mutate({ ...values, id: currentDeal.id });
+              }}
               companies={companies}
               stages={stages}
               profiles={profiles}
@@ -467,9 +541,9 @@ const DealsPage = () => {
                 description: currentDeal.description || '',
                 company_id: currentDeal.company_id || '',
                 stage_id: currentDeal.stage_id || '',
-                expected_close_date: currentDeal.expected_close_date ? currentDeal.expected_close_date.split('T')[0] : '',
                 value: currentDeal.value?.toString() || '',
                 probability: currentDeal.probability || 50,
+                expected_close_date: currentDeal.expected_close_date || '',
                 assigned_to: currentDeal.assigned_to || '',
               }}
               isSubmitting={updateMutation.isPending}
@@ -480,29 +554,6 @@ const DealsPage = () => {
               }}
             />
           )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Move Deal Dialog */}
-      <Dialog open={isMoving} onOpenChange={setIsMoving}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Move Deal</DialogTitle>
-            <DialogDescription>
-              Move "{currentDeal?.title}" to another stage.
-            </DialogDescription>
-          </DialogHeader>
-          <MoveDealForm 
-            stages={stages}
-            currentDeal={currentDeal}
-            onSubmit={handleMoveSubmit}
-            isSubmitting={moveDealMutation.isPending}
-            onCancel={() => {
-              setIsMoving(false);
-              setCurrentDeal(null);
-            }}
-            getStageName={getStageName}
-          />
         </DialogContent>
       </Dialog>
     </div>

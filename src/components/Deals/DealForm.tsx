@@ -262,3 +262,5 @@ export const DealForm: React.FC<DealFormProps> = ({
     </Form>
   );
 };
+
+export default DealForm;
