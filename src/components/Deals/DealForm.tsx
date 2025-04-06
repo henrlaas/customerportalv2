@@ -68,7 +68,7 @@ export const DealForm: React.FC<DealFormProps> = ({
       company_id: '',
       stage_id: '',
       expected_close_date: '',
-      value: '',
+      value: '',  // Changed from empty string to ensure type compatibility
       probability: 50,
       assigned_to: '',
     },
