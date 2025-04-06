@@ -150,6 +150,21 @@ const App = () => (
               }
             />
             
+            {/* Add a dedicated route for adding users */}
+            <Route
+              path="/user-management/add"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AppLayout>
+                    <div className="max-w-lg mx-auto">
+                      <h1 className="text-3xl font-bold mb-6">Add New User</h1>
+                      <UserManagement />
+                    </div>
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
             <Route
               path="/settings"
               element={

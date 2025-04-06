@@ -6,13 +6,6 @@ import * as z from 'zod';
 import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
   Form,
   FormControl,
   FormField,
@@ -30,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { UserPlus } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
 
 // Define the schema for the invite form
 const inviteSchema = z.object({
@@ -45,8 +38,11 @@ const inviteSchema = z.object({
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
 
-export function UserManagement() {
-  const [isLoading, setIsLoading] = useState(false);
+interface UserManagementProps {
+  onSuccess?: () => void;
+}
+
+export function UserManagement({ onSuccess }: UserManagementProps) {
   const { toast } = useToast();
   const t = useTranslation();
   
@@ -61,19 +57,11 @@ export function UserManagement() {
     },
   });
 
-  const onSubmit = async (data: InviteFormValues) => {
-    setIsLoading(true);
-    try {
-      // Get the user's token for authorization
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('No active session. Please log in.');
-      }
-
-      // Call our secure edge function to invite the user
-      const response = await supabase.functions.invoke('invite-user', {
+  const inviteUserMutation = useMutation({
+    mutationFn: async (data: InviteFormValues) => {
+      const response = await supabase.functions.invoke('user-management', {
         body: {
+          action: 'invite',
           email: data.email,
           firstName: data.firstName,
           lastName: data.lastName,
@@ -86,145 +74,142 @@ export function UserManagement() {
         throw new Error(response.error.message || 'Error inviting user');
       }
 
+      return response.data;
+    },
+    onSuccess: () => {
       toast({
         title: 'Success',
-        description: `Invitation sent to ${data.email}`,
+        description: `Invitation sent to ${form.getValues('email')}`,
       });
 
       // Reset the form
       form.reset();
-    } catch (error: any) {
-      console.error('Error inviting user:', error.message);
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+    },
+    onError: (error: Error) => {
       toast({
         title: 'Error',
         description: error.message,
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
     }
+  });
+
+  const onSubmit = (data: InviteFormValues) => {
+    inviteUserMutation.mutate(data);
   };
 
   return (
-    <Card className="max-w-lg mx-auto bg-white border shadow-sm">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <UserPlus className="h-5 w-5 text-blue-500" />
-          <CardTitle>{t('Add New User')}</CardTitle>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Email')}</FormLabel>
+              <FormControl>
+                <Input placeholder="user@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('First Name')}</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Last Name')}</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
-        <CardDescription>
-          {t('Send an invitation to a new user to join the platform')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Email')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder="user@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('First Name')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Last Name')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Role')}</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="admin">{t('Admin')}</SelectItem>
-                      <SelectItem value="employee">{t('Employee')}</SelectItem>
-                      <SelectItem value="client">{t('Client')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Role')}</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="admin">{t('Admin')}</SelectItem>
+                  <SelectItem value="employee">{t('Employee')}</SelectItem>
+                  <SelectItem value="client">{t('Client')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            <FormField
-              control={form.control}
-              name="team"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Team')}</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a team" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Executive Team">{t('Executive Team')}</SelectItem>
-                      <SelectItem value="Creative Team">{t('Creative Team')}</SelectItem>
-                      <SelectItem value="Client Services">{t('Client Services')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <Button 
-              type="submit" 
-              className="w-full mt-4 bg-blue-500 hover:bg-blue-600" 
-              disabled={isLoading}
-            >
-              {isLoading ? t('Sending...') : t('Send Invitation')}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+        <FormField
+          control={form.control}
+          name="team"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Team')}</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a team" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Executive Team">{t('Executive Team')}</SelectItem>
+                  <SelectItem value="Creative Team">{t('Creative Team')}</SelectItem>
+                  <SelectItem value="Client Services">{t('Client Services')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <Button 
+          type="submit" 
+          className="w-full mt-4 bg-blue-500 hover:bg-blue-600" 
+          disabled={inviteUserMutation.isPending}
+        >
+          {inviteUserMutation.isPending ? t('Sending...') : t('Send Invitation')}
+        </Button>
+      </form>
+    </Form>
   );
 }
