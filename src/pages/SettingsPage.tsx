@@ -1,22 +1,42 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { 
+  Settings, 
+  User, 
+  Globe, 
+  Shield, 
+  Bell, 
+  Key, 
+  Save,
+  Check
+} from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Form,
   FormControl,
@@ -26,145 +46,105 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  Settings,
-  User,
-  Bell,
-  Shield,
-  LogOut
-} from 'lucide-react';
+
+const languageOptions = [
+  { label: 'English', value: 'en' },
+  { label: 'French', value: 'fr' },
+  { label: 'Spanish', value: 'es' },
+  { label: 'German', value: 'de' },
+  { label: 'Japanese', value: 'ja' },
+] as const;
+
+type LanguageOption = typeof languageOptions[number]['value'];
 
 // Profile form schema
-const profileFormSchema = z.object({
+const profileSchema = z.object({
   first_name: z.string().min(1, { message: 'First name is required' }),
   last_name: z.string().min(1, { message: 'Last name is required' }),
   avatar_url: z.string().url().or(z.literal('')).optional(),
+  language: z.enum(['en', 'fr', 'es', 'de', 'ja']),
 });
 
-// Account form schema
-const accountFormSchema = z.object({
-  language: z.enum(['en', 'es', 'de', 'fr', 'ja']),
-  password: z.string().min(8).optional(),
-  confirm_password: z.string().optional(),
-}).refine((data) => {
-  if (data.password && !data.confirm_password) return false;
-  if (!data.password && data.confirm_password) return false;
-  if (data.password && data.confirm_password && data.password !== data.confirm_password) return false;
-  return true;
-}, {
-  message: "Passwords do not match",
-  path: ["confirm_password"],
+// Password form schema
+const passwordSchema = z.object({
+  current_password: z.string().min(6, { message: 'Current password is required' }),
+  new_password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
+  confirm_password: z.string().min(8, { message: 'Please confirm your password' }),
+}).refine(data => data.new_password === data.confirm_password, {
+  message: "Passwords don't match",
+  path: ['confirm_password'],
 });
 
 // Notification settings schema
-const notificationsFormSchema = z.object({
+const notificationSchema = z.object({
   email_notifications: z.boolean(),
-  task_notifications: z.boolean(),
-  deal_notifications: z.boolean(),
   marketing_emails: z.boolean(),
+  security_emails: z.boolean(),
 });
 
 const SettingsPage = () => {
-  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('profile');
   const { toast } = useToast();
+  const { user, profile, setLanguage } = useAuth();
   const queryClient = useQueryClient();
-  const [isPasswordChanged, setIsPasswordChanged] = useState(false);
-
+  
   // Profile form
-  const profileForm = useForm<z.infer<typeof profileFormSchema>>({
-    resolver: zodResolver(profileFormSchema),
+  const profileForm = useForm({
+    resolver: zodResolver(profileSchema),
     defaultValues: {
-      first_name: '',
-      last_name: '',
-      avatar_url: '',
+      first_name: profile?.first_name || '',
+      last_name: profile?.last_name || '',
+      avatar_url: profile?.avatar_url || '',
+      language: (profile?.language as LanguageOption) || 'en',
     },
   });
-
-  // Account form
-  const accountForm = useForm<z.infer<typeof accountFormSchema>>({
-    resolver: zodResolver(accountFormSchema),
+  
+  // Password form
+  const passwordForm = useForm({
+    resolver: zodResolver(passwordSchema),
     defaultValues: {
-      language: 'en',
-      password: '',
+      current_password: '',
+      new_password: '',
       confirm_password: '',
     },
   });
-
-  // Notifications form
-  const notificationsForm = useForm<z.infer<typeof notificationsFormSchema>>({
-    resolver: zodResolver(notificationsFormSchema),
+  
+  // Notification form
+  const notificationForm = useForm({
+    resolver: zodResolver(notificationSchema),
     defaultValues: {
       email_notifications: true,
-      task_notifications: true,
-      deal_notifications: true,
       marketing_emails: false,
+      security_emails: true,
     },
   });
-
-  // Fetch user profile
-  const { data: profile, isLoading: isLoadingProfile } = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      if (!user) return null;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) {
-        toast({
-          title: 'Error fetching profile',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return null;
-      }
-      
-      // Set form defaults
-      profileForm.reset({
-        first_name: data.first_name || '',
-        last_name: data.last_name || '',
-        avatar_url: data.avatar_url || '',
-      });
-      
-      accountForm.reset({
-        language: data.language || 'en',
-      });
-      
-      return data;
-    },
-    enabled: !!user,
-  });
-
+  
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof profileFormSchema>) => {
-      if (!user) throw new Error('Not authenticated');
+    mutationFn: async (values: z.infer<typeof profileSchema>) => {
+      if (!user) throw new Error('User not authenticated');
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .update(values)
-        .eq('id', user.id)
-        .select();
+        .update({
+          first_name: values.first_name,
+          last_name: values.last_name,
+          avatar_url: values.avatar_url || null,
+        })
+        .eq('id', user.id);
       
       if (error) throw error;
-      return data;
+      
+      // Handle language change separately to update context
+      if (values.language !== profile?.language) {
+        await setLanguage(values.language);
+      }
     },
     onSuccess: () => {
       toast({
@@ -181,58 +161,38 @@ const SettingsPage = () => {
       });
     },
   });
-
-  // Update account settings mutation
-  const updateAccountMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof accountFormSchema>) => {
-      if (!user) throw new Error('Not authenticated');
+  
+  // Update password mutation
+  const updatePasswordMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof passwordSchema>) => {
+      const { error } = await supabase.auth.updateUser({
+        password: values.new_password,
+      });
       
-      // First update language
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ language: values.language })
-        .eq('id', user.id);
-      
-      if (profileError) throw profileError;
-      
-      // If password is provided, update password
-      if (values.password) {
-        const { error: passwordError } = await supabase.auth.updateUser({
-          password: values.password,
-        });
-        
-        if (passwordError) throw passwordError;
-        setIsPasswordChanged(true);
-      }
-      
-      return true;
+      if (error) throw error;
     },
     onSuccess: () => {
       toast({
-        title: 'Account settings updated',
-        description: 'Your account settings have been updated successfully.',
+        title: 'Password updated',
+        description: 'Your password has been updated successfully.',
       });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      
-      // Reset password fields
-      accountForm.setValue('password', '');
-      accountForm.setValue('confirm_password', '');
+      passwordForm.reset();
     },
     onError: (error) => {
       toast({
-        title: 'Error updating account settings',
+        title: 'Error updating password',
         description: error.message,
         variant: 'destructive',
       });
     },
   });
-
-  // Save notifications settings mutation
-  const saveNotificationsMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof notificationsFormSchema>) => {
-      // In a real app, you would save these to the user's preferences
+  
+  // Update notification settings mutation
+  const updateNotificationsMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof notificationSchema>) => {
+      // This would typically update notification preferences in your database
       // For now, we'll just simulate a successful update
-      return values;
+      return new Promise(resolve => setTimeout(resolve, 500));
     },
     onSuccess: () => {
       toast({
@@ -240,358 +200,178 @@ const SettingsPage = () => {
         description: 'Your notification preferences have been saved.',
       });
     },
-  });
-
-  // Handle profile form submission
-  const onProfileSubmit = (values: z.infer<typeof profileFormSchema>) => {
-    updateProfileMutation.mutate(values);
-  };
-
-  // Handle account form submission
-  const onAccountSubmit = (values: z.infer<typeof accountFormSchema>) => {
-    updateAccountMutation.mutate(values);
-  };
-
-  // Handle notifications form submission
-  const onNotificationsSubmit = (values: z.infer<typeof notificationsFormSchema>) => {
-    saveNotificationsMutation.mutate(values);
-  };
-
-  // Handle sign out
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
+    onError: (error: any) => {
       toast({
-        title: 'Signed out',
-        description: 'You have been signed out successfully.',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Error signing out',
+        title: 'Error updating notification settings',
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
+  });
+  
+  // Submit handlers
+  const onProfileSubmit = (values: z.infer<typeof profileSchema>) => {
+    updateProfileMutation.mutate(values);
   };
-
+  
+  const onPasswordSubmit = (values: z.infer<typeof passwordSchema>) => {
+    updatePasswordMutation.mutate(values);
+  };
+  
+  const onNotificationSubmit = (values: z.infer<typeof notificationSchema>) => {
+    updateNotificationsMutation.mutate(values);
+  };
+  
+  // Update form defaults when profile data changes
+  React.useEffect(() => {
+    if (profile) {
+      profileForm.reset({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        avatar_url: profile.avatar_url || '',
+        language: (profile.language as LanguageOption) || 'en',
+      });
+    }
+  }, [profile]);
+  
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
       
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            <span>Profile</span>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="profile" className="flex items-center">
+            <User className="h-4 w-4 mr-2" />
+            Profile
           </TabsTrigger>
-          <TabsTrigger value="account" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span>Account</span>
+          <TabsTrigger value="password" className="flex items-center">
+            <Key className="h-4 w-4 mr-2" />
+            Password
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            <span>Notifications</span>
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            <span>Security</span>
+          <TabsTrigger value="notifications" className="flex items-center">
+            <Bell className="h-4 w-4 mr-2" />
+            Notifications
           </TabsTrigger>
         </TabsList>
         
-        {/* Profile Section */}
-        <TabsContent value="profile">
+        <TabsContent value="profile" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
               <CardDescription>
-                Update your personal information and profile picture.
+                Update your personal information and preferences.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={profile?.avatar_url || ''} />
-                  <AvatarFallback>
-                    {profile?.first_name?.[0]}{profile?.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-lg font-medium">Profile Picture</h3>
-                  <p className="text-sm text-gray-500">
-                    Upload a new profile picture by providing a URL.
-                  </p>
-                </div>
-              </div>
-              
-              {isLoadingProfile ? (
-                <div className="flex justify-center p-4">
-                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                </div>
-              ) : (
-                <Form {...profileForm}>
-                  <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={profileForm.control}
-                        name="first_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>First Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={profileForm.control}
-                        name="last_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Last Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+            <CardContent>
+              <Form {...profileForm}>
+                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={profile?.avatar_url || ''} />
+                      <AvatarFallback>
+                        {profile?.first_name?.[0]}{profile?.last_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="text-lg font-medium">Profile Picture</h3>
+                      <p className="text-sm text-gray-500">
+                        Upload a new avatar or update your profile URL.
+                      </p>
                     </div>
+                  </div>
+                  
+                  <FormField
+                    control={profileForm.control}
+                    name="avatar_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Avatar URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://example.com/avatar.jpg" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Enter a URL for your profile picture.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={profileForm.control}
-                      name="avatar_url"
+                      name="first_name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Avatar URL</FormLabel>
+                          <FormLabel>First Name</FormLabel>
                           <FormControl>
-                            <Input 
-                              placeholder="https://example.com/avatar.png" 
-                              {...field} 
-                            />
+                            <Input placeholder="John" {...field} />
                           </FormControl>
-                          <FormDescription>
-                            Enter the URL of your profile picture.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex justify-end">
-                      <Button 
-                        type="submit" 
-                        disabled={updateProfileMutation.isPending}
-                      >
-                        {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {/* Account Section */}
-        <TabsContent value="account">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-              <CardDescription>
-                Update your account preferences and change your password.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {isLoadingProfile ? (
-                <div className="flex justify-center p-4">
-                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                </div>
-              ) : (
-                <Form {...accountForm}>
-                  <form onSubmit={accountForm.handleSubmit(onAccountSubmit)} className="space-y-6">
-                    <FormField
-                      control={accountForm.control}
-                      name="language"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Language</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select your language" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="en">English</SelectItem>
-                              <SelectItem value="es">Spanish</SelectItem>
-                              <SelectItem value="de">German</SelectItem>
-                              <SelectItem value="fr">French</SelectItem>
-                              <SelectItem value="ja">Japanese</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Choose your preferred language for the interface.
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     
-                    <div className="border-t pt-4">
-                      <h3 className="text-lg font-medium mb-3">Change Password</h3>
-                      {isPasswordChanged && (
-                        <div className="mb-4 p-3 bg-green-50 text-green-800 rounded-md text-sm">
-                          Your password has been changed successfully.
-                        </div>
+                    <FormField
+                      control={profileForm.control}
+                      name="last_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                      <div className="space-y-4">
-                        <FormField
-                          control={accountForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>New Password</FormLabel>
-                              <FormControl>
-                                <Input type="password" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                Enter a new password (minimum 8 characters).
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={accountForm.control}
-                          name="confirm_password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Confirm Password</FormLabel>
-                              <FormControl>
-                                <Input type="password" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <Button 
-                        type="submit" 
-                        disabled={updateAccountMutation.isPending}
-                      >
-                        {updateAccountMutation.isPending ? 'Saving...' : 'Save Changes'}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {/* Notifications Section */}
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>
-                Control what notifications you receive from the platform.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...notificationsForm}>
-                <form onSubmit={notificationsForm.handleSubmit(onNotificationsSubmit)} className="space-y-6">
+                    />
+                  </div>
+                  
                   <FormField
-                    control={notificationsForm.control}
-                    name="email_notifications"
+                    control={profileForm.control}
+                    name="language"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Email Notifications</FormLabel>
-                          <FormDescription>
-                            Receive email notifications about important updates.
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
+                      <FormItem>
+                        <FormLabel>Language</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a language" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {languageOptions.map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Choose your preferred language for the interface.
+                        </FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={notificationsForm.control}
-                    name="task_notifications"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Task Updates</FormLabel>
-                          <FormDescription>
-                            Get notified when tasks are assigned to you or updated.
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={notificationsForm.control}
-                    name="deal_notifications"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Deal Updates</FormLabel>
-                          <FormDescription>
-                            Receive notifications about deal stage changes and updates.
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={notificationsForm.control}
-                    name="marketing_emails"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Marketing Emails</FormLabel>
-                          <FormDescription>
-                            Receive marketing emails about new features and updates.
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                  
                   <div className="flex justify-end">
                     <Button 
                       type="submit" 
-                      disabled={saveNotificationsMutation.isPending}
+                      disabled={updateProfileMutation.isPending}
+                      className="flex items-center"
                     >
-                      {saveNotificationsMutation.isPending ? 'Saving...' : 'Save Preferences'}
+                      {updateProfileMutation.isPending ? (
+                        <>Saving...</>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Changes
+                        </>
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -600,81 +380,173 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
         
-        {/* Security Section */}
-        <TabsContent value="security">
+        <TabsContent value="password" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
+              <CardTitle>Change Password</CardTitle>
               <CardDescription>
-                Manage your account security and sessions.
+                Update your password to keep your account secure.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="border-b pb-4">
-                <h3 className="text-lg font-medium mb-3">Account Security</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Security settings help keep your account safe. You can change your password and manage other security features here.
-                </p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium">Two-Factor Authentication</h4>
-                    <p className="text-sm text-gray-500">
-                      Add an extra layer of security to your account.
-                    </p>
-                  </div>
-                  <Button variant="outline" disabled>Coming Soon</Button>
-                </div>
-              </div>
-              
-              <div className="border-b pb-4">
-                <h3 className="text-lg font-medium mb-3">Active Sessions</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  These are the devices that are currently logged into your account.
-                </p>
-                <div className="rounded-md border p-4 mb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Current Session</h4>
-                      <p className="text-sm text-gray-500">
-                        This device • {new Date().toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Badge>Active</Badge>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="pt-2">
-                <h3 className="text-lg font-medium mb-3 text-red-600">Danger Zone</h3>
-                <div className="rounded-md border border-red-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Sign Out</h4>
-                      <p className="text-sm text-gray-500">
-                        Sign out from all devices and sessions.
-                      </p>
-                    </div>
-                    <Button variant="destructive" onClick={handleSignOut}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
+            <CardContent>
+              <Form {...passwordForm}>
+                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                  <FormField
+                    control={passwordForm.control}
+                    name="current_password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Current Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={passwordForm.control}
+                    name="new_password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Password must be at least 8 characters long.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={passwordForm.control}
+                    name="confirm_password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end">
+                    <Button 
+                      type="submit" 
+                      disabled={updatePasswordMutation.isPending}
+                    >
+                      {updatePasswordMutation.isPending ? 'Updating...' : 'Update Password'}
                     </Button>
                   </div>
-                </div>
-              </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="notifications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Notification Preferences</CardTitle>
+              <CardDescription>
+                Configure how you want to receive notifications.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...notificationForm}>
+                <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit)} className="space-y-4">
+                  <FormField
+                    control={notificationForm.control}
+                    name="email_notifications"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Email Notifications</FormLabel>
+                          <FormDescription>
+                            Receive notifications via email.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={notificationForm.control}
+                    name="marketing_emails"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Marketing Emails</FormLabel>
+                          <FormDescription>
+                            Receive emails about new features and offers.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={notificationForm.control}
+                    name="security_emails"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Security Alerts</FormLabel>
+                          <FormDescription>
+                            Receive emails about security updates and login attempts.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end">
+                    <Button 
+                      type="submit" 
+                      disabled={updateNotificationsMutation.isPending}
+                      className="flex items-center"
+                    >
+                      {updateNotificationsMutation.isPending ? (
+                        <>Saving...</>
+                      ) : (
+                        <>
+                          <Check className="mr-2 h-4 w-4" />
+                          Save Preferences
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
-  );
-};
-
-// Helper Badge component for this page only
-const Badge = ({ children, className }: { children: React.ReactNode; className?: string }) => {
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 ${className}`}>
-      {children}
-    </span>
   );
 };
 

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -167,7 +166,14 @@ const ContractsPage = () => {
     mutationFn: async (values: z.infer<typeof contractSchema>) => {
       const { data, error } = await supabase
         .from('contracts')
-        .insert([values])
+        .insert([{
+          title: values.title,
+          company_id: values.company_id,
+          status: values.status,
+          value: values.value,
+          start_date: values.start_date || null,
+          end_date: values.end_date || null,
+        }])
         .select();
       
       if (error) throw error;
@@ -197,7 +203,14 @@ const ContractsPage = () => {
       const { id, ...contractData } = values;
       const { data, error } = await supabase
         .from('contracts')
-        .update(contractData)
+        .update({
+          title: contractData.title,
+          company_id: contractData.company_id,
+          status: contractData.status,
+          value: contractData.value,
+          start_date: contractData.start_date || null,
+          end_date: contractData.end_date || null,
+        })
         .eq('id', id)
         .select();
       
@@ -307,7 +320,7 @@ const ContractsPage = () => {
       case 'active':
         return <Badge variant="default">Active</Badge>;
       case 'completed':
-        return <Badge variant="success">Completed</Badge>;
+        return <Badge variant="secondary">Completed</Badge>;
       case 'cancelled':
         return <Badge variant="destructive">Cancelled</Badge>;
       default:

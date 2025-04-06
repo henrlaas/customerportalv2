@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -165,12 +164,13 @@ const TimeTrackingPage = () => {
       
       const { data, error } = await supabase
         .from('time_entries')
-        .insert([
-          {
-            ...values,
-            user_id: user.id,
-          },
-        ])
+        .insert([{
+          description: values.description || null,
+          start_time: values.start_time,
+          end_time: values.end_time || null,
+          task_id: values.task_id || null,
+          user_id: user.id,
+        }])
         .select();
       
       if (error) throw error;
@@ -267,13 +267,11 @@ const TimeTrackingPage = () => {
     try {
       const { data, error } = await supabase
         .from('time_entries')
-        .insert([
-          {
-            user_id: user.id,
-            start_time: new Date().toISOString(),
-            description: 'Time tracking session',
-          },
-        ])
+        .insert([{
+          user_id: user.id,
+          start_time: new Date().toISOString(),
+          description: 'Time tracking session',
+        }])
         .select();
       
       if (error) throw error;

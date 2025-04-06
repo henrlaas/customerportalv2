@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,23 +61,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
 
 // Deal form schema
 const dealSchema = z.object({
   title: z.string().min(1, { message: 'Title is required' }),
   description: z.string().optional(),
   company_id: z.string().optional(),
-  stage_id: z.string().min(1, { message: 'Stage is required' }),
+  stage_id: z.string().optional(),
   expected_close_date: z.string().optional(),
   value: z.string().optional().transform(val => val ? parseFloat(val) : null),
   probability: z.number().min(0).max(100).optional(),
@@ -246,7 +239,16 @@ const DealsPage = () => {
     mutationFn: async (values: z.infer<typeof dealSchema>) => {
       const { data, error } = await supabase
         .from('deals')
-        .insert([values])
+        .insert([{
+          title: values.title,
+          description: values.description || null,
+          company_id: values.company_id || null,
+          stage_id: values.stage_id || null,
+          expected_close_date: values.expected_close_date || null,
+          value: values.value,
+          probability: values.probability || null,
+          assigned_to: values.assigned_to || null
+        }])
         .select();
       
       if (error) throw error;
@@ -276,7 +278,16 @@ const DealsPage = () => {
       const { id, ...dealData } = values;
       const { data, error } = await supabase
         .from('deals')
-        .update(dealData)
+        .update({
+          title: dealData.title,
+          description: dealData.description || null,
+          company_id: dealData.company_id || null,
+          stage_id: dealData.stage_id || null,
+          expected_close_date: dealData.expected_close_date || null,
+          value: dealData.value,
+          probability: dealData.probability || null,
+          assigned_to: dealData.assigned_to || null
+        })
         .eq('id', id)
         .select();
       
@@ -1049,66 +1060,4 @@ const DealCard = ({
                   <MoreVertical className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(deal)}>
-                  <Edit className="mr-2 h-4 w-4" /> Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onMove(deal)}>
-                  <MoveRight className="mr-2 h-4 w-4" /> Move
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onDelete(deal.id)}
-                  className="text-red-600"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="px-4 py-2 text-sm">
-        <div className="text-gray-600 mb-1 flex items-center">
-          <DollarSign className="h-3.5 w-3.5 mr-1 text-gray-400" />
-          {formatCurrency(deal.value)}
-          {deal.probability !== null && (
-            <span className="ml-2 text-xs text-gray-500">
-              ({deal.probability}% probability)
-            </span>
-          )}
-        </div>
-        <div className="text-gray-600 mb-1 flex items-center">
-          <Building className="h-3.5 w-3.5 mr-1 text-gray-400" />
-          {getCompanyName(deal.company_id)}
-        </div>
-        <div className="text-gray-600 mb-1 flex items-center">
-          <Calendar className="h-3.5 w-3.5 mr-1 text-gray-400" />
-          {formatDate(deal.expected_close_date)}
-        </div>
-        <div className="text-gray-600 flex items-center">
-          <User className="h-3.5 w-3.5 mr-1 text-gray-400" />
-          {getAssigneeName(deal.assigned_to)}
-        </div>
-      </CardContent>
-      {deal.description && (
-        <CardFooter className="px-4 py-2 pt-0">
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-gray-500">
-                View description
-              </Button>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-80">
-              <div className="text-sm">
-                <p className="font-medium mb-1">Description:</p>
-                <p className="text-gray-600">{deal.description}</p>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-        </CardFooter>
-      )}
-    </Card>
-  );
-};
-
-export default DealsPage;
+              <DropdownMenu

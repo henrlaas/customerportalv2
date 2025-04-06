@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -125,12 +124,14 @@ const TasksPage = () => {
     mutationFn: async (values: z.infer<typeof taskSchema>) => {
       const { data, error } = await supabase
         .from('tasks')
-        .insert([
-          {
-            ...values,
-            assigned_to: user?.id,
-          },
-        ])
+        .insert([{
+          title: values.title,
+          description: values.description || null,
+          priority: values.priority,
+          due_date: values.due_date || null,
+          status: values.status,
+          assigned_to: user?.id || null,
+        }])
         .select();
       
       if (error) throw error;
