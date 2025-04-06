@@ -4,10 +4,22 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+// Define types for profile data
+type Profile = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  role: 'admin' | 'employee' | 'client';
+  language: string;
+  created_at: string;
+  updated_at: string;
+}
+
 type AuthContextType = {
   session: Session | null;
   user: User | null;
-  profile: any | null;
+  profile: Profile | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -32,7 +44,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -81,11 +93,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
+      // Use type assertion to avoid TypeScript errors with Supabase client
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .single() as { data: Profile | null, error: any };
 
       if (error) throw error;
       setProfile(data);
@@ -163,10 +176,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
     
     try {
+      // Use type assertion to avoid TypeScript errors with Supabase client
       const { error } = await supabase
         .from('profiles')
         .update({ language: lang })
-        .eq('id', user.id);
+        .eq('id', user.id) as { data: any, error: any };
       
       if (error) throw error;
       
