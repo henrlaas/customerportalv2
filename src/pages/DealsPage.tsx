@@ -209,12 +209,12 @@ const DealsPage = () => {
       const { data, error } = await insertWithUser('deals', {
         title: values.title,
         description: values.description || null,
-        company_id: values.company_id || null,
+        company_id: values.company_id === 'none' ? null : values.company_id || null,
         stage_id: values.stage_id || null,
         value: values.value, // This is now handled by zod transform
         probability: values.probability || null,
         expected_close_date: values.expected_close_date || null,
-        assigned_to: values.assigned_to || null,
+        assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to || null,
       });
       
       if (error) throw error;
@@ -245,12 +245,12 @@ const DealsPage = () => {
       const { data, error } = await updateWithUser('deals', id, {
         title: dealData.title,
         description: dealData.description || null,
-        company_id: dealData.company_id || null,
+        company_id: dealData.company_id === 'none' ? null : dealData.company_id || null,
         stage_id: dealData.stage_id || null,
         value: dealData.value, // This is now handled by zod transform
         probability: dealData.probability || null,
         expected_close_date: dealData.expected_close_date || null,
-        assigned_to: dealData.assigned_to || null,
+        assigned_to: dealData.assigned_to === 'unassigned' ? null : dealData.assigned_to || null,
       });
 
       if (error) throw error;

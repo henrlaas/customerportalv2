@@ -31,7 +31,7 @@ export const MoveDealForm: React.FC<MoveDealFormProps> = ({
 }) => {
   const { register, handleSubmit, setValue, getValues, formState } = useForm({
     defaultValues: {
-      stage_id: currentDeal?.stage_id || '',
+      stage_id: currentDeal?.stage_id || 'no_stage',
     },
   });
 
@@ -43,7 +43,7 @@ export const MoveDealForm: React.FC<MoveDealFormProps> = ({
         </label>
         <Select
           onValueChange={(value) => setValue('stage_id', value)}
-          defaultValue={currentDeal?.stage_id || ''}
+          defaultValue={currentDeal?.stage_id || 'no_stage'}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a new stage" />

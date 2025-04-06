@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -111,7 +112,7 @@ export const DealForm: React.FC<DealFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">No company</SelectItem>
+                    <SelectItem value="none">No company</SelectItem>
                     {companies.map(company => (
                       <SelectItem key={company.id} value={company.id}>
                         {company.name}
@@ -218,7 +219,7 @@ export const DealForm: React.FC<DealFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {profiles.map(profile => (
                     <SelectItem key={profile.id} value={profile.id}>
                       {`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.id}
