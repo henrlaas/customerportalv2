@@ -89,10 +89,11 @@ export type Company = {
   name: string;
 };
 
-// Stage type for deal stages
+// Stage type for deal stages, making sure it matches DealCard's Stage type
 export type Stage = {
   id: string;
   name: string;
+  position: number;
 };
 
 // Profile type for assigned to
@@ -157,15 +158,15 @@ const DealsPage = () => {
     },
   });
 
-  // Fetch stages for the dropdown
+  // Fetch stages for the dropdown - fix table name
   const { data: stages = [], isLoading: isLoadingStages } = useQuery({
     queryKey: ['stages'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('stages')
-        .select('id, name')
-        .order('name');
-
+        .from('deal_stages')
+        .select('id, name, position')
+        .order('position');
+      
       if (error) {
         toast({
           title: 'Error fetching stages',
@@ -174,7 +175,7 @@ const DealsPage = () => {
         });
         return [];
       }
-
+      
       return data as Stage[];
     },
   });
@@ -204,8 +205,8 @@ const DealsPage = () => {
   // Fix the value property type issue
   const createMutation = useMutation({
     mutationFn: async (values: DealFormValues) => {
-      // Convert value from string to number if it exists
-      const numericValue = values.value ? parseFloat(String(values.value)) : null;
+      // Make sure value is number or null
+      const numericValue = values.value !== undefined ? Number(values.value) : null;
       
       const { data, error } = await insertWithUser('deals', {
         title: values.title,
@@ -238,13 +239,13 @@ const DealsPage = () => {
     },
   });
 
-  // Update deal mutation
+  // Update deal mutation - fix value type issue
   const updateMutation = useMutation({
     mutationFn: async (values: DealFormValues & { id: string }) => {
       const { id, ...dealData } = values;
 
-      // Convert value from string to number if it exists
-      const numericValue = dealData.value ? parseFloat(String(dealData.value)) : null;
+      // Make sure value is number or null
+      const numericValue = dealData.value !== undefined ? Number(dealData.value) : null;
 
       const { data, error } = await updateWithUser('deals', id, {
         title: dealData.title,

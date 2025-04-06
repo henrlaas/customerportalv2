@@ -10,7 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 // Pages
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import TasksPage from "./pages/TasksPage";  // Importing the default export
+import { TasksPage } from "./pages/TasksPage";  // Changed to named export
 import TimeTrackingPage from "./pages/TimeTrackingPage";
 import CompaniesPage from "./pages/CompaniesPage";
 import ContractsPage from "./pages/ContractsPage";

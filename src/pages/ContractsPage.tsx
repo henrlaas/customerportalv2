@@ -63,7 +63,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-// Contract form schema - Fix the status type to accept all possible values
+// Contract form schema - Fix the status and value types
 const contractSchema = z.object({
   title: z.string().min(1, { message: 'Title is required' }),
   company_id: z.string().min(1, { message: 'Company is required' }),
@@ -280,7 +280,7 @@ const ContractsPage = () => {
       title: contract.title,
       company_id: contract.company_id,
       status: contract.status as 'draft' | 'active' | 'completed' | 'cancelled',
-      value: contract.value?.toString() || '',
+      value: contract.value !== null ? contract.value.toString() : '',
       start_date: contract.start_date || '',
       end_date: contract.end_date || '',
     });
