@@ -121,9 +121,16 @@ const CompaniesPage = () => {
   // Create company mutation
   const createMutation = useMutation({
     mutationFn: async (values: z.infer<typeof companySchema>) => {
+      // Fix: Ensure name is included and not optional in the insert
       const { data, error } = await supabase
         .from('companies')
-        .insert([values])
+        .insert([{
+          name: values.name, // Explicit to ensure name is included
+          website: values.website || null,
+          phone: values.phone || null,
+          address: values.address || null,
+          logo_url: values.logo_url || null
+        }])
         .select();
       
       if (error) throw error;

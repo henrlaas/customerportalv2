@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -1066,59 +1065,4 @@ const DealCard = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-36">
-                <DropdownMenuItem onClick={() => onMove(deal)}>
-                  <MoveRight className="mr-2 h-4 w-4" />
-                  Move
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(deal)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onDelete(deal.id)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="px-4 py-2 text-sm">
-        <div className="space-y-2">
-          <div className="flex items-center text-muted-foreground">
-            <Building className="mr-2 h-4 w-4" />
-            {getCompanyName(deal.company_id)}
-          </div>
-          {deal.value !== null && (
-            <div className="flex items-center text-muted-foreground">
-              <DollarSign className="mr-2 h-4 w-4" />
-              {formatCurrency(deal.value)}
-              {deal.probability !== null && (
-                <span className="ml-2">({deal.probability}%)</span>
-              )}
-            </div>
-          )}
-          {deal.expected_close_date && (
-            <div className="flex items-center text-muted-foreground">
-              <Calendar className="mr-2 h-4 w-4" />
-              {formatDate(deal.expected_close_date)}
-            </div>
-          )}
-          <div className="flex items-center text-muted-foreground">
-            <User className="mr-2 h-4 w-4" />
-            {getAssigneeName(deal.assigned_to)}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default DealsPage;
+                  <MoreVertical className="h-
