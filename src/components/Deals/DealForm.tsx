@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,7 +57,7 @@ export const formSchema = z.object({
   stage_id: z.string().min(1, { message: 'Stage is required' }),
   expected_close_date: z.string().min(1, { message: 'Expected close date is required' }),
   // Transform string to number for value field
-  value: z.string().transform(val => parseFloat(val) || 0),
+  value: z.coerce.number().default(0),
   probability: z.number(),
   assigned_to: z.string(),
 });
@@ -64,14 +65,14 @@ export const formSchema = z.object({
 // Define the form values type from the schema
 export type DealFormValues = z.infer<typeof formSchema>;
 
-// Default form values - using string for value since it's transformed by zod
+// Default form values - using number for value to match the schema
 export const defaultValues: Partial<DealFormValues> = {
   title: '',
   description: '',
   company_id: '',
   stage_id: '',
   expected_close_date: '',
-  value: '0',
+  value: 0,
   probability: 50,
   assigned_to: '',
 };
@@ -241,7 +242,7 @@ export const DealForm: React.FC<DealFormProps> = ({
                   type="number" 
                   placeholder="Deal value"
                   {...field}
-                  value={field.value}
+                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                 />
               </FormControl>
               <FormMessage />
@@ -313,3 +314,4 @@ export const DealForm: React.FC<DealFormProps> = ({
     </Form>
   );
 };
+

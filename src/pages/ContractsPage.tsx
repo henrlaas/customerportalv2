@@ -50,8 +50,8 @@ const contractFormSchema = z.object({
   description: z.string().optional(),
   start_date: z.string().min(1, { message: 'Start date is required' }),
   end_date: z.string().min(1, { message: 'End date is required' }),
-  // Fix: Convert string value to number
-  value: z.string().transform(val => parseFloat(val) || 0),
+  // Fix: Convert string value to number using coerce
+  value: z.coerce.number().default(0),
   status: z.string().min(1, { message: 'Status is required' }),
   document_url: z.string().optional(),
 });
@@ -64,7 +64,7 @@ const defaultContractValues: Partial<ContractFormValues> = {
   description: '',
   start_date: '',
   end_date: '',
-  value: '0', // String that will be transformed
+  value: 0, // Use number instead of string
   status: 'draft',
   document_url: '',
 };
