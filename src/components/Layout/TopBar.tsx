@@ -47,16 +47,14 @@ export const TopBar: React.FC = () => {
                 onClick={() => setLanguage('en')}
                 className={`flex items-center gap-2 ${language === 'en' ? 'bg-accent' : ''}`}
               >
-                <span className="inline-block w-6 h-4 bg-cover bg-center mr-1" 
-                      style={{ backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjM1IDY1MCI+PHJlY3Qgd2lkdGg9IjEyMzUiIGhlaWdodD0iNjUwIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTAsOTEuNVY1NTguNSwyNzUsMzI1TTEyMzUsMjc1SDYxNy41bTAgLTE4My41SDEyMzVNNjE3LjU1LDU1OC41SDEyMzVNMCw5MS41SDYxNy41TTAsMjc1SDYxNy41TTAsNDU4LjVINjE3LjUiIHN0cm9rZT0iI2NmMTQyYiIgc3Ryb2tlLXdpZHRoPSIxMDAiLz48cGF0aCBkPSJNMCwwVjY1MGgyNDdWME0wLDBoMTIzNXYyNDdIMCIgZmlsbD0iIzAwMjQ3ZCIvPjwvc3ZnPg==')" }}></span>
+                <span className="text-lg mr-1">🇺🇸</span>
                 EN
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setLanguage('no')}
                 className={`flex items-center gap-2 ${language === 'no' ? 'bg-accent' : ''}`}
               >
-                <span className="inline-block w-6 h-4 bg-cover bg-center mr-1" 
-                      style={{ backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMTAwIDgwMCI+PHBhdGggZmlsbD0iI2VmMmIyZCIgZD0iTTAsODAwaDExMDBWMEgweiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0zMDAsMEgwVjgwMGgzMDBWMHpNMTEwMCwzNDBoLTgwMHYxMjBoODAwVjM0MHoiLz48cGF0aCBmaWxsPSIjMDAyODY4IiBkPSJNMzUwLDBIMjUwVjgwMGgxMDBWMHpNMTEwMCwyOTBIOHYyMjBoMTA5MlYyOTB6Ii8+PC9zdmc+')" }}></span>
+                <span className="text-lg mr-1">🇳🇴</span>
                 NO
               </DropdownMenuItem>
             </DropdownMenuContent>
