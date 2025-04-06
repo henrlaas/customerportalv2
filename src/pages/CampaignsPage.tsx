@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, insertWithUser } from '@/integrations/supabase/client'; // Updated import
+import { supabase } from '@/integrations/supabase/client'; // Updated import
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Search } from 'lucide-react';
@@ -99,8 +99,12 @@ const CampaignsPage: React.FC = () => {
         end_date: values.end_date || null
       };
       
-      // Use insertWithUser helper to automatically add created_by
-      const { data, error } = await insertWithUser('campaigns', campaignData);
+      // Direct insert instead of using insertWithUser helper since there's no created_by column
+      const { data, error } = await supabase
+        .from('campaigns')
+        .insert(campaignData)
+        .select()
+        .single();
 
       if (error) throw error;
       return data;
