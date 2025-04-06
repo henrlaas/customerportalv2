@@ -75,17 +75,19 @@ const UserManagementPage = () => {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // Fetch users from Supabase
+  // Fetch users from edge function
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const { data: { users }, error } = await supabase.auth.admin.listUsers();
+      const response = await supabase.functions.invoke('user-management', {
+        body: { action: 'list' }
+      });
       
-      if (error) {
-        throw new Error(error.message);
+      if (response.error) {
+        throw new Error(response.error.message || 'Error fetching users');
       }
       
-      return users as User[];
+      return response.data.users || [];
     },
   });
 

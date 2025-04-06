@@ -31,8 +31,29 @@ serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
+    // List Users Operation
+    if (action === 'list') {
+      console.log('Fetching users list');
+      
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+      
+      if (error) throw error;
+      
+      console.log(`Retrieved ${data.users.length} users`);
+      
+      return new Response(
+        JSON.stringify({ 
+          users: data.users
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+    
     // Invite User Operation
-    if (action === 'invite') {
+    else if (action === 'invite') {
       const { email, firstName, lastName, role, team } = body;
       
       console.log(`Inviting user: ${email} with role: ${role}`);
