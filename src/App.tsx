@@ -11,10 +11,10 @@ import { AppLayout } from "@/components/Layout/AppLayout";
 // Pages
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import { TasksPage } from "./pages/TasksPage";  // Changed to named export
+import { TasksPage } from "./pages/TasksPage";
 import TimeTrackingPage from "./pages/TimeTrackingPage";
 import CompaniesPage from "./pages/CompaniesPage";
-import ContractsPage from "./pages/ContractsPage";
+import { ContractsPage } from "./pages/ContractsPage";  // Changed to named import
 import DealsPage from "./pages/DealsPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import SettingsPage from "./pages/SettingsPage";
