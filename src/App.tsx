@@ -21,6 +21,9 @@ import SettingsPage from "./pages/SettingsPage";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
+import CampaignsPage from "./pages/CampaignsPage";
+import MediaPage from "./pages/MediaPage";
+import FinancePage from "./pages/FinancePage";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +46,17 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <Dashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/campaigns"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CampaignsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -98,6 +112,28 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['admin', 'employee']}>
                   <AppLayout>
                     <DealsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/media"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <MediaPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/finance"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                  <AppLayout>
+                    <FinancePage />
                   </AppLayout>
                 </ProtectedRoute>
               }
