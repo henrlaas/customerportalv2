@@ -184,9 +184,14 @@ const UserManagementPage = () => {
     return matchesSearch && matchesRole && matchesTeam;
   });
 
-  // Get unique roles and teams for filters
-  const roles = ["All Roles", ...Array.from(new Set(users.map(user => user.user_metadata?.role || '').filter(Boolean)))];
-  const teams = ["All Teams", ...Array.from(new Set(users.map(user => user.user_metadata?.team || '').filter(Boolean)))];
+  // Get unique roles and teams for filters - fix type issues here
+  const roles: string[] = ["All Roles", ...Array.from(new Set(users
+    .map(user => user.user_metadata?.role || '')
+    .filter(Boolean) as string[]))];
+  
+  const teams: string[] = ["All Teams", ...Array.from(new Set(users
+    .map(user => user.user_metadata?.team || '')
+    .filter(Boolean) as string[]))];
 
   // Role badge color based on role
   const getRoleBadgeColor = (role: string) => {
