@@ -21,6 +21,7 @@ export function useInviteUser({ onSuccess }: UseInviteUserProps = {}) {
           lastName: data.lastName,
           role: data.role,
           team: data.team,
+          language: data.language,
         }
       });
 

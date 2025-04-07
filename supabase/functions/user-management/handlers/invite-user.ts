@@ -7,7 +7,7 @@ export const handleInviteUser = async (
   supabaseAdmin: SupabaseClient,
   corsHeaders: Record<string, string>
 ) => {
-  const { email, firstName, lastName, role, team } = body;
+  const { email, firstName, lastName, role, team, language } = body;
   
   console.log(`Inviting user: ${email} with role: ${role}`);
   
@@ -28,7 +28,7 @@ export const handleInviteUser = async (
   }
 
   // Verify the role is valid
-  if (!['admin', 'employee', 'client'].includes(role)) {
+  if (!['admin', 'employee'].includes(role)) {
     return new Response(
       JSON.stringify({ error: 'Invalid role' }),
       {
@@ -46,6 +46,7 @@ export const handleInviteUser = async (
       last_name: lastName || '',
       role: role,
       team: team || '',
+      language: language || 'en',
     },
   });
 

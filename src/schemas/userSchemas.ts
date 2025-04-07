@@ -10,6 +10,9 @@ export const inviteSchema = z.object({
     required_error: 'Please select a role' 
   }),
   team: z.string().min(1, { message: 'Team is required' }),
+  language: z.enum(['en', 'no'], {
+    required_error: 'Please select a language'
+  }),
 });
 
 export type InviteFormValues = z.infer<typeof inviteSchema>;

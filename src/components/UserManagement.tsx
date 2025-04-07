@@ -10,6 +10,7 @@ import { useInviteUser } from '@/hooks/useInviteUser';
 import { UserContactFields } from './UserManagement/UserContactFields';
 import { UserRoleSelect } from './UserManagement/UserRoleSelect';
 import { TeamSelect } from './UserManagement/TeamSelect';
+import { LanguageSelect } from './UserManagement/LanguageSelect';
 
 interface UserManagementProps {
   onSuccess?: () => void;
@@ -24,8 +25,9 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
       email: '',
       firstName: '',
       lastName: '',
-      role: 'employee', // Changed from 'client' to 'employee'
+      role: 'employee',
       team: 'Client Services',
+      language: 'en',
     },
   });
 
@@ -48,6 +50,7 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
         <UserContactFields form={form} />
         <UserRoleSelect form={form} />
         <TeamSelect form={form} />
+        <LanguageSelect form={form} />
         
         <Button 
           type="submit" 
