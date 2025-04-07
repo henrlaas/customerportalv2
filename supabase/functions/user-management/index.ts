@@ -30,6 +30,9 @@ serve(async (req) => {
     // Parse request body and extract action
     const body = await req.json();
     const { action } = body;
+    
+    // Extract origin for redirect URLs
+    const origin = req.headers.get('origin') || 'https://customerportalv2.lovable.app';
 
     // List Users Operation
     if (action === 'list') {
@@ -80,8 +83,9 @@ serve(async (req) => {
         );
       }
 
-      // Invite the user using the admin API
+      // Invite the user using the admin API with a proper redirect URL
       const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        redirectTo: `${origin}/auth?setup=true`,
         data: {
           first_name: firstName || '',
           last_name: lastName || '',
@@ -150,7 +154,7 @@ serve(async (req) => {
       }
 
       const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
-        redirectTo: `${req.headers.get('origin')}/auth?reset=true`,
+        redirectTo: `${origin}/auth?reset=true`,
       });
 
       if (error) throw error;

@@ -45,21 +45,26 @@ const Auth = () => {
   const t = useTranslation();
   const [isSetupMode, setIsSetupMode] = useState(false);
   const [isProcessingInvite, setIsProcessingInvite] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   
   // Check if user is coming from an invite link or password reset
   useEffect(() => {
     // Check for setup query parameter that we set in the redirectTo URL
     const isSetup = new URLSearchParams(location.search).get('setup') === 'true';
-    if (isSetup) {
+    const isReset = new URLSearchParams(location.search).get('reset') === 'true';
+    
+    if (isSetup || isReset) {
       setIsSetupMode(true);
     }
     
-    // Process the hash fragment for authentication
-    const handleHashChange = async () => {
-      const hash = window.location.hash;
-      if (hash && hash.includes('access_token') && hash.includes('type=invite')) {
-        setIsProcessingInvite(true);
-        try {
+    // Process the hash fragment or token for authentication
+    const handleAuthParams = async () => {
+      setIsProcessingInvite(true);
+      
+      try {
+        // Handle hash fragment (old style)
+        const hash = window.location.hash;
+        if (hash && (hash.includes('access_token') || hash.includes('type=invite'))) {
           // This will parse the hash and set the session
           const { data, error } = await supabase.auth.getUser();
           
@@ -71,6 +76,7 @@ const Auth = () => {
               variant: 'destructive',
             });
           } else if (data?.user) {
+            setUserEmail(data.user.email);
             setIsSetupMode(true);
             // Remove the hash to clean up the URL
             window.history.replaceState({}, document.title, window.location.pathname + '?setup=true');
@@ -79,15 +85,49 @@ const Auth = () => {
               description: 'Please set up your password to continue.',
             });
           }
-        } catch (err) {
-          console.error('Error in invitation processing:', err);
-        } finally {
-          setIsProcessingInvite(false);
         }
+        
+        // Handle token parameter (new style)
+        const token = new URLSearchParams(window.location.search).get('token');
+        const type = new URLSearchParams(window.location.search).get('type');
+        
+        if (token && (type === 'invite' || type === 'recovery')) {
+          // Exchange the token for a session
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: type === 'invite' ? 'invite' : 'recovery',
+          });
+          
+          if (error) {
+            console.error('Error processing token:', error);
+            toast({
+              title: 'Error',
+              description: 'Invalid or expired token. Please request a new invitation or password reset.',
+              variant: 'destructive',
+            });
+          } else if (data?.user) {
+            setUserEmail(data.user.email);
+            setIsSetupMode(true);
+            // Update the URL to clean it up
+            window.history.replaceState({}, document.title, window.location.pathname + '?setup=true');
+            toast({
+              title: 'Welcome!',
+              description: 'Please set up your password to continue.',
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error in authentication processing:', err);
+      } finally {
+        setIsProcessingInvite(false);
       }
     };
     
-    handleHashChange();
+    if (location.hash || location.search.includes('token=')) {
+      handleAuthParams();
+    } else {
+      setIsProcessingInvite(false);
+    }
   }, [location, toast]);
 
   // If user is already logged in and not in setup mode, redirect to dashboard
@@ -176,7 +216,9 @@ const Auth = () => {
           {isSetupMode ? (
             <>
               <h2 className="text-2xl font-bold mb-2">Set Your Password</h2>
-              <p className="text-gray-500 mb-6">Create a password to access your account</p>
+              <p className="text-gray-500 mb-6">
+                {userEmail ? `Create a password for ${userEmail}` : 'Create a password to access your account'}
+              </p>
               
               <Form {...passwordSetupForm}>
                 <form onSubmit={passwordSetupForm.handleSubmit(handlePasswordSetup)} className="space-y-4">
