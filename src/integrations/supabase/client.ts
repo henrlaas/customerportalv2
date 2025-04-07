@@ -9,11 +9,15 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+const SITE_URL = typeof window !== 'undefined' ? window.location.origin : '';
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    flowType: 'pkce',
+    redirectTo: `${SITE_URL}/auth?setup=true`,
   },
   global: {
     headers: {
