@@ -82,14 +82,14 @@ const SetPassword = () => {
             console.log("Trying alternative token processing method...");
             
             // For Supabase invites, we need to make a direct API call to the verify endpoint
-            // Get the API URL from the config
-            const apiUrl = new URL(supabase.auth.getSession().then(() => {})).origin;
+            const supabaseUrl = process.env.SUPABASE_URL || "https://vjqbgnjeuvuxvuruewyc.supabase.co";
+            const apiKey = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqcWJnbmpldXZ1eHZ1cnVld3ljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5NTA5MDIsImV4cCI6MjA1OTUyNjkwMn0.MvXDNmHq771t4TbZrrnaylqBoTcEONv0qv31sZYmAA8";
             
-            const authResponse = await fetch(`${apiUrl}/auth/v1/verify`, {
+            const authResponse = await fetch(`${supabaseUrl}/auth/v1/verify`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'apikey': supabase.supabaseUrl.split('https://')[1].split('.')[0]
+                'apikey': apiKey
               },
               body: JSON.stringify({
                 type: otpType,
