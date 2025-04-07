@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { EditUserFormValues } from "@/schemas/userSchemas";
 
 export interface User {
   id: string;
@@ -24,6 +25,28 @@ export const userService = {
     }
     
     return response.data.users || [];
+  },
+
+  updateUser: async (userId: string, userData: EditUserFormValues): Promise<any> => {
+    const response = await supabase.functions.invoke('user-management', {
+      body: {
+        action: 'update',
+        userId,
+        userData: {
+          email: userData.email,
+          user_metadata: {
+            first_name: userData.firstName,
+            last_name: userData.lastName
+          }
+        }
+      },
+    });
+    
+    if (response.error) {
+      throw new Error(response.error.message || 'Error updating user');
+    }
+    
+    return response.data;
   },
 
   deleteUser: async (userId: string): Promise<any> => {

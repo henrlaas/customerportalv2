@@ -10,6 +10,7 @@ import { UserFilters } from "@/components/UserManagement/UserFilters";
 import { UserTable } from "@/components/UserManagement/UserTable";
 import { DeleteUserDialog } from "@/components/UserManagement/DeleteUserDialog";
 import { InviteUserDialog } from "@/components/UserManagement/InviteUserDialog";
+import { EditUserDialog } from "@/components/UserManagement/EditUserDialog";
 import { useUserFilters } from "@/hooks/useUserFilters";
 import { userService, User } from "@/services/userService";
 
@@ -17,6 +18,7 @@ const UserManagementPage = () => {
   const { isAdmin, user: currentUser } = useAuth();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -95,6 +97,12 @@ const UserManagementPage = () => {
     }
   };
 
+  // Handle edit user
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setShowEditDialog(true);
+  };
+
   // Handle password reset
   const handleResetPassword = (email: string) => {
     resetPasswordMutation.mutate(email);
@@ -130,8 +138,9 @@ const UserManagementPage = () => {
             filteredUsers={filteredUsers}
             currentUserId={currentUser?.id}
             isLoading={isLoading}
-            error={error} // We're passing the error as-is, but UserTable now handles any error type
+            error={error}
             onDeleteUser={handleDeleteUser}
+            onEditUser={handleEditUser}
             onResetPassword={handleResetPassword}
             isPendingDelete={deleteUserMutation.isPending}
             isPendingReset={resetPasswordMutation.isPending}
@@ -143,6 +152,13 @@ const UserManagementPage = () => {
       <InviteUserDialog 
         isOpen={showInviteDialog} 
         onClose={() => setShowInviteDialog(false)} 
+      />
+
+      {/* Edit User Dialog */}
+      <EditUserDialog 
+        isOpen={showEditDialog} 
+        onClose={() => setShowEditDialog(false)}
+        user={selectedUser}
       />
 
       {/* Delete Confirmation Dialog */}

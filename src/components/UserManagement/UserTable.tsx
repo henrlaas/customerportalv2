@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { KeyRound, Trash2 } from "lucide-react";
+import { Edit, KeyRound, Trash2 } from "lucide-react";
 
 interface UserTableProps {
   filteredUsers: User[];
@@ -17,6 +17,7 @@ interface UserTableProps {
   isLoading: boolean;
   error: unknown; // Changed from Error | null to unknown for better type flexibility
   onDeleteUser: (user: User) => void;
+  onEditUser: (user: User) => void;
   onResetPassword: (email: string) => void;
   isPendingDelete: boolean;
   isPendingReset: boolean;
@@ -28,6 +29,7 @@ export function UserTable({
   isLoading,
   error,
   onDeleteUser,
+  onEditUser,
   onResetPassword,
   isPendingDelete,
   isPendingReset
@@ -118,6 +120,16 @@ export function UserTable({
               <TableCell className="text-gray-600">{formatDate(user.created_at)}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    title="Edit User"
+                    onClick={() => onEditUser(user)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  
                   <Button 
                     variant="ghost" 
                     size="icon" 

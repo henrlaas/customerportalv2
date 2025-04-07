@@ -5,6 +5,7 @@ import { handleListUsers } from "./handlers/list-users.ts";
 import { handleInviteUser } from "./handlers/invite-user.ts";
 import { handleDeleteUser } from "./handlers/delete-user.ts";
 import { handleResetPassword } from "./handlers/reset-password.ts";
+import { handleUpdateUser } from "./handlers/update-user.ts";
 import { createAdminClient } from "./utils/supabase.ts";
 
 serve(async (req) => {
@@ -37,6 +38,9 @@ serve(async (req) => {
         
       case 'resetPassword':
         return handleResetPassword(body, origin, supabaseAdmin, corsHeaders);
+        
+      case 'update':
+        return handleUpdateUser(body, supabaseAdmin, corsHeaders);
         
       default:
         return new Response(
