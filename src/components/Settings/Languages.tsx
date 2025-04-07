@@ -24,8 +24,8 @@ export const Languages = () => {
       
       const { error } = await supabase
         .from('profiles')
-        .update({ language: lang })
-        .eq('id', user.id);
+        .update({ language: lang } as any)
+        .eq('id', user.id as any);
       
       if (error) throw error;
       return { success: true };

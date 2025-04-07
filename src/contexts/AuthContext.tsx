@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', userId as any)
         .single() as { data: Profile | null, error: any };
 
       if (error) throw error;
@@ -144,8 +144,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ language: lang })
-        .eq('id', user.id) as { data: any, error: any };
+        .update({ language: lang } as any)
+        .eq('id', user.id as any) as { data: any, error: any };
       
       if (error) throw error;
       
