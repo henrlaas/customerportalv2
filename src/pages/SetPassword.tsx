@@ -52,15 +52,8 @@ const SetPassword = () => {
     const searchParams = new URLSearchParams(location.search);
     const typeParam = searchParams.get('type');
     
-    // Get token from either the 'token' parameter (our custom redirect) or 'token_hash' (direct from Supabase)
-    let token = searchParams.get('token');
-    const tokenHash = searchParams.get('token_hash');
-    
-    // Use token_hash if token is not available
-    if (!token && tokenHash) {
-      token = tokenHash;
-      console.log("Using token_hash instead:", tokenHash);
-    }
+    // Get token from any of the possible parameters
+    let token = searchParams.get('token') || searchParams.get('token_hash');
     
     setInviteType(typeParam);
     console.log("Invite type:", typeParam);
@@ -76,20 +69,50 @@ const SetPassword = () => {
           const otpType = typeParam === 'recovery' ? 'recovery' : 'invite';
           console.log("Processing token with type:", otpType);
           
-          const { data, error } = await supabase.auth.verifyOtp({
+          // Direct authentication attempt using the token
+          let { data, error } = await supabase.auth.verifyOtp({
             token_hash: token as string,
             type: otpType,
           });
           
           if (error) {
             console.error('Error processing token:', error);
-            toast({
-              title: 'Error',
-              description: 'Invalid or expired token. Please request a new invitation or password reset.',
-              variant: 'destructive',
+            
+            // Fallback: Try to exchange the token for a session
+            console.log("Trying alternative token processing method...");
+            
+            // For Supabase invites, sometimes we need to pass the token directly 
+            // without the token_hash parameter
+            const authResponse = await fetch(`${supabase.auth.url}/verify`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabase.supabaseKey
+              },
+              body: JSON.stringify({
+                type: otpType,
+                token: token
+              })
             });
-            setIsProcessing(false);
-            setTimeout(() => navigate('/auth'), 3000);
+            
+            const authResult = await authResponse.json();
+            console.log("Alternative auth result:", authResult);
+            
+            if (authResult.error) {
+              // If still failing, show error to user
+              toast({
+                title: 'Error',
+                description: 'Invalid or expired token. Please request a new invitation or password reset.',
+                variant: 'destructive',
+              });
+              setIsProcessing(false);
+              setTimeout(() => navigate('/auth'), 3000);
+            } else if (authResult.user) {
+              // If successful, use the user data
+              setUserEmail(authResult.user.email);
+              setIsProcessing(false);
+              window.history.replaceState({}, document.title, `/set-password?type=${typeParam}`);
+            }
           } else if (data?.user) {
             console.log("Token verified successfully, user:", data.user);
             setUserEmail(data.user.email);
