@@ -1,5 +1,5 @@
 
-import { Bell, Globe, Search } from 'lucide-react';
+import { Bell, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,10 +25,6 @@ export const TopBar: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="icon" className="text-gray-600 rounded-full">
-            <Search className="h-5 w-5" />
-          </Button>
-          
           <Button variant="ghost" size="icon" className="text-gray-600 rounded-full">
             <Bell className="h-5 w-5" />
           </Button>
