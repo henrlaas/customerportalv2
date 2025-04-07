@@ -15,7 +15,7 @@ interface UserTableProps {
   filteredUsers: User[];
   currentUserId?: string;
   isLoading: boolean;
-  error: Error | null;
+  error: unknown; // Changed from Error | null to unknown for better type flexibility
   onDeleteUser: (user: User) => void;
   onResetPassword: (email: string) => void;
   isPendingDelete: boolean;
@@ -77,7 +77,7 @@ export function UserTable({
   }
 
   if (error) {
-    return <div className="p-8 text-center text-red-500">Error loading users: {error.message}</div>;
+    return <div className="p-8 text-center text-red-500">Error loading users: {error instanceof Error ? error.message : String(error)}</div>;
   }
 
   return (

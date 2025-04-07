@@ -130,7 +130,7 @@ const UserManagementPage = () => {
             filteredUsers={filteredUsers}
             currentUserId={currentUser?.id}
             isLoading={isLoading}
-            error={error as Error | null}
+            error={error} // We're passing the error as-is, but UserTable now handles any error type
             onDeleteUser={handleDeleteUser}
             onResetPassword={handleResetPassword}
             isPendingDelete={deleteUserMutation.isPending}
