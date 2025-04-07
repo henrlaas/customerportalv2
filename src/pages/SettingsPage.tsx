@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +25,6 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Languages } from '@/components/Settings/Languages';
 import {
   Select,
   SelectContent,
@@ -259,17 +259,6 @@ const SettingsPage = () => {
               </Button>
             </form>
           </Form>
-        </CardContent>
-      </Card>
-
-      {/* Preferences Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Preferences</CardTitle>
-          <CardDescription>Manage your app preferences.</CardDescription>
-        </CardHeader>
-        <CardContent className="pl-6">
-          <Languages />
         </CardContent>
       </Card>
     </div>
