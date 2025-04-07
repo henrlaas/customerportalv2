@@ -24,7 +24,7 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
       email: '',
       firstName: '',
       lastName: '',
-      role: 'client',
+      role: 'employee', // Changed from 'client' to 'employee'
       team: 'Client Services',
     },
   });
