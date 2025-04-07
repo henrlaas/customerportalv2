@@ -19,7 +19,7 @@ export const handleResetPassword = async (
     );
   }
 
-  // Update password reset to pass the type=recovery parameter
+  // Update password reset to use the full path with type=recovery parameter
   const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/set-password?type=recovery`,
   });

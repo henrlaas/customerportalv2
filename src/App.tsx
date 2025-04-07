@@ -3,11 +3,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/Layout/AppLayout";
-import { UserManagement } from "@/components/UserManagement"; // Add import for UserManagement
+import { UserManagement } from "@/components/UserManagement";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -29,6 +29,23 @@ import FinancePage from "./pages/FinancePage";
 
 const queryClient = new QueryClient();
 
+// Helper component to redirect if an invite link brings the user to root URL
+const InviteLinkHandler = () => {
+  // Check URL for invite params
+  const queryParams = new URLSearchParams(window.location.search);
+  const token = queryParams.get('token');
+  const type = queryParams.get('type');
+  
+  if (token && (type === 'invite' || type === 'recovery')) {
+    console.log('Found invite or recovery parameters, redirecting to set-password');
+    // Redirect to set-password with all params preserved
+    return <Navigate to={`/set-password${window.location.search}`} replace />;
+  }
+  
+  // If no invite params, just render normal index
+  return <Index />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -38,7 +55,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<InviteLinkHandler />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/set-password" element={<SetPassword />} />
             

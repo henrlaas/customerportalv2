@@ -14,6 +14,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
+    // Explicitly define the storage mechanism
+    storage: localStorage,
   },
   global: {
     headers: {
