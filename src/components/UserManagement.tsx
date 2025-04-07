@@ -2,48 +2,20 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { useTranslation } from '@/hooks/useTranslation';
-import { supabase } from '@/integrations/supabase/client';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-import { useMutation } from '@tanstack/react-query';
-
-// Define the schema for the invite form
-const inviteSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  firstName: z.string().min(1, { message: 'First name is required' }),
-  lastName: z.string().min(1, { message: 'Last name is required' }),
-  role: z.enum(['admin', 'employee', 'client'], { 
-    required_error: 'Please select a role' 
-  }),
-  team: z.string().min(1, { message: 'Team is required' }),
-});
-
-type InviteFormValues = z.infer<typeof inviteSchema>;
+import { inviteSchema, InviteFormValues } from '@/schemas/userSchemas';
+import { useInviteUser } from '@/hooks/useInviteUser';
+import { UserContactFields } from './UserManagement/UserContactFields';
+import { UserRoleSelect } from './UserManagement/UserRoleSelect';
+import { TeamSelect } from './UserManagement/TeamSelect';
 
 interface UserManagementProps {
   onSuccess?: () => void;
 }
 
 export function UserManagement({ onSuccess }: UserManagementProps) {
-  const { toast } = useToast();
   const t = useTranslation();
   
   const form = useForm<InviteFormValues>({
@@ -57,45 +29,12 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
     },
   });
 
-  const inviteUserMutation = useMutation({
-    mutationFn: async (data: InviteFormValues) => {
-      const response = await supabase.functions.invoke('user-management', {
-        body: {
-          action: 'invite',
-          email: data.email,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          role: data.role,
-          team: data.team,
-        }
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Error inviting user');
-      }
-
-      return response.data;
-    },
+  const inviteUserMutation = useInviteUser({
     onSuccess: () => {
-      toast({
-        title: 'Success',
-        description: `Invitation sent to ${form.getValues('email')}`,
-      });
-
-      // Reset the form
       form.reset();
-      
-      // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
       }
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
     }
   });
 
@@ -106,101 +45,9 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Email')}</FormLabel>
-              <FormControl>
-                <Input placeholder="user@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('First Name')}</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('Last Name')}</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Role')}</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="admin">{t('Admin')}</SelectItem>
-                  <SelectItem value="employee">{t('Employee')}</SelectItem>
-                  <SelectItem value="client">{t('Client')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="team"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Team')}</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a team" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Executive Team">{t('Executive Team')}</SelectItem>
-                  <SelectItem value="Creative Team">{t('Creative Team')}</SelectItem>
-                  <SelectItem value="Client Services">{t('Client Services')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <UserContactFields form={form} />
+        <UserRoleSelect form={form} />
+        <TeamSelect form={form} />
         
         <Button 
           type="submit" 
