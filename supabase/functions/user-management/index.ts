@@ -31,7 +31,7 @@ serve(async (req) => {
     const body = await req.json();
     const { action } = body;
     
-    // Extract origin for redirect URLs
+    // Extract origin for redirect URLs - ensure it includes the setup parameter
     const origin = req.headers.get('origin') || 'https://customerportalv2.lovable.app';
     console.log('Using origin for redirects:', origin);
 
@@ -61,7 +61,9 @@ serve(async (req) => {
       const { email, firstName, lastName, role, team } = body;
       
       console.log(`Inviting user: ${email} with role: ${role}`);
-      console.log(`Redirect URL: ${origin}/auth?setup=true`);
+      // Make sure the redirect URL explicitly includes the setup=true parameter
+      const redirectUrl = `${origin}/auth?setup=true`;
+      console.log(`Redirect URL: ${redirectUrl}`);
 
       // Validate inputs
       if (!email || !role) {
@@ -87,7 +89,7 @@ serve(async (req) => {
 
       // Invite the user using the admin API with a proper redirect URL
       const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${origin}/auth?setup=true`,
+        redirectTo: redirectUrl,
         data: {
           first_name: firstName || '',
           last_name: lastName || '',

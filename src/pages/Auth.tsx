@@ -48,9 +48,20 @@ const Auth = () => {
   
   // Check if user is coming from an invite link or password reset
   useEffect(() => {
+    // Debug information
+    console.log("Auth page loaded with URL:", window.location.href);
+    console.log("Search params:", location.search);
+    console.log("Hash:", location.hash);
+    
     // Check for setup query parameter that we set in the redirectTo URL
-    const isSetup = new URLSearchParams(location.search).get('setup') === 'true';
-    const isReset = new URLSearchParams(location.search).get('reset') === 'true';
+    const searchParams = new URLSearchParams(location.search);
+    const isSetup = searchParams.get('setup') === 'true';
+    const isReset = searchParams.get('reset') === 'true';
+    const token = searchParams.get('token');
+    const type = searchParams.get('type');
+    
+    console.log("Setup mode:", isSetup, "Reset mode:", isReset);
+    console.log("Token:", token, "Type:", type);
     
     if (isSetup || isReset) {
       setIsSetupMode(true);
@@ -59,13 +70,7 @@ const Auth = () => {
     // Process the hash fragment or token for authentication
     const handleAuthParams = async () => {
       try {
-        // Check for token parameter (new style)
-        const token = new URLSearchParams(window.location.search).get('token');
-        const type = new URLSearchParams(window.location.search).get('type');
-        
-        console.log("Auth parameters:", { token, type });
-
-        // Process invitation token
+        // First check if we have a token in the URL (new style)
         if (token && (type === 'invite' || type === 'recovery')) {
           console.log("Processing token:", token, "type:", type);
           // Exchange the token for a session
@@ -81,23 +86,25 @@ const Auth = () => {
               description: 'Invalid or expired token. Please request a new invitation or password reset.',
               variant: 'destructive',
             });
+            setIsProcessingInvite(false);
           } else if (data?.user) {
             console.log("Token verified successfully, user:", data.user);
             setUserEmail(data.user.email);
             setIsSetupMode(true);
             // Update the URL to clean it up but keep the setup flag
-            window.history.replaceState({}, document.title, window.location.pathname + '?setup=true');
+            window.history.replaceState({}, document.title, `${window.location.pathname}?setup=true`);
             toast({
               title: 'Welcome!',
               description: 'Please set up your password to continue.',
             });
+            setIsProcessingInvite(false);
           }
         } 
         // Check for hash fragment (old style)
-        else if (location.hash && location.hash.includes('type=invite')) {
+        else if (location.hash && location.hash.includes('type=')) {
           console.log("Processing hash fragment:", location.hash);
           // This will parse the hash and set the session
-          const { data, error } = await supabase.auth.getUser();
+          const { data, error } = await supabase.auth.getSession();
           
           if (error) {
             console.error('Error processing invitation:', error);
@@ -106,17 +113,36 @@ const Auth = () => {
               description: 'There was an error processing your invitation. Please try again or contact support.',
               variant: 'destructive',
             });
-          } else if (data?.user) {
-            console.log("User authenticated successfully:", data.user);
-            setUserEmail(data.user.email);
+            setIsProcessingInvite(false);
+          } else if (data?.session?.user) {
+            console.log("User authenticated successfully:", data.session.user);
+            setUserEmail(data.session.user.email);
             setIsSetupMode(true);
             // Remove the hash to clean up the URL
-            window.history.replaceState({}, document.title, window.location.pathname + '?setup=true');
+            window.history.replaceState({}, document.title, `${window.location.pathname}?setup=true`);
             toast({
               title: 'Welcome!',
               description: 'Please set up your password to continue.',
             });
+            setIsProcessingInvite(false);
+          } else {
+            console.log("No session found in hash");
+            setIsProcessingInvite(false);
           }
+        }
+        // If we're in setup mode but don't have a token or hash, may have been redirected normally
+        else if (isSetup && !token && !location.hash) {
+          console.log("In setup mode without token or hash, checking for existing session");
+          const { data } = await supabase.auth.getSession();
+          if (data?.session?.user) {
+            console.log("Found existing user session:", data.session.user);
+            setUserEmail(data.session.user.email);
+          }
+          setIsProcessingInvite(false);
+        }
+        else {
+          console.log("No auth parameters found, proceeding normally");
+          setIsProcessingInvite(false);
         }
       } catch (err) {
         console.error('Error in authentication processing:', err);
@@ -125,16 +151,11 @@ const Auth = () => {
           description: 'An error occurred while processing your authentication. Please try again.',
           variant: 'destructive',
         });
-      } finally {
         setIsProcessingInvite(false);
       }
     };
     
-    if (location.hash || location.search.includes('token=')) {
-      handleAuthParams();
-    } else {
-      setIsProcessingInvite(false);
-    }
+    handleAuthParams();
   }, [location, toast]);
 
   // If user is already logged in and not in setup mode, redirect to dashboard
@@ -169,6 +190,7 @@ const Auth = () => {
 
   const handlePasswordSetup = async (data: PasswordSetupFormValues) => {
     try {
+      console.log("Setting up password for user");
       const { error } = await supabase.auth.updateUser({
         password: data.password,
       });
@@ -181,6 +203,7 @@ const Auth = () => {
           variant: 'destructive',
         });
       } else {
+        console.log("Password set successfully");
         toast({
           title: 'Success',
           description: 'Your password has been set successfully. You can now use it to log in.',
