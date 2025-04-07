@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,7 +43,7 @@ const Auth = () => {
   const { toast } = useToast();
   const t = useTranslation();
   const [isSetupMode, setIsSetupMode] = useState(false);
-  const [isProcessingInvite, setIsProcessingInvite] = useState(false);
+  const [isProcessingInvite, setIsProcessingInvite] = useState(true); // Start with loading
   const [userEmail, setUserEmail] = useState<string | null>(null);
   
   // Check if user is coming from an invite link or password reset
@@ -59,39 +58,16 @@ const Auth = () => {
     
     // Process the hash fragment or token for authentication
     const handleAuthParams = async () => {
-      setIsProcessingInvite(true);
-      
       try {
-        // Handle hash fragment (old style)
-        const hash = window.location.hash;
-        if (hash && (hash.includes('access_token') || hash.includes('type=invite'))) {
-          // This will parse the hash and set the session
-          const { data, error } = await supabase.auth.getUser();
-          
-          if (error) {
-            console.error('Error processing invitation:', error);
-            toast({
-              title: 'Error',
-              description: 'There was an error processing your invitation. Please try again or contact support.',
-              variant: 'destructive',
-            });
-          } else if (data?.user) {
-            setUserEmail(data.user.email);
-            setIsSetupMode(true);
-            // Remove the hash to clean up the URL
-            window.history.replaceState({}, document.title, window.location.pathname + '?setup=true');
-            toast({
-              title: 'Welcome!',
-              description: 'Please set up your password to continue.',
-            });
-          }
-        }
-        
-        // Handle token parameter (new style)
+        // Check for token parameter (new style)
         const token = new URLSearchParams(window.location.search).get('token');
         const type = new URLSearchParams(window.location.search).get('type');
         
+        console.log("Auth parameters:", { token, type });
+
+        // Process invitation token
         if (token && (type === 'invite' || type === 'recovery')) {
+          console.log("Processing token:", token, "type:", type);
           // Exchange the token for a session
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: token,
@@ -106,9 +82,35 @@ const Auth = () => {
               variant: 'destructive',
             });
           } else if (data?.user) {
+            console.log("Token verified successfully, user:", data.user);
             setUserEmail(data.user.email);
             setIsSetupMode(true);
-            // Update the URL to clean it up
+            // Update the URL to clean it up but keep the setup flag
+            window.history.replaceState({}, document.title, window.location.pathname + '?setup=true');
+            toast({
+              title: 'Welcome!',
+              description: 'Please set up your password to continue.',
+            });
+          }
+        } 
+        // Check for hash fragment (old style)
+        else if (location.hash && location.hash.includes('type=invite')) {
+          console.log("Processing hash fragment:", location.hash);
+          // This will parse the hash and set the session
+          const { data, error } = await supabase.auth.getUser();
+          
+          if (error) {
+            console.error('Error processing invitation:', error);
+            toast({
+              title: 'Error',
+              description: 'There was an error processing your invitation. Please try again or contact support.',
+              variant: 'destructive',
+            });
+          } else if (data?.user) {
+            console.log("User authenticated successfully:", data.user);
+            setUserEmail(data.user.email);
+            setIsSetupMode(true);
+            // Remove the hash to clean up the URL
             window.history.replaceState({}, document.title, window.location.pathname + '?setup=true');
             toast({
               title: 'Welcome!',
@@ -118,6 +120,11 @@ const Auth = () => {
         }
       } catch (err) {
         console.error('Error in authentication processing:', err);
+        toast({
+          title: 'Error',
+          description: 'An error occurred while processing your authentication. Please try again.',
+          variant: 'destructive',
+        });
       } finally {
         setIsProcessingInvite(false);
       }
@@ -167,6 +174,7 @@ const Auth = () => {
       });
 
       if (error) {
+        console.error("Error setting password:", error);
         toast({
           title: 'Error',
           description: error.message,
@@ -182,6 +190,7 @@ const Auth = () => {
         navigate('/dashboard');
       }
     } catch (error: any) {
+      console.error("Exception setting password:", error);
       toast({
         title: 'Error',
         description: error.message || 'An error occurred while setting your password.',

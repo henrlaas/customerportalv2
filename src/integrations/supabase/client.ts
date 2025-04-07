@@ -39,7 +39,7 @@ export const insertWithUser = async <T extends keyof Database["public"]["Tables"
   }
   
   return supabase
-    .from(table)
+    .from(table as any)
     .insert({
       ...data,
       created_by: userId
@@ -60,7 +60,7 @@ export const updateWithUser = async <T extends keyof Database["public"]["Tables"
   }
   
   return supabase
-    .from(table)
+    .from(table as any)
     .update(data as any)
     .eq('id', id as any);
 };

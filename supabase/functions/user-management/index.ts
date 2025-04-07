@@ -33,6 +33,7 @@ serve(async (req) => {
     
     // Extract origin for redirect URLs
     const origin = req.headers.get('origin') || 'https://customerportalv2.lovable.app';
+    console.log('Using origin for redirects:', origin);
 
     // List Users Operation
     if (action === 'list') {
@@ -60,6 +61,7 @@ serve(async (req) => {
       const { email, firstName, lastName, role, team } = body;
       
       console.log(`Inviting user: ${email} with role: ${role}`);
+      console.log(`Redirect URL: ${origin}/auth?setup=true`);
 
       // Validate inputs
       if (!email || !role) {
