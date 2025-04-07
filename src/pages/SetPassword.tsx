@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -47,14 +48,23 @@ const SetPassword = () => {
   useEffect(() => {
     console.log("SetPassword page loaded with URL:", window.location.href);
     console.log("Search params:", location.search);
-    console.log("Hash:", location.hash);
     
     const searchParams = new URLSearchParams(location.search);
     const typeParam = searchParams.get('type');
-    const token = searchParams.get('token');
+    
+    // Get token from either the 'token' parameter (our custom redirect) or 'token_hash' (direct from Supabase)
+    let token = searchParams.get('token');
+    const tokenHash = searchParams.get('token_hash');
+    
+    // Use token_hash if token is not available
+    if (!token && tokenHash) {
+      token = tokenHash;
+      console.log("Using token_hash instead:", tokenHash);
+    }
     
     setInviteType(typeParam);
     console.log("Invite type:", typeParam);
+    console.log("Token value:", token);
 
     // Check if we're coming from the auth flow with a token in the URL
     if (token) {
@@ -67,7 +77,7 @@ const SetPassword = () => {
           console.log("Processing token with type:", otpType);
           
           const { data, error } = await supabase.auth.verifyOtp({
-            token_hash: token,
+            token_hash: token as string,
             type: otpType,
           });
           
