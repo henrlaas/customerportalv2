@@ -81,13 +81,15 @@ const SetPassword = () => {
             // Fallback: Try to exchange the token for a session
             console.log("Trying alternative token processing method...");
             
-            // For Supabase invites, sometimes we need to pass the token directly 
-            // without the token_hash parameter
-            const authResponse = await fetch(`${supabase.auth.url}/verify`, {
+            // For Supabase invites, we need to make a direct API call to the verify endpoint
+            // Get the API URL from the config
+            const apiUrl = new URL(supabase.auth.getSession().then(() => {})).origin;
+            
+            const authResponse = await fetch(`${apiUrl}/auth/v1/verify`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'apikey': supabase.supabaseKey
+                'apikey': supabase.supabaseUrl.split('https://')[1].split('.')[0]
               },
               body: JSON.stringify({
                 type: otpType,
