@@ -61,8 +61,9 @@ serve(async (req) => {
       const { email, firstName, lastName, role, team } = body;
       
       console.log(`Inviting user: ${email} with role: ${role}`);
-      // The key change - redirect directly to the dedicated set-password page
-      const redirectUrl = `${origin}/set-password`;
+      
+      // Update to add the type=invite parameter to the redirect URL
+      const redirectUrl = `${origin}/set-password?type=invite`;
       console.log(`Redirect URL: ${redirectUrl}`);
 
       // Validate inputs
@@ -87,7 +88,7 @@ serve(async (req) => {
         );
       }
 
-      // Invite the user using the admin API with the direct set-password URL
+      // Invite the user using the admin API with the updated redirect URL
       const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         redirectTo: redirectUrl,
         data: {
@@ -157,9 +158,9 @@ serve(async (req) => {
         );
       }
 
-      // Update password reset to use the dedicated set-password page
+      // Update password reset to pass the type=recovery parameter
       const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
-        redirectTo: `${origin}/set-password`,
+        redirectTo: `${origin}/set-password?type=recovery`,
       });
 
       if (error) throw error;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -34,6 +33,7 @@ const SetPassword = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [inviteType, setInviteType] = useState<string | null>(null);
   
   const form = useForm<PasswordSetupFormValues>({
     resolver: zodResolver(passwordSetupSchema),
@@ -49,96 +49,143 @@ const SetPassword = () => {
     console.log("Search params:", location.search);
     console.log("Hash:", location.hash);
     
-    // Check for token in URL query params (new style)
     const searchParams = new URLSearchParams(location.search);
+    const typeParam = searchParams.get('type');
     const token = searchParams.get('token');
-    const type = searchParams.get('type');
+    
+    setInviteType(typeParam);
+    console.log("Invite type:", typeParam);
 
-    const handleToken = async () => {
-      try {
-        if (token && (type === 'invite' || type === 'recovery')) {
-          console.log("Processing token:", token, "type:", type);
-          // Exchange the token for a session
+    // Check if we're coming from the auth flow with a token in the URL
+    if (token) {
+      console.log("Found token in URL params:", token);
+      
+      const handleToken = async () => {
+        try {
+          // This handles both invite and recovery flows
+          const otpType = typeParam === 'recovery' ? 'recovery' : 'invite';
+          console.log("Processing token with type:", otpType);
+          
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: token,
-            type: type === 'invite' ? 'invite' : 'recovery',
+            type: otpType,
           });
           
           if (error) {
             console.error('Error processing token:', error);
             toast({
               title: 'Error',
-              description: 'Invalid or expired token. Please request a new invitation.',
+              description: 'Invalid or expired token. Please request a new invitation or password reset.',
               variant: 'destructive',
             });
             setIsProcessing(false);
-            // Redirect to login after a delay
             setTimeout(() => navigate('/auth'), 3000);
           } else if (data?.user) {
             console.log("Token verified successfully, user:", data.user);
             setUserEmail(data.user.email);
             setIsProcessing(false);
-            // Clean up the URL
-            window.history.replaceState({}, document.title, `/set-password`);
+            
+            // Clean up URL but keep the type parameter
+            window.history.replaceState({}, document.title, `/set-password?type=${typeParam}`);
           }
-        } 
-        // Handle hash fragment in URL (old style)
-        else if (location.hash && location.hash.includes('type=')) {
-          console.log("Processing hash fragment:", location.hash);
+        } catch (err) {
+          console.error('Error in token processing:', err);
+          toast({
+            title: 'Error',
+            description: 'An unexpected error occurred. Please try again or contact support.',
+            variant: 'destructive',
+          });
+          setIsProcessing(false);
+          setTimeout(() => navigate('/auth'), 3000);
+        }
+      };
+      
+      handleToken();
+    } 
+    // Handle hash fragment in URL (old style auth flow)
+    else if (location.hash && location.hash.includes('type=')) {
+      console.log("Processing hash fragment:", location.hash);
+      
+      const handleHash = async () => {
+        try {
           const { data, error } = await supabase.auth.getSession();
           
           if (error) {
-            console.error('Error processing invitation:', error);
+            console.error('Error processing hash:', error);
             toast({
               title: 'Error',
-              description: 'There was an error processing your invitation. Please try again or contact support.',
+              description: 'There was an error processing your request. Please try again.',
               variant: 'destructive',
             });
             setIsProcessing(false);
-            // Redirect to login after a delay
             setTimeout(() => navigate('/auth'), 3000);
           } else if (data?.session?.user) {
-            console.log("User authenticated successfully:", data.session.user);
+            console.log("User authenticated from hash:", data.session.user);
             setUserEmail(data.session.user.email);
             setIsProcessing(false);
-            // Clean up the URL
-            window.history.replaceState({}, document.title, `/set-password`);
+            
+            // Keep the type in the URL but remove the hash
+            window.history.replaceState({}, document.title, `/set-password?type=${typeParam || 'invite'}`);
           } else {
             console.log("No session found in hash");
             toast({
               title: 'Error',
-              description: 'Invalid or expired invitation link. Please contact your administrator.',
+              description: 'Invalid or expired link. Please request a new invitation.',
               variant: 'destructive',
             });
             setIsProcessing(false);
-            // Redirect to login after a delay
             setTimeout(() => navigate('/auth'), 3000);
           }
-        } else {
-          console.log("No token or hash found");
+        } catch (err) {
+          console.error('Error processing hash:', err);
           toast({
             title: 'Error',
-            description: 'Invalid invitation link. Please contact your administrator.',
+            description: 'An unexpected error occurred.',
             variant: 'destructive',
           });
           setIsProcessing(false);
-          // Redirect to login after a delay
           setTimeout(() => navigate('/auth'), 3000);
         }
-      } catch (err) {
-        console.error('Error in token processing:', err);
-        toast({
-          title: 'Error',
-          description: 'An unexpected error occurred. Please try again or contact support.',
-          variant: 'destructive',
-        });
+      };
+      
+      handleHash();
+    }
+    // If we have a type but no token or hash, check for existing session
+    else if (typeParam) {
+      console.log("Type parameter found but no token/hash, checking for session");
+      
+      const checkSession = async () => {
+        const { data } = await supabase.auth.getSession();
+        
+        if (data?.session?.user) {
+          console.log("Found existing session:", data.session.user);
+          setUserEmail(data.session.user.email);
+        } else {
+          console.log("No session found, redirecting to auth");
+          toast({
+            title: 'Session expired',
+            description: 'Your session has expired. Please request a new invitation.',
+            variant: 'destructive',
+          });
+          setTimeout(() => navigate('/auth'), 1500);
+        }
+        
         setIsProcessing(false);
-        // Redirect to login after a delay
-        setTimeout(() => navigate('/auth'), 3000);
-      }
-    };
-    
-    handleToken();
+      };
+      
+      checkSession();
+    } 
+    // No parameters at all
+    else {
+      console.log("No parameters found, redirecting to auth");
+      toast({
+        title: 'Invalid access',
+        description: 'Please use the link sent in your invitation email.',
+        variant: 'destructive',
+      });
+      setIsProcessing(false);
+      setTimeout(() => navigate('/auth'), 1500);
+    }
   }, [location, navigate, toast]);
 
   const handleSetPassword = async (data: PasswordSetupFormValues) => {
@@ -184,7 +231,7 @@ const SetPassword = () => {
       <div className="flex min-h-screen items-center justify-center bg-white">
         <div className="text-center">
           <div className="mb-4 animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-          <h2 className="text-xl font-semibold mb-2">Processing your invitation</h2>
+          <h2 className="text-xl font-semibold mb-2">Processing your {inviteType === 'recovery' ? 'password reset' : 'invitation'}</h2>
           <p className="text-gray-600">Please wait a moment...</p>
         </div>
       </div>
@@ -202,9 +249,11 @@ const SetPassword = () => {
             <h1 className="text-xl font-bold text-gray-800">Workspace</h1>
           </div>
           
-          <h2 className="text-2xl font-bold mb-2">Set Your Password</h2>
+          <h2 className="text-2xl font-bold mb-2">
+            {inviteType === 'recovery' ? 'Reset Your Password' : 'Set Your Password'}
+          </h2>
           <p className="text-gray-500 mb-6">
-            {userEmail ? `Create a password for ${userEmail}` : 'Create a password to access your account'}
+            {userEmail ? `Create a ${inviteType === 'recovery' ? 'new' : ''} password for ${userEmail}` : 'Create a password to access your account'}
           </p>
           
           <Form {...form}>
@@ -242,7 +291,7 @@ const SetPassword = () => {
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white"
                 disabled={isProcessing}
               >
-                {isProcessing ? 'Setting Password...' : 'Set Password'}
+                {isProcessing ? 'Setting Password...' : inviteType === 'recovery' ? 'Reset Password' : 'Set Password'}
               </Button>
             </form>
           </Form>
