@@ -11,6 +11,7 @@ import { UserManagement } from "@/components/UserManagement"; // Add import for 
 
 // Pages
 import Auth from "./pages/Auth";
+import SetPassword from "./pages/SetPassword";
 import Dashboard from "./pages/Dashboard";
 import { TasksPage } from "./pages/TasksPage";
 import TimeTrackingPage from "./pages/TimeTrackingPage";
@@ -36,9 +37,10 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public Route - Redirect to Auth if not authenticated */}
+            {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/set-password" element={<SetPassword />} />
             
             {/* Protected Routes */}
             <Route

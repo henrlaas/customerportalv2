@@ -31,7 +31,7 @@ serve(async (req) => {
     const body = await req.json();
     const { action } = body;
     
-    // Extract origin for redirect URLs - ensure it includes the setup parameter
+    // Extract origin for redirect URLs
     const origin = req.headers.get('origin') || 'https://customerportalv2.lovable.app';
     console.log('Using origin for redirects:', origin);
 
@@ -61,8 +61,8 @@ serve(async (req) => {
       const { email, firstName, lastName, role, team } = body;
       
       console.log(`Inviting user: ${email} with role: ${role}`);
-      // Make sure the redirect URL explicitly includes the setup=true parameter
-      const redirectUrl = `${origin}/auth?setup=true`;
+      // The key change - redirect directly to the dedicated set-password page
+      const redirectUrl = `${origin}/set-password`;
       console.log(`Redirect URL: ${redirectUrl}`);
 
       // Validate inputs
@@ -87,7 +87,7 @@ serve(async (req) => {
         );
       }
 
-      // Invite the user using the admin API with a proper redirect URL
+      // Invite the user using the admin API with the direct set-password URL
       const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         redirectTo: redirectUrl,
         data: {
@@ -157,8 +157,9 @@ serve(async (req) => {
         );
       }
 
+      // Update password reset to use the dedicated set-password page
       const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
-        redirectTo: `${origin}/auth?reset=true`,
+        redirectTo: `${origin}/set-password`,
       });
 
       if (error) throw error;
