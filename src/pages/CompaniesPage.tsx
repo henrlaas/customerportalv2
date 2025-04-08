@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -108,10 +107,19 @@ const CompaniesPage = () => {
       (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.country && company.country.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    const matchesType = clientTypeFilter === 'all' || company.client_type === clientTypeFilter;
+    // Updated to handle client_type as a string that may contain multiple types
+    const matchesType = clientTypeFilter === 'all' || 
+      (company.client_type && company.client_type.includes(clientTypeFilter));
     
     return matchesSearch && matchesType;
   });
+  
+  // Display client type more elegantly
+  const formatClientType = (typeString: string | null) => {
+    if (!typeString) return null;
+    const types = typeString.split(',');
+    return types.join(' & ');
+  };
   
   // Check if user can modify companies (admin or employee)
   const canModify = isAdmin || isEmployee;
@@ -129,14 +137,17 @@ const CompaniesPage = () => {
   };
   
   const getCompanyTypeColor = (type: string | null) => {
-    switch (type) {
-      case 'Marketing':
-        return 'bg-blue-100 text-blue-800';
-      case 'Web':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    if (!type) return 'bg-gray-100 text-gray-800';
+    
+    if (type.includes('Marketing') && type.includes('Web')) {
+      return 'bg-indigo-100 text-indigo-800';  // Combined type
+    } else if (type.includes('Marketing')) {
+      return 'bg-blue-100 text-blue-800';      // Marketing type
+    } else if (type.includes('Web')) {
+      return 'bg-purple-100 text-purple-800';  // Web type
     }
+    
+    return 'bg-gray-100 text-gray-800';        // Default
   };
   
   return (
@@ -267,7 +278,7 @@ const CompaniesPage = () => {
                       <TableCell>
                         {company.client_type && (
                           <Badge variant="outline" className={getCompanyTypeColor(company.client_type)}>
-                            {company.client_type}
+                            {formatClientType(company.client_type)}
                           </Badge>
                         )}
                       </TableCell>
@@ -366,7 +377,7 @@ const CompaniesPage = () => {
                           <div className="flex flex-wrap items-center gap-1 mt-1">
                             {company.client_type && (
                               <Badge variant="outline" className={`text-xs ${getCompanyTypeColor(company.client_type)}`}>
-                                {company.client_type}
+                                {formatClientType(company.client_type)}
                               </Badge>
                             )}
                             {company.is_partner && (

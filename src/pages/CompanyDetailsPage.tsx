@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -49,6 +48,13 @@ const CompanyDetailsPage = () => {
     enabled: !!companyId,
   });
   
+  // Format client type for display
+  const formatClientType = (typeString: string | null) => {
+    if (!typeString) return null;
+    const types = typeString.split(',');
+    return types.join(' & ');
+  };
+  
   // Delete company mutation
   const deleteCompanyMutation = useMutation({
     mutationFn: companyService.deleteCompany,
@@ -82,14 +88,17 @@ const CompanyDetailsPage = () => {
   };
   
   const getCompanyTypeColor = (type: string | null) => {
-    switch (type) {
-      case 'Marketing':
-        return 'bg-blue-100 text-blue-800';
-      case 'Web':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    if (!type) return 'bg-gray-100 text-gray-800';
+    
+    if (type.includes('Marketing') && type.includes('Web')) {
+      return 'bg-indigo-100 text-indigo-800';  // Combined type
+    } else if (type.includes('Marketing')) {
+      return 'bg-blue-100 text-blue-800';      // Marketing type
+    } else if (type.includes('Web')) {
+      return 'bg-purple-100 text-purple-800';  // Web type
     }
+    
+    return 'bg-gray-100 text-gray-800';        // Default
   };
   
   // Check if user can modify companies (admin or employee)
@@ -145,7 +154,7 @@ const CompanyDetailsPage = () => {
               <h2 className="text-2xl font-bold">{company.name}</h2>
               {company.client_type && (
                 <Badge variant="outline" className={getCompanyTypeColor(company.client_type)}>
-                  {company.client_type}
+                  {formatClientType(company.client_type)}
                 </Badge>
               )}
               {company.is_partner && (

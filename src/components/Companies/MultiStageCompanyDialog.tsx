@@ -45,13 +45,14 @@ import {
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Form schema for all stages
 const companyFormSchema = z.object({
   // Stage 1: Basic Info
   name: z.string().min(1, { message: 'Company name is required' }),
   organization_number: z.string().optional(),
-  client_type: z.enum(['Marketing', 'Web']),
+  client_types: z.array(z.string()).min(1, { message: 'At least one client type is required' }),
   
   // Stage 2: Contact Details
   website: z.string().url().or(z.literal('')).optional(),
@@ -71,6 +72,11 @@ const companyFormSchema = z.object({
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
+
+const CLIENT_TYPES = {
+  MARKETING: 'Marketing',
+  WEB: 'Web',
+};
 
 type MultiStageCompanyDialogProps = {
   isOpen: boolean;
@@ -102,7 +108,7 @@ export function MultiStageCompanyDialog({
     defaultValues: {
       name: '',
       organization_number: '',
-      client_type: 'Marketing',
+      client_types: [CLIENT_TYPES.MARKETING],
       website: '',
       phone: '',
       invoice_email: '',
@@ -120,6 +126,8 @@ export function MultiStageCompanyDialog({
 
   // Watch for website changes to fetch favicon
   const website = form.watch('website');
+  const clientTypes = form.watch('client_types');
+  const hasMarketingType = clientTypes?.includes(CLIENT_TYPES.MARKETING);
   
   useEffect(() => {
     if (website) {
@@ -146,7 +154,8 @@ export function MultiStageCompanyDialog({
         ...values,
         logo_url: logo,
         parent_id: values.parent_id || null,
-        mrr: values.client_type === 'Marketing' ? values.mrr : null,
+        client_type: values.client_types.join(','), // Join array into comma-separated string
+        mrr: hasMarketingType ? values.mrr : null, // Only include MRR if Marketing is selected
       };
       
       return companyService.createCompany(companyData);
@@ -190,8 +199,6 @@ export function MultiStageCompanyDialog({
       setStage(stage - 1);
     }
   };
-
-  const clientType = form.watch('client_type');
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -268,27 +275,68 @@ export function MultiStageCompanyDialog({
 
                 <FormField
                   control={form.control}
-                  name="client_type"
-                  render={({ field }) => (
+                  name="client_types"
+                  render={() => (
                     <FormItem>
-                      <FormLabel>Client Type*</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select client type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Marketing">Marketing</SelectItem>
-                          <SelectItem value="Web">Web</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Type of services provided to this client
-                      </FormDescription>
+                      <div className="mb-2">
+                        <FormLabel>Client Type*</FormLabel>
+                        <FormDescription>
+                          Type of services provided to this client
+                        </FormDescription>
+                      </div>
+                      <div className="space-y-2">
+                        <FormField
+                          control={form.control}
+                          name="client_types"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(CLIENT_TYPES.MARKETING)}
+                                  onCheckedChange={(checked) => {
+                                    const current = field.value || [];
+                                    const updated = checked
+                                      ? [...current, CLIENT_TYPES.MARKETING]
+                                      : current.filter(value => value !== CLIENT_TYPES.MARKETING);
+                                    
+                                    // Ensure at least one value is selected
+                                    field.onChange(updated.length > 0 ? updated : current);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal cursor-pointer">
+                                Marketing
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="client_types"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(CLIENT_TYPES.WEB)}
+                                  onCheckedChange={(checked) => {
+                                    const current = field.value || [];
+                                    const updated = checked
+                                      ? [...current, CLIENT_TYPES.WEB]
+                                      : current.filter(value => value !== CLIENT_TYPES.WEB);
+                                    
+                                    // Ensure at least one value is selected
+                                    field.onChange(updated.length > 0 ? updated : current);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal cursor-pointer">
+                                Web
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -455,7 +503,7 @@ export function MultiStageCompanyDialog({
                     )}
                   />
                   
-                  {clientType === 'Marketing' && (
+                  {hasMarketingType && (
                     <FormField
                       control={form.control}
                       name="mrr"

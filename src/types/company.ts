@@ -17,7 +17,7 @@ export type Company = {
   city: string | null;
   postal_code: string | null;
   country: string | null;
-  client_type: 'Marketing' | 'Web' | null;
+  client_type: string[] | null; // Changed from 'Marketing' | 'Web' | null to string[] | null
   mrr: number | null;
   trial_period: boolean | null;
   is_partner: boolean | null;
