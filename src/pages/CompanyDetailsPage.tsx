@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -126,6 +127,10 @@ const CompanyDetailsPage = () => {
     );
   }
 
+  // Parse client_type string to array if needed for logic checks
+  const clientTypeArray = company.client_type ? company.client_type.split(',') : [];
+  const isMarketingType = company.client_type ? company.client_type.includes('Marketing') : false;
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex items-center mb-6">
@@ -242,7 +247,7 @@ const CompanyDetailsPage = () => {
           </Card>
         )}
         
-        {company.client_type === 'Marketing' && company.mrr !== null && (
+        {isMarketingType && company.mrr !== null && (
           <Card>
             <CardHeader className="py-3">
               <CardTitle className="text-sm font-medium text-gray-500">Monthly Revenue</CardTitle>

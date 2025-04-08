@@ -51,21 +51,27 @@ export const companyService = {
   },
   
   // Create company
-  createCompany: async (company: Partial<Company>): Promise<Company> => {
+  createCompany: async (company: Partial<Company> & { client_types?: string[] }): Promise<Company> => {
     // Ensure name field is provided as it's required by the database
     if (!company.name) {
       throw new Error('Company name is required');
     }
     
-    // TypeScript needs to know that company has the 'name' property
-    const companyWithName = { 
-      ...company,
-      name: company.name 
-    };
+    // Handle conversion from client_types array to client_type string
+    const companyData = { ...company };
+    
+    // If client_types exists, convert to a comma-separated string
+    if ('client_types' in companyData) {
+      const clientTypes = companyData.client_types;
+      if (clientTypes && clientTypes.length > 0) {
+        companyData.client_type = clientTypes.join(',');
+      }
+      delete companyData.client_types;
+    }
     
     const { data, error } = await supabase
       .from('companies')
-      .insert(companyWithName)
+      .insert(companyData)
       .select()
       .single();
     
@@ -74,10 +80,22 @@ export const companyService = {
   },
   
   // Update company
-  updateCompany: async (id: string, company: Partial<Company>): Promise<Company> => {
+  updateCompany: async (id: string, company: Partial<Company> & { client_types?: string[] }): Promise<Company> => {
+    // Handle conversion from client_types array to client_type string
+    const companyData = { ...company };
+    
+    // If client_types exists, convert to a comma-separated string
+    if ('client_types' in companyData) {
+      const clientTypes = companyData.client_types;
+      if (clientTypes && clientTypes.length > 0) {
+        companyData.client_type = clientTypes.join(',');
+      }
+      delete companyData.client_types;
+    }
+    
     const { data, error } = await supabase
       .from('companies')
-      .update(company)
+      .update(companyData)
       .eq('id', id)
       .select()
       .single();

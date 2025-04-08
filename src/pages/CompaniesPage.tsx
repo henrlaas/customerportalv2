@@ -67,7 +67,7 @@ import { Edit, Trash } from 'lucide-react';
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
+  const [viewMode, setViewMode<'list' | 'card'>('list');
   const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
   
   const { toast } = useToast();
@@ -107,7 +107,7 @@ const CompaniesPage = () => {
       (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.country && company.country.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    // Updated to handle client_type as a string that may contain multiple types
+    // Handle client_type as a string that may contain multiple types
     const matchesType = clientTypeFilter === 'all' || 
       (company.client_type && company.client_type.includes(clientTypeFilter));
     

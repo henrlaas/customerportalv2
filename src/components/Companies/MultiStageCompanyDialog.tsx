@@ -149,12 +149,13 @@ export function MultiStageCompanyDialog({
   // Create company mutation
   const createCompanyMutation = useMutation({
     mutationFn: (values: CompanyFormValues) => {
-      // Format values for submission
+      // Format values for submission - we pass the client_types array to the service 
+      // which will convert it to the string format the DB expects
       const companyData = {
         ...values,
         logo_url: logo,
         parent_id: values.parent_id || null,
-        client_type: values.client_types.join(','), // Join array into comma-separated string
+        // client_types is passed directly and will be converted in the service
         mrr: hasMarketingType ? values.mrr : null, // Only include MRR if Marketing is selected
       };
       
