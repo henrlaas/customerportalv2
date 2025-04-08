@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Company, CompanyContact } from '@/types/company';
 
@@ -81,25 +80,17 @@ export const companyService = {
     
     // Handle conversion from client_types array to client_type string
     if ('client_types' in companyData && companyData.client_types) {
-      // Ensure we're passing a valid string for the client_type field in DB
-      // We need to check the values to prevent constraint violation
-      if (companyData.client_types.length === 1) {
-        if (companyData.client_types[0] === 'Marketing') {
-          companyData.client_type = 'Marketing';
-        } else if (companyData.client_types[0] === 'Web') {
-          companyData.client_type = 'Web';
-        } else {
-          companyData.client_type = companyData.client_types[0];
-        }
-      } else if (companyData.client_types.length > 1) {
-        // For multiple values, we need to create a valid combination
-        if (companyData.client_types.includes('Marketing') && companyData.client_types.includes('Web')) {
-          companyData.client_type = 'Marketing,Web';
-        } else {
-          companyData.client_type = companyData.client_types.join(',');
-        }
+      // Handle client_type conversion differently to match database constraints
+      if (companyData.client_types.length === 0) {
+        companyData.client_type = null;
+      } else if (companyData.client_types.includes('Marketing') && companyData.client_types.includes('Web')) {
+        companyData.client_type = 'Marketing+Web'; // Use specific format for combined types
+      } else if (companyData.client_types.includes('Marketing')) {
+        companyData.client_type = 'Marketing';
+      } else if (companyData.client_types.includes('Web')) {
+        companyData.client_type = 'Web';
       } else {
-        companyData.client_type = null; // Empty array case
+        companyData.client_type = companyData.client_types[0];
       }
       
       // Remove client_types as it's not a DB field
@@ -132,25 +123,17 @@ export const companyService = {
     
     // Handle conversion from client_types array to client_type string
     if ('client_types' in companyData && companyData.client_types) {
-      // Ensure we're passing a valid string for the client_type field in DB
-      // We need to check the values to prevent constraint violation
-      if (companyData.client_types.length === 1) {
-        if (companyData.client_types[0] === 'Marketing') {
-          companyData.client_type = 'Marketing';
-        } else if (companyData.client_types[0] === 'Web') {
-          companyData.client_type = 'Web';
-        } else {
-          companyData.client_type = companyData.client_types[0];
-        }
-      } else if (companyData.client_types.length > 1) {
-        // For multiple values, we need to create a valid combination
-        if (companyData.client_types.includes('Marketing') && companyData.client_types.includes('Web')) {
-          companyData.client_type = 'Marketing,Web';
-        } else {
-          companyData.client_type = companyData.client_types.join(',');
-        }
+      // Handle client_type conversion differently to match database constraints
+      if (companyData.client_types.length === 0) {
+        companyData.client_type = null;
+      } else if (companyData.client_types.includes('Marketing') && companyData.client_types.includes('Web')) {
+        companyData.client_type = 'Marketing+Web'; // Use specific format for combined types
+      } else if (companyData.client_types.includes('Marketing')) {
+        companyData.client_type = 'Marketing';
+      } else if (companyData.client_types.includes('Web')) {
+        companyData.client_type = 'Web';
       } else {
-        companyData.client_type = null; // Empty array case
+        companyData.client_type = companyData.client_types[0];
       }
       
       // Remove client_types as it's not a DB field
