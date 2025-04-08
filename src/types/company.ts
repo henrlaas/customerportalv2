@@ -17,7 +17,9 @@ export type Company = {
   city: string | null;
   postal_code: string | null;
   country: string | null;
-  client_type: string | null; // Changed back to string | null as the DB stores it as a string
+  client_type: string | null; // Keeping for backward compatibility
+  is_marketing_client: boolean; // New boolean field for marketing
+  is_web_client: boolean; // New boolean field for web
   mrr: number | null;
   trial_period: boolean | null;
   is_partner: boolean | null;

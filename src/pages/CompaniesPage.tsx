@@ -108,9 +108,11 @@ const CompaniesPage = () => {
       (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.country && company.country.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    // Handle client_type as a string that may contain multiple types
-    const matchesType = clientTypeFilter === 'all' || 
-      (company.client_type && company.client_type.includes(clientTypeFilter));
+    // Handle client type filtering using the new boolean fields
+    const matchesType = 
+      clientTypeFilter === 'all' || 
+      (clientTypeFilter === 'Marketing' && company.is_marketing_client) ||
+      (clientTypeFilter === 'Web' && company.is_web_client);
     
     return matchesSearch && matchesType;
   });

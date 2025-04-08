@@ -107,7 +107,9 @@ export type Database = {
           created_at: string
           id: string
           invoice_email: string | null
+          is_marketing_client: boolean | null
           is_partner: boolean | null
+          is_web_client: boolean | null
           logo_url: string | null
           mrr: number | null
           name: string
@@ -129,7 +131,9 @@ export type Database = {
           created_at?: string
           id?: string
           invoice_email?: string | null
+          is_marketing_client?: boolean | null
           is_partner?: boolean | null
+          is_web_client?: boolean | null
           logo_url?: string | null
           mrr?: number | null
           name: string
@@ -151,7 +155,9 @@ export type Database = {
           created_at?: string
           id?: string
           invoice_email?: string | null
+          is_marketing_client?: boolean | null
           is_partner?: boolean | null
+          is_web_client?: boolean | null
           logo_url?: string | null
           mrr?: number | null
           name?: string

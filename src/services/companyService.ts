@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { Company, CompanyContact } from '@/types/company';
 
@@ -11,27 +12,31 @@ export const companyService = {
     
     if (error) throw error;
     
-    // Convert client_type string to array format for frontend
+    // Convert to proper format for frontend
     return data.map(company => ({
       ...company,
-      client_type: company.client_type || null
+      client_type: getClientTypeFromBooleans(company.is_marketing_client, company.is_web_client)
     })) as Company[];
   },
   
   // Get companies filtered by type
   getCompaniesByType: async (type: string): Promise<Company[]> => {
-    const { data, error } = await supabase
-      .from('companies')
-      .select('*')
-      .ilike('client_type', `%${type}%`)
-      .order('name');
+    let query = supabase.from('companies').select('*');
+    
+    // Filter based on the type
+    if (type === 'Marketing') {
+      query = query.eq('is_marketing_client', true);
+    } else if (type === 'Web') {
+      query = query.eq('is_web_client', true);
+    }
+    
+    const { data, error } = await query.order('name');
     
     if (error) throw error;
     
-    // Convert client_type string to array format for frontend
     return data.map(company => ({
       ...company,
-      client_type: company.client_type || null
+      client_type: getClientTypeFromBooleans(company.is_marketing_client, company.is_web_client)
     })) as Company[];
   },
   
@@ -47,7 +52,7 @@ export const companyService = {
     
     return {
       ...data,
-      client_type: data.client_type || null
+      client_type: getClientTypeFromBooleans(data.is_marketing_client, data.is_web_client)
     } as Company;
   },
 
@@ -61,10 +66,9 @@ export const companyService = {
     
     if (error) throw error;
     
-    // Convert client_type string to array format for frontend
     return data.map(company => ({
       ...company,
-      client_type: company.client_type || null
+      client_type: getClientTypeFromBooleans(company.is_marketing_client, company.is_web_client)
     })) as Company[];
   },
   
@@ -78,20 +82,14 @@ export const companyService = {
     // Make a copy of the company data so we don't modify the original
     const companyData: any = { ...company };
     
-    // Handle conversion from client_types array to client_type string
+    // Handle conversion from client_types array to boolean fields
     if ('client_types' in companyData && companyData.client_types) {
-      // Handle client_type conversion differently to match database constraints
-      if (companyData.client_types.length === 0) {
-        companyData.client_type = null;
-      } else if (companyData.client_types.includes('Marketing') && companyData.client_types.includes('Web')) {
-        companyData.client_type = 'Marketing+Web'; // Use specific format for combined types
-      } else if (companyData.client_types.includes('Marketing')) {
-        companyData.client_type = 'Marketing';
-      } else if (companyData.client_types.includes('Web')) {
-        companyData.client_type = 'Web';
-      } else {
-        companyData.client_type = companyData.client_types[0];
-      }
+      // Set the boolean fields based on the selected client types
+      companyData.is_marketing_client = companyData.client_types.includes('Marketing');
+      companyData.is_web_client = companyData.client_types.includes('Web');
+      
+      // Set client_type for backward compatibility
+      companyData.client_type = getClientTypeFromArray(companyData.client_types);
       
       // Remove client_types as it's not a DB field
       delete companyData.client_types;
@@ -112,7 +110,7 @@ export const companyService = {
     
     return {
       ...data,
-      client_type: data.client_type || null
+      client_type: getClientTypeFromBooleans(data.is_marketing_client, data.is_web_client)
     } as Company;
   },
   
@@ -121,20 +119,14 @@ export const companyService = {
     // Make a copy of the company data so we don't modify the original
     const companyData: any = { ...company };
     
-    // Handle conversion from client_types array to client_type string
+    // Handle conversion from client_types array to boolean fields
     if ('client_types' in companyData && companyData.client_types) {
-      // Handle client_type conversion differently to match database constraints
-      if (companyData.client_types.length === 0) {
-        companyData.client_type = null;
-      } else if (companyData.client_types.includes('Marketing') && companyData.client_types.includes('Web')) {
-        companyData.client_type = 'Marketing+Web'; // Use specific format for combined types
-      } else if (companyData.client_types.includes('Marketing')) {
-        companyData.client_type = 'Marketing';
-      } else if (companyData.client_types.includes('Web')) {
-        companyData.client_type = 'Web';
-      } else {
-        companyData.client_type = companyData.client_types[0];
-      }
+      // Set the boolean fields based on the selected client types
+      companyData.is_marketing_client = companyData.client_types.includes('Marketing');
+      companyData.is_web_client = companyData.client_types.includes('Web');
+      
+      // Set client_type for backward compatibility
+      companyData.client_type = getClientTypeFromArray(companyData.client_types);
       
       // Remove client_types as it's not a DB field
       delete companyData.client_types;
@@ -154,7 +146,7 @@ export const companyService = {
     
     return {
       ...data,
-      client_type: data.client_type || null
+      client_type: getClientTypeFromBooleans(data.is_marketing_client, data.is_web_client)
     } as Company;
   },
   
@@ -278,3 +270,29 @@ export const companyService = {
     }
   },
 };
+
+// Helper function to convert boolean fields to client_type string
+function getClientTypeFromBooleans(isMarketing: boolean, isWeb: boolean): string | null {
+  if (isMarketing && isWeb) {
+    return 'Marketing+Web';
+  } else if (isMarketing) {
+    return 'Marketing';
+  } else if (isWeb) {
+    return 'Web';
+  }
+  return null;
+}
+
+// Helper function to convert client_types array to client_type string
+function getClientTypeFromArray(clientTypes: string[]): string | null {
+  if (clientTypes.length === 0) {
+    return null;
+  } else if (clientTypes.includes('Marketing') && clientTypes.includes('Web')) {
+    return 'Marketing+Web';
+  } else if (clientTypes.includes('Marketing')) {
+    return 'Marketing';
+  } else if (clientTypes.includes('Web')) {
+    return 'Web';
+  }
+  return clientTypes[0];
+}
