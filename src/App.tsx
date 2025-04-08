@@ -17,6 +17,7 @@ import { TasksPage } from "./pages/TasksPage";
 import { TaskDetailPage } from "./pages/TaskDetailPage";
 import TimeTrackingPage from "./pages/TimeTrackingPage";
 import CompaniesPage from "./pages/CompaniesPage";
+import CompanyDetailsPage from "./pages/CompanyDetailsPage";
 import { ContractsPage } from "./pages/ContractsPage";
 import DealsPage from "./pages/DealsPage";
 import UserManagementPage from "./pages/UserManagementPage";
@@ -122,6 +123,17 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['admin', 'employee']}>
                   <AppLayout>
                     <CompaniesPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/companies/:companyId"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                  <AppLayout>
+                    <CompanyDetailsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

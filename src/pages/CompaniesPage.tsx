@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +19,7 @@ import {
   MapPin,
   User,
   Calendar,
+  CheckCircle,
 } from 'lucide-react';
 import { 
   Card,
@@ -29,12 +31,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CompanyContactsList } from '@/components/Companies/CompanyContactsList';
-import { CompanyHierarchy } from '@/components/Companies/CompanyHierarchy';
-import { EditCompanyDialog } from '@/components/Companies/EditCompanyDialog';
+import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
 import { companyService } from '@/services/companyService';
 import { Company } from '@/types/company';
-import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,18 +63,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import { Edit, Trash } from 'lucide-react';
+
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('overview');
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
   const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
   
   const { toast } = useToast();
   const { isAdmin, isEmployee } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   
   // Fetch companies
   const { data: companies = [], isLoading } = useQuery({
@@ -89,9 +88,8 @@ const CompaniesPage = () => {
     onSuccess: () => {
       toast({
         title: 'Company deleted',
-        description: 'The company has been deleted',
+        description: 'The company has been successfully deleted',
       });
-      setSelectedCompany(null);
       queryClient.invalidateQueries({ queryKey: ['companies'] });
     },
     onError: (error: any) => {
@@ -118,10 +116,9 @@ const CompaniesPage = () => {
   // Check if user can modify companies (admin or employee)
   const canModify = isAdmin || isEmployee;
   
-  // Handle company click
+  // Handle company click - navigate to details page
   const handleCompanyClick = (company: Company) => {
-    setSelectedCompany(company);
-    setActiveTab('overview');
+    navigate(`/companies/${company.id}`);
   };
   
   // Handle delete confirmation
@@ -234,6 +231,7 @@ const CompaniesPage = () => {
                     <TableHead className="w-[250px]">Company</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Website</TableHead>
+                    <TableHead>Partner</TableHead>
                     <TableHead>Advisor</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -290,6 +288,16 @@ const CompaniesPage = () => {
                         )}
                       </TableCell>
                       <TableCell>
+                        {company.is_partner ? (
+                          <div className="flex items-center">
+                            <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
+                            <span>Partner</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 text-sm">No</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         {company.advisor_id ? (
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-gray-500" />
@@ -312,23 +320,13 @@ const CompaniesPage = () => {
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               <DropdownMenuSeparator />
                               <DropdownMenuGroup>
-                                <DropdownMenuItem onClick={() => {
-                                  setSelectedCompany(company);
-                                  setIsEditing(true);
-                                }}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  <span>Edit</span>
+                                <DropdownMenuItem onClick={() => navigate(`/companies/${company.id}`)}>
+                                  <Users className="mr-2 h-4 w-4" />
+                                  <span>View Details</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleDelete(company.id)}>
                                   <Trash className="mr-2 h-4 w-4" />
                                   <span>Delete</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  setSelectedCompany(company);
-                                  setActiveTab('contacts');
-                                }}>
-                                  <Users className="mr-2 h-4 w-4" />
-                                  <span>View Contacts</span>
                                 </DropdownMenuItem>
                               </DropdownMenuGroup>
                             </DropdownMenuContent>
@@ -365,11 +363,18 @@ const CompaniesPage = () => {
                         )}
                         <div>
                           <CardTitle className="text-base font-medium">{company.name}</CardTitle>
-                          {company.client_type && (
-                            <Badge variant="outline" className={`text-xs mt-1 ${getCompanyTypeColor(company.client_type)}`}>
-                              {company.client_type}
-                            </Badge>
-                          )}
+                          <div className="flex flex-wrap items-center gap-1 mt-1">
+                            {company.client_type && (
+                              <Badge variant="outline" className={`text-xs ${getCompanyTypeColor(company.client_type)}`}>
+                                {company.client_type}
+                              </Badge>
+                            )}
+                            {company.is_partner && (
+                              <Badge variant="outline" className="text-xs bg-green-100 text-green-800">
+                                Partner
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                       {canModify && (
@@ -383,10 +388,9 @@ const CompaniesPage = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedCompany(company);
-                              setIsEditing(true);
+                              navigate(`/companies/${company.id}`);
                             }}>
-                              Edit
+                              View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => {
                               e.stopPropagation();
@@ -453,284 +457,13 @@ const CompaniesPage = () => {
         </CardContent>
       </Card>
       
-      {/* Company Details */}
-      <div className="mt-6">
-        {selectedCompany ? (
-          <div>
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex items-center space-x-4">
-                {selectedCompany.logo_url ? (
-                  <img 
-                    src={selectedCompany.logo_url} 
-                    alt={`${selectedCompany.name} logo`} 
-                    className="w-16 h-16 rounded-lg object-contain bg-white p-1 border"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
-                    <Building className="h-8 w-8 text-gray-500" />
-                  </div>
-                )}
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-bold">{selectedCompany.name}</h2>
-                    {selectedCompany.client_type && (
-                      <Badge variant="outline" className={getCompanyTypeColor(selectedCompany.client_type)}>
-                        {selectedCompany.client_type}
-                      </Badge>
-                    )}
-                  </div>
-                  {selectedCompany.street_address && (
-                    <p className="text-gray-500">
-                      {selectedCompany.street_address}, 
-                      {selectedCompany.city && ` ${selectedCompany.city}`}
-                      {selectedCompany.postal_code && ` ${selectedCompany.postal_code}`}
-                      {selectedCompany.country && `, ${selectedCompany.country}`}
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              {canModify && (
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsEditing(true)}
-                  >
-                    Edit
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => handleDelete(selectedCompany.id)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              {selectedCompany.website && (
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium text-gray-500">Website</CardTitle>
-                  </CardHeader>
-                  <CardContent className="py-0">
-                    <a 
-                      href={selectedCompany.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {selectedCompany.website.replace(/^https?:\/\//, '')}
-                    </a>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {selectedCompany.phone && (
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium text-gray-500">Phone</CardTitle>
-                  </CardHeader>
-                  <CardContent className="py-0">
-                    <p>{selectedCompany.phone}</p>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {selectedCompany.invoice_email && (
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium text-gray-500">Invoice Email</CardTitle>
-                  </CardHeader>
-                  <CardContent className="py-0">
-                    <p>{selectedCompany.invoice_email}</p>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {selectedCompany.client_type === 'Marketing' && selectedCompany.mrr !== null && (
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium text-gray-500">Monthly Revenue</CardTitle>
-                  </CardHeader>
-                  <CardContent className="py-0">
-                    <p>${selectedCompany.mrr}</p>
-                  </CardContent>
-                </Card>
-              )}
-              
-              <Card>
-                <CardHeader className="py-3">
-                  <CardTitle className="text-sm font-medium text-gray-500">Created</CardTitle>
-                </CardHeader>
-                <CardContent className="py-0">
-                  <p>{new Date(selectedCompany.created_at).toLocaleDateString()}</p>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="mb-6">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="contacts" className="flex items-center">
-                  <Users className="h-4 w-4 mr-2" /> Contacts
-                </TabsTrigger>
-                <TabsTrigger value="hierarchy" className="flex items-center">
-                  <Layers className="h-4 w-4 mr-2" /> Hierarchy
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="overview">
-                {/* Overview content */}
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">Recent Activity</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-gray-500">No recent activity to display.</p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">Company Details</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="grid grid-cols-3 gap-1">
-                          <div className="font-medium">Name:</div>
-                          <div className="col-span-2">{selectedCompany.name}</div>
-                        </div>
-                        
-                        {selectedCompany.organization_number && (
-                          <div className="grid grid-cols-3 gap-1">
-                            <div className="font-medium">Organization #:</div>
-                            <div className="col-span-2">{selectedCompany.organization_number}</div>
-                          </div>
-                        )}
-                        
-                        {selectedCompany.website && (
-                          <div className="grid grid-cols-3 gap-1">
-                            <div className="font-medium">Website:</div>
-                            <div className="col-span-2">
-                              <a 
-                                href={selectedCompany.website} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
-                              >
-                                {selectedCompany.website}
-                              </a>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {selectedCompany.phone && (
-                          <div className="grid grid-cols-3 gap-1">
-                            <div className="font-medium">Phone:</div>
-                            <div className="col-span-2">{selectedCompany.phone}</div>
-                          </div>
-                        )}
-                        
-                        {selectedCompany.invoice_email && (
-                          <div className="grid grid-cols-3 gap-1">
-                            <div className="font-medium">Invoice Email:</div>
-                            <div className="col-span-2">{selectedCompany.invoice_email}</div>
-                          </div>
-                        )}
-                        
-                        {selectedCompany.street_address && (
-                          <div className="grid grid-cols-3 gap-1">
-                            <div className="font-medium">Address:</div>
-                            <div className="col-span-2">
-                              {selectedCompany.street_address}<br />
-                              {selectedCompany.city && selectedCompany.city}
-                              {selectedCompany.postal_code && ` ${selectedCompany.postal_code}`}<br />
-                              {selectedCompany.country && selectedCompany.country}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {selectedCompany.client_type && (
-                          <div className="grid grid-cols-3 gap-1">
-                            <div className="font-medium">Client Type:</div>
-                            <div className="col-span-2">{selectedCompany.client_type}</div>
-                          </div>
-                        )}
-                        
-                        {selectedCompany.client_type === 'Marketing' && selectedCompany.mrr !== null && (
-                          <div className="grid grid-cols-3 gap-1">
-                            <div className="font-medium">Monthly Revenue:</div>
-                            <div className="col-span-2">${selectedCompany.mrr}</div>
-                          </div>
-                        )}
-                        
-                        <div className="grid grid-cols-3 gap-1">
-                          <div className="font-medium">Trial Period:</div>
-                          <div className="col-span-2">{selectedCompany.trial_period ? 'Yes' : 'No'}</div>
-                        </div>
-                        
-                        <div className="grid grid-cols-3 gap-1">
-                          <div className="font-medium">Partner:</div>
-                          <div className="col-span-2">{selectedCompany.is_partner ? 'Yes' : 'No'}</div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="contacts">
-                {/* Contacts tab content */}
-                <CompanyContactsList companyId={selectedCompany.id} />
-              </TabsContent>
-              
-              <TabsContent value="hierarchy">
-                {/* Hierarchy tab content */}
-                <CompanyHierarchy 
-                  companyId={selectedCompany.id}
-                  onSelectCompany={handleCompanyClick}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-[50vh] border rounded-lg bg-muted/10">
-            <Building className="h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-xl font-medium text-gray-600 mb-2">No Company Selected</h3>
-            <p className="text-gray-500 text-center max-w-md">
-              Select a company from the list to view details or create a new one.
-            </p>
-            {canModify && (
-              <Button variant="outline" className="mt-6" onClick={() => setIsCreating(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create New Company
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-      
       {/* Multi-Stage Company Creation Dialog */}
       <MultiStageCompanyDialog
         isOpen={isCreating}
         onClose={() => setIsCreating(false)}
       />
-      
-      {/* Edit Company Dialog */}
-      {selectedCompany && (
-        <EditCompanyDialog
-          isOpen={isEditing}
-          onClose={() => setIsEditing(false)}
-          companyId={selectedCompany.id}
-        />
-      )}
     </div>
   );
 };
 
 export default CompaniesPage;
-
-import { Edit, Trash } from 'lucide-react';
