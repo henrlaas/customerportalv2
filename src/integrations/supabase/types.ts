@@ -104,6 +104,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          parent_id: string | null
           phone: string | null
           updated_at: string
           website: string | null
@@ -114,6 +115,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          parent_id?: string | null
           phone?: string | null
           updated_at?: string
           website?: string | null
@@ -124,11 +126,61 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          parent_id?: string | null
           phone?: string | null
           updated_at?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_contacts: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          is_admin: boolean | null
+          is_primary: boolean | null
+          position: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean | null
+          is_primary?: boolean | null
+          position?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean | null
+          is_primary?: boolean | null
+          position?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_members: {
         Row: {
@@ -382,6 +434,7 @@ export type Database = {
           created_at: string
           first_name: string | null
           id: string
+          is_client: boolean | null
           language: string
           last_name: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -392,6 +445,7 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           id: string
+          is_client?: boolean | null
           language?: string
           last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -402,6 +456,7 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           id?: string
+          is_client?: boolean | null
           language?: string
           last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -555,6 +610,10 @@ export type Database = {
       create_admin_user: {
         Args: { admin_email: string }
         Returns: string
+      }
+      get_accessible_companies: {
+        Args: { user_uuid: string }
+        Returns: string[]
       }
       has_role: {
         Args: { requested_role: Database["public"]["Enums"]["user_role"] }

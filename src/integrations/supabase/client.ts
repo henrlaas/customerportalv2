@@ -91,6 +91,38 @@ type CustomDatabase = Database & {
           related_type?: string | null;
         };
       };
+      company_contacts: {
+        Row: {
+          id: string;
+          company_id: string;
+          user_id: string;
+          position: string | null;
+          is_primary: boolean;
+          is_admin: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          user_id: string;
+          position?: string | null;
+          is_primary?: boolean;
+          is_admin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          company_id?: string;
+          user_id?: string;
+          position?: string | null;
+          is_primary?: boolean;
+          is_admin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     } & Database['public']['Tables'];
   };
 }
@@ -102,7 +134,7 @@ export const supabase = createClient<CustomDatabase>(SUPABASE_URL, SUPABASE_PUBL
     detectSessionInUrl: true,
     flowType: 'pkce',
     // Explicitly define the storage mechanism
-    storage: localStorage,
+    storage: typeof localStorage !== 'undefined' ? localStorage : undefined,
   },
   global: {
     headers: {

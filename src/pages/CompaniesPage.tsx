@@ -1,210 +1,60 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   Building, 
   Plus, 
   Search,
-  Globe,
-  Phone,
-  MapPin,
-  MoreVertical,
-  Trash2,
-  Edit,
-  Briefcase,
+  Layers,
   Users
 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import {
+import { 
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-
-// Company form schema
-const companySchema = z.object({
-  name: z.string().min(1, { message: 'Company name is required' }),
-  website: z.string().url().or(z.literal('')).optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  logo_url: z.string().url().or(z.literal('')).optional(),
-});
-
-// Company type matching our database schema
-type Company = {
-  id: string;
-  name: string;
-  website: string | null;
-  phone: string | null;
-  address: string | null;
-  logo_url: string | null;
-  created_at: string;
-  updated_at: string;
-};
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CompanyContactsList } from '@/components/Companies/CompanyContactsList';
+import { CompanyHierarchy } from '@/components/Companies/CompanyHierarchy';
+import { CreateCompanyDialog } from '@/components/Companies/CreateCompanyDialog';
+import { EditCompanyDialog } from '@/components/Companies/EditCompanyDialog';
+import { companyService } from '@/services/companyService';
+import { Company } from '@/types/company';
 
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('overview');
   
   const { toast } = useToast();
   const { isAdmin, isEmployee } = useAuth();
   const queryClient = useQueryClient();
   
-  // Form for creating/editing companies
-  const form = useForm({
-    resolver: zodResolver(companySchema),
-    defaultValues: {
-      name: '',
-      website: '',
-      phone: '',
-      address: '',
-      logo_url: '',
-    },
-  });
-  
   // Fetch companies
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['companies'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('*')
-        .order('name');
-      
-      if (error) {
-        toast({
-          title: 'Error fetching companies',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return [];
-      }
-      
-      return data as Company[];
-    },
-  });
-  
-  // Create company mutation
-  const createMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof companySchema>) => {
-      // Fix: Ensure name is included and not optional in the insert
-      const { data, error } = await supabase
-        .from('companies')
-        .insert([{
-          name: values.name, // Explicit to ensure name is included
-          website: values.website || null,
-          phone: values.phone || null,
-          address: values.address || null,
-          logo_url: values.logo_url || null
-        }])
-        .select();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Company created',
-        description: 'The company has been created successfully.',
-      });
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
-      setIsCreating(false);
-      form.reset();
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error creating company',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-  
-  // Update company mutation
-  const updateMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof companySchema> & { id: string }) => {
-      const { id, ...companyData } = values;
-      const { data, error } = await supabase
-        .from('companies')
-        .update(companyData)
-        .eq('id', id)
-        .select();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Company updated',
-        description: 'The company has been updated successfully.',
-      });
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
-      setIsEditing(false);
-      setCurrentCompany(null);
-      form.reset();
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error updating company',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
+    queryFn: companyService.getCompanies,
   });
   
   // Delete company mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('companies')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
+  const deleteCompanyMutation = useMutation({
+    mutationFn: companyService.deleteCompany,
     onSuccess: () => {
       toast({
         title: 'Company deleted',
-        description: 'The company has been deleted successfully.',
+        description: 'The company has been deleted',
       });
+      setSelectedCompany(null);
       queryClient.invalidateQueries({ queryKey: ['companies'] });
-      setCurrentCompany(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error deleting company',
         description: error.message,
@@ -212,33 +62,6 @@ const CompaniesPage = () => {
       });
     },
   });
-  
-  // Submit handler for the form
-  const onSubmit = (values: z.infer<typeof companySchema>) => {
-    if (isEditing && currentCompany) {
-      updateMutation.mutate({ ...values, id: currentCompany.id });
-    } else {
-      createMutation.mutate(values);
-    }
-  };
-  
-  // Edit company
-  const handleEdit = (company: Company) => {
-    form.reset({
-      name: company.name,
-      website: company.website || '',
-      phone: company.phone || '',
-      address: company.address || '',
-      logo_url: company.logo_url || '',
-    });
-    setCurrentCompany(company);
-    setIsEditing(true);
-  };
-  
-  // Delete company
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
-  };
   
   // Filter companies by search query
   const filteredCompanies = companies.filter(company => 
@@ -249,305 +72,291 @@ const CompaniesPage = () => {
   // Check if user can modify companies (admin or employee)
   const canModify = isAdmin || isEmployee;
   
+  // Handle company click
+  const handleCompanyClick = (company: Company) => {
+    setSelectedCompany(company);
+    setActiveTab('overview');
+  };
+  
+  // Handle delete confirmation
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this company? This will also delete all associated data.')) {
+      deleteCompanyMutation.mutate(id);
+    }
+  };
+  
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Companies</h1>
         {canModify && (
-          <Dialog open={isCreating} onOpenChange={setIsCreating}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Company
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Company</DialogTitle>
-                <DialogDescription>
-                  Add a new company to your database.
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Acme Corporation" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="website"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Website</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://www.example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="+1 (555) 123-4567" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Address</FormLabel>
-                        <FormControl>
-                          <Input placeholder="123 Main St, City, Country" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="logo_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Logo URL</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://example.com/logo.png" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline" onClick={() => form.reset()}>Cancel</Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={createMutation.isPending}>
-                      {createMutation.isPending ? 'Creating...' : 'Create Company'}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setIsCreating(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Company
+          </Button>
         )}
       </div>
       
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            type="search"
-            placeholder="Search companies..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Companies List Sidebar */}
+        <div className="md:col-span-1">
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                type="search"
+                placeholder="Search companies..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>
+          ) : filteredCompanies.length === 0 ? (
+            <div className="text-center p-8 border rounded-lg bg-muted/10">
+              <p>No companies found.</p>
+              {canModify && (
+                <Button variant="outline" className="mt-4" onClick={() => setIsCreating(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Your First Company
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-2">
+              {filteredCompanies.map(company => (
+                <Card 
+                  key={company.id} 
+                  className={`cursor-pointer hover:bg-accent/50 transition-colors ${
+                    selectedCompany?.id === company.id ? 'border-primary bg-accent/50' : ''
+                  }`}
+                  onClick={() => handleCompanyClick(company)}
+                >
+                  <CardHeader className="py-3 px-4">
+                    <div className="flex items-center space-x-3">
+                      {company.logo_url ? (
+                        <img 
+                          src={company.logo_url} 
+                          alt={`${company.name} logo`} 
+                          className="w-8 h-8 rounded-full object-contain"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                          <Building className="h-4 w-4 text-gray-500" />
+                        </div>
+                      )}
+                      <CardTitle className="text-sm font-medium">{company.name}</CardTitle>
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Company Details */}
+        <div className="md:col-span-3">
+          {selectedCompany ? (
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center space-x-4">
+                  {selectedCompany.logo_url ? (
+                    <img 
+                      src={selectedCompany.logo_url} 
+                      alt={`${selectedCompany.name} logo`} 
+                      className="w-16 h-16 rounded-lg object-contain bg-white p-1 border"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
+                      <Building className="h-8 w-8 text-gray-500" />
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="text-2xl font-bold">{selectedCompany.name}</h2>
+                    {selectedCompany.address && (
+                      <p className="text-gray-500">{selectedCompany.address}</p>
+                    )}
+                  </div>
+                </div>
+                
+                {canModify && (
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsEditing(true)}
+                    >
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => handleDelete(selectedCompany.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {selectedCompany.website && (
+                  <Card>
+                    <CardHeader className="py-3">
+                      <CardTitle className="text-sm font-medium text-gray-500">Website</CardTitle>
+                    </CardHeader>
+                    <CardContent className="py-0">
+                      <a 
+                        href={selectedCompany.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {selectedCompany.website.replace(/^https?:\/\//, '')}
+                      </a>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                {selectedCompany.phone && (
+                  <Card>
+                    <CardHeader className="py-3">
+                      <CardTitle className="text-sm font-medium text-gray-500">Phone</CardTitle>
+                    </CardHeader>
+                    <CardContent className="py-0">
+                      <p>{selectedCompany.phone}</p>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-sm font-medium text-gray-500">Created</CardTitle>
+                  </CardHeader>
+                  <CardContent className="py-0">
+                    <p>{new Date(selectedCompany.created_at).toLocaleDateString()}</p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="mb-6">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="contacts" className="flex items-center">
+                    <Users className="h-4 w-4 mr-2" /> Contacts
+                  </TabsTrigger>
+                  <TabsTrigger value="hierarchy" className="flex items-center">
+                    <Layers className="h-4 w-4 mr-2" /> Hierarchy
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="overview">
+                  {/* Overview content */}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Recent Activity</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-gray-500">No recent activity to display.</p>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Company Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="grid grid-cols-3 gap-1">
+                            <div className="font-medium">Name:</div>
+                            <div className="col-span-2">{selectedCompany.name}</div>
+                          </div>
+                          
+                          {selectedCompany.website && (
+                            <div className="grid grid-cols-3 gap-1">
+                              <div className="font-medium">Website:</div>
+                              <div className="col-span-2">
+                                <a 
+                                  href={selectedCompany.website} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  {selectedCompany.website}
+                                </a>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {selectedCompany.phone && (
+                            <div className="grid grid-cols-3 gap-1">
+                              <div className="font-medium">Phone:</div>
+                              <div className="col-span-2">{selectedCompany.phone}</div>
+                            </div>
+                          )}
+                          
+                          {selectedCompany.address && (
+                            <div className="grid grid-cols-3 gap-1">
+                              <div className="font-medium">Address:</div>
+                              <div className="col-span-2">{selectedCompany.address}</div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="contacts">
+                  {/* Contacts tab content */}
+                  <CompanyContactsList companyId={selectedCompany.id} />
+                </TabsContent>
+                
+                <TabsContent value="hierarchy">
+                  {/* Hierarchy tab content */}
+                  <CompanyHierarchy 
+                    companyId={selectedCompany.id}
+                    onSelectCompany={handleCompanyClick}
+                  />
+                </TabsContent>
+              </Tabs>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[50vh] border rounded-lg bg-muted/10">
+              <Building className="h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-xl font-medium text-gray-600 mb-2">No Company Selected</h3>
+              <p className="text-gray-500 text-center max-w-md">
+                Select a company from the list to view details or create a new one.
+              </p>
+              {canModify && (
+                <Button variant="outline" className="mt-6" onClick={() => setIsCreating(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create New Company
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
       
-      {isLoading ? (
-        <div className="flex justify-center p-8">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCompanies.length === 0 ? (
-            <div className="col-span-full text-center p-8 text-gray-500">
-              No companies found. Add your first company to get started.
-            </div>
-          ) : (
-            filteredCompanies.map(company => (
-              <Card key={company.id} className="overflow-hidden">
-                {canModify && (
-                  <div className="absolute right-2 top-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(company)}>
-                          <Edit className="mr-2 h-4 w-4" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleDelete(company.id)}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                )}
-                <CardHeader className="pb-2">
-                  <div className="flex items-center">
-                    {company.logo_url ? (
-                      <img 
-                        src={company.logo_url} 
-                        alt={`${company.name} logo`} 
-                        className="w-10 h-10 rounded object-contain mr-3"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center mr-3">
-                        <Building className="h-6 w-6 text-gray-500" />
-                      </div>
-                    )}
-                    <CardTitle className="text-lg">{company.name}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="pb-2">
-                  <div className="space-y-2 text-sm">
-                    {company.website && (
-                      <div className="flex items-center">
-                        <Globe className="h-4 w-4 mr-2 text-gray-400" />
-                        <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                          {company.website.replace(/^https?:\/\//, '')}
-                        </a>
-                      </div>
-                    )}
-                    {company.phone && (
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                        <span>{company.phone}</span>
-                      </div>
-                    )}
-                    {company.address && (
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                        <span className="text-gray-600">{company.address}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between pt-4 border-t">
-                  <Button variant="outline" size="sm" className="flex gap-1 items-center">
-                    <Briefcase className="h-4 w-4" />
-                    <span>View Deals</span>
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex gap-1 items-center">
-                    <Users className="h-4 w-4" />
-                    <span>Contacts</span>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
+      {/* Create Company Dialog */}
+      <CreateCompanyDialog
+        isOpen={isCreating}
+        onClose={() => setIsCreating(false)}
+      />
       
       {/* Edit Company Dialog */}
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Company</DialogTitle>
-            <DialogDescription>
-              Update the company information.
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Acme Corporation" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="website"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://www.example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+1 (555) 123-4567" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Input placeholder="123 Main St, City, Country" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="logo_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Logo URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://example.com/logo.png" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" onClick={() => {
-                    setIsEditing(false);
-                    setCurrentCompany(null);
-                    form.reset();
-                  }}>
-                    Cancel
-                  </Button>
-                </DialogClose>
-                <Button type="submit" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      {selectedCompany && (
+        <EditCompanyDialog
+          isOpen={isEditing}
+          onClose={() => setIsEditing(false)}
+          companyId={selectedCompany.id}
+        />
+      )}
     </div>
   );
 };
