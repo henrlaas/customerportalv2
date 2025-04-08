@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -455,7 +456,7 @@ const TimeTrackingPage = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">No related task</SelectItem>
+                            <SelectItem value="no-task">No related task</SelectItem>
                             {tasks.map(task => (
                               <SelectItem key={task.id} value={task.id}>
                                 {task.title}
@@ -637,7 +638,7 @@ const TimeTrackingPage = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No related task</SelectItem>
+                        <SelectItem value="no-task">No related task</SelectItem>
                         {tasks.map(task => (
                           <SelectItem key={task.id} value={task.id}>
                             {task.title}
