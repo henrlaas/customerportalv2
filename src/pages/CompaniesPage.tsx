@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -108,7 +107,7 @@ const CompaniesPage = () => {
       (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.country && company.country.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    // Handle client type filtering using the new boolean fields
+    // Handle client type filtering using the boolean fields directly
     const matchesType = 
       clientTypeFilter === 'all' || 
       (clientTypeFilter === 'Marketing' && company.is_marketing_client) ||
@@ -116,13 +115,6 @@ const CompaniesPage = () => {
     
     return matchesSearch && matchesType;
   });
-  
-  // Display client type more elegantly
-  const formatClientType = (typeString: string | null) => {
-    if (!typeString) return null;
-    const types = typeString.split(',');
-    return types.join(' & ');
-  };
   
   // Check if user can modify companies (admin or employee)
   const canModify = isAdmin || isEmployee;
@@ -139,19 +131,9 @@ const CompaniesPage = () => {
     }
   };
   
-  const getCompanyTypeColor = (type: string | null) => {
-    if (!type) return 'bg-gray-100 text-gray-800';
-    
-    if (type.includes('Marketing') && type.includes('Web')) {
-      return 'bg-indigo-100 text-indigo-800';  // Combined type
-    } else if (type.includes('Marketing')) {
-      return 'bg-blue-100 text-blue-800';      // Marketing type
-    } else if (type.includes('Web')) {
-      return 'bg-purple-100 text-purple-800';  // Web type
-    }
-    
-    return 'bg-gray-100 text-gray-800';        // Default
-  };
+  // Define the style for each badge type
+  const getMarketingBadgeStyle = () => "bg-blue-100 text-blue-800";
+  const getWebBadgeStyle = () => "bg-purple-100 text-purple-800";
   
   return (
     <div className="container mx-auto p-6">
@@ -279,11 +261,21 @@ const CompaniesPage = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {company.client_type && (
-                          <Badge variant="outline" className={getCompanyTypeColor(company.client_type)}>
-                            {formatClientType(company.client_type)}
-                          </Badge>
-                        )}
+                        <div className="flex flex-wrap gap-1">
+                          {company.is_marketing_client && (
+                            <Badge variant="outline" className={getMarketingBadgeStyle()}>
+                              Marketing
+                            </Badge>
+                          )}
+                          {company.is_web_client && (
+                            <Badge variant="outline" className={getWebBadgeStyle()}>
+                              Web
+                            </Badge>
+                          )}
+                          {!company.is_marketing_client && !company.is_web_client && (
+                            <span className="text-gray-500 text-sm">None</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {company.website ? (
@@ -378,9 +370,14 @@ const CompaniesPage = () => {
                         <div>
                           <CardTitle className="text-base font-medium">{company.name}</CardTitle>
                           <div className="flex flex-wrap items-center gap-1 mt-1">
-                            {company.client_type && (
-                              <Badge variant="outline" className={`text-xs ${getCompanyTypeColor(company.client_type)}`}>
-                                {formatClientType(company.client_type)}
+                            {company.is_marketing_client && (
+                              <Badge variant="outline" className={`text-xs ${getMarketingBadgeStyle()}`}>
+                                Marketing
+                              </Badge>
+                            )}
+                            {company.is_web_client && (
+                              <Badge variant="outline" className={`text-xs ${getWebBadgeStyle()}`}>
+                                Web
                               </Badge>
                             )}
                             {company.is_partner && (
