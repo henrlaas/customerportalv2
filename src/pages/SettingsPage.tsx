@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,7 +36,6 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { Plus, User, Lock, Bell } from 'lucide-react';
 import FileUploader from '@/components/FileUploader';
 
@@ -48,13 +46,10 @@ const SettingsPage = () => {
 
   // Profile form schema
   const profileSchema = z.object({
-    full_name: z.string().min(2, "Full name must be at least 2 characters").optional(),
-    title: z.string().optional(),
-    phone: z.string().optional(),
-    bio: z.string().optional(),
     first_name: z.string().min(1, "First name is required"),
     last_name: z.string().min(1, "Last name is required"),
     email: z.string().email().optional(),
+    phone: z.string().optional(),
   });
 
   // Password form schema
@@ -83,9 +78,7 @@ const SettingsPage = () => {
       first_name: profile?.first_name || '',
       last_name: profile?.last_name || '',
       email: user?.email || '',
-      title: '',
-      phone: '',
-      bio: '',
+      phone: profile?.phone_number || '',
     },
   });
 
@@ -121,7 +114,7 @@ const SettingsPage = () => {
         .update({
           first_name: values.first_name,
           last_name: values.last_name,
-          // Add more fields to store title, phone, bio in the future
+          phone_number: values.phone, // Updated to use the new phone_number field
         })
         .eq('id', user.id);
 
@@ -311,7 +304,7 @@ const SettingsPage = () => {
               </div>
               
               <h2 className="text-xl font-semibold mt-4">{fullName}</h2>
-              <p className="text-gray-500">Marketing Director</p>
+              <p className="text-gray-500">{profile?.role}</p>
 
               <div className="w-full mt-6 space-y-2">
                 <div className="flex justify-between">
@@ -324,7 +317,7 @@ const SettingsPage = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Phone:</span>
-                  <span className="font-medium">+1 (555) 123-4567</span>
+                  <span className="font-medium">{profile?.phone_number || 'Not set'}</span>
                 </div>
               </div>
             </div>
@@ -403,50 +396,18 @@ const SettingsPage = () => {
                         />
                         <FormField
                           control={profileForm.control}
-                          name="title"
+                          name="phone"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Title</FormLabel>
+                              <FormLabel>Phone Number</FormLabel>
                               <FormControl>
-                                <Input placeholder="Marketing Director" {...field} />
+                                <Input placeholder="+1 (555) 123-4567" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       </div>
-                      
-                      <FormField
-                        control={profileForm.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                              <Input placeholder="+1 (555) 123-4567" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={profileForm.control}
-                        name="bio"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Bio</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Experienced marketing professional with a focus on digital campaigns and brand strategy." 
-                                {...field} 
-                                className="min-h-[100px]"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                       
                       <div className="flex justify-end">
                         <Button type="submit" disabled={profileMutation.isPending}>

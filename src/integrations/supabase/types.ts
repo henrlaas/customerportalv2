@@ -476,6 +476,7 @@ export type Database = {
           is_client: boolean | null
           language: string
           last_name: string | null
+          phone_number: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
@@ -487,6 +488,7 @@ export type Database = {
           is_client?: boolean | null
           language?: string
           last_name?: string | null
+          phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -498,6 +500,7 @@ export type Database = {
           is_client?: boolean | null
           language?: string
           last_name?: string | null
+          phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }

@@ -39,6 +39,19 @@ export const handleUpdateUser = async (
       );
     }
 
+    // If user_metadata.phone_number exists, update the phone_number in profiles table as well
+    if (userData.user_metadata && userData.user_metadata.phone_number) {
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .update({ phone_number: userData.user_metadata.phone_number })
+        .eq('id', userId);
+
+      if (profileError) {
+        console.error(`Error updating profile phone number: ${profileError.message}`);
+        // We don't return an error here since the main user update was successful
+      }
+    }
+
     return new Response(
       JSON.stringify({
         user: updateData.user,
