@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -320,6 +319,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    {/* If there are no campaigns, provide a default option */}
+                    {campaigns.length === 0 && (
+                      <SelectItem value="no-campaigns">No campaigns available</SelectItem>
+                    )}
                     {campaigns.map((campaign) => (
                       <SelectItem key={campaign.id} value={campaign.id}>
                         {campaign.name}
