@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -49,13 +48,6 @@ const CompanyDetailsPage = () => {
     enabled: !!companyId,
   });
   
-  // Format client type for display
-  const formatClientType = (typeString: string | null) => {
-    if (!typeString) return null;
-    const types = typeString.split(',');
-    return types.join(' & ');
-  };
-  
   // Delete company mutation
   const deleteCompanyMutation = useMutation({
     mutationFn: companyService.deleteCompany,
@@ -88,19 +80,10 @@ const CompanyDetailsPage = () => {
     }
   };
   
-  const getCompanyTypeColor = (type: string | null) => {
-    if (!type) return 'bg-gray-100 text-gray-800';
-    
-    if (type.includes('Marketing') && type.includes('Web')) {
-      return 'bg-indigo-100 text-indigo-800';  // Combined type
-    } else if (type.includes('Marketing')) {
-      return 'bg-blue-100 text-blue-800';      // Marketing type
-    } else if (type.includes('Web')) {
-      return 'bg-purple-100 text-purple-800';  // Web type
-    }
-    
-    return 'bg-gray-100 text-gray-800';        // Default
-  };
+  // Define badge styles
+  const getMarketingBadgeStyle = () => "bg-blue-100 text-blue-800";
+  const getWebBadgeStyle = () => "bg-purple-100 text-purple-800";
+  const getPartnerBadgeStyle = () => "bg-green-100 text-green-800";
   
   // Check if user can modify companies (admin or employee)
   const canModify = isAdmin || isEmployee;
@@ -127,10 +110,6 @@ const CompanyDetailsPage = () => {
     );
   }
 
-  // Parse client_type string to array if needed for logic checks
-  const clientTypeArray = company.client_type ? company.client_type.split(',') : [];
-  const isMarketingType = company.client_type ? company.client_type.includes('Marketing') : false;
-
   return (
     <div className="container mx-auto p-6">
       <div className="flex items-center mb-6">
@@ -155,18 +134,25 @@ const CompanyDetailsPage = () => {
             </div>
           )}
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-2xl font-bold">{company.name}</h2>
-              {company.client_type && (
-                <Badge variant="outline" className={getCompanyTypeColor(company.client_type)}>
-                  {formatClientType(company.client_type)}
-                </Badge>
-              )}
-              {company.is_partner && (
-                <Badge variant="outline" className="bg-green-100 text-green-800">
-                  Partner
-                </Badge>
-              )}
+              <div className="flex gap-2">
+                {company.is_marketing_client && (
+                  <Badge variant="outline" className={getMarketingBadgeStyle()}>
+                    Marketing
+                  </Badge>
+                )}
+                {company.is_web_client && (
+                  <Badge variant="outline" className={getWebBadgeStyle()}>
+                    Web
+                  </Badge>
+                )}
+                {company.is_partner && (
+                  <Badge variant="outline" className={getPartnerBadgeStyle()}>
+                    Partner
+                  </Badge>
+                )}
+              </div>
             </div>
             {company.street_address && (
               <p className="text-gray-500">
@@ -247,7 +233,7 @@ const CompanyDetailsPage = () => {
           </Card>
         )}
         
-        {isMarketingType && company.mrr !== null && (
+        {company.is_marketing_client && company.mrr !== null && (
           <Card>
             <CardHeader className="py-3">
               <CardTitle className="text-sm font-medium text-gray-500">Monthly Revenue</CardTitle>
@@ -354,14 +340,28 @@ const CompanyDetailsPage = () => {
                     </div>
                   )}
                   
-                  {company.client_type && (
-                    <div className="grid grid-cols-3 gap-1">
-                      <div className="font-medium">Client Type:</div>
-                      <div className="col-span-2">{company.client_type}</div>
+                  <div className="grid grid-cols-3 gap-1">
+                    <div className="font-medium">Client Type:</div>
+                    <div className="col-span-2">
+                      <div className="flex flex-wrap gap-1">
+                        {company.is_marketing_client && (
+                          <Badge variant="outline" className={getMarketingBadgeStyle()}>
+                            Marketing
+                          </Badge>
+                        )}
+                        {company.is_web_client && (
+                          <Badge variant="outline" className={getWebBadgeStyle()}>
+                            Web
+                          </Badge>
+                        )}
+                        {!company.is_marketing_client && !company.is_web_client && (
+                          <span className="text-gray-500">None</span>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
                   
-                  {company.client_type === 'Marketing' && company.mrr !== null && (
+                  {company.is_marketing_client && company.mrr !== null && (
                     <div className="grid grid-cols-3 gap-1">
                       <div className="font-medium">Monthly Revenue:</div>
                       <div className="col-span-2">${company.mrr}</div>
