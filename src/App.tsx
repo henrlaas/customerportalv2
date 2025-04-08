@@ -14,6 +14,7 @@ import Auth from "./pages/Auth";
 import SetPassword from "./pages/SetPassword";
 import Dashboard from "./pages/Dashboard";
 import { TasksPage } from "./pages/TasksPage";
+import { TaskDetailPage } from "./pages/TaskDetailPage";
 import TimeTrackingPage from "./pages/TimeTrackingPage";
 import CompaniesPage from "./pages/CompaniesPage";
 import { ContractsPage } from "./pages/ContractsPage";
@@ -88,6 +89,17 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <TasksPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/tasks/:taskId"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TaskDetailPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

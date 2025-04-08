@@ -24,6 +24,19 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   },
 });
 
+// Create attachments bucket if it doesn't exist (will be ignored if exists)
+(async () => {
+  try {
+    await supabase.storage.createBucket('attachments', {
+      public: true,
+      fileSizeLimit: 50 * 1024 * 1024, // 50MB
+    });
+    console.log('Attachments bucket created or already exists');
+  } catch (error) {
+    console.error('Error creating attachments bucket:', error);
+  }
+})();
+
 // Helper function to add created_by for any table that needs it
 export const insertWithUser = async <T extends keyof Database["public"]["Tables"]>(
   table: T,

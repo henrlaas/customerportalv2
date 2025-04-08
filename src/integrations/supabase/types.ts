@@ -409,16 +409,59 @@ export type Database = {
         }
         Relationships: []
       }
+      task_attachments: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assigned_to: string | null
           campaign_id: string | null
+          client_visible: boolean | null
           created_at: string
           created_by: string | null
           description: string | null
           due_date: string | null
           id: string
           priority: string
+          related_type: string | null
           status: string
           title: string
           updated_at: string
@@ -426,12 +469,14 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           campaign_id?: string | null
+          client_visible?: boolean | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
           priority?: string
+          related_type?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -439,12 +484,14 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           campaign_id?: string | null
+          client_visible?: boolean | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
           priority?: string
+          related_type?: string | null
           status?: string
           title?: string
           updated_at?: string
