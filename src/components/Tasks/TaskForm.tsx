@@ -263,7 +263,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
                     {profiles.map((contact) => (
                       <SelectItem key={contact.id} value={contact.id}>
                         {`${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown User'}

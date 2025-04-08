@@ -79,11 +79,11 @@ export const TasksPage = () => {
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [filters, setFilters] = useState({
-    status: '',
-    priority: '',
+    status: 'all',
+    priority: 'all',
     search: '',
-    assignee: '',
-    campaign: '',
+    assignee: 'all',
+    campaign: 'all',
   });
   const [showFilters, setShowFilters] = useState(false);
   
@@ -97,19 +97,19 @@ export const TasksPage = () => {
         .order('created_at', { ascending: false });
       
       // Apply filters
-      if (filters.status) {
+      if (filters.status && filters.status !== 'all') {
         query = query.eq('status', filters.status);
       }
-      if (filters.priority) {
+      if (filters.priority && filters.priority !== 'all') {
         query = query.eq('priority', filters.priority);
       }
       if (filters.search) {
         query = query.ilike('title', `%${filters.search}%`);
       }
-      if (filters.assignee) {
+      if (filters.assignee && filters.assignee !== 'all') {
         query = query.eq('assigned_to', filters.assignee);
       }
-      if (filters.campaign) {
+      if (filters.campaign && filters.campaign !== 'all') {
         query = query.eq('campaign_id', filters.campaign);
       }
         
@@ -180,11 +180,11 @@ export const TasksPage = () => {
   // Function to reset all filters
   const resetFilters = () => {
     setFilters({
-      status: '',
-      priority: '',
+      status: 'all',
+      priority: 'all',
       search: '',
-      assignee: '',
-      campaign: '',
+      assignee: 'all',
+      campaign: 'all',
     });
   };
   

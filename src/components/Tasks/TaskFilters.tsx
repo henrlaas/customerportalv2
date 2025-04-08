@@ -56,7 +56,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All statuses</SelectItem>
+            <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="todo">Todo</SelectItem>
             <SelectItem value="in_progress">In Progress</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
@@ -74,7 +74,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
             <SelectValue placeholder="All priorities" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All priorities</SelectItem>
+            <SelectItem value="all">All priorities</SelectItem>
             <SelectItem value="low">Low</SelectItem>
             <SelectItem value="medium">Medium</SelectItem>
             <SelectItem value="high">High</SelectItem>
@@ -92,7 +92,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
             <SelectValue placeholder="All assignees" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All assignees</SelectItem>
+            <SelectItem value="all">All assignees</SelectItem>
             {profiles.map((profile) => (
               <SelectItem key={profile.id} value={profile.id}>
                 {`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'}
@@ -112,7 +112,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
             <SelectValue placeholder="All campaigns" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All campaigns</SelectItem>
+            <SelectItem value="all">All campaigns</SelectItem>
             {campaigns.map((campaign) => (
               <SelectItem key={campaign.id} value={campaign.id}>
                 {campaign.name}
