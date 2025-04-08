@@ -11,7 +11,12 @@ export const companyService = {
       .order('name');
     
     if (error) throw error;
-    return data as Company[];
+    
+    // Convert client_type string to array format for frontend
+    return data.map(company => ({
+      ...company,
+      client_type: company.client_type || null
+    })) as Company[];
   },
   
   // Get companies filtered by type
@@ -19,11 +24,16 @@ export const companyService = {
     const { data, error } = await supabase
       .from('companies')
       .select('*')
-      .eq('client_type', type)
+      .ilike('client_type', `%${type}%`)
       .order('name');
     
     if (error) throw error;
-    return data as Company[];
+    
+    // Convert client_type string to array format for frontend
+    return data.map(company => ({
+      ...company,
+      client_type: company.client_type || null
+    })) as Company[];
   },
   
   // Get a single company by id
@@ -35,7 +45,11 @@ export const companyService = {
       .single();
     
     if (error) throw error;
-    return data as Company;
+    
+    return {
+      ...data,
+      client_type: data.client_type || null
+    } as Company;
   },
 
   // Get child companies
@@ -47,7 +61,12 @@ export const companyService = {
       .order('name');
     
     if (error) throw error;
-    return data as Company[];
+    
+    // Convert client_type string to array format for frontend
+    return data.map(company => ({
+      ...company,
+      client_type: company.client_type || null
+    })) as Company[];
   },
   
   // Create company
@@ -57,17 +76,37 @@ export const companyService = {
       throw new Error('Company name is required');
     }
     
-    // Handle conversion from client_types array to client_type string
-    const companyData = { ...company };
+    // Make a copy of the company data so we don't modify the original
+    const companyData: any = { ...company };
     
-    // If client_types exists, convert to a comma-separated string
-    if ('client_types' in companyData) {
-      const clientTypes = companyData.client_types;
-      if (clientTypes && clientTypes.length > 0) {
-        companyData.client_type = clientTypes.join(',');
+    // Handle conversion from client_types array to client_type string
+    if ('client_types' in companyData && companyData.client_types) {
+      // Ensure we're passing a valid string for the client_type field in DB
+      // We need to check the values to prevent constraint violation
+      if (companyData.client_types.length === 1) {
+        if (companyData.client_types[0] === 'Marketing') {
+          companyData.client_type = 'Marketing';
+        } else if (companyData.client_types[0] === 'Web') {
+          companyData.client_type = 'Web';
+        } else {
+          companyData.client_type = companyData.client_types[0];
+        }
+      } else if (companyData.client_types.length > 1) {
+        // For multiple values, we need to create a valid combination
+        if (companyData.client_types.includes('Marketing') && companyData.client_types.includes('Web')) {
+          companyData.client_type = 'Marketing,Web';
+        } else {
+          companyData.client_type = companyData.client_types.join(',');
+        }
+      } else {
+        companyData.client_type = null; // Empty array case
       }
+      
+      // Remove client_types as it's not a DB field
       delete companyData.client_types;
     }
+    
+    console.log('Creating company with data:', companyData);
     
     const { data, error } = await supabase
       .from('companies')
@@ -75,21 +114,46 @@ export const companyService = {
       .select()
       .single();
     
-    if (error) throw error;
-    return data as Company;
+    if (error) {
+      console.error('Error creating company:', error);
+      throw error;
+    }
+    
+    return {
+      ...data,
+      client_type: data.client_type || null
+    } as Company;
   },
   
   // Update company
   updateCompany: async (id: string, company: Partial<Company> & { client_types?: string[] }): Promise<Company> => {
-    // Handle conversion from client_types array to client_type string
-    const companyData = { ...company };
+    // Make a copy of the company data so we don't modify the original
+    const companyData: any = { ...company };
     
-    // If client_types exists, convert to a comma-separated string
-    if ('client_types' in companyData) {
-      const clientTypes = companyData.client_types;
-      if (clientTypes && clientTypes.length > 0) {
-        companyData.client_type = clientTypes.join(',');
+    // Handle conversion from client_types array to client_type string
+    if ('client_types' in companyData && companyData.client_types) {
+      // Ensure we're passing a valid string for the client_type field in DB
+      // We need to check the values to prevent constraint violation
+      if (companyData.client_types.length === 1) {
+        if (companyData.client_types[0] === 'Marketing') {
+          companyData.client_type = 'Marketing';
+        } else if (companyData.client_types[0] === 'Web') {
+          companyData.client_type = 'Web';
+        } else {
+          companyData.client_type = companyData.client_types[0];
+        }
+      } else if (companyData.client_types.length > 1) {
+        // For multiple values, we need to create a valid combination
+        if (companyData.client_types.includes('Marketing') && companyData.client_types.includes('Web')) {
+          companyData.client_type = 'Marketing,Web';
+        } else {
+          companyData.client_type = companyData.client_types.join(',');
+        }
+      } else {
+        companyData.client_type = null; // Empty array case
       }
+      
+      // Remove client_types as it's not a DB field
       delete companyData.client_types;
     }
     
@@ -100,8 +164,15 @@ export const companyService = {
       .select()
       .single();
     
-    if (error) throw error;
-    return data as Company;
+    if (error) {
+      console.error('Error updating company:', error);
+      throw error;
+    }
+    
+    return {
+      ...data,
+      client_type: data.client_type || null
+    } as Company;
   },
   
   // Delete company
@@ -195,11 +266,25 @@ export const companyService = {
   // Fetch website favicon
   fetchFavicon: async (website: string): Promise<string | null> => {
     try {
+      // Check if website is empty or not a valid URL
+      if (!website || !website.trim()) {
+        return null;
+      }
+      
       // Extract domain from website URL
       let domain = website;
-      if (website.startsWith('http')) {
-        const url = new URL(website);
+      
+      // Make sure we have a valid URL by checking for protocol
+      if (!website.startsWith('http://') && !website.startsWith('https://')) {
+        domain = 'https://' + website;
+      }
+      
+      try {
+        const url = new URL(domain);
         domain = url.hostname;
+      } catch (error) {
+        console.error('Invalid URL:', domain);
+        return null;
       }
       
       // Use Google's favicon service

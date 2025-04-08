@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -149,13 +148,13 @@ export function MultiStageCompanyDialog({
   // Create company mutation
   const createCompanyMutation = useMutation({
     mutationFn: (values: CompanyFormValues) => {
-      // Format values for submission - we pass the client_types array to the service 
-      // which will convert it to the string format the DB expects
+      // Format values for submission
       const companyData = {
         ...values,
         logo_url: logo,
         parent_id: values.parent_id || null,
-        // client_types is passed directly and will be converted in the service
+        // Pass client_types directly - the service will handle conversion
+        client_types: values.client_types,
         mrr: hasMarketingType ? values.mrr : null, // Only include MRR if Marketing is selected
       };
       
