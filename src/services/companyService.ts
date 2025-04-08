@@ -50,11 +50,16 @@ export const companyService = {
     return data as Company[];
   },
   
-  // Create company - Fixed the type error by specifying proper type
+  // Create company - Fixed type issue by not using an array for single insert
   createCompany: async (company: Partial<Company>): Promise<Company> => {
+    // Ensure name field is provided as it's required by the database
+    if (!company.name) {
+      throw new Error('Company name is required');
+    }
+    
     const { data, error } = await supabase
       .from('companies')
-      .insert([company]) // Fixed: Wrap in an array with the expected type
+      .insert(company) // Don't wrap in array for single insert
       .select()
       .single();
     
@@ -85,7 +90,7 @@ export const companyService = {
     if (error) throw error;
   },
   
-  // Get company contacts - Fixed the query to properly join user data
+  // Get company contacts - Fixed the query to properly handle join data
   getCompanyContacts: async (companyId: string): Promise<CompanyContact[]> => {
     const { data, error } = await supabase
       .from('company_contacts')
@@ -105,16 +110,17 @@ export const companyService = {
     if (error) throw error;
 
     // Process the nested data to flatten the structure
+    // Cast with type assertion to help TypeScript understand the structure
     return data.map(item => ({
       ...item,
-      email: item.auth_user?.email,
-      first_name: item.profile?.first_name,
-      last_name: item.profile?.last_name,
-      avatar_url: item.profile?.avatar_url,
-    })) as CompanyContact[];
+      email: item.auth_user?.email || '',
+      first_name: item.profile?.first_name || null,
+      last_name: item.profile?.last_name || null,
+      avatar_url: item.profile?.avatar_url || null,
+    })) as unknown as CompanyContact[];
   },
 
-  // Add contact to company - Fixed the type error by specifying proper type
+  // Add contact to company - Fixed type issue
   addCompanyContact: async (contact: Partial<CompanyContact>): Promise<CompanyContact> => {
     // Ensure required fields are present
     if (!contact.company_id || !contact.user_id) {
@@ -123,7 +129,7 @@ export const companyService = {
     
     const { data, error } = await supabase
       .from('company_contacts')
-      .insert([contact]) // Fixed: Wrap in an array with the expected type
+      .insert(contact) // Don't wrap in array for single insert
       .select()
       .single();
     
