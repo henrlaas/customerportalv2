@@ -14,6 +14,7 @@ type Profile = {
   language: string;
   created_at: string;
   updated_at: string;
+  phone_number: string | null;
 }
 
 type AuthContextType = {

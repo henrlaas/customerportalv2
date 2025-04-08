@@ -1,27 +1,25 @@
 
 import * as z from 'zod';
 
-// Define the schema for the invite form
-export const inviteSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  firstName: z.string().min(1, { message: 'First name is required' }),
-  lastName: z.string().min(1, { message: 'Last name is required' }),
-  role: z.enum(['admin', 'employee'], { 
-    required_error: 'Please select a role' 
-  }),
-  team: z.string().min(1, { message: 'Team is required' }),
-  language: z.enum(['en', 'no'], {
-    required_error: 'Please select a language'
-  }),
+export const userSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  phone: z.string().optional(),
+  role: z.string().optional(),
+  team: z.string().optional(),
 });
 
-export type InviteFormValues = z.infer<typeof inviteSchema>;
+export const inviteUserSchema = userSchema;
 
-// Define schema for editing users
 export const editUserSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  firstName: z.string().min(1, { message: 'First name is required' }),
-  lastName: z.string().min(1, { message: 'Last name is required' }),
+  email: z.string().email('Please enter a valid email address').optional(),
+  firstName: z.string().min(1, 'First name is required').optional(),
+  lastName: z.string().min(1, 'Last name is required').optional(),
+  phone: z.string().optional(),
+  role: z.string().optional(),
+  team: z.string().optional(),
 });
 
 export type EditUserFormValues = z.infer<typeof editUserSchema>;
+export type InviteUserFormValues = z.infer<typeof userSchema>;
