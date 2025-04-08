@@ -2,7 +2,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { InviteFormValues } from '@/schemas/userSchemas';
+import { InviteUserFormValues } from '@/schemas/userSchemas';
 
 interface UseInviteUserProps {
   onSuccess?: () => void;
@@ -12,7 +12,7 @@ export function useInviteUser({ onSuccess }: UseInviteUserProps = {}) {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async (data: InviteFormValues) => {
+    mutationFn: async (data: InviteUserFormValues) => {
       const response = await supabase.functions.invoke('user-management', {
         body: {
           action: 'invite',

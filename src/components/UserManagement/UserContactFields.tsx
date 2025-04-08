@@ -9,10 +9,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { UseFormReturn } from 'react-hook-form';
-import { InviteFormValues } from '@/schemas/userSchemas';
+import { InviteUserFormValues } from '@/schemas/userSchemas';
 
 interface UserContactFieldsProps {
-  form: UseFormReturn<InviteFormValues>;
+  form: UseFormReturn<InviteUserFormValues>;
 }
 
 export function UserContactFields({ form }: UserContactFieldsProps) {

@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { inviteSchema, InviteFormValues } from '@/schemas/userSchemas';
+import { inviteUserSchema, InviteUserFormValues } from '@/schemas/userSchemas';
 import { useInviteUser } from '@/hooks/useInviteUser';
 import { UserContactFields } from './UserManagement/UserContactFields';
 import { UserRoleSelect } from './UserManagement/UserRoleSelect';
@@ -19,8 +19,8 @@ interface UserManagementProps {
 export function UserManagement({ onSuccess }: UserManagementProps) {
   const t = useTranslation();
   
-  const form = useForm<InviteFormValues>({
-    resolver: zodResolver(inviteSchema),
+  const form = useForm<InviteUserFormValues>({
+    resolver: zodResolver(inviteUserSchema),
     defaultValues: {
       email: '',
       firstName: '',
@@ -40,7 +40,7 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
     }
   });
 
-  const onSubmit = (data: InviteFormValues) => {
+  const onSubmit = (data: InviteUserFormValues) => {
     inviteUserMutation.mutate(data);
   };
 

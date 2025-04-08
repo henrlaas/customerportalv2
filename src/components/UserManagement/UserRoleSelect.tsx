@@ -15,10 +15,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { UseFormReturn } from 'react-hook-form';
-import { InviteFormValues } from '@/schemas/userSchemas';
+import { InviteUserFormValues } from '@/schemas/userSchemas';
 
 interface UserRoleSelectProps {
-  form: UseFormReturn<InviteFormValues>;
+  form: UseFormReturn<InviteUserFormValues>;
 }
 
 export function UserRoleSelect({ form }: UserRoleSelectProps) {

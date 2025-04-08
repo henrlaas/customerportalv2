@@ -8,7 +8,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { UseFormReturn } from 'react-hook-form';
-import { InviteFormValues } from '@/schemas/userSchemas';
+import { InviteUserFormValues } from '@/schemas/userSchemas';
 import {
   Select,
   SelectContent,
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 
 interface LanguageSelectProps {
-  form: UseFormReturn<InviteFormValues>;
+  form: UseFormReturn<InviteUserFormValues>;
 }
 
 export function LanguageSelect({ form }: LanguageSelectProps) {
