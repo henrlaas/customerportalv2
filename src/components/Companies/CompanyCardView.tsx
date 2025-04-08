@@ -78,8 +78,17 @@ export const CompanyCardView = ({ companies, onCompanyClick }: CompanyCardViewPr
     return {
       name: `${advisor.user_metadata?.first_name || ''} ${advisor.user_metadata?.last_name || ''}`.trim() || advisor.email,
       email: advisor.email,
-      avatarUrl: advisor.user_metadata?.avatar_url
+      // Use initials for avatar fallback since we don't have avatar_url in user_metadata
+      initials: getInitials(advisor.user_metadata?.first_name, advisor.user_metadata?.last_name)
     };
+  };
+  
+  // Helper function to get initials from name
+  const getInitials = (firstName?: string, lastName?: string): string => {
+    let initials = '';
+    if (firstName) initials += firstName.charAt(0).toUpperCase();
+    if (lastName) initials += lastName.charAt(0).toUpperCase();
+    return initials || '??';
   };
   
   return (
@@ -197,13 +206,9 @@ export const CompanyCardView = ({ companies, onCompanyClick }: CompanyCardViewPr
                     <User className="h-3.5 w-3.5" />
                     <div className="flex items-center gap-2">
                       <Avatar className="h-5 w-5">
-                        {advisorDetails.avatarUrl ? (
-                          <AvatarImage src={advisorDetails.avatarUrl} alt={advisorDetails.name} />
-                        ) : (
-                          <AvatarFallback className="text-xs">
-                            {advisorDetails.name.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        )}
+                        <AvatarFallback className="text-xs">
+                          {advisorDetails.initials}
+                        </AvatarFallback>
                       </Avatar>
                       <span>{advisorDetails.name}</span>
                     </div>
