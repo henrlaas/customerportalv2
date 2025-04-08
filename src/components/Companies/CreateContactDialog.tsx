@@ -26,6 +26,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
 
 // Form schema
 const contactFormSchema = z.object({

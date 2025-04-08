@@ -14,6 +14,18 @@ export const companyService = {
     return data as Company[];
   },
   
+  // Get companies filtered by type
+  getCompaniesByType: async (type: string): Promise<Company[]> => {
+    const { data, error } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('client_type', type)
+      .order('name');
+    
+    if (error) throw error;
+    return data as Company[];
+  },
+  
   // Get a single company by id
   getCompany: async (id: string): Promise<Company> => {
     const { data, error } = await supabase
@@ -135,5 +147,23 @@ export const companyService = {
       .eq('id', id);
     
     if (error) throw error;
-  }
+  },
+  
+  // Fetch website favicon
+  fetchFavicon: async (website: string): Promise<string | null> => {
+    try {
+      // Extract domain from website URL
+      let domain = website;
+      if (website.startsWith('http')) {
+        const url = new URL(website);
+        domain = url.hostname;
+      }
+      
+      // Use Google's favicon service
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    } catch (error) {
+      console.error('Error fetching favicon:', error);
+      return null;
+    }
+  },
 };

@@ -100,34 +100,67 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          advisor_id: string | null
+          city: string | null
+          client_type: string | null
+          country: string | null
           created_at: string
           id: string
+          invoice_email: string | null
+          is_partner: boolean | null
           logo_url: string | null
+          mrr: number | null
           name: string
+          organization_number: string | null
           parent_id: string | null
           phone: string | null
+          postal_code: string | null
+          street_address: string | null
+          trial_period: boolean | null
           updated_at: string
           website: string | null
         }
         Insert: {
           address?: string | null
+          advisor_id?: string | null
+          city?: string | null
+          client_type?: string | null
+          country?: string | null
           created_at?: string
           id?: string
+          invoice_email?: string | null
+          is_partner?: boolean | null
           logo_url?: string | null
+          mrr?: number | null
           name: string
+          organization_number?: string | null
           parent_id?: string | null
           phone?: string | null
+          postal_code?: string | null
+          street_address?: string | null
+          trial_period?: boolean | null
           updated_at?: string
           website?: string | null
         }
         Update: {
           address?: string | null
+          advisor_id?: string | null
+          city?: string | null
+          client_type?: string | null
+          country?: string | null
           created_at?: string
           id?: string
+          invoice_email?: string | null
+          is_partner?: boolean | null
           logo_url?: string | null
+          mrr?: number | null
           name?: string
+          organization_number?: string | null
           parent_id?: string | null
           phone?: string | null
+          postal_code?: string | null
+          street_address?: string | null
+          trial_period?: boolean | null
           updated_at?: string
           website?: string | null
         }

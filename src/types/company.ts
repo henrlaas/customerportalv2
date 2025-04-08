@@ -10,6 +10,18 @@ export type Company = {
   parent_id: string | null;
   created_at: string;
   updated_at: string;
+  // New fields
+  organization_number: string | null;
+  invoice_email: string | null;
+  street_address: string | null;
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
+  client_type: 'Marketing' | 'Web' | null;
+  mrr: number | null;
+  trial_period: boolean | null;
+  is_partner: boolean | null;
+  advisor_id: string | null;
 };
 
 // Company contact type matching our database schema
