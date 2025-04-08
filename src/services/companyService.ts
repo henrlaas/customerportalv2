@@ -50,16 +50,22 @@ export const companyService = {
     return data as Company[];
   },
   
-  // Create company - Fixed type issue by not using an array for single insert
+  // Create company
   createCompany: async (company: Partial<Company>): Promise<Company> => {
     // Ensure name field is provided as it's required by the database
     if (!company.name) {
       throw new Error('Company name is required');
     }
     
+    // TypeScript needs to know that company has the 'name' property
+    const companyWithName = { 
+      ...company,
+      name: company.name 
+    };
+    
     const { data, error } = await supabase
       .from('companies')
-      .insert(company) // Don't wrap in array for single insert
+      .insert(companyWithName)
       .select()
       .single();
     
@@ -90,7 +96,7 @@ export const companyService = {
     if (error) throw error;
   },
   
-  // Get company contacts - Fixed the query to properly handle join data
+  // Get company contacts
   getCompanyContacts: async (companyId: string): Promise<CompanyContact[]> => {
     const { data, error } = await supabase
       .from('company_contacts')
@@ -109,27 +115,35 @@ export const companyService = {
     
     if (error) throw error;
 
-    // Process the nested data to flatten the structure
-    // Cast with type assertion to help TypeScript understand the structure
-    return data.map(item => ({
+    // Process the nested data to flatten the structure and ensure type safety
+    return data.map((item: any) => ({
       ...item,
       email: item.auth_user?.email || '',
       first_name: item.profile?.first_name || null,
       last_name: item.profile?.last_name || null,
       avatar_url: item.profile?.avatar_url || null,
-    })) as unknown as CompanyContact[];
+    })) as CompanyContact[];
   },
 
-  // Add contact to company - Fixed type issue
+  // Add contact to company
   addCompanyContact: async (contact: Partial<CompanyContact>): Promise<CompanyContact> => {
     // Ensure required fields are present
     if (!contact.company_id || !contact.user_id) {
       throw new Error("Company ID and User ID are required");
     }
     
+    // Create a properly typed object with required fields explicitly set
+    const contactData = {
+      company_id: contact.company_id,
+      user_id: contact.user_id,
+      position: contact.position,
+      is_primary: contact.is_primary || false,
+      is_admin: contact.is_admin || false,
+    };
+    
     const { data, error } = await supabase
       .from('company_contacts')
-      .insert(contact) // Don't wrap in array for single insert
+      .insert(contactData)
       .select()
       .single();
     
