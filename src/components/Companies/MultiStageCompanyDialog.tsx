@@ -90,9 +90,10 @@ export function MultiStageCompanyDialog({
   
   const totalStages = 3;
   
+  // Fix: Change getUsers to listUsers to match the userService API
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => userService.getUsers(['admin', 'employee']),
+    queryFn: () => userService.listUsers(),
   });
   
   // Create form with all fields

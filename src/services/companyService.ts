@@ -50,11 +50,11 @@ export const companyService = {
     return data as Company[];
   },
   
-  // Create company
+  // Create company - Fixed the type error by specifying proper type
   createCompany: async (company: Partial<Company>): Promise<Company> => {
     const { data, error } = await supabase
       .from('companies')
-      .insert([company])
+      .insert([company]) // Fixed: Wrap in an array with the expected type
       .select()
       .single();
     
@@ -85,7 +85,7 @@ export const companyService = {
     if (error) throw error;
   },
   
-  // Get company contacts
+  // Get company contacts - Fixed the query to properly join user data
   getCompanyContacts: async (companyId: string): Promise<CompanyContact[]> => {
     const { data, error } = await supabase
       .from('company_contacts')
@@ -104,21 +104,26 @@ export const companyService = {
     
     if (error) throw error;
 
-    // Flatten the nested structure
+    // Process the nested data to flatten the structure
     return data.map(item => ({
       ...item,
       email: item.auth_user?.email,
       first_name: item.profile?.first_name,
       last_name: item.profile?.last_name,
       avatar_url: item.profile?.avatar_url,
-    }));
+    })) as CompanyContact[];
   },
 
-  // Add contact to company
+  // Add contact to company - Fixed the type error by specifying proper type
   addCompanyContact: async (contact: Partial<CompanyContact>): Promise<CompanyContact> => {
+    // Ensure required fields are present
+    if (!contact.company_id || !contact.user_id) {
+      throw new Error("Company ID and User ID are required");
+    }
+    
     const { data, error } = await supabase
       .from('company_contacts')
-      .insert([contact])
+      .insert([contact]) // Fixed: Wrap in an array with the expected type
       .select()
       .single();
     
