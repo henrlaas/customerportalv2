@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -67,7 +68,7 @@ import { Edit, Trash } from 'lucide-react';
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode<'list' | 'card'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
   const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
   
   const { toast } = useToast();
