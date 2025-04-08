@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -114,6 +113,14 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
       if (existingTimer) {
         throw new Error('You already have an active timer');
       }
+
+      // Get current user ID for the time entry
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
       
       // Create new time entry
       const { data, error } = await supabase
@@ -121,6 +128,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
         .insert({
           task_id: taskId,
           start_time: new Date().toISOString(),
+          user_id: userId
         })
         .select()
         .single();

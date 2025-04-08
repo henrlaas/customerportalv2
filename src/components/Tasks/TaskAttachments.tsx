@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,7 +46,8 @@ export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
   const { data: attachments = [], isLoading } = useQuery({
     queryKey: ['task-attachments', taskId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Cast to any first to allow using "task_attachments" table
+      const { data, error } = await (supabase as any)
         .from('task_attachments')
         .select('*')
         .eq('task_id', taskId)
@@ -69,6 +69,14 @@ export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
   // Handle file upload
   const handleUpload = async (file: File) => {
     try {
+      // Get current user ID
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+      
       // Generate a unique filename to prevent collisions
       const timestamp = new Date().getTime();
       const fileExt = file.name.split('.').pop();
@@ -88,7 +96,7 @@ export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
         .getPublicUrl(filePath);
       
       // Create database record
-      const { error: insertError } = await supabase
+      const { error: insertError } = await (supabase as any)
         .from('task_attachments')
         .insert({
           task_id: taskId,
@@ -96,6 +104,7 @@ export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
           file_size: file.size,
           file_type: file.type,
           file_url: publicUrlData.publicUrl,
+          created_by: userId
         });
       
       if (insertError) throw insertError;
@@ -118,7 +127,7 @@ export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
   const deleteAttachmentMutation = useMutation({
     mutationFn: async (attachmentId: string) => {
       // Get the attachment details first
-      const { data: attachment, error: fetchError } = await supabase
+      const { data: attachment, error: fetchError } = await (supabase as any)
         .from('task_attachments')
         .select('file_url')
         .eq('id', attachmentId)
@@ -127,7 +136,7 @@ export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
       if (fetchError) throw fetchError;
       
       // Extract path from URL
-      const fileUrl = attachment.file_url;
+      const fileUrl = attachment.file_url as string;
       const path = fileUrl.split('/').slice(-2).join('/');
       
       // Delete from storage first (best effort, don't block if fails)
@@ -140,7 +149,7 @@ export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
       }
       
       // Delete database record
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await (supabase as any)
         .from('task_attachments')
         .delete()
         .eq('id', attachmentId);

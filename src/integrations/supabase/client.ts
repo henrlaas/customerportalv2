@@ -8,7 +8,94 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Get current site URL dynamically
 const SITE_URL = typeof window !== 'undefined' ? window.location.origin : '';
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+// Create a custom type that extends the Database type with our tables that might not be in the types.ts yet
+type CustomDatabase = Database & {
+  public: {
+    Tables: {
+      task_attachments: {
+        Row: {
+          id: string;
+          task_id: string;
+          file_name: string;
+          file_size: number;
+          file_type: string;
+          file_url: string;
+          created_at: string | null;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          file_name: string;
+          file_size: number;
+          file_type: string;
+          file_url: string;
+          created_at?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          task_id?: string;
+          file_name?: string;
+          file_size?: number;
+          file_type?: string;
+          file_url?: string;
+          created_at?: string | null;
+          created_by?: string | null;
+        };
+      };
+      tasks: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          status: string;
+          priority: string;
+          due_date: string | null;
+          campaign_id: string | null;
+          assigned_to: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+          client_visible: boolean | null;
+          related_type: string | null;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          status?: string;
+          priority?: string;
+          due_date?: string | null;
+          campaign_id?: string | null;
+          assigned_to?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          client_visible?: boolean | null;
+          related_type?: string | null;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          description?: string | null;
+          status?: string;
+          priority?: string;
+          due_date?: string | null;
+          campaign_id?: string | null;
+          assigned_to?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          client_visible?: boolean | null;
+          related_type?: string | null;
+        };
+      };
+    } & Database['public']['Tables'];
+  };
+}
+
+export const supabase = createClient<CustomDatabase>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -38,7 +125,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 })();
 
 // Helper function to add created_by for any table that needs it
-export const insertWithUser = async <T extends keyof Database["public"]["Tables"]>(
+export const insertWithUser = async <T extends keyof CustomDatabase["public"]["Tables"]>(
   table: T,
   data: Record<string, any>
 ) => {
@@ -58,7 +145,7 @@ export const insertWithUser = async <T extends keyof Database["public"]["Tables"
 };
 
 // Helper function to update with user check
-export const updateWithUser = async <T extends keyof Database["public"]["Tables"]>(
+export const updateWithUser = async <T extends keyof CustomDatabase["public"]["Tables"]>(
   table: T,
   id: string,
   data: Record<string, any>

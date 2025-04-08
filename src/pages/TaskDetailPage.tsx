@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -183,7 +182,7 @@ export const TaskDetailPage = () => {
     mutationFn: async () => {
       if (!taskId || !task) throw new Error('Task ID or data is missing');
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('tasks')
         .update({ client_visible: !task.client_visible })
         .eq('id', taskId);
