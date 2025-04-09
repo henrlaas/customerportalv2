@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,7 +14,9 @@ import {
   Trash2, 
   Phone,
   Mail,
-  Calendar
+  Calendar,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -116,11 +119,13 @@ export const CompanyHierarchyItem = ({
           <div className="flex items-center gap-3 flex-grow">
             {/* Company Name and Icon */}
             <div 
-              className={`flex items-center gap-2 py-1 flex-grow cursor-pointer ${isActive ? 'text-primary font-medium' : ''}`}
-              onClick={() => depth === 0 ? onSelectCompany(company) : handleToggleSubsidiary()}
+              className={`flex items-center gap-2 py-1 flex-grow ${isActive ? 'text-primary font-medium' : ''}`}
             >
               <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} ${isActive ? 'text-primary' : 'text-gray-500'}`} />
-              <span className={`${depth > 0 ? 'text-sm font-medium' : 'text-base font-medium'}`}>
+              <span 
+                className={`${depth > 0 ? 'text-sm font-medium' : 'text-base font-medium'} cursor-pointer`}
+                onClick={() => depth === 0 ? onSelectCompany(company) : null}
+              >
                 {company.name}
               </span>
             </div>
@@ -152,51 +157,56 @@ export const CompanyHierarchyItem = ({
             )}
           </div>
           
-          {/* Actions */}
-          {canModify && (
-            <div className="flex gap-1">
-              {onEditCompany && (
+          {/* Chevron for Subsidiary Details and Actions */}
+          <div className="flex items-center gap-1">
+            {/* Chevron button for subsidiaries */}
+            {depth > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDetails(true);
+                }}
+                aria-label="View details"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+            
+            {/* Actions */}
+            {canModify && (
+              <div className="flex gap-1">
+                {onEditCompany && (
+                  <Button 
+                    variant="ghost" 
+                    size={depth > 0 ? "sm" : "default"} 
+                    className={depth > 0 ? "h-7 w-7 p-0" : ""}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditCompany();
+                    }}
+                    aria-label="Edit company"
+                  >
+                    <Edit className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                  </Button>
+                )}
                 <Button 
                   variant="ghost" 
-                  size={depth > 0 ? "sm" : "default"} 
+                  size={depth > 0 ? "sm" : "default"}
                   className={depth > 0 ? "h-7 w-7 p-0" : ""}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditCompany();
+                    handleDeleteCompany(company.id);
                   }}
-                  aria-label="Edit company"
+                  aria-label="Delete company"
                 >
-                  <Edit className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                  <Trash2 className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
                 </Button>
-              )}
-              <Button 
-                variant="ghost" 
-                size={depth > 0 ? "sm" : "default"}
-                className={depth > 0 ? "h-7 w-7 p-0" : ""}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteCompany(company.id);
-                }}
-                aria-label="Delete company"
-              >
-                <Trash2 className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
-              </Button>
-              {depth > 0 && !isActive && (
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  className="ml-2 hidden sm:flex"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowDetails(true);
-                  }}
-                  aria-label="View details"
-                >
-                  View Details
-                </Button>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Expanded Subsidiary Information */}
@@ -259,7 +269,7 @@ export const CompanyHierarchyItem = ({
         )}
       </div>
 
-      {/* Company Details Dialog/Sheet */}
+      {/* Company Details Sheet */}
       <Sheet open={showDetails} onOpenChange={setShowDetails}>
         <SheetContent className="overflow-y-auto">
           <SheetHeader className="mb-6">
