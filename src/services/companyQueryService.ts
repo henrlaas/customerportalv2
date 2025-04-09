@@ -61,31 +61,42 @@ export const companyQueryService = {
     return data.map(company => formatCompanyResponse(company)) as Company[];
   },
   
-  // Get company contacts
+  // Get company contacts - Optimized query with proper caching strategy
   getCompanyContacts: async (companyId: string) => {
+    console.log(`Fetching contacts for company: ${companyId}`);
+    
     const { data, error } = await supabase
       .from('company_contacts')
       .select(`
         *,
         auth_user:user_id (
+          id,
           email
         ),
         profile:user_id (
+          id,
           first_name,
           last_name,
           avatar_url
         )
       `)
-      .eq('company_id', companyId);
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching company contacts:', error);
+      throw error;
+    }
+
+    // Log the number of contacts retrieved
+    console.log(`Retrieved ${data?.length || 0} contacts for company ${companyId}`);
 
     // Process the nested data to flatten the structure and ensure type safety
     return data.map((item: any) => ({
       ...item,
       email: item.auth_user?.email || '',
-      first_name: item.profile?.first_name || null,
-      last_name: item.profile?.last_name || null,
+      first_name: item.profile?.first_name || '',
+      last_name: item.profile?.last_name || '',
       avatar_url: item.profile?.avatar_url || null,
     }));
   },

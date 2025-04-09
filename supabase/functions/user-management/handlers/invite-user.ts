@@ -40,40 +40,53 @@ export const handleInviteUser = async (
     );
   }
 
-  // Invite the user using the admin API with the updated redirect URL
-  const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: redirectUrl,
-    data: {
-      first_name: firstName || '',
-      last_name: lastName || '',
-      role: userRole,
-      team: team || '',
-      language: language || 'en',
-    },
-  });
+  try {
+    // Invite the user using the admin API with the updated redirect URL
+    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      redirectTo: redirectUrl,
+      data: {
+        first_name: firstName || '',
+        last_name: lastName || '',
+        role: userRole,
+        team: team || '',
+        language: language || 'en',
+      },
+    });
 
-  if (error) {
-    console.error('Error inviting user:', error);
+    if (error) {
+      console.error('Error inviting user:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    console.log('User invited successfully:', data);
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        message: `Invitation sent to ${email}`,
+        data: data,
+        user: data.user
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
+  } catch (e) {
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error('Exception while inviting user:', errorMessage);
+    
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       }
     );
   }
-
-  console.log('User invited successfully:', data);
-
-  return new Response(
-    JSON.stringify({ 
-      message: `Invitation sent to ${email}`,
-      data: data,
-      user: data.user
-    }),
-    {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    }
-  );
 };

@@ -17,7 +17,6 @@ import {
   Trash2,
   Edit,
   UserPlus,
-  Phone,
   Mail,
   Star,
   Shield
@@ -45,11 +44,18 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Fetch contacts
-  const { data: contacts = [], isLoading } = useQuery({
+  // Fetch contacts with improved query options
+  const { data: contacts = [], isLoading, isError, error } = useQuery({
     queryKey: ['companyContacts', companyId],
     queryFn: () => companyService.getCompanyContacts(companyId),
+    staleTime: 10000, // Data considered fresh for 10 seconds
+    refetchOnWindowFocus: true, // Refresh when window gets focus
+    retry: 1, // Only retry once on failure
   });
+  
+  // Log query status for debugging
+  console.log('Contacts query status:', { isLoading, isError, contactCount: contacts.length });
+  if (isError) console.error('Contacts query error:', error);
   
   // Delete contact mutation
   const deleteContactMutation = useMutation({
@@ -69,6 +75,12 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
       });
     }
   });
+  
+  // Handle successful contact creation
+  const handleContactAdded = () => {
+    // Force a refetch of the contacts data
+    queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] });
+  };
   
   // Handlers
   const handleEdit = (contact: CompanyContact) => {
@@ -100,6 +112,15 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
         <div className="flex justify-center p-8">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
+      ) : isError ? (
+        <div className="text-center p-8 border rounded-lg bg-muted/10 text-destructive">
+          <p>Error loading contacts: {error?.message || 'Unknown error'}</p>
+          <Button variant="outline" className="mt-4" onClick={() => 
+            queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] })
+          }>
+            Retry
+          </Button>
+        </div>
       ) : contacts.length === 0 ? (
         <div className="text-center p-8 border rounded-lg bg-muted/10">
           <p>No contacts added yet.</p>
@@ -120,12 +141,12 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={contact.avatar_url || ''} alt={`${contact.first_name} ${contact.last_name}`} />
                       <AvatarFallback>
-                        {contact.first_name?.[0] || ''}{contact.last_name?.[0] || ''}
+                        {(contact.first_name?.[0] || '')}{(contact.last_name?.[0] || '')}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <CardTitle className="text-base">
-                        {contact.first_name} {contact.last_name}
+                        {contact.first_name || ''} {contact.last_name || ''}
                       </CardTitle>
                       {contact.position && <p className="text-sm text-muted-foreground">{contact.position}</p>}
                     </div>
@@ -179,6 +200,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
         isOpen={isAddingContact}
         onClose={() => setIsAddingContact(false)}
         companyId={companyId}
+        onSuccess={handleContactAdded}
       />
       
       <EditContactDialog

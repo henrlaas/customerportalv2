@@ -43,15 +43,18 @@ type CreateContactDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   companyId: string;
+  onSuccess?: () => void;
 };
 
 export const CreateContactDialog = ({
   isOpen,
   onClose,
   companyId,
+  onSuccess,
 }: CreateContactDialogProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -68,51 +71,68 @@ export const CreateContactDialog = ({
   // Create user and add as contact mutation
   const createContactMutation = useMutation({
     mutationFn: async (values: ContactFormValues) => {
-      // First, invite the user through edge function
-      const { data, error } = await supabase.functions.invoke('user-management', {
-        body: {
-          action: 'invite',
-          email: values.email,
-          firstName: values.first_name,
-          lastName: values.last_name,
-          role: 'client', // Always set role to 'client' for company contacts
-          language: 'en', // Default language
-        },
-      });
+      setIsSubmitting(true);
       
-      if (error) {
-        console.error("Function invocation error:", error);
-        throw new Error(error.message);
+      try {
+        // First, invite the user through edge function
+        console.log('Inviting user:', values.email);
+        const { data, error } = await supabase.functions.invoke('user-management', {
+          body: {
+            action: 'invite',
+            email: values.email,
+            firstName: values.first_name,
+            lastName: values.last_name,
+            role: 'client', // Always set role to 'client' for company contacts
+            language: 'en', // Default language
+          },
+        });
+        
+        if (error) {
+          console.error("Function invocation error:", error);
+          throw new Error(error.message);
+        }
+        
+        if (!data?.user?.id) {
+          console.error("No user data returned:", data);
+          throw new Error('Failed to create user');
+        }
+        
+        console.log("User created successfully:", data.user);
+        
+        // Then add user as company contact
+        const contactData = await companyService.addCompanyContact({
+          company_id: companyId,
+          user_id: data.user.id,
+          position: values.position || null,
+          is_primary: values.is_primary,
+          is_admin: values.is_admin,
+        });
+        
+        return contactData;
+      } finally {
+        setIsSubmitting(false);
       }
-      
-      if (!data?.user?.id) {
-        console.error("No user data returned:", data);
-        throw new Error('Failed to create user');
-      }
-      
-      console.log("User created successfully:", data.user);
-      
-      // Then add user as company contact
-      const contactData = await companyService.addCompanyContact({
-        company_id: companyId,
-        user_id: data.user.id,
-        position: values.position || null,
-        is_primary: values.is_primary,
-        is_admin: values.is_admin,
-      });
-      
-      return contactData;
     },
     onSuccess: () => {
       toast({
         title: 'Contact added',
         description: 'The contact has been added and invitation email sent',
       });
+      
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] });
+      
+      // Reset form and close dialog
       form.reset();
       onClose();
+      
+      // Call optional success callback
+      if (onSuccess) {
+        onSuccess();
+      }
     },
     onError: (error: Error) => {
+      console.error('Error adding contact:', error);
       toast({
         title: 'Error',
         description: `Failed to add contact: ${error.message}`,
@@ -250,9 +270,9 @@ export const CreateContactDialog = ({
               <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
               <Button 
                 type="submit" 
-                disabled={createContactMutation.isPending}
+                disabled={isSubmitting || createContactMutation.isPending}
               >
-                {createContactMutation.isPending ? 'Adding...' : 'Add Contact'}
+                {isSubmitting ? 'Adding...' : 'Add Contact'}
               </Button>
             </div>
           </form>
