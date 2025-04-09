@@ -35,7 +35,7 @@ export const SettingItem = ({ setting, onSave }: SettingItemProps) => {
       .join(' ');
   };
   
-  // Format display value to show kr for monetary values
+  // Format display value to show NOK for monetary values
   const formatDisplayValue = (key: string, value: string) => {
     // If the key indicates it's a rate or price value, format with kr
     if (key.includes('rate') || key.includes('price') || key.includes('cost')) {
