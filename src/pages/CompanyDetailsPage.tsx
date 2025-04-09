@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -28,9 +28,23 @@ const CompanyDetailsPage = () => {
     enabled: !!companyId,
   });
   
+  // Check if the company is a subsidiary and redirect to parent company if needed
+  useEffect(() => {
+    if (company && company.parent_id) {
+      navigate(`/companies/${company.parent_id}`);
+      toast({
+        title: "Redirected to parent company",
+        description: `${company.name} is a subsidiary of another company.`
+      });
+    }
+  }, [company, navigate, toast]);
+  
   // Handle company click (for hierarchy navigation)
   const handleCompanyClick = (company: any) => {
-    navigate(`/companies/${company.id}`);
+    // Only navigate to the company details page if it's a parent company
+    if (!company.parent_id) {
+      navigate(`/companies/${company.id}`);
+    }
   };
   
   if (isLoading) {
@@ -51,6 +65,15 @@ const CompanyDetailsPage = () => {
             Back to Companies
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  // Don't render the full page if this is a subsidiary - the redirect will happen
+  if (company.parent_id) {
+    return (
+      <div className="container mx-auto p-6 flex justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
   }

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -51,9 +50,15 @@ const CompaniesPage = () => {
   // Check if user can modify companies (admin or employee)
   const canModify = isAdmin || isEmployee;
   
-  // Handle company click - navigate to details page
-  const handleCompanyClick = (company: Company) => {
-    navigate(`/companies/${company.id}`);
+  // Handle company click - navigate to details page or parent company if it's a subsidiary
+  const handleCompanyClick = async (company: Company) => {
+    if (company.parent_id) {
+      // If it's a subsidiary, navigate to the parent company
+      navigate(`/companies/${company.parent_id}`);
+    } else {
+      // Otherwise navigate to the company details
+      navigate(`/companies/${company.id}`);
+    }
   };
   
   return (

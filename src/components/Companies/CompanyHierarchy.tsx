@@ -43,11 +43,14 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
   
   const canModify = isAdmin || isEmployee;
   
+  // Check if the current company is already a subsidiary
+  const isSubsidiary = parentCompany?.parent_id !== null;
+  
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Subsidiaries</h2>
-        {canModify && (
+        {canModify && !isSubsidiary && (
           <Button onClick={() => setIsAddingCompany(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Subsidiary
@@ -59,10 +62,14 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
         <div className="flex justify-center p-8">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
+      ) : isSubsidiary ? (
+        <div className="text-center p-8 border rounded-lg bg-muted/10">
+          <p>This company is already a subsidiary and cannot have subsidiaries of its own.</p>
+        </div>
       ) : childCompanies.length === 0 ? (
         <div className="text-center p-8 border rounded-lg bg-muted/10">
           <p>No subsidiaries added yet.</p>
-          {canModify && (
+          {canModify && !isSubsidiary && (
             <Button variant="outline" className="mt-4" onClick={() => setIsAddingCompany(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Your First Subsidiary
@@ -88,12 +95,14 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
         </div>
       )}
       
-      <CreateCompanyDialog
-        isOpen={isAddingCompany}
-        onClose={() => setIsAddingCompany(false)}
-        parentId={companyId}
-        parentCompany={parentCompany}
-      />
+      {!isSubsidiary && (
+        <CreateCompanyDialog
+          isOpen={isAddingCompany}
+          onClose={() => setIsAddingCompany(false)}
+          parentId={companyId}
+          parentCompany={parentCompany}
+        />
+      )}
       
       <EditCompanyDialog
         isOpen={isEditingCompany}

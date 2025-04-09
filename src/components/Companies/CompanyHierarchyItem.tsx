@@ -54,6 +54,9 @@ export const CompanyHierarchyItem = ({
     }
   };
 
+  // Hide expand/collapse button for subsidiaries since they can't have their own subsidiaries
+  const canHaveChildren = depth === 0;
+
   return (
     <div className={`border-b border-gray-100 last:border-b-0 pb-2 ${depth > 0 ? 'pl-5 border-l-2 border-gray-100 ml-3 mt-1' : ''}`}>
       <div className="flex justify-between items-center">
@@ -92,26 +95,28 @@ export const CompanyHierarchyItem = ({
             >
               <Trash2 className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
             </Button>
-            <Button 
-              variant="ghost" 
-              size={depth > 0 ? "sm" : "default"}
-              className={depth > 0 ? "h-7 w-7 p-0" : ""}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(!isExpanded);
-              }}
-            >
-              {isExpanded ? (
-                <ChevronDown className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
-              ) : (
-                <ChevronRight className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
-              )}
-            </Button>
+            {canHaveChildren && (
+              <Button 
+                variant="ghost" 
+                size={depth > 0 ? "sm" : "default"}
+                className={depth > 0 ? "h-7 w-7 p-0" : ""}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsExpanded(!isExpanded);
+                }}
+              >
+                {isExpanded ? (
+                  <ChevronDown className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                ) : (
+                  <ChevronRight className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                )}
+              </Button>
+            )}
           </div>
         )}
       </div>
       
-      {isExpanded && (
+      {isExpanded && canHaveChildren && (
         <CompanyHierarchyChildren 
           parentId={company.id}
           onSelectCompany={onSelectCompany}
