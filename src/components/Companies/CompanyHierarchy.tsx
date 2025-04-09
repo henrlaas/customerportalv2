@@ -45,6 +45,11 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
   
   // Check if the current company is already a subsidiary
   const isSubsidiary = parentCompany?.parent_id !== null;
+
+  const handleEditCompany = (companyId: string) => {
+    setSelectedCompany(companyId);
+    setIsEditingCompany(true);
+  };
   
   return (
     <div>
@@ -84,10 +89,7 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
                 <CompanyHierarchyItem 
                   company={company}
                   onSelectCompany={onSelectCompany}
-                  onEditCompany={() => {
-                    setSelectedCompany(company.id);
-                    setIsEditingCompany(true);
-                  }}
+                  onEditCompany={() => handleEditCompany(company.id)}
                 />
               </CardHeader>
             </Card>

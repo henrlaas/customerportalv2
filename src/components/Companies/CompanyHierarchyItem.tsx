@@ -5,7 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { companyService } from '@/services/companyService';
 import { Company } from '@/types/company';
 import { Button } from '@/components/ui/button';
-import { Building2, ChevronDown, ChevronRight, Edit, ExternalLink, Trash2 } from 'lucide-react';
+import { Building2, ChevronDown, ChevronRight, Edit, ExternalLink, Info, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
@@ -59,14 +59,13 @@ export const CompanyHierarchyItem = ({
   // Hide expand/collapse button for subsidiaries since they can't have their own subsidiaries
   const canHaveChildren = depth === 0;
   
-  const handleCompanyClick = () => {
-    if (depth > 0) {
-      // If this is a subsidiary, show details dialog
-      setShowDetails(true);
-    } else {
-      // If this is a parent company, use the provided callback
-      onSelectCompany(company);
-    }
+  // Explicitly separate click handlers for clarity
+  const handleParentCompanyClick = () => {
+    onSelectCompany(company);
+  };
+
+  const handleSubsidiaryClick = () => {
+    setShowDetails(true);
   };
 
   return (
@@ -75,7 +74,7 @@ export const CompanyHierarchyItem = ({
         <div className="flex justify-between items-center">
           <div 
             className="flex items-center space-x-2 py-1"
-            onClick={handleCompanyClick}
+            onClick={depth === 0 ? handleParentCompanyClick : handleSubsidiaryClick}
             style={{ cursor: 'pointer' }}
           >
             <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
@@ -134,8 +133,9 @@ export const CompanyHierarchyItem = ({
                     e.stopPropagation();
                     setShowDetails(true);
                   }}
+                  aria-label="View subsidiary details"
                 >
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <Info className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
