@@ -68,7 +68,7 @@ export const CompanyInfoCards = ({ company }: CompanyInfoCardsProps) => {
             <CardTitle className="text-sm font-medium text-gray-500">Monthly Revenue</CardTitle>
           </CardHeader>
           <CardContent className="py-0">
-            <p>${company.mrr}</p>
+            <p>{company.mrr} kr</p>
           </CardContent>
         </Card>
       )}
