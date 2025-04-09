@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -118,11 +119,7 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
                     Web
                   </Badge>
                 )}
-                {company.is_partner && (
-                  <Badge variant="partner">
-                    Partner
-                  </Badge>
-                )}
+                {/* Removed the redundant Partner badge here */}
               </div>
             </div>
             {company.organization_number && (
