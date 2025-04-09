@@ -16,7 +16,7 @@ export const LanguageToggle: React.FC = () => {
       onClick={toggleLanguage}
       className="text-sm font-medium"
     >
-      {language === 'en' ? 'NO' : 'EN'}
+      {language === 'en' ? 'Norwegian' : 'English'}
     </Button>
   );
 };

@@ -36,7 +36,7 @@ export const TopBar: React.FC = () => {
                 <Globe className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuLabel>Select Language</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
@@ -44,14 +44,14 @@ export const TopBar: React.FC = () => {
                 className={`flex items-center gap-2 ${language === 'en' ? 'bg-accent' : ''}`}
               >
                 <span className="text-lg mr-1">🇺🇸</span>
-                EN
+                English
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setLanguage('no')}
                 className={`flex items-center gap-2 ${language === 'no' ? 'bg-accent' : ''}`}
               >
                 <span className="text-lg mr-1">🇳🇴</span>
-                NO
+                Norwegian
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
