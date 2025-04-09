@@ -20,7 +20,7 @@ export const CompanyInfoCards = ({ company }: CompanyInfoCardsProps) => {
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium text-gray-500">Website</CardTitle>
           </CardHeader>
-          <CardContent className="py-0">
+          <CardContent className="py-0 pb-4">
             <a 
               href={company.website} 
               target="_blank" 
@@ -39,7 +39,7 @@ export const CompanyInfoCards = ({ company }: CompanyInfoCardsProps) => {
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium text-gray-500">Phone</CardTitle>
           </CardHeader>
-          <CardContent className="py-0">
+          <CardContent className="py-0 pb-4">
             <div className="flex items-center">
               <Phone className="h-4 w-4 mr-2" />
               <p>{company.phone}</p>
@@ -53,7 +53,7 @@ export const CompanyInfoCards = ({ company }: CompanyInfoCardsProps) => {
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium text-gray-500">Invoice Email</CardTitle>
           </CardHeader>
-          <CardContent className="py-0">
+          <CardContent className="py-0 pb-4">
             <div className="flex items-center">
               <Mail className="h-4 w-4 mr-2" />
               <p>{company.invoice_email}</p>
@@ -67,7 +67,7 @@ export const CompanyInfoCards = ({ company }: CompanyInfoCardsProps) => {
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium text-gray-500">Monthly Revenue</CardTitle>
           </CardHeader>
-          <CardContent className="py-0">
+          <CardContent className="py-0 pb-4">
             <p>{company.mrr} kr</p>
           </CardContent>
         </Card>
@@ -77,7 +77,7 @@ export const CompanyInfoCards = ({ company }: CompanyInfoCardsProps) => {
         <CardHeader className="py-3">
           <CardTitle className="text-sm font-medium text-gray-500">Created</CardTitle>
         </CardHeader>
-        <CardContent className="py-0">
+        <CardContent className="py-0 pb-4">
           <div className="flex items-center">
             <Calendar className="h-4 w-4 mr-2" />
             <p>{new Date(company.created_at).toLocaleDateString()}</p>
