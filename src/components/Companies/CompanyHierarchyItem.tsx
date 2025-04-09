@@ -7,8 +7,6 @@ import { Company } from '@/types/company';
 import { Button } from '@/components/ui/button';
 import { 
   Building2, 
-  ChevronDown, 
-  ChevronRight, 
   Edit, 
   ExternalLink, 
   Globe, 
@@ -38,7 +36,6 @@ export const CompanyHierarchyItem = ({
   onEditCompany,
   depth = 0 
 }: CompanyHierarchyItemProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   
   const { isAdmin, isEmployee } = useAuth();
@@ -148,23 +145,6 @@ export const CompanyHierarchyItem = ({
               >
                 <Trash2 className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
               </Button>
-              {canHaveChildren && (
-                <Button 
-                  variant="ghost" 
-                  size="default"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsExpanded(!isExpanded);
-                  }}
-                  aria-label={isExpanded ? "Collapse children" : "Expand children"}
-                >
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </Button>
-              )}
               {depth > 0 && (
                 <Button 
                   variant="outline"
@@ -182,14 +162,6 @@ export const CompanyHierarchyItem = ({
             </div>
           )}
         </div>
-        
-        {isExpanded && canHaveChildren && (
-          <CompanyHierarchyChildren 
-            parentId={company.id}
-            onSelectCompany={onSelectCompany}
-            depth={depth + 1}
-          />
-        )}
       </div>
 
       {/* Company Details Dialog */}
@@ -311,3 +283,4 @@ const CompanyHierarchyChildren = ({
     </div>
   );
 };
+
