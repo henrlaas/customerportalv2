@@ -1,5 +1,5 @@
 
-import { Search, Briefcase, Layers, Building, Buildings } from 'lucide-react';
+import { Search, Briefcase, Layers, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -57,7 +57,7 @@ export const CompanyFilters = ({
             onCheckedChange={setShowSubsidiaries}
           />
           <Label htmlFor="show-subsidiaries" className="cursor-pointer flex items-center gap-1">
-            <Buildings className="h-4 w-4" />
+            <Building className="h-4 w-4" />
             <span>Show subsidiaries</span>
           </Label>
         </div>
