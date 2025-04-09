@@ -73,16 +73,24 @@ export const CreateContactDialog = ({
         body: {
           action: 'invite',
           email: values.email,
-          userData: {
-            first_name: values.first_name,
-            last_name: values.last_name,
-            role: 'client', // Always set role to 'client' for company contacts
-          },
+          firstName: values.first_name,
+          lastName: values.last_name,
+          role: 'client', // Always set role to 'client' for company contacts
+          language: 'en', // Default language
         },
       });
       
-      if (error) throw new Error(error.message);
-      if (!data?.user?.id) throw new Error('Failed to create user');
+      if (error) {
+        console.error("Function invocation error:", error);
+        throw new Error(error.message);
+      }
+      
+      if (!data?.user?.id) {
+        console.error("No user data returned:", data);
+        throw new Error('Failed to create user');
+      }
+      
+      console.log("User created successfully:", data.user);
       
       // Then add user as company contact
       const contactData = await companyService.addCompanyContact({

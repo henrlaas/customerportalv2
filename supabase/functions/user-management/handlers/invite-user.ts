@@ -16,9 +16,9 @@ export const handleInviteUser = async (
   console.log(`Redirect URL: ${redirectUrl}`);
 
   // Validate inputs
-  if (!email || !role) {
+  if (!email) {
     return new Response(
-      JSON.stringify({ error: 'Missing required fields' }),
+      JSON.stringify({ error: 'Email is required' }),
       {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -26,8 +26,11 @@ export const handleInviteUser = async (
     );
   }
 
+  // Default role to 'client' if not specified
+  const userRole = role || 'client';
+  
   // Verify the role is valid
-  if (!['admin', 'employee', 'client'].includes(role)) {
+  if (!['admin', 'employee', 'client'].includes(userRole)) {
     return new Response(
       JSON.stringify({ error: 'Invalid role' }),
       {
@@ -43,20 +46,30 @@ export const handleInviteUser = async (
     data: {
       first_name: firstName || '',
       last_name: lastName || '',
-      role: role,
+      role: userRole,
       team: team || '',
       language: language || 'en',
     },
   });
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error inviting user:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
+  }
 
   console.log('User invited successfully:', data);
 
   return new Response(
     JSON.stringify({ 
       message: `Invitation sent to ${email}`,
-      data: data 
+      data: data,
+      user: data.user
     }),
     {
       status: 200,
