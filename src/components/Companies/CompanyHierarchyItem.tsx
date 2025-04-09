@@ -5,9 +5,25 @@ import { useToast } from '@/components/ui/use-toast';
 import { companyService } from '@/services/companyService';
 import { Company } from '@/types/company';
 import { Button } from '@/components/ui/button';
-import { Building2, ChevronDown, ChevronRight, Edit, ExternalLink, Info, Trash2 } from 'lucide-react';
+import { 
+  Building2, 
+  ChevronDown, 
+  ChevronRight, 
+  Edit, 
+  ExternalLink, 
+  Globe, 
+  Hash,
+  Trash2 
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from '@/components/ui/dialog';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
 interface CompanyHierarchyItemProps {
   company: Company;
@@ -37,9 +53,10 @@ export const CompanyHierarchyItem = ({
     onSuccess: () => {
       toast({
         title: 'Company deleted',
-        description: 'The company has been deleted',
+        description: 'The company has been deleted successfully',
       });
       queryClient.invalidateQueries({ queryKey: ['childCompanies', company.parent_id] });
+      setShowDetails(false);
     },
     onError: (error: Error) => {
       toast({
@@ -56,33 +73,55 @@ export const CompanyHierarchyItem = ({
     }
   };
 
-  // Hide expand/collapse button for subsidiaries since they can't have their own subsidiaries
+  // Determine if this company can have children
   const canHaveChildren = depth === 0;
   
-  // Explicitly separate click handlers for clarity
-  const handleParentCompanyClick = () => {
-    onSelectCompany(company);
-  };
-
-  const handleSubsidiaryClick = () => {
-    setShowDetails(true);
-  };
-
   return (
     <>
-      <div className={`border-b border-gray-100 last:border-b-0 pb-2 ${depth > 0 ? 'pl-5 border-l-2 border-gray-100 ml-3 mt-1' : ''}`}>
+      <div className={`relative ${depth > 0 ? 'pl-4 border-l-2 border-gray-100 ml-3 mt-1' : ''}`}>
         <div className="flex justify-between items-center">
-          <div 
-            className="flex items-center space-x-2 py-1"
-            onClick={depth === 0 ? handleParentCompanyClick : handleSubsidiaryClick}
-            style={{ cursor: 'pointer' }}
-          >
-            <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
-            <span className={`${depth > 0 ? 'text-sm font-medium' : 'text-base font-medium'}`}>{company.name}</span>
+          <div className="flex items-center gap-3 flex-grow">
+            {/* Company Name and Icon */}
+            <div 
+              className="flex items-center gap-2 py-1 flex-grow cursor-pointer"
+              onClick={() => depth === 0 ? onSelectCompany(company) : setShowDetails(true)}
+            >
+              <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
+              <span className={`${depth > 0 ? 'text-sm font-medium' : 'text-base font-medium'}`}>
+                {company.name}
+              </span>
+            </div>
+            
+            {/* Brief Info Section for Subsidiaries */}
+            {depth > 0 && (
+              <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
+                {company.organization_number && (
+                  <div className="flex items-center gap-1">
+                    <Hash className="h-3.5 w-3.5" />
+                    <span>{company.organization_number}</span>
+                  </div>
+                )}
+                {company.website && (
+                  <div className="flex items-center gap-1">
+                    <Globe className="h-3.5 w-3.5" />
+                    <a 
+                      href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="hover:text-blue-500 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {company.website.replace(/^https?:\/\//, '')}
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
+          {/* Actions */}
           {canModify && (
-            <div className="flex space-x-1">
+            <div className="flex gap-1">
               {onEditCompany && (
                 <Button 
                   variant="ghost" 
@@ -92,6 +131,7 @@ export const CompanyHierarchyItem = ({
                     e.stopPropagation();
                     onEditCompany();
                   }}
+                  aria-label="Edit company"
                 >
                   <Edit className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
                 </Button>
@@ -104,38 +144,39 @@ export const CompanyHierarchyItem = ({
                   e.stopPropagation();
                   handleDeleteCompany(company.id);
                 }}
+                aria-label="Delete company"
               >
                 <Trash2 className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
               </Button>
               {canHaveChildren && (
                 <Button 
                   variant="ghost" 
-                  size={depth > 0 ? "sm" : "default"}
-                  className={depth > 0 ? "h-7 w-7 p-0" : ""}
+                  size="default"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsExpanded(!isExpanded);
                   }}
+                  aria-label={isExpanded ? "Collapse children" : "Expand children"}
                 >
                   {isExpanded ? (
-                    <ChevronDown className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                    <ChevronDown className="h-4 w-4" />
                   ) : (
-                    <ChevronRight className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                    <ChevronRight className="h-4 w-4" />
                   )}
                 </Button>
               )}
               {depth > 0 && (
                 <Button 
-                  variant="ghost" 
+                  variant="outline"
                   size="sm"
-                  className="h-7 w-7 p-0"
+                  className="ml-2 hidden sm:flex"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowDetails(true);
                   }}
-                  aria-label="View subsidiary details"
+                  aria-label="View details"
                 >
-                  <Info className="h-3.5 w-3.5" />
+                  View Details
                 </Button>
               )}
             </div>
@@ -151,34 +192,60 @@ export const CompanyHierarchyItem = ({
         )}
       </div>
 
-      {/* Subsidiary Details Dialog */}
+      {/* Company Details Dialog */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{company.name}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              {company.name}
+            </DialogTitle>
             <DialogDescription>Company details</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">Organization Number</p>
-                <p className="text-sm">{company.organization_number || 'Not specified'}</p>
-              </div>
-              <div className="space-y-1 col-span-2">
-                <p className="text-sm font-medium text-muted-foreground">Website</p>
-                {company.website ? (
-                  <p className="text-sm flex items-center gap-1">
-                    <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center">
-                      {company.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                      <ExternalLink className="h-3 w-3 ml-1" />
-                    </a>
-                  </p>
-                ) : (
-                  <p className="text-sm">Not specified</p>
+          
+          <div className="mt-2">
+            <Table>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">Organization Number</TableCell>
+                  <TableCell>{company.organization_number || 'Not specified'}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Website</TableCell>
+                  <TableCell>
+                    {company.website ? (
+                      <a 
+                        href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline flex items-center"
+                      >
+                        {company.website}
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </a>
+                    ) : (
+                      'Not specified'
+                    )}
+                  </TableCell>
+                </TableRow>
+                {company.phone && (
+                  <TableRow>
+                    <TableCell className="font-medium">Phone</TableCell>
+                    <TableCell>{company.phone}</TableCell>
+                  </TableRow>
                 )}
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
+                {company.address && (
+                  <TableRow>
+                    <TableCell className="font-medium">Address</TableCell>
+                    <TableCell>{company.address}</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          
+          {canModify && (
+            <div className="flex justify-end gap-2 mt-4">
               {onEditCompany && (
                 <Button 
                   variant="outline" 
@@ -194,7 +261,6 @@ export const CompanyHierarchyItem = ({
               <Button 
                 variant="destructive" 
                 onClick={() => {
-                  setShowDetails(false);
                   handleDeleteCompany(company.id);
                 }}
               >
@@ -202,7 +268,7 @@ export const CompanyHierarchyItem = ({
                 Delete
               </Button>
             </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
@@ -225,15 +291,15 @@ const CompanyHierarchyChildren = ({
   });
   
   if (isLoading) {
-    return <div className="py-2">Loading...</div>;
+    return <div className="py-2 pl-4">Loading...</div>;
   }
   
   if (companies.length === 0) {
-    return <div className="py-2 text-sm text-gray-500">No subsidiaries</div>;
+    return <div className="py-2 pl-4 text-sm text-gray-500">No subsidiaries</div>;
   }
   
   return (
-    <div className="space-y-2 mt-2">
+    <div className="space-y-2 mt-2 pl-2">
       {companies.map(company => (
         <CompanyHierarchyItem
           key={company.id}
