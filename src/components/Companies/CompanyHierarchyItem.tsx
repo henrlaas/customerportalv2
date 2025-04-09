@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -16,7 +15,8 @@ import {
   Mail,
   Calendar,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  ArrowRight
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -123,8 +123,7 @@ export const CompanyHierarchyItem = ({
             >
               <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} ${isActive ? 'text-primary' : 'text-gray-500'}`} />
               <span 
-                className={`${depth > 0 ? 'text-sm font-medium' : 'text-base font-medium'} cursor-pointer`}
-                onClick={() => depth === 0 ? onSelectCompany(company) : null}
+                className={`${depth > 0 ? 'text-sm font-medium' : 'text-base font-medium'}`}
               >
                 {company.name}
               </span>
@@ -157,27 +156,24 @@ export const CompanyHierarchyItem = ({
             )}
           </div>
           
-          {/* Chevron for Subsidiary Details and Actions */}
+          {/* View Details Button for Subsidiaries */}
           <div className="flex items-center gap-1">
-            {/* Chevron button for subsidiaries */}
+            {/* Explicit View Details button for subsidiaries */}
             {depth > 0 && (
               <Button 
-                variant="ghost" 
+                variant="outline" 
                 size="sm"
-                className="h-7 w-7 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDetails(true);
-                }}
-                aria-label="View details"
+                className="flex items-center gap-1"
+                onClick={() => setShowDetails(true)}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4" />
+                <span className="hidden sm:inline">View Details</span>
               </Button>
             )}
             
             {/* Actions */}
             {canModify && (
-              <div className="flex gap-1">
+              <div className="flex gap-1 ml-2">
                 {onEditCompany && (
                   <Button 
                     variant="ghost" 

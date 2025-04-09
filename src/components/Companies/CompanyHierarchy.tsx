@@ -86,7 +86,7 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
         <div className="space-y-2">
           {childCompanies.map(company => (
             <Card key={company.id} className="overflow-hidden hover:shadow-md transition-shadow">
-              <CardHeader className="p-4">
+              <CardContent className="p-4">
                 <CompanyHierarchyItem 
                   company={company}
                   onSelectCompany={onSelectCompany}
@@ -94,7 +94,7 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
                   activeSubsidiaryId={activeSubsidiaryId}
                   setActiveSubsidiaryId={setActiveSubsidiaryId}
                 />
-              </CardHeader>
+              </CardContent>
             </Card>
           ))}
         </div>
@@ -120,3 +120,4 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
     </div>
   );
 };
+
