@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -84,7 +83,7 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
       
       <div className="flex justify-between items-start mb-6">
         <div className="flex items-center space-x-4">
-          <div className={`relative ${company.is_partner ? 'p-0.5 border-2 border-green-500 rounded-lg' : ''}`}>
+          <div className="relative">
             {company.logo_url ? (
               <img 
                 src={company.logo_url} 
