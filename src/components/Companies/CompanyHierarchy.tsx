@@ -120,4 +120,3 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
     </div>
   );
 };
-

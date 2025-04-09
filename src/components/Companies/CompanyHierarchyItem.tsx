@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -16,7 +17,8 @@ import {
   Calendar,
   ChevronDown,
   ChevronRight,
-  ArrowRight
+  ArrowRight,
+  MoreVertical
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -28,6 +30,14 @@ import {
 } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import {
   Card,
@@ -156,9 +166,8 @@ export const CompanyHierarchyItem = ({
             )}
           </div>
           
-          {/* View Details Button for Subsidiaries */}
-          <div className="flex items-center gap-1">
-            {/* Explicit View Details button for subsidiaries */}
+          <div className="flex items-center gap-2">
+            {/* View Details Button for subsidiaries */}
             {depth > 0 && (
               <Button 
                 variant="outline" 
@@ -171,36 +180,38 @@ export const CompanyHierarchyItem = ({
               </Button>
             )}
             
-            {/* Actions */}
+            {/* Actions Dropdown Menu */}
             {canModify && (
-              <div className="flex gap-1 ml-2">
-                {onEditCompany && (
-                  <Button 
-                    variant="ghost" 
-                    size={depth > 0 ? "sm" : "default"} 
-                    className={depth > 0 ? "h-7 w-7 p-0" : ""}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditCompany();
-                    }}
-                    aria-label="Edit company"
-                  >
-                    <Edit className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreVertical className="h-4 w-4" />
                   </Button>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size={depth > 0 ? "sm" : "default"}
-                  className={depth > 0 ? "h-7 w-7 p-0" : ""}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteCompany(company.id);
-                  }}
-                  aria-label="Delete company"
-                >
-                  <Trash2 className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                </Button>
-              </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {depth > 0 && (
+                    <DropdownMenuItem onClick={() => setShowDetails(true)}>
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      <span>View Details</span>
+                    </DropdownMenuItem>
+                  )}
+                  {onEditCompany && (
+                    <DropdownMenuItem onClick={() => onEditCompany()}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      <span>Edit</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem 
+                    className="text-red-600 focus:text-red-600" 
+                    onClick={() => handleDeleteCompany(company.id)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Delete</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
