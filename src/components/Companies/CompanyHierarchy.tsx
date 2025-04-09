@@ -28,6 +28,13 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
   
   const { isAdmin, isEmployee } = useAuth();
   
+  // Fetch parent company data
+  const { data: parentCompany } = useQuery({
+    queryKey: ['company', companyId],
+    queryFn: () => companyService.getCompany(companyId),
+    enabled: !!companyId,
+  });
+  
   // Fetch child companies
   const { data: childCompanies = [], isLoading } = useQuery({
     queryKey: ['childCompanies', companyId],
@@ -85,6 +92,7 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
         isOpen={isAddingCompany}
         onClose={() => setIsAddingCompany(false)}
         parentId={companyId}
+        parentCompany={parentCompany}
       />
       
       <EditCompanyDialog
