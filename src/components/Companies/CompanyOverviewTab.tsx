@@ -1,4 +1,3 @@
-
 import { 
   Card,
   CardContent,
@@ -37,7 +36,7 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
             
             {company.organization_number && (
               <div className="grid grid-cols-3 gap-1">
-                <div className="font-medium">Organization #:</div>
+                <div className="font-medium">Org.nr:</div>
                 <div className="col-span-2">{company.organization_number}</div>
               </div>
             )}
