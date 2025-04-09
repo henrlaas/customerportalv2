@@ -30,9 +30,14 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   if (allowedRoles && profile && !allowedRoles.includes(profile.role as any)) {
     console.log(`Access denied: User has role ${profile?.role} but needs one of ${allowedRoles.join(', ')}`);
     
-    // Redirect client users to client dashboard when they try to access agency routes
+    // Redirect client users to client dashboard when they try to access restricted routes
     if (profile.role === 'client') {
       return <Navigate to="/client-dashboard" replace />;
+    }
+    
+    // Admin and employee users should access the agency dashboard
+    if (profile.role === 'admin' || profile.role === 'employee') {
+      return <Navigate to="/dashboard" replace />;
     }
     
     // Redirect other unauthorized users to the unauthorized page
