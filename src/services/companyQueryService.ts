@@ -61,65 +61,77 @@ export const companyQueryService = {
     return data.map(company => formatCompanyResponse(company)) as Company[];
   },
   
-  // Get company contacts - Fixed query that doesn't rely on foreign key relationships
+  // Get company contacts without relying on foreign key relationships
   getCompanyContacts: async (companyId: string) => {
     console.log(`Fetching contacts for company: ${companyId}`);
     
-    // Modified query using explicit joins instead of relying on foreign key relationships
-    const { data, error } = await supabase
+    // First, get the company contacts without trying to join with profiles
+    const { data: contactsData, error: contactsError } = await supabase
       .from('company_contacts')
-      .select(`
-        *,
-        profiles:user_id (
-          first_name,
-          last_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false });
     
-    if (error) {
-      console.error('Error fetching company contacts:', error);
-      throw error;
+    if (contactsError) {
+      console.error('Error fetching company contacts:', contactsError);
+      throw contactsError;
     }
 
-    // Also fetch email addresses from auth.users using a separate query
-    // because we can't directly join with auth.users
-    const userIds = data.map(contact => contact.user_id);
+    // Extract user IDs to fetch profile data separately
+    const userIds = contactsData.map(contact => contact.user_id);
     
-    // Only fetch emails if we have contacts
+    // Get profile data for these users
+    let profilesMap: Record<string, any> = {};
+    if (userIds.length > 0) {
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.warn('Could not fetch profile information:', profilesError);
+      } else if (profilesData) {
+        // Create a map for quick lookups
+        profilesMap = profilesData.reduce((acc: Record<string, any>, profile) => {
+          acc[profile.id] = profile;
+          return acc;
+        }, {});
+      }
+    }
+
+    // Get emails using the edge function
     let emailsMap: Record<string, string> = {};
     if (userIds.length > 0) {
-      // Use a type assertion to tell TypeScript about the function
-      const { data: authData, error: authError } = await supabase
-        .functions.invoke<{ id: string, email: string }[]>('user-management', {
+      try {
+        const { data: emailsData, error: emailsError } = await supabase.functions.invoke('user-management', {
           body: {
             action: 'get-user-emails',
             userIds: userIds
           }
         });
         
-      if (!authError && authData) {
-        emailsMap = authData.reduce((acc, item) => {
-          acc[item.id] = item.email;
-          return acc;
-        }, {} as Record<string, string>);
-      } else if (authError) {
-        console.warn('Could not fetch email addresses:', authError);
+        if (emailsError) {
+          console.warn('Could not fetch email addresses:', emailsError);
+        } else if (emailsData) {
+          // Create a map for quick lookups
+          emailsMap = emailsData.reduce((acc: Record<string, string>, item: { id: string, email: string }) => {
+            acc[item.id] = item.email;
+            return acc;
+          }, {});
+        }
+      } catch (error) {
+        console.error('Error invoking get-user-emails function:', error);
       }
     }
 
-    // Log the number of contacts retrieved
-    console.log(`Retrieved ${data?.length || 0} contacts for company ${companyId}`);
-
-    // Process the nested data to flatten the structure and ensure type safety
-    return data.map((item: any) => ({
-      ...item,
-      email: emailsMap[item.user_id] || '',
-      first_name: item.profiles?.first_name || '',
-      last_name: item.profiles?.last_name || '',
-      avatar_url: item.profiles?.avatar_url || null,
+    // Combine the data
+    return contactsData.map(contact => ({
+      ...contact,
+      email: emailsMap[contact.user_id] || '',
+      first_name: profilesMap[contact.user_id]?.first_name || '',
+      last_name: profilesMap[contact.user_id]?.last_name || '',
+      avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
     }));
   },
 };
+
