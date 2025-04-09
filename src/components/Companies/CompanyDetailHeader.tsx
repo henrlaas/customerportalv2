@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   Edit,
   Trash,
+  BadgeCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -83,17 +84,27 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
       
       <div className="flex justify-between items-start mb-6">
         <div className="flex items-center space-x-4">
-          {company.logo_url ? (
-            <img 
-              src={company.logo_url} 
-              alt={`${company.name} logo`} 
-              className="w-16 h-16 rounded-lg object-contain bg-white p-1 border"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
-              <Building className="h-8 w-8 text-gray-500" />
-            </div>
-          )}
+          <div className={`relative ${company.is_partner ? 'p-0.5 border-2 border-green-500 rounded-lg' : ''}`}>
+            {company.logo_url ? (
+              <img 
+                src={company.logo_url} 
+                alt={`${company.name} logo`} 
+                className="w-16 h-16 rounded-lg object-contain bg-white p-1 border"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
+                <Building className="h-8 w-8 text-gray-500" />
+              </div>
+            )}
+            {company.is_partner && (
+              <div className="absolute -bottom-2 left-0 right-0 flex justify-center">
+                <Badge variant="partner" className="text-xs flex items-center gap-1">
+                  <BadgeCheck className="h-3 w-3" />
+                  Partner
+                </Badge>
+              </div>
+            )}
+          </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-2xl font-bold">{company.name}</h2>
