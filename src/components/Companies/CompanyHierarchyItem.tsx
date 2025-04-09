@@ -7,7 +7,7 @@ import { Company } from '@/types/company';
 import { Button } from '@/components/ui/button';
 import { Building2, ChevronDown, ChevronRight, Edit, ExternalLink, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface CompanyHierarchyItemProps {
   company: Company;
@@ -58,6 +58,16 @@ export const CompanyHierarchyItem = ({
 
   // Hide expand/collapse button for subsidiaries since they can't have their own subsidiaries
   const canHaveChildren = depth === 0;
+  
+  const handleCompanyClick = () => {
+    if (depth > 0) {
+      // If this is a subsidiary, show details dialog
+      setShowDetails(true);
+    } else {
+      // If this is a parent company, use the provided callback
+      onSelectCompany(company);
+    }
+  };
 
   return (
     <>
@@ -65,13 +75,7 @@ export const CompanyHierarchyItem = ({
         <div className="flex justify-between items-center">
           <div 
             className="flex items-center space-x-2 py-1"
-            onClick={() => {
-              if (depth > 0) {
-                setShowDetails(true);
-              } else {
-                onSelectCompany(company);
-              }
-            }}
+            onClick={handleCompanyClick}
             style={{ cursor: 'pointer' }}
           >
             <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
@@ -139,6 +143,7 @@ export const CompanyHierarchyItem = ({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{company.name}</DialogTitle>
+            <DialogDescription>Company details</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-3 gap-4">
