@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -188,15 +187,13 @@ export const CompanyHierarchyItem = ({
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-48 z-50 bg-white">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {depth > 0 && (
-                    <DropdownMenuItem onClick={() => setShowDetails(true)}>
-                      <ArrowRight className="mr-2 h-4 w-4" />
-                      <span>View Details</span>
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem onClick={() => setShowDetails(true)}>
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                    <span>View Details</span>
+                  </DropdownMenuItem>
                   {onEditCompany && (
                     <DropdownMenuItem onClick={() => onEditCompany()}>
                       <Edit className="mr-2 h-4 w-4" />
