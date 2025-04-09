@@ -18,6 +18,7 @@ const CompaniesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
   const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
+  const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   
   const { isAdmin, isEmployee } = useAuth();
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const CompaniesPage = () => {
     queryFn: companyService.getCompanies,
   });
   
-  // Filter companies by search query and type
+  // Filter companies by search query, type, and parent status
   const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (company.address && company.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -41,7 +42,10 @@ const CompaniesPage = () => {
       (clientTypeFilter === 'Marketing' && company.is_marketing_client) ||
       (clientTypeFilter === 'Web' && company.is_web_client);
     
-    return matchesSearch && matchesType;
+    // Filter subsidiaries (companies with parent_id)
+    const matchesParentStatus = showSubsidiaries || company.parent_id === null;
+    
+    return matchesSearch && matchesType && matchesParentStatus;
   });
   
   // Check if user can modify companies (admin or employee)
@@ -78,6 +82,8 @@ const CompaniesPage = () => {
               setClientTypeFilter={setClientTypeFilter}
               viewMode={viewMode}
               setViewMode={setViewMode}
+              showSubsidiaries={showSubsidiaries}
+              setShowSubsidiaries={setShowSubsidiaries}
             />
           </div>
         </CardHeader>

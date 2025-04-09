@@ -1,5 +1,5 @@
 
-import { Search, Briefcase, Layers } from 'lucide-react';
+import { Search, Briefcase, Layers, Building, Buildings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface CompanyFiltersProps {
   searchQuery: string;
@@ -19,6 +21,8 @@ interface CompanyFiltersProps {
   setClientTypeFilter: (type: string) => void;
   viewMode: 'list' | 'card';
   setViewMode: (mode: 'list' | 'card') => void;
+  showSubsidiaries: boolean;
+  setShowSubsidiaries: (show: boolean) => void;
 }
 
 export const CompanyFilters = ({ 
@@ -27,7 +31,9 @@ export const CompanyFilters = ({
   clientTypeFilter, 
   setClientTypeFilter,
   viewMode,
-  setViewMode
+  setViewMode,
+  showSubsidiaries,
+  setShowSubsidiaries
 }: CompanyFiltersProps) => {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -43,7 +49,19 @@ export const CompanyFilters = ({
           />
         </div>
       </div>
-      <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+      <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-center">
+        <div className="flex items-center gap-2 mr-2">
+          <Switch
+            id="show-subsidiaries"
+            checked={showSubsidiaries}
+            onCheckedChange={setShowSubsidiaries}
+          />
+          <Label htmlFor="show-subsidiaries" className="cursor-pointer flex items-center gap-1">
+            <Buildings className="h-4 w-4" />
+            <span>Show subsidiaries</span>
+          </Label>
+        </div>
+        
         <Select
           value={clientTypeFilter}
           onValueChange={setClientTypeFilter}
