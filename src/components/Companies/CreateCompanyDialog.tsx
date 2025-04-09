@@ -1,9 +1,9 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useEffect } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/dialog';
 import type { Company } from '@/types/company';
 import { Globe, Building } from 'lucide-react';
-import { useState } from 'react';
 
 // Form schema - simplified for subsidiaries
 const companyFormSchema = z.object({
