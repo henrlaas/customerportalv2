@@ -48,6 +48,17 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
     },
   });
   
+  // Format organization number to have spaces between groups of digits
+  const formatOrganizationNumber = (orgNumber: string | null): string => {
+    if (!orgNumber) return '';
+    
+    // Remove any existing spaces or special characters
+    const cleanNumber = orgNumber.replace(/\s+/g, '');
+    
+    // Add spaces after every 3 digits
+    return cleanNumber.replace(/(\d{3})(?=\d)/g, '$1 ');
+  };
+  
   // Handle delete confirmation
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this company? This will also delete all associated data.')) {
@@ -106,7 +117,7 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
             </div>
             {company.organization_number && (
               <p className="text-gray-500">
-                Organization #: {company.organization_number}
+                Org.nr: {formatOrganizationNumber(company.organization_number)}
               </p>
             )}
           </div>
