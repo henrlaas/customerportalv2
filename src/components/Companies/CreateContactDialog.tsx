@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
-import { CompanyContact } from '@/types/company';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -53,7 +52,6 @@ export const CreateContactDialog = ({
 }: CreateContactDialogProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isClient, setIsClient] = useState(true);
   
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -78,7 +76,7 @@ export const CreateContactDialog = ({
           userData: {
             first_name: values.first_name,
             last_name: values.last_name,
-            role: isClient ? 'client' : 'employee',
+            role: 'client', // Always set role to 'client' for company contacts
           },
         },
       });
@@ -131,26 +129,11 @@ export const CreateContactDialog = ({
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="flex justify-between items-center p-3 rounded-lg bg-muted mb-2">
-              <span>Contact type:</span>
-              <div className="flex items-center space-x-2">
-                <Button 
-                  type="button"
-                  size="sm"
-                  variant={isClient ? "default" : "outline"} 
-                  onClick={() => setIsClient(true)}
-                >
-                  Client
-                </Button>
-                <Button 
-                  type="button"
-                  size="sm"
-                  variant={!isClient ? "default" : "outline"} 
-                  onClick={() => setIsClient(false)}
-                >
-                  Employee
-                </Button>
-              </div>
+            <div className="rounded-lg bg-muted p-3 mb-2">
+              <p className="text-sm">
+                This contact will be assigned the <strong>client</strong> role and 
+                will have access to their company information when logged in.
+              </p>
             </div>
             
             <FormField

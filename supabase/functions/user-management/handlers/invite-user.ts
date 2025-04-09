@@ -12,7 +12,6 @@ export const handleInviteUser = async (
   console.log(`Inviting user: ${email} with role: ${role}`);
   
   // Define the full URL path with type parameter
-  // This is the key change - specify the full path including /set-password instead of relying on origin
   const redirectUrl = `${origin}/set-password?type=invite`;
   console.log(`Redirect URL: ${redirectUrl}`);
 
@@ -28,7 +27,7 @@ export const handleInviteUser = async (
   }
 
   // Verify the role is valid
-  if (!['admin', 'employee'].includes(role)) {
+  if (!['admin', 'employee', 'client'].includes(role)) {
     return new Response(
       JSON.stringify({ error: 'Invalid role' }),
       {

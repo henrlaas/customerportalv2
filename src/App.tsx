@@ -26,6 +26,8 @@ import Index from "./pages/Index";
 import CampaignsPage from "./pages/CampaignsPage";
 import MediaPage from "./pages/MediaPage";
 import FinancePage from "./pages/FinancePage";
+import ClientDashboardPage from "./pages/ClientDashboardPage";
+import ClientCompanyDetailsPage from "./pages/ClientCompanyDetailsPage";
 
 const queryClient = new QueryClient();
 
@@ -58,11 +60,34 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/set-password" element={<SetPassword />} />
           
-          {/* Protected Routes */}
+          {/* Client Routes (only accessible to users with the client role) */}
+          <Route
+            path="/client-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <AppLayout>
+                  <ClientDashboardPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/client/companies/:companyId"
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <AppLayout>
+                  <ClientCompanyDetailsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Agency Routes (dashboard, tasks, etc.) */}
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
                 <AppLayout>
                   <Dashboard />
                 </AppLayout>
@@ -73,7 +98,7 @@ const App = () => (
           <Route
             path="/campaigns"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'employee', 'client']}>
                 <AppLayout>
                   <CampaignsPage />
                 </AppLayout>
@@ -84,7 +109,7 @@ const App = () => (
           <Route
             path="/tasks"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'employee', 'client']}>
                 <AppLayout>
                   <TasksPage />
                 </AppLayout>
@@ -95,7 +120,7 @@ const App = () => (
           <Route
             path="/tasks/:taskId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'employee', 'client']}>
                 <AppLayout>
                   <TaskDetailPage />
                 </AppLayout>
@@ -139,7 +164,7 @@ const App = () => (
           <Route
             path="/contracts"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'employee', 'client']}>
                 <AppLayout>
                   <ContractsPage />
                 </AppLayout>
@@ -161,7 +186,7 @@ const App = () => (
           <Route
             path="/media"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'employee', 'client']}>
                 <AppLayout>
                   <MediaPage />
                 </AppLayout>
@@ -180,6 +205,7 @@ const App = () => (
             }
           />
 
+          {/* User Management (admin only) */}
           <Route
             path="/user-management"
             element={
