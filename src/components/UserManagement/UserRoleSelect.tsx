@@ -43,6 +43,7 @@ export function UserRoleSelect({ form }: UserRoleSelectProps) {
             <SelectContent>
               <SelectItem value="admin">{t('Admin')}</SelectItem>
               <SelectItem value="employee">{t('Employee')}</SelectItem>
+              <SelectItem value="client">{t('Client')}</SelectItem>
             </SelectContent>
           </Select>
           <FormMessage />

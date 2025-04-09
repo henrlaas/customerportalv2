@@ -13,6 +13,8 @@ export function useInviteUser({ onSuccess }: UseInviteUserProps = {}) {
   
   return useMutation({
     mutationFn: async (data: InviteUserFormValues) => {
+      console.log('Inviting user with data:', data);
+      
       const response = await supabase.functions.invoke('user-management', {
         body: {
           action: 'invite',

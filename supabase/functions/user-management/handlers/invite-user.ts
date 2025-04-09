@@ -26,7 +26,7 @@ export const handleInviteUser = async (
     );
   }
 
-  // Default role to 'client' if not specified
+  // Get the explicit role from the request or default to 'client'
   const userRole = role || 'client';
   
   // Verify the role is valid
