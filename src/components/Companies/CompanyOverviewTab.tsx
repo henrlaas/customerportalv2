@@ -108,7 +108,7 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
             {company.is_marketing_client && company.mrr !== null && (
               <div className="grid grid-cols-3 gap-1">
                 <div className="font-medium">Monthly Revenue:</div>
-                <div className="col-span-2">${company.mrr}</div>
+                <div className="col-span-2">{company.mrr} kr</div>
               </div>
             )}
             
