@@ -34,6 +34,15 @@ export const SettingItem = ({ setting, onSave }: SettingItemProps) => {
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
+  
+  // Format display value to show kr for monetary values
+  const formatDisplayValue = (key: string, value: string) => {
+    // If the key indicates it's a rate or price value, format with kr
+    if (key.includes('rate') || key.includes('price') || key.includes('cost')) {
+      return `${value} kr`;
+    }
+    return value;
+  };
 
   return (
     <Card>
@@ -71,7 +80,7 @@ export const SettingItem = ({ setting, onSave }: SettingItemProps) => {
           </div>
           
           {!isEditing ? (
-            <div className="text-xl font-semibold">{setting.setting_value}</div>
+            <div className="text-xl font-semibold">{formatDisplayValue(setting.setting_key, setting.setting_value)}</div>
           ) : (
             <Input 
               value={value} 

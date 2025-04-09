@@ -138,7 +138,7 @@ const WorkspaceManagementPage = () => {
               Hourly Rates Configuration
             </h2>
             <p className="text-muted-foreground">
-              Set default hourly rates for different roles in your organization. These rates will be used for financial calculations.
+              Set default hourly rates for different roles in your organization. These rates will be used for financial calculations (NOK).
             </p>
             <Separator />
           </div>

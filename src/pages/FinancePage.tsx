@@ -24,7 +24,7 @@ const FinancePage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-                <h3 className="text-2xl font-bold mt-1">$84,324.00</h3>
+                <h3 className="text-2xl font-bold mt-1">84,324.00 kr</h3>
                 <p className="text-xs text-green-600 flex items-center mt-1">
                   <ArrowUp className="h-3 w-3 mr-1" />
                   8% from last month
@@ -40,7 +40,7 @@ const FinancePage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Outstanding</p>
-                <h3 className="text-2xl font-bold mt-1">$12,426.00</h3>
+                <h3 className="text-2xl font-bold mt-1">12,426.00 kr</h3>
                 <p className="text-xs text-red-600 flex items-center mt-1">
                   <ArrowUp className="h-3 w-3 mr-1" />
                   12% from last month
@@ -56,7 +56,7 @@ const FinancePage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Pending</p>
-                <h3 className="text-2xl font-bold mt-1">$18,289.00</h3>
+                <h3 className="text-2xl font-bold mt-1">18,289.00 kr</h3>
                 <p className="text-xs text-gray-600 flex items-center mt-1">
                   3 invoices pending
                 </p>
@@ -71,7 +71,7 @@ const FinancePage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Expenses</p>
-                <h3 className="text-2xl font-bold mt-1">$32,578.00</h3>
+                <h3 className="text-2xl font-bold mt-1">32,578.00 kr</h3>
                 <p className="text-xs text-green-600 flex items-center mt-1">
                   <ArrowDown className="h-3 w-3 mr-1" />
                   4% from last month
@@ -105,7 +105,7 @@ const FinancePage: React.FC = () => {
                   <td className="py-3 px-4">Website Redesign - Client ABC</td>
                   <td className="py-3 px-4">Services</td>
                   <td className="py-3 px-4">Apr 4, 2025</td>
-                  <td className="py-3 px-4 text-right">$4,200.00</td>
+                  <td className="py-3 px-4 text-right">4,200.00 kr</td>
                   <td className="py-3 px-4 text-right">
                     <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                       Paid
@@ -116,7 +116,7 @@ const FinancePage: React.FC = () => {
                   <td className="py-3 px-4">Marketing Campaign - Client XYZ</td>
                   <td className="py-3 px-4">Marketing</td>
                   <td className="py-3 px-4">Apr 3, 2025</td>
-                  <td className="py-3 px-4 text-right">$8,750.00</td>
+                  <td className="py-3 px-4 text-right">8,750.00 kr</td>
                   <td className="py-3 px-4 text-right">
                     <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
                       Pending
@@ -127,7 +127,7 @@ const FinancePage: React.FC = () => {
                   <td className="py-3 px-4">Office Supplies</td>
                   <td className="py-3 px-4">Expenses</td>
                   <td className="py-3 px-4">Apr 2, 2025</td>
-                  <td className="py-3 px-4 text-right">-$350.00</td>
+                  <td className="py-3 px-4 text-right">-350.00 kr</td>
                   <td className="py-3 px-4 text-right">
                     <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
                       Completed
@@ -138,7 +138,7 @@ const FinancePage: React.FC = () => {
                   <td className="py-3 px-4">Software Maintenance - Client DEF</td>
                   <td className="py-3 px-4">Services</td>
                   <td className="py-3 px-4">Apr 1, 2025</td>
-                  <td className="py-3 px-4 text-right">$1,250.00</td>
+                  <td className="py-3 px-4 text-right">1,250.00 kr</td>
                   <td className="py-3 px-4 text-right">
                     <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
                       Overdue

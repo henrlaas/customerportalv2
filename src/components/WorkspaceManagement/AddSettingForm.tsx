@@ -110,8 +110,11 @@ export const AddSettingForm = ({ onAdd }: AddSettingFormProps) => {
                 <FormItem>
                   <FormLabel>Value</FormLabel>
                   <FormControl>
-                    <Input placeholder="120" {...field} />
+                    <Input placeholder="1200" {...field} />
                   </FormControl>
+                  <FormDescription>
+                    For rates, enter the amount in NOK without the currency symbol
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -125,7 +128,7 @@ export const AddSettingForm = ({ onAdd }: AddSettingFormProps) => {
                   <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="A description of what this setting is used for" 
+                      placeholder="A description of what this setting is used for (e.g., Hourly rate for managers in NOK)" 
                       {...field} 
                     />
                   </FormControl>
