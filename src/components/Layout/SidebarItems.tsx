@@ -12,6 +12,7 @@ import {
   DollarSign,
   Settings,
   BookOpen,
+  Sliders,
 } from "lucide-react";
 
 export function getSidebarItems() {
@@ -77,6 +78,12 @@ export function getSidebarItems() {
       title: t('User Management'),
       href: '/user-management',
       icon: Users,
+      roles: ['admin'],
+    },
+    {
+      title: t('Workspace Management'),
+      href: '/workspace-management',
+      icon: Sliders,
       roles: ['admin'],
     },
   ];

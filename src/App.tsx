@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +20,7 @@ import CompanyDetailsPage from "./pages/CompanyDetailsPage";
 import { ContractsPage } from "./pages/ContractsPage";
 import DealsPage from "./pages/DealsPage";
 import UserManagementPage from "./pages/UserManagementPage";
+import WorkspaceManagementPage from "./pages/WorkspaceManagementPage";
 import SettingsPage from "./pages/SettingsPage";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
@@ -212,6 +214,18 @@ const App = () => (
               <ProtectedRoute allowedRoles={['admin']}>
                 <AppLayout>
                   <UserManagementPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Workspace Management (admin only) */}
+          <Route
+            path="/workspace-management"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AppLayout>
+                  <WorkspaceManagementPage />
                 </AppLayout>
               </ProtectedRoute>
             }
