@@ -8,6 +8,7 @@ export const userSchema = z.object({
   phone: z.string().optional(),
   role: z.string().optional(),
   team: z.string().optional(),
+  language: z.string().optional(),
 });
 
 export const inviteUserSchema = userSchema;
