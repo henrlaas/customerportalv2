@@ -14,10 +14,11 @@ export const workspaceService = {
   // Get all workspace settings
   getSettings: async (): Promise<WorkspaceSetting[]> => {
     try {
+      // Use type casting to tell TypeScript that the result will be WorkspaceSetting[]
       const { data, error } = await supabase
         .from('workspace_settings')
         .select('*')
-        .order('setting_key');
+        .order('setting_key') as { data: WorkspaceSetting[] | null, error: any };
       
       if (error) throw error;
       
@@ -31,11 +32,12 @@ export const workspaceService = {
   // Get a specific setting by key
   getSetting: async (key: string): Promise<WorkspaceSetting | null> => {
     try {
+      // Use type casting here as well
       const { data, error } = await supabase
         .from('workspace_settings')
         .select('*')
         .eq('setting_key', key)
-        .single();
+        .single() as { data: WorkspaceSetting | null, error: any };
       
       if (error) throw error;
       
@@ -54,7 +56,7 @@ export const workspaceService = {
         .update({ 
           setting_value: value,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('id', id);
       
       if (error) throw error;
@@ -67,17 +69,19 @@ export const workspaceService = {
   // Create a new setting
   createSetting: async (key: string, value: string, description?: string): Promise<WorkspaceSetting> => {
     try {
+      // Use type casting for the returned data
       const { data, error } = await supabase
         .from('workspace_settings')
         .insert({
           setting_key: key,
           setting_value: value,
           description
-        })
+        } as any)
         .select()
-        .single();
+        .single() as { data: WorkspaceSetting | null, error: any };
       
       if (error) throw error;
+      if (!data) throw new Error('No data returned after insert');
       
       return data;
     } catch (error: any) {
