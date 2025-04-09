@@ -16,6 +16,7 @@ const ClientDashboardPage = () => {
   const fetchClientCompanies = async () => {
     if (!user) return [];
     
+    // Get companies the user is directly associated with
     const { data: contactData, error: contactError } = await supabase
       .from('company_contacts')
       .select('company_id')
@@ -26,14 +27,34 @@ const ClientDashboardPage = () => {
     if (contactData && contactData.length > 0) {
       const companyIds = contactData.map(contact => contact.company_id);
       
-      // Get companies and their parent companies if they exist
-      const { data: companyData, error: companyError } = await supabase
+      // Get the companies the user has direct access to
+      const { data: directCompanies, error: directCompanyError } = await supabase
         .from('companies')
         .select('*, parent:parent_id(*)')
         .in('id', companyIds);
         
-      if (companyError) throw new Error(companyError.message);
-      return companyData || [];
+      if (directCompanyError) throw new Error(directCompanyError.message);
+      
+      // Get subsidiary companies (companies where the parent_id is in companyIds)
+      const { data: subsidiaryCompanies, error: subsidiaryError } = await supabase
+        .from('companies')
+        .select('*, parent:parent_id(*)')
+        .in('parent_id', companyIds);
+        
+      if (subsidiaryError) throw new Error(subsidiaryError.message);
+      
+      // Combine direct companies and subsidiaries
+      const allCompanies = [
+        ...(directCompanies || []),
+        ...(subsidiaryCompanies || [])
+      ];
+      
+      // Remove duplicates in case a company appears in both arrays
+      const uniqueCompanies = allCompanies.filter((company, index, self) =>
+        index === self.findIndex((c) => c.id === company.id)
+      );
+      
+      return uniqueCompanies;
     }
     
     return [];

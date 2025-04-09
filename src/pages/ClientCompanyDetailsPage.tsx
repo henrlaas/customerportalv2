@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -17,40 +16,18 @@ const ClientCompanyDetailsPage = () => {
   const fetchCompany = async () => {
     if (!user || !companyId) return null;
     
-    // First verify the user has access to this company
-    const { data: contactData } = await supabase
-      .from('company_contacts')
-      .select('company_id')
-      .eq('user_id', user.id)
-      .eq('company_id', companyId);
-    
-    // If no direct access, check if it's a parent company
-    if (!contactData || contactData.length === 0) {
-      // Get companies the user has direct access to
-      const { data: userCompanies } = await supabase
-        .from('company_contacts')
-        .select('company_id')
-        .eq('user_id', user.id);
-      
-      if (!userCompanies || userCompanies.length === 0) return null;
-      
-      // Get their parent companies
-      const { data: companies } = await supabase
-        .from('companies')
-        .select('parent_id')
-        .in('id', userCompanies.map(c => c.company_id))
-        .eq('parent_id', companyId);
-      
-      // No access to this company
-      if (!companies || companies.length === 0) return null;
-    }
-    
-    // Get company details
-    const { data: company } = await supabase
+    // This will utilize our updated is_company_member_or_parent function via RLS
+    // We only need to fetch the company details, as RLS will handle permission checking
+    const { data: company, error } = await supabase
       .from('companies')
       .select('*')
       .eq('id', companyId)
       .single();
+    
+    if (error) {
+      console.error("Error fetching company:", error);
+      return null;
+    }
     
     return company;
   };

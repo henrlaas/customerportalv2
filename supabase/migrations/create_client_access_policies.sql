@@ -14,7 +14,7 @@ BEGIN
     RETURN TRUE;
   END IF;
 
-  -- Check if user is a member of a company that has this company as a parent
+  -- Check if user is a member of a parent company
   RETURN EXISTS (
     WITH RECURSIVE company_hierarchy AS (
       -- Base case: Get companies where the user is directly a contact
@@ -29,6 +29,25 @@ BEGIN
       SELECT p.id, p.parent_id
       FROM public.companies p
       JOIN company_hierarchy ch ON p.id = ch.parent_id
+    )
+    SELECT 1 FROM company_hierarchy WHERE id = company_uuid
+  )
+  OR
+  -- Check if the company is a subsidiary of a company where the user is a contact
+  EXISTS (
+    WITH RECURSIVE company_hierarchy AS (
+      -- Base case: Get companies where the user is directly a contact
+      SELECT c.id, c.parent_id
+      FROM public.companies c
+      JOIN public.company_contacts cc ON c.id = cc.company_id
+      WHERE cc.user_id = auth.uid()
+      
+      UNION ALL
+      
+      -- Recursive case: Get child companies (subsidiaries)
+      SELECT c.id, c.parent_id
+      FROM public.companies c
+      JOIN company_hierarchy ch ON c.parent_id = ch.id
     )
     SELECT 1 FROM company_hierarchy WHERE id = company_uuid
   );
