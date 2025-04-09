@@ -61,20 +61,16 @@ export const companyQueryService = {
     return data.map(company => formatCompanyResponse(company)) as Company[];
   },
   
-  // Get company contacts - Optimized query with proper caching strategy
+  // Get company contacts - Fixed query that doesn't rely on foreign key relationships
   getCompanyContacts: async (companyId: string) => {
     console.log(`Fetching contacts for company: ${companyId}`);
     
+    // Modified query using explicit joins instead of relying on foreign key relationships
     const { data, error } = await supabase
       .from('company_contacts')
       .select(`
         *,
-        auth_user:user_id (
-          id,
-          email
-        ),
-        profile:user_id (
-          id,
+        profiles:user_id (
           first_name,
           last_name,
           avatar_url
@@ -88,16 +84,36 @@ export const companyQueryService = {
       throw error;
     }
 
+    // Also fetch email addresses from auth.users using a separate query
+    // because we can't directly join with auth.users
+    const userIds = data.map(contact => contact.user_id);
+    
+    // Only fetch emails if we have contacts
+    let emailsMap = {};
+    if (userIds.length > 0) {
+      const { data: authData, error: authError } = await supabase
+        .rpc('get_users_email', { user_ids: userIds });
+        
+      if (!authError && authData) {
+        emailsMap = authData.reduce((acc, item) => {
+          acc[item.id] = item.email;
+          return acc;
+        }, {});
+      } else if (authError) {
+        console.warn('Could not fetch email addresses:', authError);
+      }
+    }
+
     // Log the number of contacts retrieved
     console.log(`Retrieved ${data?.length || 0} contacts for company ${companyId}`);
 
     // Process the nested data to flatten the structure and ensure type safety
     return data.map((item: any) => ({
       ...item,
-      email: item.auth_user?.email || '',
-      first_name: item.profile?.first_name || '',
-      last_name: item.profile?.last_name || '',
-      avatar_url: item.profile?.avatar_url || null,
+      email: emailsMap[item.user_id] || '',
+      first_name: item.profiles?.first_name || '',
+      last_name: item.profiles?.last_name || '',
+      avatar_url: item.profiles?.avatar_url || null,
     }));
   },
 };
