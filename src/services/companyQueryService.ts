@@ -89,16 +89,17 @@ export const companyQueryService = {
     const userIds = data.map(contact => contact.user_id);
     
     // Only fetch emails if we have contacts
-    let emailsMap = {};
+    let emailsMap: Record<string, string> = {};
     if (userIds.length > 0) {
       const { data: authData, error: authError } = await supabase
         .rpc('get_users_email', { user_ids: userIds });
         
       if (!authError && authData) {
-        emailsMap = authData.reduce((acc, item) => {
+        // Ensure authData is properly typed as an array of objects with id and email
+        emailsMap = (authData as Array<{id: string, email: string}>).reduce((acc, item) => {
           acc[item.id] = item.email;
           return acc;
-        }, {});
+        }, {} as Record<string, string>);
       } else if (authError) {
         console.warn('Could not fetch email addresses:', authError);
       }

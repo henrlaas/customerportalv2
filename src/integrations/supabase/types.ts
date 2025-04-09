@@ -657,6 +657,13 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: string[]
       }
+      get_users_email: {
+        Args: { user_ids: string[] }
+        Returns: {
+          id: string
+          email: string
+        }[]
+      }
       has_role: {
         Args: { requested_role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
