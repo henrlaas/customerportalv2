@@ -1,5 +1,5 @@
 
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 
 export const handleListUsers = async (
   supabaseAdmin: SupabaseClient,

@@ -1,6 +1,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { corsHeaders } from './utils/cors.ts'
+import { createAdminClient } from './utils/supabase.ts'
 import { handleInviteUser } from './handlers/invite-user.ts'
 import { handleUpdateUser } from './handlers/update-user.ts'
 import { handleDeleteUser } from './handlers/delete-user.ts'
@@ -17,18 +18,22 @@ serve(async (req) => {
   try {
     const body = await req.json()
     const { action } = body
+    const supabaseAdmin = createAdminClient()
 
+    // Get origin for redirects
+    const origin = req.headers.get('origin') || 'http://localhost:3000'
+    
     switch(action) {
       case 'invite':
-        return await handleInviteUser(req)
+        return await handleInviteUser(body, origin, supabaseAdmin, corsHeaders)
       case 'update':
-        return await handleUpdateUser(req)
+        return await handleUpdateUser(body, supabaseAdmin, corsHeaders)
       case 'delete':
-        return await handleDeleteUser(req)
+        return await handleDeleteUser(body, supabaseAdmin, corsHeaders)
       case 'list':
-        return await handleListUsers(req)
+        return await handleListUsers(supabaseAdmin, corsHeaders)
       case 'reset-password':
-        return await handleResetPassword(req)
+        return await handleResetPassword(body, origin, supabaseAdmin, corsHeaders)
       case 'get-user-emails':
         return await handleGetUserEmails(req)
       default:

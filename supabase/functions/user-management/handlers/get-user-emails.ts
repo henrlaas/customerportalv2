@@ -1,7 +1,6 @@
 
-import { createServerClient } from 'https://esm.sh/@supabase/supabase-js@2.39.6'
 import { corsHeaders } from '../utils/cors.ts'
-import { getSupabaseAdmin } from '../utils/supabase.ts'
+import { createAdminClient } from '../utils/supabase.ts'
 
 // Handler for getting emails for a list of user IDs
 export async function handleGetUserEmails(req: Request) {
@@ -16,7 +15,7 @@ export async function handleGetUserEmails(req: Request) {
     }
     
     // Get admin supabase client
-    const supabase = getSupabaseAdmin()
+    const supabase = createAdminClient()
 
     // Get user role to determine permission
     const { data: userData, error: userError } = await supabase.auth.getUser()
