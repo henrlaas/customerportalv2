@@ -104,12 +104,9 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
                 )}
               </div>
             </div>
-            {company.street_address && (
+            {company.organization_number && (
               <p className="text-gray-500">
-                {company.street_address}, 
-                {company.city && ` ${company.city}`}
-                {company.postal_code && ` ${company.postal_code}`}
-                {company.country && `, ${company.country}`}
+                Organization #: {company.organization_number}
               </p>
             )}
           </div>
