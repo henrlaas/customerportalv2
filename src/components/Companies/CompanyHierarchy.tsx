@@ -25,6 +25,7 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
   const [isAddingCompany, setIsAddingCompany] = useState(false);
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [activeSubsidiaryId, setActiveSubsidiaryId] = useState<string | null>(null);
   
   const { isAdmin, isEmployee } = useAuth();
   
@@ -90,6 +91,8 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
                   company={company}
                   onSelectCompany={onSelectCompany}
                   onEditCompany={() => handleEditCompany(company.id)}
+                  activeSubsidiaryId={activeSubsidiaryId}
+                  setActiveSubsidiaryId={setActiveSubsidiaryId}
                 />
               </CardHeader>
             </Card>

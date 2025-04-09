@@ -28,13 +28,17 @@ interface CompanyHierarchyItemProps {
   onSelectCompany: (company: Company) => void;
   onEditCompany?: () => void;
   depth?: number;
+  activeSubsidiaryId?: string | null;
+  setActiveSubsidiaryId?: (id: string | null) => void;
 }
 
 export const CompanyHierarchyItem = ({ 
   company, 
   onSelectCompany, 
   onEditCompany,
-  depth = 0 
+  depth = 0,
+  activeSubsidiaryId,
+  setActiveSubsidiaryId
 }: CompanyHierarchyItemProps) => {
   const [showDetails, setShowDetails] = useState(false);
   
@@ -73,6 +77,20 @@ export const CompanyHierarchyItem = ({
   // Determine if this company can have children
   const canHaveChildren = depth === 0;
   
+  // Handle toggle for subsidiary details
+  const handleToggleSubsidiary = () => {
+    if (depth > 0 && setActiveSubsidiaryId) {
+      if (activeSubsidiaryId === company.id) {
+        setActiveSubsidiaryId(null);
+      } else {
+        setActiveSubsidiaryId(company.id);
+      }
+    }
+  };
+  
+  // Check if this subsidiary is active
+  const isActive = depth > 0 && activeSubsidiaryId === company.id;
+  
   return (
     <>
       <div className={`relative ${depth > 0 ? 'pl-4 border-l-2 border-gray-100 ml-3 mt-1' : ''}`}>
@@ -80,17 +98,17 @@ export const CompanyHierarchyItem = ({
           <div className="flex items-center gap-3 flex-grow">
             {/* Company Name and Icon */}
             <div 
-              className="flex items-center gap-2 py-1 flex-grow cursor-pointer"
-              onClick={() => depth === 0 ? onSelectCompany(company) : setShowDetails(true)}
+              className={`flex items-center gap-2 py-1 flex-grow cursor-pointer ${isActive ? 'text-primary font-medium' : ''}`}
+              onClick={() => depth === 0 ? onSelectCompany(company) : handleToggleSubsidiary()}
             >
-              <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
+              <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} ${isActive ? 'text-primary' : 'text-gray-500'}`} />
               <span className={`${depth > 0 ? 'text-sm font-medium' : 'text-base font-medium'}`}>
                 {company.name}
               </span>
             </div>
             
-            {/* Brief Info Section for Subsidiaries */}
-            {depth > 0 && (
+            {/* Brief Info Section for Subsidiaries when not expanded */}
+            {depth > 0 && !isActive && (
               <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
                 {company.organization_number && (
                   <div className="flex items-center gap-1">
@@ -145,7 +163,7 @@ export const CompanyHierarchyItem = ({
               >
                 <Trash2 className={depth > 0 ? "h-3.5 w-3.5" : "h-4 w-4"} />
               </Button>
-              {depth > 0 && (
+              {depth > 0 && !isActive && (
                 <Button 
                   variant="outline"
                   size="sm"
@@ -162,6 +180,65 @@ export const CompanyHierarchyItem = ({
             </div>
           )}
         </div>
+
+        {/* Expanded Subsidiary Information */}
+        {isActive && (
+          <div className="mt-2 mb-4 pl-6 pr-2 py-3 bg-muted/20 rounded-md">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-1">Organization Number</h4>
+                <p className="text-sm">{company.organization_number || 'Not specified'}</p>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-1">Website</h4>
+                {company.website ? (
+                  <a 
+                    href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-500 hover:underline flex items-center"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {company.website}
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </a>
+                ) : (
+                  <p className="text-sm">Not specified</p>
+                )}
+              </div>
+            </div>
+            
+            {canModify && (
+              <div className="flex justify-end gap-2 mt-3">
+                {onEditCompany && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditCompany();
+                    }}
+                  >
+                    <Edit className="mr-2 h-3.5 w-3.5" />
+                    Edit
+                  </Button>
+                )}
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteCompany(company.id);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-3.5 w-3.5" />
+                  Delete
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Company Details Dialog */}
@@ -251,11 +328,15 @@ export const CompanyHierarchyItem = ({
 const CompanyHierarchyChildren = ({ 
   parentId, 
   onSelectCompany,
-  depth = 1
+  depth = 1,
+  activeSubsidiaryId,
+  setActiveSubsidiaryId
 }: { 
   parentId: string; 
   onSelectCompany: (company: Company) => void;
   depth?: number;
+  activeSubsidiaryId?: string | null;
+  setActiveSubsidiaryId?: (id: string | null) => void;
 }) => {
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['childCompanies', parentId],
@@ -278,6 +359,8 @@ const CompanyHierarchyChildren = ({
           company={company}
           onSelectCompany={onSelectCompany}
           depth={depth}
+          activeSubsidiaryId={activeSubsidiaryId}
+          setActiveSubsidiaryId={setActiveSubsidiaryId}
         />
       ))}
     </div>
