@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,7 +10,10 @@ import {
   ExternalLink, 
   Globe, 
   Hash,
-  Trash2 
+  Trash2, 
+  Phone,
+  Mail,
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -21,7 +23,15 @@ import {
   DialogTitle, 
   DialogDescription 
 } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 interface CompanyHierarchyItemProps {
   company: Company;
@@ -79,7 +89,10 @@ export const CompanyHierarchyItem = ({
   
   // Handle toggle for subsidiary details
   const handleToggleSubsidiary = () => {
-    if (depth > 0 && setActiveSubsidiaryId) {
+    if (depth > 0) {
+      // Open the subsidiary details sheet for depth > 0
+      setShowDetails(true);
+    } else if (setActiveSubsidiaryId) {
       if (activeSubsidiaryId === company.id) {
         setActiveSubsidiaryId(null);
       } else {
@@ -91,6 +104,11 @@ export const CompanyHierarchyItem = ({
   // Check if this subsidiary is active
   const isActive = depth > 0 && activeSubsidiaryId === company.id;
   
+  // Format the date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
   return (
     <>
       <div className={`relative ${depth > 0 ? 'pl-4 border-l-2 border-gray-100 ml-3 mt-1' : ''}`}>
@@ -241,60 +259,108 @@ export const CompanyHierarchyItem = ({
         )}
       </div>
 
-      {/* Company Details Dialog */}
-      <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+      {/* Company Details Dialog/Sheet */}
+      <Sheet open={showDetails} onOpenChange={setShowDetails}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader className="mb-6">
+            <SheetTitle className="flex items-center gap-2 text-xl">
               <Building2 className="h-5 w-5" />
               {company.name}
-            </DialogTitle>
-            <DialogDescription>Company details</DialogDescription>
-          </DialogHeader>
+            </SheetTitle>
+            <SheetDescription>Company details</SheetDescription>
+          </SheetHeader>
           
-          <div className="mt-2">
-            <Table>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="font-medium">Organization Number</TableCell>
-                  <TableCell>{company.organization_number || 'Not specified'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Website</TableCell>
-                  <TableCell>
-                    {company.website ? (
-                      <a 
-                        href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline flex items-center"
-                      >
-                        {company.website}
-                        <ExternalLink className="h-3 w-3 ml-1" />
-                      </a>
-                    ) : (
-                      'Not specified'
-                    )}
-                  </TableCell>
-                </TableRow>
-                {company.phone && (
-                  <TableRow>
-                    <TableCell className="font-medium">Phone</TableCell>
-                    <TableCell>{company.phone}</TableCell>
-                  </TableRow>
-                )}
-                {company.address && (
-                  <TableRow>
-                    <TableCell className="font-medium">Address</TableCell>
-                    <TableCell>{company.address}</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+          <div className="grid grid-cols-1 gap-4 mb-6">
+            {company.website && (
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-medium text-gray-500">Website</CardTitle>
+                </CardHeader>
+                <CardContent className="py-0 pb-4">
+                  <a 
+                    href={company.website} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline flex items-center"
+                  >
+                    <Globe className="h-4 w-4 mr-2" />
+                    {company.website.replace(/^https?:\/\//, '')}
+                  </a>
+                </CardContent>
+              </Card>
+            )}
+            
+            {company.organization_number && (
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-medium text-gray-500">Organization Number</CardTitle>
+                </CardHeader>
+                <CardContent className="py-0 pb-4">
+                  <div className="flex items-center">
+                    <Hash className="h-4 w-4 mr-2" />
+                    <p>{company.organization_number}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            {company.phone && (
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-medium text-gray-500">Phone</CardTitle>
+                </CardHeader>
+                <CardContent className="py-0 pb-4">
+                  <div className="flex items-center">
+                    <Phone className="h-4 w-4 mr-2" />
+                    <p>{company.phone}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            {company.invoice_email && (
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-medium text-gray-500">Invoice Email</CardTitle>
+                </CardHeader>
+                <CardContent className="py-0 pb-4">
+                  <div className="flex items-center">
+                    <Mail className="h-4 w-4 mr-2" />
+                    <p>{company.invoice_email}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm font-medium text-gray-500">Created</CardTitle>
+              </CardHeader>
+              <CardContent className="py-0 pb-4">
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <p>{formatDate(company.created_at)}</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
           
+          {company.address && (
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Address</h3>
+              <p className="text-sm">{company.address}</p>
+              {company.city && (
+                <p className="text-sm mt-1">
+                  {company.city}
+                  {company.postal_code && `, ${company.postal_code}`}
+                  {company.country && `, ${company.country}`}
+                </p>
+              )}
+            </div>
+          )}
+          
           {canModify && (
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end gap-2 mt-6">
               {onEditCompany && (
                 <Button 
                   variant="outline" 
@@ -318,8 +384,8 @@ export const CompanyHierarchyItem = ({
               </Button>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </>
   );
 };
@@ -366,4 +432,3 @@ const CompanyHierarchyChildren = ({
     </div>
   );
 };
-
