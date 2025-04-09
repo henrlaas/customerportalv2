@@ -91,12 +91,17 @@ export const companyQueryService = {
     // Only fetch emails if we have contacts
     let emailsMap: Record<string, string> = {};
     if (userIds.length > 0) {
+      // Use a type assertion to tell TypeScript about the function
       const { data: authData, error: authError } = await supabase
-        .rpc('get_users_email', { user_ids: userIds });
+        .functions.invoke<{ id: string, email: string }[]>('user-management', {
+          body: {
+            action: 'get-user-emails',
+            userIds: userIds
+          }
+        });
         
       if (!authError && authData) {
-        // Ensure authData is properly typed as an array of objects with id and email
-        emailsMap = (authData as Array<{id: string, email: string}>).reduce((acc, item) => {
+        emailsMap = authData.reduce((acc, item) => {
           acc[item.id] = item.email;
           return acc;
         }, {} as Record<string, string>);
