@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -27,9 +28,7 @@ import {
   DialogTitle, 
   DialogDescription 
 } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -37,7 +36,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import {
   Card,
   CardContent,
@@ -62,7 +60,7 @@ export const CompanyHierarchyItem = ({
   activeSubsidiaryId,
   setActiveSubsidiaryId
 }: CompanyHierarchyItemProps) => {
-  const [showDetails, setShowDetails] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const { isAdmin, isEmployee } = useAuth();
   const { toast } = useToast();
@@ -79,7 +77,7 @@ export const CompanyHierarchyItem = ({
         description: 'The company has been deleted successfully',
       });
       queryClient.invalidateQueries({ queryKey: ['childCompanies', company.parent_id] });
-      setShowDetails(false);
+      setIsExpanded(false);
     },
     onError: (error: Error) => {
       toast({
@@ -96,272 +94,167 @@ export const CompanyHierarchyItem = ({
     }
   };
 
-  // Determine if this company can have children
-  const canHaveChildren = depth === 0;
-  
-  // Handle toggle for subsidiary details
-  const handleToggleSubsidiary = () => {
-    if (depth > 0) {
-      // Open the subsidiary details sheet for depth > 0
-      setShowDetails(true);
-    } else if (setActiveSubsidiaryId) {
-      if (activeSubsidiaryId === company.id) {
-        setActiveSubsidiaryId(null);
-      } else {
-        setActiveSubsidiaryId(company.id);
-      }
-    }
-  };
-  
-  // Check if this subsidiary is active
-  const isActive = depth > 0 && activeSubsidiaryId === company.id;
-  
   // Format the date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
+  
+  // Toggle expanded state when company name is clicked
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   return (
-    <>
-      <div className={`relative ${depth > 0 ? 'pl-4 border-l-2 border-gray-100 ml-3 mt-1' : ''}`}>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3 flex-grow">
-            {/* Company Name and Icon */}
-            <div 
-              className={`flex items-center gap-2 py-1 flex-grow ${isActive ? 'text-primary font-medium' : ''}`}
-            >
-              <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} ${isActive ? 'text-primary' : 'text-gray-500'}`} />
-              <span 
-                className={`${depth > 0 ? 'text-sm font-medium' : 'text-base font-medium'}`}
-              >
-                {company.name}
-              </span>
-            </div>
-            
-            {/* Brief Info Section for Subsidiaries when not expanded */}
-            {depth > 0 && !isActive && (
-              <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
-                {company.organization_number && (
-                  <div className="flex items-center gap-1">
-                    <Hash className="h-3.5 w-3.5" />
-                    <span>{company.organization_number}</span>
-                  </div>
-                )}
-                {company.website && (
-                  <div className="flex items-center gap-1">
-                    <Globe className="h-3.5 w-3.5" />
-                    <a 
-                      href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="hover:text-blue-500 hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {company.website.replace(/^https?:\/\//, '')}
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+    <div className={`relative ${depth > 0 ? 'pl-4 border-l-2 border-gray-100 ml-3 mt-1' : ''}`}>
+      {/* Company Row - Always visible */}
+      <div className="flex justify-between items-center py-2">
+        {/* Company Name and Icon - Clickable */}
+        <div 
+          onClick={toggleExpand}
+          className={`flex items-center gap-2 flex-grow cursor-pointer hover:bg-gray-50 rounded-md px-2 py-1`}
+        >
+          {isExpanded ? (
+            <ChevronDown className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
+          ) : (
+            <ChevronRight className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
+          )}
+          <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
+          <span className={`${depth > 0 ? 'text-sm font-medium' : 'text-base font-medium'}`}>
+            {company.name}
+          </span>
           
-          <div className="flex items-center gap-2">
-            {/* View Details Button for subsidiaries */}
-            {depth > 0 && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={() => setShowDetails(true)}
-              >
-                <ArrowRight className="h-4 w-4" />
-                <span className="hidden sm:inline">View Details</span>
-              </Button>
-            )}
-            
-            {/* Actions Dropdown Menu */}
-            {canModify && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 z-50 bg-white">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowDetails(true)}>
-                    <ArrowRight className="mr-2 h-4 w-4" />
-                    <span>View Details</span>
-                  </DropdownMenuItem>
-                  {onEditCompany && (
-                    <DropdownMenuItem onClick={() => onEditCompany()}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      <span>Edit</span>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem 
-                    className="text-red-600 focus:text-red-600" 
-                    onClick={() => handleDeleteCompany(company.id)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    <span>Delete</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </div>
-
-        {/* Expanded Subsidiary Information */}
-        {isActive && (
-          <div className="mt-2 mb-4 pl-6 pr-2 py-3 bg-muted/20 rounded-md">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">Organization Number</h4>
-                <p className="text-sm">{company.organization_number || 'Not specified'}</p>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">Website</h4>
-                {company.website ? (
+          {/* Brief Info Section when not expanded */}
+          {!isExpanded && (
+            <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground ml-2">
+              {company.organization_number && (
+                <div className="flex items-center gap-1">
+                  <Hash className="h-3.5 w-3.5" />
+                  <span>{company.organization_number}</span>
+                </div>
+              )}
+              {company.website && (
+                <div className="flex items-center gap-1">
+                  <Globe className="h-3.5 w-3.5" />
                   <a 
                     href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-sm text-blue-500 hover:underline flex items-center"
+                    className="hover:text-blue-500 hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {company.website}
-                    <ExternalLink className="h-3 w-3 ml-1" />
-                  </a>
-                ) : (
-                  <p className="text-sm">Not specified</p>
-                )}
-              </div>
-            </div>
-            
-            {canModify && (
-              <div className="flex justify-end gap-2 mt-3">
-                {onEditCompany && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditCompany();
-                    }}
-                  >
-                    <Edit className="mr-2 h-3.5 w-3.5" />
-                    Edit
-                  </Button>
-                )}
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteCompany(company.id);
-                  }}
-                >
-                  <Trash2 className="mr-2 h-3.5 w-3.5" />
-                  Delete
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Company Details Sheet */}
-      <Sheet open={showDetails} onOpenChange={setShowDetails}>
-        <SheetContent className="overflow-y-auto">
-          <SheetHeader className="mb-6">
-            <SheetTitle className="flex items-center gap-2 text-xl">
-              <Building2 className="h-5 w-5" />
-              {company.name}
-            </SheetTitle>
-            <SheetDescription>Company details</SheetDescription>
-          </SheetHeader>
-          
-          <div className="grid grid-cols-1 gap-4 mb-6">
-            {company.website && (
-              <Card>
-                <CardHeader className="py-3">
-                  <CardTitle className="text-sm font-medium text-gray-500">Website</CardTitle>
-                </CardHeader>
-                <CardContent className="py-0 pb-4">
-                  <a 
-                    href={company.website} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline flex items-center"
-                  >
-                    <Globe className="h-4 w-4 mr-2" />
                     {company.website.replace(/^https?:\/\//, '')}
                   </a>
-                </CardContent>
-              </Card>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {/* Actions Dropdown Menu */}
+        <div className="flex items-center">
+          {canModify && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 z-50 bg-white">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={toggleExpand}>
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp className="mr-2 h-4 w-4" />
+                      <span>Hide Details</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="mr-2 h-4 w-4" />
+                      <span>Show Details</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+                {onEditCompany && (
+                  <DropdownMenuItem onClick={() => onEditCompany()}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    <span>Edit</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem 
+                  className="text-red-600 focus:text-red-600" 
+                  onClick={() => handleDeleteCompany(company.id)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>Delete</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      </div>
+
+      {/* Expanded Company Details */}
+      {isExpanded && (
+        <div className="mt-2 mb-4 ml-6 mr-2 bg-gray-50 rounded-md p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {company.organization_number && (
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-1">Organization Number</h4>
+                <div className="flex items-center">
+                  <Hash className="h-4 w-4 mr-2 text-gray-500" />
+                  <p>{company.organization_number}</p>
+                </div>
+              </div>
             )}
             
-            {company.organization_number && (
-              <Card>
-                <CardHeader className="py-3">
-                  <CardTitle className="text-sm font-medium text-gray-500">Organization Number</CardTitle>
-                </CardHeader>
-                <CardContent className="py-0 pb-4">
-                  <div className="flex items-center">
-                    <Hash className="h-4 w-4 mr-2" />
-                    <p>{company.organization_number}</p>
-                  </div>
-                </CardContent>
-              </Card>
+            {company.website && (
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-1">Website</h4>
+                <a 
+                  href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center text-blue-600 hover:underline"
+                >
+                  <Globe className="h-4 w-4 mr-2" />
+                  {company.website.replace(/^https?:\/\//, '')}
+                </a>
+              </div>
             )}
             
             {company.phone && (
-              <Card>
-                <CardHeader className="py-3">
-                  <CardTitle className="text-sm font-medium text-gray-500">Phone</CardTitle>
-                </CardHeader>
-                <CardContent className="py-0 pb-4">
-                  <div className="flex items-center">
-                    <Phone className="h-4 w-4 mr-2" />
-                    <p>{company.phone}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-1">Phone</h4>
+                <div className="flex items-center">
+                  <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                  <p>{company.phone}</p>
+                </div>
+              </div>
             )}
             
             {company.invoice_email && (
-              <Card>
-                <CardHeader className="py-3">
-                  <CardTitle className="text-sm font-medium text-gray-500">Invoice Email</CardTitle>
-                </CardHeader>
-                <CardContent className="py-0 pb-4">
-                  <div className="flex items-center">
-                    <Mail className="h-4 w-4 mr-2" />
-                    <p>{company.invoice_email}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-1">Invoice Email</h4>
+                <div className="flex items-center">
+                  <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                  <p>{company.invoice_email}</p>
+                </div>
+              </div>
             )}
             
-            <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm font-medium text-gray-500">Created</CardTitle>
-              </CardHeader>
-              <CardContent className="py-0 pb-4">
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <p>{formatDate(company.created_at)}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-1">Created</h4>
+              <div className="flex items-center">
+                <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                <p>{formatDate(company.created_at)}</p>
+              </div>
+            </div>
           </div>
           
           {company.address && (
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Address</h3>
+            <div className="mt-4">
+              <h4 className="text-sm font-medium text-muted-foreground mb-1">Address</h4>
               <p className="text-sm">{company.address}</p>
               {company.city && (
                 <p className="text-sm mt-1">
@@ -374,33 +267,30 @@ export const CompanyHierarchyItem = ({
           )}
           
           {canModify && (
-            <div className="flex justify-end gap-2 mt-6">
+            <div className="flex justify-end gap-2 mt-4">
               {onEditCompany && (
                 <Button 
                   variant="outline" 
-                  onClick={() => {
-                    setShowDetails(false);
-                    onEditCompany();
-                  }}
+                  size="sm"
+                  onClick={() => onEditCompany()}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
+                  <Edit className="mr-2 h-3.5 w-3.5" />
                   Edit
                 </Button>
               )}
               <Button 
-                variant="destructive" 
-                onClick={() => {
-                  handleDeleteCompany(company.id);
-                }}
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDeleteCompany(company.id)}
               >
-                <Trash2 className="mr-2 h-4 w-4" />
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
                 Delete
               </Button>
             </div>
           )}
-        </SheetContent>
-      </Sheet>
-    </>
+        </div>
+      )}
+    </div>
   );
 };
 
