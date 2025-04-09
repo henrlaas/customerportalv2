@@ -18,7 +18,8 @@ import {
   ChevronDown,
   ChevronRight,
   ArrowRight,
-  MoreVertical
+  MoreVertical,
+  ChevronUp
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
