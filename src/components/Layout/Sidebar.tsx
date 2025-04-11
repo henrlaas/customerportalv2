@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Link } from 'react-router-dom';
 import { Settings } from 'lucide-react';
+import { Logo } from './Logo';
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -22,12 +23,7 @@ export const Sidebar: React.FC = () => {
   return (
     <ShadcnSidebar className="border-r bg-white">
       <SidebarHeader className="p-4">
-        <div className="flex items-center space-x-2">
-          <div className="bg-black text-white p-2 rounded">
-            <span className="text-xl font-bold">W</span>
-          </div>
-          <h1 className="text-xl font-bold text-gray-800">Workspace</h1>
-        </div>
+        <Logo />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

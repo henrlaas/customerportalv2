@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -16,6 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Logo } from '@/components/Layout/Logo';
 
 // Define form schema for password setup
 const passwordSetupSchema = z.object({
@@ -277,12 +277,7 @@ const SetPassword = () => {
     <div className="flex min-h-screen bg-white">
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="bg-black text-white p-2 rounded">
-              <span className="text-xl font-bold">W</span>
-            </div>
-            <h1 className="text-xl font-bold text-gray-800">Workspace</h1>
-          </div>
+          <Logo className="mb-8" />
           
           <h2 className="text-2xl font-bold mb-2">
             {inviteType === 'recovery' ? 'Reset Your Password' : 'Set Your Password'}

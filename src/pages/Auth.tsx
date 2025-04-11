@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Logo } from '@/components/Layout/Logo';
 
 // Define form schema for login
 const loginSchema = z.object({
@@ -95,12 +96,7 @@ const Auth = () => {
     <div className="flex min-h-screen bg-white">
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="bg-black text-white p-2 rounded">
-              <span className="text-xl font-bold">W</span>
-            </div>
-            <h1 className="text-xl font-bold text-gray-800">Workspace</h1>
-          </div>
+          <Logo className="mb-8" />
           
           <h2 className="text-2xl font-bold mb-2">Sign in</h2>
           <p className="text-gray-500 mb-6">Enter your credentials to access your account</p>
