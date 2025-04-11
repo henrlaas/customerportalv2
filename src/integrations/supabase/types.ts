@@ -333,6 +333,7 @@ export type Database = {
           description: string | null
           expected_close_date: string | null
           id: string
+          is_recurring: boolean | null
           probability: number | null
           stage_id: string | null
           title: string
@@ -347,6 +348,7 @@ export type Database = {
           description?: string | null
           expected_close_date?: string | null
           id?: string
+          is_recurring?: boolean | null
           probability?: number | null
           stage_id?: string | null
           title: string
@@ -361,6 +363,7 @@ export type Database = {
           description?: string | null
           expected_close_date?: string | null
           id?: string
+          is_recurring?: boolean | null
           probability?: number | null
           stage_id?: string | null
           title?: string

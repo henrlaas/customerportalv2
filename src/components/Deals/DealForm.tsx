@@ -30,6 +30,10 @@ import {
 } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from '@/components/ui/radio-group';
 
 // Define types for Company, Stage, and Profile
 type Company = {
@@ -47,6 +51,7 @@ type Profile = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  role: string;
 };
 
 // Schema for form validation
@@ -60,6 +65,7 @@ export const formSchema = z.object({
   value: z.coerce.number().default(0),
   probability: z.number(),
   assigned_to: z.string(),
+  is_recurring: z.boolean().default(false),
 });
 
 // Define the form values type from the schema
@@ -75,6 +81,7 @@ export const defaultValues: Partial<DealFormValues> = {
   value: 0,
   probability: 50,
   assigned_to: '',
+  is_recurring: false,
 };
 
 interface DealFormProps {
@@ -104,6 +111,11 @@ export const DealForm: React.FC<DealFormProps> = ({
     defaultValues: { ...defaultValues, ...propDefaultValues },
   });
 
+  // Filter profiles to only show admin and employee roles
+  const eligibleProfiles = profiles.filter(
+    profile => profile.role === 'admin' || profile.role === 'employee'
+  );
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -112,7 +124,7 @@ export const DealForm: React.FC<DealFormProps> = ({
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel>Deal Name</FormLabel>
               <FormControl>
                 <Input placeholder="Deal title" {...field} />
               </FormControl>
@@ -126,9 +138,9 @@ export const DealForm: React.FC<DealFormProps> = ({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Short Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="Deal description" {...field} />
+                <Textarea placeholder="Brief deal description" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -236,14 +248,45 @@ export const DealForm: React.FC<DealFormProps> = ({
           name="value"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Value</FormLabel>
+              <FormLabel>Value (MRR in NOK)</FormLabel>
               <FormControl>
                 <Input 
                   type="number" 
-                  placeholder="Deal value"
+                  placeholder="Deal value in NOK"
                   {...field}
                   onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="is_recurring"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Deal Type</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={(value) => field.onChange(value === 'true')}
+                  defaultValue={field.value ? 'true' : 'false'}
+                  className="flex flex-col space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="true" id="recurring" />
+                    <FormLabel htmlFor="recurring" className="font-normal cursor-pointer">
+                      Recurring
+                    </FormLabel>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="false" id="one-time" />
+                    <FormLabel htmlFor="one-time" className="font-normal cursor-pointer">
+                      One-time
+                    </FormLabel>
+                  </div>
+                </RadioGroup>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -288,7 +331,7 @@ export const DealForm: React.FC<DealFormProps> = ({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {profiles.map((profile) => (
+                  {eligibleProfiles.map((profile) => (
                     <SelectItem key={profile.id} value={profile.id}>
                       {profile.first_name} {profile.last_name}
                     </SelectItem>
@@ -314,4 +357,3 @@ export const DealForm: React.FC<DealFormProps> = ({
     </Form>
   );
 };
-

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
@@ -19,6 +20,7 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  Repeat,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
@@ -81,6 +83,7 @@ export type Deal = {
   assigned_to: string | null;
   created_at: string;
   updated_at: string;
+  is_recurring: boolean | null;
 };
 
 // Company type for selecting related companies
@@ -101,6 +104,7 @@ export type Profile = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  role: string;
 };
 
 const DealsPage = () => {
@@ -186,7 +190,7 @@ const DealsPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name')
+        .select('id, first_name, last_name, role')
         .order('first_name');
 
       if (error) {
@@ -215,6 +219,7 @@ const DealsPage = () => {
         probability: values.probability || null,
         expected_close_date: values.expected_close_date || null,
         assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to || null,
+        is_recurring: values.is_recurring,
       });
       
       if (error) throw error;
@@ -251,6 +256,7 @@ const DealsPage = () => {
         probability: dealData.probability || null,
         expected_close_date: dealData.expected_close_date || null,
         assigned_to: dealData.assigned_to === 'unassigned' ? null : dealData.assigned_to || null,
+        is_recurring: dealData.is_recurring,
       });
 
       if (error) throw error;
@@ -315,9 +321,9 @@ const DealsPage = () => {
   // Format currency
   const formatCurrency = (value: number | null) => {
     if (value === null) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('no-NO', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'NOK',
     }).format(value);
   };
 
@@ -447,6 +453,11 @@ const DealsPage = () => {
                       <FileText className="h-5 w-5 text-gray-500" />
                       <CardTitle className="text-lg">{deal.title}</CardTitle>
                       <div className="ml-2">{getStatusBadge(deal)}</div>
+                      {deal.is_recurring && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <Repeat className="h-3 w-3" /> Recurring
+                        </Badge>
+                      )}
                     </div>
                     {canModify && (
                       <DropdownMenu>
@@ -471,6 +482,9 @@ const DealsPage = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {deal.description && (
+                    <p className="text-sm text-gray-600 mb-3">{deal.description}</p>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
                     <div className="flex items-center">
                       <Building className="h-4 w-4 mr-2 text-gray-400" />
@@ -488,7 +502,7 @@ const DealsPage = () => {
                     </div>
                     <div className="flex items-center">
                       <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">Value:</span>
+                      <span className="text-gray-600">Value (MRR):</span>
                       <span className="font-medium ml-1">
                         {formatCurrency(deal.value)}
                       </span>
@@ -537,10 +551,11 @@ const DealsPage = () => {
                 description: currentDeal.description || '',
                 company_id: currentDeal.company_id || '',
                 stage_id: currentDeal.stage_id || '',
-                value: currentDeal.value,
+                value: currentDeal.value || 0,
                 probability: currentDeal.probability || 50,
                 expected_close_date: currentDeal.expected_close_date || '',
                 assigned_to: currentDeal.assigned_to || '',
+                is_recurring: currentDeal.is_recurring || false,
               }}
               isSubmitting={updateMutation.isPending}
               submitLabel="Save Changes"
