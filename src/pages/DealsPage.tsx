@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
@@ -164,7 +163,7 @@ const DealsPage = () => {
 
   // Fetch stages for the dropdown - use the correct table name
   const { data: stages = [], isLoading: isLoadingStages } = useQuery({
-    queryKey: ['stages'],
+    queryKey: ['deal_stages'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('deal_stages')
@@ -206,18 +205,25 @@ const DealsPage = () => {
     },
   });
 
-  // Fix the value property type issue
+  // Create deal mutation - updated to automatically assign to the first stage
   const createMutation = useMutation({
     mutationFn: async (values: DealFormValues) => {
+      // Find the first stage (Lead) by position
+      let firstStageId = null;
+      if (stages && stages.length > 0) {
+        const firstStage = [...stages].sort((a, b) => a.position - b.position)[0];
+        firstStageId = firstStage?.id || null;
+      }
+
       // Make sure value is number
       const { data, error } = await insertWithUser('deals', {
         title: values.title,
         description: values.description || null,
         company_id: values.company_id === 'none' ? null : values.company_id || null,
-        stage_id: values.stage_id || null,
-        value: values.value, // This is now a number from our updated form schema
-        probability: values.probability || null,
-        expected_close_date: values.expected_close_date || null,
+        stage_id: firstStageId,
+        value: values.value,
+        probability: 10, // Default probability for new deals
+        expected_close_date: null, // No close date initially
         assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to || null,
         is_recurring: values.is_recurring,
       });
@@ -242,7 +248,7 @@ const DealsPage = () => {
     },
   });
 
-  // Update deal mutation - fix value type issue
+  // Update deal mutation
   const updateMutation = useMutation({
     mutationFn: async (values: DealFormValues & { id: string }) => {
       const { id, ...dealData } = values;
@@ -251,10 +257,7 @@ const DealsPage = () => {
         title: dealData.title,
         description: dealData.description || null,
         company_id: dealData.company_id === 'none' ? null : dealData.company_id || null,
-        stage_id: dealData.stage_id || null,
-        value: dealData.value, // This is now a number from our updated form schema
-        probability: dealData.probability || null,
-        expected_close_date: dealData.expected_close_date || null,
+        value: dealData.value,
         assigned_to: dealData.assigned_to === 'unassigned' ? null : dealData.assigned_to || null,
         is_recurring: dealData.is_recurring,
       });

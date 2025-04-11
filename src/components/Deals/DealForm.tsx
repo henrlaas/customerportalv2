@@ -14,8 +14,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
 import {
   Select,
   SelectContent,
@@ -23,13 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import {
   RadioGroup,
   RadioGroupItem,
@@ -59,11 +50,8 @@ export const formSchema = z.object({
   title: z.string().min(1, { message: 'Title is required' }),
   description: z.string().optional(),
   company_id: z.string().min(1, { message: 'Company is required' }),
-  stage_id: z.string().min(1, { message: 'Stage is required' }),
-  expected_close_date: z.string().min(1, { message: 'Expected close date is required' }),
   // Transform string to number for value field
   value: z.coerce.number().default(0),
-  probability: z.number(),
   assigned_to: z.string(),
   is_recurring: z.boolean().default(false),
 });
@@ -76,10 +64,7 @@ export const defaultValues: Partial<DealFormValues> = {
   title: '',
   description: '',
   company_id: '',
-  stage_id: '',
-  expected_close_date: '',
   value: 0,
-  probability: 50,
   assigned_to: '',
   is_recurring: false,
 };
@@ -175,73 +160,6 @@ export const DealForm: React.FC<DealFormProps> = ({
             </FormItem>
           )}
         />
-        
-        <FormField
-          control={form.control}
-          name="stage_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Stage</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select stage" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {stages.map((stage) => (
-                    <SelectItem key={stage.id} value={stage.id}>
-                      {stage.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="expected_close_date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Expected Close Date</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(new Date(field.value), "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value ? new Date(field.value) : undefined}
-                    onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <FormField
           control={form.control}
@@ -287,27 +205,6 @@ export const DealForm: React.FC<DealFormProps> = ({
                     </FormLabel>
                   </div>
                 </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="probability"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Probability (%)</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  min="0" 
-                  max="100" 
-                  placeholder="50"
-                  {...field}
-                  onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
-                />
               </FormControl>
               <FormMessage />
             </FormItem>
