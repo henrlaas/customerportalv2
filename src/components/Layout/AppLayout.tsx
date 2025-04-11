@@ -26,7 +26,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <SidebarInset className="flex-1">
           <div className="flex-1 overflow-auto">
             <TopBar />
-            <main className="p-8">{children}</main>
+            <main className="w-full overflow-x-hidden">{children}</main>
           </div>
         </SidebarInset>
       </div>

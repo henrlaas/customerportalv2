@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -62,8 +63,8 @@ const CompaniesPage = () => {
   };
   
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full max-w-full px-4 sm:px-6 py-6 overflow-x-hidden">
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <h1 className="text-3xl font-bold">Companies</h1>
         {canModify && (
           <Button onClick={() => setIsCreating(true)}>
@@ -74,7 +75,7 @@ const CompaniesPage = () => {
       </div>
       
       {/* Search and filters */}
-      <Card className="mb-6">
+      <Card className="mb-6 w-full">
         <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <CardTitle className="text-lg">
@@ -110,10 +111,12 @@ const CompaniesPage = () => {
               )}
             </div>
           ) : viewMode === 'list' ? (
-            <CompanyListView 
-              companies={filteredCompanies} 
-              onCompanyClick={handleCompanyClick} 
-            />
+            <div className="overflow-x-auto w-full">
+              <CompanyListView 
+                companies={filteredCompanies} 
+                onCompanyClick={handleCompanyClick} 
+              />
+            </div>
           ) : (
             <CompanyCardView 
               companies={filteredCompanies} 

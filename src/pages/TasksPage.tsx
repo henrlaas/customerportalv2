@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser } from '@/integrations/supabase/client';
@@ -231,8 +230,8 @@ export const TasksPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full max-w-full px-4 sm:px-6 py-6 overflow-x-hidden">
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Tasks</h1>
           <p className="text-muted-foreground">Manage and track your tasks</p>
@@ -272,8 +271,8 @@ export const TasksPage = () => {
       </div>
       
       {/* Search and filters */}
-      <div className="mb-6 flex items-center gap-4">
-        <div className="relative flex-1">
+      <div className="mb-6 flex items-center gap-4 flex-wrap">
+        <div className="relative flex-1 min-w-[250px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search tasks..."
@@ -295,7 +294,7 @@ export const TasksPage = () => {
       
       {/* Filter panel */}
       {showFilters && (
-        <Card className="mb-6">
+        <Card className="mb-6 w-full">
           <CardContent className="pt-6">
             <TaskFilters 
               filters={filters}
@@ -322,53 +321,55 @@ export const TasksPage = () => {
           </Button>
         </div>
       ) : (
-        <div className="bg-white rounded-md border shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Assignee</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Related To</TableHead>
-                <TableHead>Client Visible</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tasks.map(task => (
-                <TableRow 
-                  key={task.id}
-                  className="cursor-pointer hover:bg-muted/60"
-                  onClick={() => handleTaskClick(task.id)}
-                >
-                  <TableCell className="font-medium">{task.title}</TableCell>
-                  <TableCell>{getStatusBadge(task.status)}</TableCell>
-                  <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                  <TableCell>{getAssigneeName(task.assigned_to)}</TableCell>
-                  <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
-                  <TableCell>
-                    {task.campaign_id ? (
-                      <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-                        Campaign: {getCampaignName(task.campaign_id)}
-                      </Badge>
-                    ) : task.related_type ? (
-                      <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
-                        {task.related_type}
-                      </Badge>
-                    ) : 'None'}
-                  </TableCell>
-                  <TableCell>
-                    {task.client_visible ? (
-                      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Visible</Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200">Hidden</Badge>
-                    )}
-                  </TableCell>
+        <div className="bg-white rounded-md border shadow-sm overflow-hidden w-full">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Assignee</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Related To</TableHead>
+                  <TableHead>Client Visible</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {tasks.map(task => (
+                  <TableRow 
+                    key={task.id}
+                    className="cursor-pointer hover:bg-muted/60"
+                    onClick={() => handleTaskClick(task.id)}
+                  >
+                    <TableCell className="font-medium">{task.title}</TableCell>
+                    <TableCell>{getStatusBadge(task.status)}</TableCell>
+                    <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+                    <TableCell>{getAssigneeName(task.assigned_to)}</TableCell>
+                    <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
+                    <TableCell>
+                      {task.campaign_id ? (
+                        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
+                          Campaign: {getCampaignName(task.campaign_id)}
+                        </Badge>
+                      ) : task.related_type ? (
+                        <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
+                          {task.related_type}
+                        </Badge>
+                      ) : 'None'}
+                    </TableCell>
+                    <TableCell>
+                      {task.client_visible ? (
+                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Visible</Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200">Hidden</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
     </div>

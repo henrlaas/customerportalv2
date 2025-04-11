@@ -109,8 +109,8 @@ const UserManagementPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="w-full max-w-full px-4 sm:px-6 space-y-6 overflow-x-hidden">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <h1 className="text-3xl font-bold">User Management</h1>
         <Button 
           className="bg-blue-500 hover:bg-blue-600"
@@ -121,7 +121,7 @@ const UserManagementPage = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg border shadow-sm">
+      <div className="bg-white rounded-lg border shadow-sm w-full">
         <UserFilters 
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -133,7 +133,7 @@ const UserManagementPage = () => {
           teams={teams}
         />
 
-        <div className="overflow-x-auto">
+        <div className="w-full overflow-x-auto">
           <UserTable 
             filteredUsers={filteredUsers}
             currentUserId={currentUser?.id}
