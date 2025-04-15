@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
@@ -41,6 +42,14 @@ export function DealKanbanView({
     onMove(dealId, stageId);
   };
 
+  // Wrapper function to adapt the onMove function signature
+  const handleMoveDeal = (deal: Deal) => {
+    if (!canModify) return;
+    if (deal.stage_id) {
+      onMove(deal.id, deal.stage_id);
+    }
+  };
+
   const Droppable = ({ id, children }: { id: string; children: React.ReactNode }) => {
     const { setNodeRef, isOver, active } = useDroppable({ id });
     const style = {
@@ -82,7 +91,7 @@ export function DealKanbanView({
                       canModify={canModify}
                       onEdit={onEdit}
                       onDelete={onDelete}
-                      onMove={onMove}
+                      onMove={handleMoveDeal}
                       onClick={setSelectedDeal}
                     />
                   ))}

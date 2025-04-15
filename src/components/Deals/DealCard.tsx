@@ -78,15 +78,15 @@ export const DealCard = ({
             <div className="flex gap-1">
               {/* Deal Type Icon */}
               {deal.deal_type === 'recurring' ? (
-                <Repeat className="h-4 w-4 text-blue-600" title="Recurring Deal" />
+                <Repeat className="h-4 w-4 text-blue-600" aria-label="Recurring Deal" />
               ) : (
-                <CircleDot className="h-4 w-4 text-gray-600" title="One-time Deal" />
+                <CircleDot className="h-4 w-4 text-gray-600" aria-label="One-time Deal" />
               )}
               {/* Client Deal Type Icon */}
               {deal.client_deal_type === 'web' ? (
-                <Globe className="h-4 w-4 text-purple-600" title="Web Project" />
+                <Globe className="h-4 w-4 text-purple-600" aria-label="Web Project" />
               ) : deal.client_deal_type === 'marketing' ? (
-                <Megaphone className="h-4 w-4 text-green-600" title="Marketing Project" />
+                <Megaphone className="h-4 w-4 text-green-600" aria-label="Marketing Project" />
               ) : null}
             </div>
             {canModify && (

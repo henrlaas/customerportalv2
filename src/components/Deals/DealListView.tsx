@@ -44,6 +44,12 @@ export function DealListView({
     onMove(dealToMove.id, newStageId);
   };
 
+  // Wrapper function to adapt the onMove function signature
+  const handleMoveDeal = (deal: Deal) => {
+    if (!canModify || !deal.stage_id) return;
+    handleMove(deal, deal.stage_id);
+  };
+
   return (
     <>
       <div className="space-y-4 p-4">
@@ -57,11 +63,7 @@ export function DealListView({
             canModify={canModify}
             onEdit={onEdit}
             onDelete={onDelete}
-            onMove={(dealToMove) => {
-              if (dealToMove.stage_id) {
-                handleMove(deal, dealToMove.stage_id);
-              }
-            }}
+            onMove={handleMoveDeal}
             onClick={setSelectedDeal}
           />
         ))}
