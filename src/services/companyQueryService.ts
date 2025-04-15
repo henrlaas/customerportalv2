@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { Company } from '@/types/company';
 import { formatCompanyResponse } from './companyHelpers';
@@ -102,14 +103,16 @@ export const companyQueryService = {
     let emailsMap: Record<string, string> = {};
     if (userIds.length > 0) {
       try {
-        const { data: emailsData } = await supabase.functions.invoke('user-management', {
+        const { data: emailsData, error: emailsError } = await supabase.functions.invoke('user-management', {
           body: {
             action: 'get-user-emails',
             userIds: userIds
           }
         });
         
-        if (emailsData) {
+        if (emailsError) {
+          console.warn('Could not fetch email addresses:', emailsError);
+        } else if (emailsData) {
           // Create a map for quick lookups
           emailsMap = emailsData.reduce((acc: Record<string, string>, item: { id: string, email: string }) => {
             acc[item.id] = item.email;
