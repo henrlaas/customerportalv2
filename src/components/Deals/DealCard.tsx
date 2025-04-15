@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Building, Calendar, DollarSign, MoreVertical, Edit, Trash2, User, Repeat, CircleDollarSign, Globe, Megaphone } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -79,6 +80,14 @@ export const DealCard = ({
     opacity: isDragging ? 0.8 : 1,
   } : undefined;
   
+  // Handle card click without opening details when clicking on dropdown
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Don't open details if clicking inside the dropdown menu
+    if (!(e.target as HTMLElement).closest('.dropdown-trigger')) {
+      setShowDetails(true);
+    }
+  };
+  
   return (
     <>
       <Card 
@@ -87,12 +96,7 @@ export const DealCard = ({
         {...attributes}
         {...listeners}
         style={style}
-        onClick={(e) => {
-          // Prevent opening details when clicking on dropdown menu
-          if (!(e.target as HTMLElement).closest('.dropdown-trigger')) {
-            setShowDetails(true);
-          }
-        }}
+        onClick={handleCardClick}
       >
         <CardHeader className="pb-2 pt-4 px-4">
           <div className="flex justify-between items-start">
@@ -133,18 +137,24 @@ export const DealCard = ({
               {canModify && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 dropdown-trigger" onClick={(e) => e.stopPropagation()}>
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(deal)}>
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(deal);
+                    }}>
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-red-600" 
-                      onClick={() => onDelete(deal.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(deal.id);
+                      }}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
