@@ -38,6 +38,7 @@ import { useDealsView } from '@/hooks/useDealsView';
 import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
 import { DealKanbanView } from '@/components/Deals/DealKanbanView';
 import { DealListView } from '@/components/Deals/DealListView';
+import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog';
 
 // Deal type matching our database schema
 export type Deal = {
@@ -390,36 +391,10 @@ const DealsPage = () => {
             </ToggleGroupItem>
           </ToggleGroup>
           {canModify && (
-            <Dialog open={isCreating} onOpenChange={setIsCreating}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Deal
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Deal</DialogTitle>
-                  <DialogDescription>
-                    Add a new deal to your pipeline.
-                  </DialogDescription>
-                </DialogHeader>
-                <DealForm
-                  onSubmit={(values) => {
-                    createMutation.mutate(values);
-                  }}
-                  companies={companies}
-                  stages={stages}
-                  profiles={profiles}
-                  defaultValues={{
-                    assigned_to: user?.id || '',
-                  }}
-                  isSubmitting={createMutation.isPending}
-                  submitLabel="Create Deal"
-                  onCancel={() => setIsCreating(false)}
-                />
-              </DialogContent>
-            </Dialog>
+            <MultiStageDealDialog
+              isOpen={isCreating}
+              onClose={() => setIsCreating(false)}
+            />
           )}
         </div>
       </div>

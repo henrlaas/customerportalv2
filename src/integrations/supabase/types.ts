@@ -327,9 +327,11 @@ export type Database = {
       deals: {
         Row: {
           assigned_to: string | null
+          client_deal_type: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
+          deal_type: string | null
           description: string | null
           expected_close_date: string | null
           id: string
@@ -342,9 +344,11 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          client_deal_type?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
+          deal_type?: string | null
           description?: string | null
           expected_close_date?: string | null
           id?: string
@@ -357,9 +361,11 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          client_deal_type?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
+          deal_type?: string | null
           description?: string | null
           expected_close_date?: string | null
           id?: string
@@ -602,6 +608,88 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      temp_deal_companies: {
+        Row: {
+          company_name: string
+          created_at: string
+          created_by: string | null
+          deal_id: string | null
+          id: string
+          organization_number: string | null
+          website: string | null
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string | null
+          id?: string
+          organization_number?: string | null
+          website?: string | null
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string | null
+          id?: string
+          organization_number?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temp_deal_companies_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      temp_deal_contacts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deal_id: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          position: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string | null
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          position?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          position?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temp_deal_contacts_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
             referencedColumns: ["id"]
           },
         ]
