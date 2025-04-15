@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Building, Calendar, DollarSign, MoreVertical, Edit, Trash2, User, Repeat } from 'lucide-react';
+import { Building, Calendar, DollarSign, MoreVertical, Edit, Trash2, User, Repeat, CircleDollarSign, Globe, Megaphone } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -82,38 +81,48 @@ export const DealCard = ({
       <CardHeader className="pb-2 pt-4 px-4">
         <div className="flex justify-between items-start">
           <h3 className="text-base font-semibold">{deal.title}</h3>
-          {canModify && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(deal)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="text-red-600" 
-                  onClick={() => onDelete(deal.id)}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Deal Type Icon */}
+            {deal.deal_type === 'recurring' ? (
+              <Repeat className="h-4 w-4 text-blue-500" aria-label="Recurring deal" />
+            ) : (
+              <CircleDollarSign className="h-4 w-4 text-green-500" aria-label="One-time deal" />
+            )}
+            {/* Client Deal Type Icon */}
+            {deal.client_deal_type === 'web' ? (
+              <Globe className="h-4 w-4 text-purple-500" aria-label="Web deal" />
+            ) : (
+              <Megaphone className="h-4 w-4 text-orange-500" aria-label="Marketing deal" />
+            )}
+            {canModify && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onEdit(deal)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-red-600" 
+                    onClick={() => onDelete(deal.id)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="px-4 py-3 space-y-2 text-sm">
         <div className="flex items-center text-gray-600">
           <Building className="h-4 w-4 mr-2 flex-shrink-0" />
           <span className="truncate">{getCompanyName(deal.company_id, companies, tempCompanies, deal.id)}</span>
-        </div>
-        <div className="flex items-center text-gray-600">
-          <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
-          <span>{formatDate(deal.expected_close_date)}</span>
         </div>
         <div className="flex items-center text-gray-600">
           <DollarSign className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -123,28 +132,6 @@ export const DealCard = ({
           <User className="h-4 w-4 mr-2 flex-shrink-0" />
           <span>{getAssigneeName(deal.assigned_to, profiles)}</span>
         </div>
-        {deal.is_recurring && (
-          <div className="mt-2">
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Repeat className="h-3 w-3" />
-              <span>Recurring</span>
-            </Badge>
-          </div>
-        )}
-        {deal.deal_type && (
-          <div className="mt-1">
-            <Badge variant="secondary" className="text-xs">
-              {deal.deal_type === 'recurring' ? 'Monthly' : 'One-time'}
-            </Badge>
-          </div>
-        )}
-        {deal.client_deal_type && (
-          <div className="mt-1">
-            <Badge variant="outline" className="text-xs">
-              {deal.client_deal_type}
-            </Badge>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
