@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Deal, Stage, Company, Profile } from './types/deal';
+import { Deal, Stage, Company, Profile } from '@/components/Deals/types/deal';
 import { DealCard } from './DealCard';
-import { DealDetailsDialog } from './DealDetailsDialog';
 
 interface DealListViewProps {
   deals: Deal[];
@@ -25,9 +24,10 @@ export function DealListView({
   onDelete,
   onMove,
 }: DealListViewProps) {
+  // Track optimistic updates locally
   const [localDeals, setLocalDeals] = useState<Deal[]>(deals);
-  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   
+  // Update local deals when props change
   useEffect(() => {
     setLocalDeals(deals);
   }, [deals]);
@@ -35,47 +35,37 @@ export function DealListView({
   const handleMove = (dealToMove: Deal, newStageId: string) => {
     if (!canModify) return;
     
+    // Optimistic update - update local state immediately
     setLocalDeals(prevDeals => 
       prevDeals.map(deal => 
         deal.id === dealToMove.id ? { ...deal, stage_id: newStageId } : deal
       )
     );
     
+    // Then persist to database
     onMove(dealToMove.id, newStageId);
   };
 
-  // Wrapper function to adapt the onMove function signature
-  const handleMoveDeal = (deal: Deal) => {
-    if (!canModify || !deal.stage_id) return;
-    handleMove(deal, deal.stage_id);
-  };
-
   return (
-    <>
-      <div className="space-y-4 p-4">
-        {localDeals.map((deal) => (
-          <DealCard
-            key={deal.id}
-            deal={deal}
-            companies={companies}
-            stages={stages}
-            profiles={profiles}
-            canModify={canModify}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onMove={handleMoveDeal}
-            onClick={setSelectedDeal}
-          />
-        ))}
-      </div>
-
-      <DealDetailsDialog
-        deal={selectedDeal}
-        companies={companies}
-        profiles={profiles}
-        isOpen={!!selectedDeal}
-        onClose={() => setSelectedDeal(null)}
-      />
-    </>
+    <div className="space-y-4 p-4">
+      {localDeals.map((deal) => (
+        <DealCard
+          key={deal.id}
+          deal={deal}
+          companies={companies}
+          stages={stages}
+          profiles={profiles}
+          canModify={canModify}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onMove={(dealToMove) => {
+            // In list view, we just update the stage using the current stage
+            if (dealToMove.stage_id) {
+              handleMove(deal, dealToMove.stage_id);
+            }
+          }}
+        />
+      ))}
+    </div>
   );
 }
