@@ -13,10 +13,12 @@ import { Badge } from '@/components/ui/badge';
 import { useDraggable } from '@dnd-kit/core';
 
 // Import types from the deal types file
-import { Deal, Company, Stage, Profile } from '@/components/Deals/types/deal';
+import { Deal, Company, Stage, Profile, TempDealCompany } from '@/components/Deals/types/deal';
 
 // Import formatters
 import { formatCurrency, formatDate, getCompanyName, getAssigneeName } from './utils/formatters';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DealCardProps {
   deal: Deal;
@@ -39,6 +41,24 @@ export const DealCard = ({
   onDelete,
   onMove
 }: DealCardProps) => {
+  // Fetch temp company info if needed
+  const { data: tempCompanies } = useQuery({
+    queryKey: ['temp-deal-companies', deal.id],
+    queryFn: async () => {
+      // Only fetch if this deal doesn't have a company_id
+      if (deal.company_id) return null;
+      
+      const { data } = await supabase
+        .from('temp_deal_companies')
+        .select('deal_id, company_name')
+        .eq('deal_id', deal.id);
+        
+      return data || null;
+    },
+    // Only run this query for deals without company_id
+    enabled: !deal.company_id
+  });
+  
   // Set up draggable functionality
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: deal.id,
@@ -89,7 +109,7 @@ export const DealCard = ({
       <CardContent className="px-4 py-3 space-y-2 text-sm">
         <div className="flex items-center text-gray-600">
           <Building className="h-4 w-4 mr-2 flex-shrink-0" />
-          <span className="truncate">{getCompanyName(deal.company_id, companies)}</span>
+          <span className="truncate">{getCompanyName(deal.company_id, companies, tempCompanies, deal.id)}</span>
         </div>
         <div className="flex items-center text-gray-600">
           <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -128,4 +148,4 @@ export const DealCard = ({
       </CardContent>
     </Card>
   );
-};
+}

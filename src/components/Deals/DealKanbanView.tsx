@@ -118,6 +118,7 @@ export function DealKanbanView({
             canModify={canModify}
             onEdit={onEdit}
             onDelete={onDelete}
+            onMove={onMove}
           />
         ))}
       </div>
@@ -133,6 +134,7 @@ interface StageColumnProps {
   canModify: boolean;
   onEdit: (deal: Deal) => void;
   onDelete: (id: string) => void;
+  onMove: (dealId: string, newStageId: string) => void;
 }
 
 function StageColumn({

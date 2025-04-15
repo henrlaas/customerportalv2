@@ -41,6 +41,30 @@ export type Profile = {
   role: string;
 };
 
+// Temp deal company type
+export type TempDealCompany = {
+  id: string;
+  deal_id: string;
+  company_name: string;
+  organization_number?: string | null;
+  website?: string | null;
+  created_at: string;
+  created_by?: string | null;
+};
+
+// Temp deal contact type
+export type TempDealContact = {
+  id: string;
+  deal_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string | null;
+  position?: string | null;
+  created_at: string;
+  created_by?: string | null;
+};
+
 // Schema for new company form
 export const newCompanyFormSchema = z.object({
   company_name: z.string().min(1, 'Company name is required'),

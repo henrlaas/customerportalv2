@@ -28,11 +28,27 @@ export const formatDate = (dateString: string | null) => {
 
 /**
  * Gets company name by ID from companies list
+ * Also checks temp_deal_companies when company_id is null
  */
-export const getCompanyName = (companyId: string | null, companies: Array<{ id: string; name: string; }>) => {
-  if (!companyId) return 'No company';
-  const company = companies.find(c => c.id === companyId);
-  return company ? company.name : 'Unknown Company';
+export const getCompanyName = (
+  companyId: string | null, 
+  companies: Array<{ id: string; name: string; }>,
+  tempCompanies?: Array<{ deal_id: string; company_name: string; }> | null,
+  dealId?: string
+) => {
+  // First try to find in regular companies
+  if (companyId) {
+    const company = companies.find(c => c.id === companyId);
+    if (company) return company.name;
+  }
+  
+  // If no company_id but we have temp companies and dealId, try to find temp company
+  if (!companyId && tempCompanies && dealId) {
+    const tempCompany = tempCompanies.find(tc => tc.deal_id === dealId);
+    if (tempCompany) return `${tempCompany.company_name} (New)`;
+  }
+  
+  return 'No company';
 };
 
 /**
@@ -44,4 +60,3 @@ export const getAssigneeName = (userId: string | null, profiles: Array<{ id: str
   if (!profile) return 'Unknown User';
   return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
 };
-
