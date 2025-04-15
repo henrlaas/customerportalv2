@@ -45,6 +45,9 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
   const createDealMutation = useMutation({
     mutationFn: async (dealData: any) => {
       let dealId: string | undefined;
+      
+      // Use the specific Lead stage ID
+      const leadStageId = "5ac493ab-84be-4203-bb92-b7c310bc2128";
 
       // Start a transaction
       const { data: deal, error: dealError } = await supabase
@@ -59,6 +62,7 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
           company_id: dealData.existingCompanyId || null,
           is_recurring: dealData.dealDetails.deal_type === 'recurring',
           created_by: user?.id,
+          stage_id: leadStageId, // Set the specific Lead stage ID
         })
         .select()
         .single();
