@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Company, CompanyContact } from '@/types/company';
 
@@ -83,7 +84,7 @@ const companyQueryService = {
 };
 
 const companyMutationService = {
-  createCompany: async (companyData: Company): Promise<Company> => {
+  createCompany: async (companyData: Partial<Company>): Promise<Company> => {
     try {
       const { data, error } = await supabase
         .from('companies')
@@ -141,7 +142,7 @@ const companyMutationService = {
     }
   },
 
-  createContact: async (contactData: CompanyContact): Promise<CompanyContact> => {
+  createContact: async (contactData: Partial<CompanyContact>): Promise<CompanyContact> => {
     try {
       const { data, error } = await supabase
         .from('company_contacts')
@@ -198,19 +199,7 @@ const companyMutationService = {
       throw error;
     }
   },
-};
-
-export const companyService = {
-  fetchCompanies: companyQueryService.fetchCompanies,
-  fetchChildCompanies: companyQueryService.fetchChildCompanies,
-  fetchCompanyById: companyQueryService.fetchCompanyById,
-  fetchCompanyContacts: companyQueryService.fetchCompanyContacts,
-  createCompany: companyMutationService.createCompany,
-  updateCompany: companyMutationService.updateCompany,
-  deleteCompany: companyMutationService.deleteCompany,
-  createContact: companyMutationService.createContact,
-  updateContact: companyMutationService.updateContact,
-  deleteContact: companyMutationService.deleteContact,
+  
   fetchFavicon: async (website: string) => {
     if (!website) return null;
     
@@ -262,4 +251,22 @@ export const companyService = {
       throw error;
     }
   }
+};
+
+export const companyService = {
+  // Query functions
+  fetchCompanies: companyQueryService.fetchCompanies,
+  fetchChildCompanies: companyQueryService.fetchChildCompanies,
+  fetchCompanyById: companyQueryService.fetchCompanyById,
+  fetchCompanyContacts: companyQueryService.fetchCompanyContacts,
+  
+  // Mutation functions
+  createCompany: companyMutationService.createCompany,
+  updateCompany: companyMutationService.updateCompany,
+  deleteCompany: companyMutationService.deleteCompany,
+  createContact: companyMutationService.createContact,
+  updateContact: companyMutationService.updateContact,
+  deleteContact: companyMutationService.deleteContact,
+  fetchFavicon: companyMutationService.fetchFavicon,
+  convertTempCompany: companyMutationService.convertTempCompany,
 };

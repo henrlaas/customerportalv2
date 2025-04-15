@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -22,14 +23,14 @@ const CompaniesPage = () => {
   const { isAdmin, isEmployee } = useAuth();
   const navigate = useNavigate();
   
-  // Fetch companies - use fetchCompanies instead of getCompanies
+  // Fetch companies - use fetchCompanies
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['companies'],
     queryFn: companyService.fetchCompanies,
   });
   
   // Filter companies by search query, type, and parent status
-  const filteredCompanies = companies ? companies.filter(company => {
+  const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (company.address && company.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -45,7 +46,7 @@ const CompaniesPage = () => {
     const matchesParentStatus = showSubsidiaries || company.parent_id === null;
     
     return matchesSearch && matchesType && matchesParentStatus;
-  }) : [];
+  });
   
   // Check if user can modify companies (admin or employee)
   const canModify = isAdmin || isEmployee;

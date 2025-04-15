@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { userService } from '@/services/userService';
 import { useToast } from '@/components/ui/use-toast';
@@ -77,7 +78,12 @@ export const CreateContactDialog = ({
   
   // Create contact mutation - use createContact instead of addCompanyContact
   const createContactMutation = useMutation({
-    mutationFn: companyService.createContact,
+    mutationFn: (contactData: ContactFormValues & { company_id: string }) => {
+      return companyService.createContact({
+        ...contactData,
+        company_id: companyId,
+      });
+    },
     onSuccess: () => {
       toast({
         title: 'Contact added',
@@ -92,6 +98,9 @@ export const CreateContactDialog = ({
       
       // Close dialog
       onClose();
+      
+      // Refetch company contacts
+      queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] });
     },
     onError: (error: Error) => {
       toast({

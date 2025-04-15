@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -43,7 +44,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Fetch contacts with improved query options - use fetchCompanyContacts instead of getCompanyContacts
+  // Fetch contacts with improved query options - use fetchCompanyContacts
   const { data: contacts = [], isLoading, isError, error } = useQuery({
     queryKey: ['companyContacts', companyId],
     queryFn: () => companyService.fetchCompanyContacts(companyId),
@@ -54,9 +55,9 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   
   // Log query status for debugging
   console.log('Contacts query status:', { isLoading, isError, contactCount: contacts.length });
-  if (isError) console.error('Contacts query error:', error);
+  if (isError && error) console.error('Contacts query error:', error);
   
-  // Delete contact mutation - use deleteContact instead of deleteCompanyContact
+  // Delete contact mutation - use deleteContact 
   const deleteContactMutation = useMutation({
     mutationFn: companyService.deleteContact,
     onSuccess: () => {
@@ -113,7 +114,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
         </div>
       ) : isError ? (
         <div className="text-center p-8 border rounded-lg bg-muted/10 text-destructive">
-          <p>Error loading contacts: {error?.message || 'Unknown error'}</p>
+          <p>Error loading contacts: {error instanceof Error ? error.message : 'Unknown error'}</p>
           <Button variant="outline" className="mt-4" onClick={() => 
             queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] })
           }>

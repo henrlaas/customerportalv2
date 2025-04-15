@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -20,7 +21,7 @@ const CompanyDetailsPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Fetch company details - use fetchCompanyById instead of getCompany
+  // Fetch company details - use fetchCompanyById
   const { data: company, isLoading } = useQuery({
     queryKey: ['company', companyId],
     queryFn: () => companyService.fetchCompanyById(companyId as string),
