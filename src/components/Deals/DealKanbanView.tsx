@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -91,7 +92,13 @@ export function DealKanbanView({
     const deal = deals.find(d => d.id === dealId);
     const tempCompany = tempCompanies?.find(tc => tc.deal_id === dealId);
     
-    if (targetStage?.name.toLowerCase() === 'closed won' && !deal?.company_id && tempCompany) {
+    // Only show convert dialog if:
+    // 1. Target stage is "Closed Won"
+    // 2. Deal has no company_id (not associated with an actual company)
+    // 3. Deal has a temporary company record
+    if (targetStage?.name.toLowerCase() === 'closed won' && 
+        !deal?.company_id && 
+        tempCompany) {
       setSelectedDeal(deal);
       setTempCompanyData(tempCompany);
       setShowConvertDialog(true);
@@ -231,4 +238,15 @@ function StageColumn({
       </div>
     </div>
   );
+}
+
+interface StageColumnProps {
+  stage: Stage;
+  deals: Deal[];
+  companies: Company[];
+  profiles: Profile[];
+  canModify: boolean;
+  onEdit: (deal: Deal) => void;
+  onDelete: (id: string) => void;
+  onMove: (dealId: string, newStageId: string) => void;
 }
