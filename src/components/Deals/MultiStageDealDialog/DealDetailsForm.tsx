@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -39,18 +40,21 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
   onSubmit,
   onBack,
   isSubmitting = false,
-  defaultValues = {
-    title: '',
-    description: '',
-    deal_type: 'one-time',
-    client_deal_type: 'web',
-    value: 0,
-    assigned_to: '',
-  }
+  defaultValues = {},
 }) => {
+  const { user } = useAuth();
+  
   const form = useForm<DealDetailsFormValues>({
     resolver: zodResolver(dealDetailsFormSchema),
-    defaultValues: defaultValues as DealDetailsFormValues,
+    defaultValues: {
+      title: '',
+      description: '',
+      deal_type: 'one-time',
+      client_deal_type: 'web',
+      value: 0,
+      assigned_to: user?.id || '', // Set default assigned_to as the current user's ID
+      ...defaultValues,
+    },
   });
 
   const { data: profiles = [] } = useQuery({
