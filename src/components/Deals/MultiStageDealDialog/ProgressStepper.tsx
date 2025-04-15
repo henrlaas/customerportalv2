@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Circle, CircleCheck } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 type Step = 'company-selection' | 'existing-company' | 'new-company' | 'contact-info' | 'deal-details';
@@ -26,27 +25,11 @@ export const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep })
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
   return (
-    <div className="mb-8">
-      <Progress value={progress} className="mb-4" />
-      <div className="flex justify-between">
-        {steps.map((step, index) => (
-          <div 
-            key={step.id} 
-            className={`flex flex-col items-center ${
-              index <= currentStepIndex ? 'text-primary' : 'text-muted-foreground'
-            }`}
-          >
-            <div className="mb-2">
-              {index <= currentStepIndex ? (
-                <CircleCheck className="h-5 w-5" />
-              ) : (
-                <Circle className="h-5 w-5" />
-              )}
-            </div>
-            <span className="text-xs text-center max-w-[80px]">{step.label}</span>
-          </div>
-        ))}
+    <div className="mb-4">
+      <div className="flex justify-between mb-2 text-sm text-muted-foreground">
+        <span>Step {currentStepIndex + 1} of {steps.length}: {steps[currentStepIndex].label}</span>
       </div>
+      <Progress value={progress} className="h-2" />
     </div>
   );
 };
