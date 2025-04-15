@@ -61,7 +61,7 @@ export function DealListView({
           onMove={(dealToMove) => {
             // In list view, we just update the stage using the current stage
             if (dealToMove.stage_id) {
-              handleMove(dealToMove, dealToMove.stage_id);
+              handleMove(deal, dealToMove.stage_id);
             }
           }}
         />

@@ -13,36 +13,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useDraggable } from '@dnd-kit/core';
 
-export type Company = {
-  id: string;
-  name: string;
-};
-
-export type Stage = {
-  id: string;
-  name: string;
-  position: number;
-};
-
-export type Profile = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-};
-
-export type Deal = {
-  id: string;
-  title: string;
-  description: string | null;
-  company_id: string | null;
-  stage_id: string | null;
-  expected_close_date: string | null;
-  value: number | null;
-  assigned_to: string | null;
-  created_at: string;
-  updated_at: string;
-  is_recurring: boolean | null;
-};
+// Import types from DealsPage to ensure consistency
+import { Company, Stage, Profile, Deal } from '@/pages/DealsPage';
 
 interface DealCardProps {
   deal: Deal;
