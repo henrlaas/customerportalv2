@@ -116,9 +116,9 @@ export function MultiStageCompanyDialog({
     }
   }, [website]);
   
-  // Create company mutation - Fix the return type to handle both Company and string
+  // Create company mutation
   const createCompanyMutation = useMutation({
-    mutationFn: async (values: CompanyFormValues) => {
+    mutationFn: async (values: CompanyFormValues): Promise<Company> => {
       // Format values for submission
       const companyData = {
         ...values,
@@ -127,16 +127,15 @@ export function MultiStageCompanyDialog({
         // Pass client_types directly - the service will handle conversion
         client_types: values.client_types,
         mrr: hasMarketingType ? values.mrr : null, // Only include MRR if Marketing is selected
+        name: values.name, // Ensure name is included
       };
       
       // Handle deal ID if provided (converting temp company)
       if (dealId) {
-        const result = await companyService.convertTempCompany(companyData, dealId);
-        // Return empty object as Company to satisfy TypeScript
-        return {} as any;
+        return await companyService.convertTempCompany(companyData, dealId);
       }
       
-      return await companyService.createCompany(companyData as any);
+      return await companyService.createCompany(companyData);
     },
     onSuccess: () => {
       toast({

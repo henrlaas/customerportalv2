@@ -5,7 +5,6 @@ import { userService } from '@/services/userService';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -45,44 +44,11 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
-
-// Form schema for all stages
-const companyFormSchema = z.object({
-  // Stage 1: Basic Info
-  name: z.string().min(1, { message: 'Company name is required' }),
-  organization_number: z.string().optional(),
-  client_types: z.array(z.string()).min(1, { message: 'At least one client type is required' }),
-  
-  // Stage 2: Contact Details
-  website: z.string().url().or(z.literal('')).optional(),
-  phone: z.string().optional(),
-  invoice_email: z.string().email().or(z.literal('')).optional(),
-  
-  // Stage 3: Address & Settings
-  street_address: z.string().optional(),
-  city: z.string().optional(),
-  postal_code: z.string().optional(),
-  country: z.string().optional(),
-  parent_id: z.string().optional(),
-  trial_period: z.boolean().default(false),
-  is_partner: z.boolean().default(false),
-  advisor_id: z.string().optional(),
-  mrr: z.coerce.number().optional(),
-});
-
-type CompanyFormValues = z.infer<typeof companyFormSchema>;
+import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './types';
 
 const CLIENT_TYPES = {
   MARKETING: 'Marketing',
   WEB: 'Web',
-};
-
-type MultiStageCompanyDialogProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  parentId?: string;
-  defaultValues?: Partial<CompanyFormValues>;
-  dealId?: string;
 };
 
 export function MultiStageCompanyDialog({
@@ -152,7 +118,7 @@ export function MultiStageCompanyDialog({
   
   // Create company mutation
   const createCompanyMutation = useMutation({
-    mutationFn: (values: CompanyFormValues) => {
+    mutationFn: async (values: CompanyFormValues): Promise<Company> => {
       // Format values for submission
       const companyData = {
         ...values,
@@ -161,14 +127,15 @@ export function MultiStageCompanyDialog({
         // Pass client_types directly - the service will handle conversion
         client_types: values.client_types,
         mrr: hasMarketingType ? values.mrr : null, // Only include MRR if Marketing is selected
+        name: values.name, // Ensure name is included
       };
       
       // Handle deal ID if provided (converting temp company)
       if (dealId) {
-        return companyService.convertTempCompany(companyData, dealId);
+        return await companyService.convertTempCompany(companyData, dealId);
       }
       
-      return companyService.createCompany(companyData);
+      return await companyService.createCompany(companyData);
     },
     onSuccess: () => {
       toast({
@@ -216,6 +183,7 @@ export function MultiStageCompanyDialog({
     }
   };
   
+  // ... rest of the component code
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">

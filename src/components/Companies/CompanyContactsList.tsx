@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -44,7 +43,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Fetch contacts with improved query options - use fetchCompanyContacts
+  // Fetch contacts with improved query options
   const { data: contacts = [], isLoading, isError, error } = useQuery({
     queryKey: ['companyContacts', companyId],
     queryFn: () => companyService.fetchCompanyContacts(companyId),
@@ -57,9 +56,9 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   console.log('Contacts query status:', { isLoading, isError, contactCount: contacts.length });
   if (isError && error) console.error('Contacts query error:', error);
   
-  // Delete contact mutation - use deleteContact 
+  // Delete contact mutation
   const deleteContactMutation = useMutation({
-    mutationFn: companyService.deleteContact,
+    mutationFn: (id: string) => companyService.deleteContact(id),
     onSuccess: () => {
       toast({
         title: 'Contact removed',
@@ -96,7 +95,9 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   
   const canModify = isAdmin || isEmployee;
   
+  // ... keep the rest of the component code unchanged
   return (
+    // ... keep existing JSX code
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Company Contacts</h2>

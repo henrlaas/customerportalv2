@@ -76,7 +76,7 @@ export const CreateContactDialog = ({
     queryFn: () => userService.listUsers(),
   });
   
-  // Create contact mutation - use createContact instead of addCompanyContact
+  // Create contact mutation
   const createContactMutation = useMutation({
     mutationFn: (contactData: ContactFormValues & { company_id: string }) => {
       return companyService.createContact({
