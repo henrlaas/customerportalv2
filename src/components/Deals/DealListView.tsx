@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Deal, Stage, Company, Profile } from '@/pages/DealsPage';
+import { Deal, Stage, Company, Profile } from '@/components/Deals/types/deal';
 import { DealCard } from './DealCard';
 
 interface DealListViewProps {

@@ -51,6 +51,7 @@ export function DealKanbanView({
   // Update local deals when props change
   React.useEffect(() => {
     setLocalDeals(deals);
+    console.log("DealKanbanView received deals:", deals.length);
   }, [deals]);
 
   const handleDragStart = (event: any) => {

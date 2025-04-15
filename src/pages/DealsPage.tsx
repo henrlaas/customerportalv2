@@ -30,8 +30,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from 'zod';
 import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useDealsView } from '@/hooks/useDealsView';
@@ -227,8 +227,8 @@ const DealsPage = () => {
         value: dealData.value,
         assigned_to: dealData.assigned_to === 'unassigned' ? null : dealData.assigned_to || null,
         is_recurring: dealData.is_recurring,
-        deal_type: dealData.deal_type,
-        client_deal_type: dealData.client_deal_type,
+        deal_type: dealData.deal_type || null,
+        client_deal_type: dealData.client_deal_type || null,
       });
 
       if (error) throw error;

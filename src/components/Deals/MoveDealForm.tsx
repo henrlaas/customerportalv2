@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Stage, Deal } from '@/pages/DealsPage';
+import { Stage, Deal } from '@/components/Deals/types/deal';
 
 interface MoveDealFormProps {
   stages: Stage[];
@@ -31,7 +31,7 @@ export const MoveDealForm: React.FC<MoveDealFormProps> = ({
 }) => {
   const { register, handleSubmit, setValue, getValues, formState } = useForm({
     defaultValues: {
-      stage_id: currentDeal?.stage_id || 'no_stage',
+      stage_id: currentDeal?.stage_id || '',
     },
   });
 
@@ -43,7 +43,7 @@ export const MoveDealForm: React.FC<MoveDealFormProps> = ({
         </label>
         <Select
           onValueChange={(value) => setValue('stage_id', value)}
-          defaultValue={currentDeal?.stage_id || 'no_stage'}
+          defaultValue={currentDeal?.stage_id || ''}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a new stage" />

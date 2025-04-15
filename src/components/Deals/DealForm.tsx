@@ -54,6 +54,8 @@ export const formSchema = z.object({
   value: z.coerce.number().default(0),
   assigned_to: z.string(),
   is_recurring: z.boolean().default(false),
+  deal_type: z.enum(['recurring', 'one-time']).optional(),
+  client_deal_type: z.enum(['marketing', 'web']).optional(),
 });
 
 // Define the form values type from the schema
@@ -67,6 +69,8 @@ export const defaultValues: Partial<DealFormValues> = {
   value: 0,
   assigned_to: '',
   is_recurring: false,
+  deal_type: 'one-time',
+  client_deal_type: 'web',
 };
 
 interface DealFormProps {
@@ -182,10 +186,72 @@ export const DealForm: React.FC<DealFormProps> = ({
 
         <FormField
           control={form.control}
-          name="is_recurring"
+          name="deal_type"
           render={({ field }) => (
             <FormItem className="space-y-3">
               <FormLabel>Deal Type</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={(value) => field.onChange(value as 'recurring' | 'one-time')}
+                  defaultValue={field.value || 'one-time'}
+                  className="flex flex-col space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="recurring" id="recurring-type" />
+                    <FormLabel htmlFor="recurring-type" className="font-normal cursor-pointer">
+                      Recurring
+                    </FormLabel>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="one-time" id="one-time-type" />
+                    <FormLabel htmlFor="one-time-type" className="font-normal cursor-pointer">
+                      One-time
+                    </FormLabel>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="client_deal_type"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Client Deal Type</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={(value) => field.onChange(value as 'marketing' | 'web')}
+                  defaultValue={field.value || 'web'}
+                  className="flex flex-col space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="marketing" id="marketing" />
+                    <FormLabel htmlFor="marketing" className="font-normal cursor-pointer">
+                      Marketing
+                    </FormLabel>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="web" id="web" />
+                    <FormLabel htmlFor="web" className="font-normal cursor-pointer">
+                      Web
+                    </FormLabel>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="is_recurring"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Billing Type</FormLabel>
               <FormControl>
                 <RadioGroup
                   onValueChange={(value) => field.onChange(value === 'true')}
