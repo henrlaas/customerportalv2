@@ -1,12 +1,10 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   DndContext, 
   useSensors, 
   useSensor, 
   PointerSensor,
   DragEndEvent,
-  DragOverlay,
   useDroppable,
   UniqueIdentifier
 } from '@dnd-kit/core';
@@ -14,10 +12,10 @@ import {
   SortableContext, 
   verticalListSortingStrategy 
 } from '@dnd-kit/sortable';
+import ReactConfetti from 'react-confetti';
 import { Card } from '../ui/card';
 import { Deal, Stage, Company, Profile } from '@/pages/DealsPage';
 import { DealCard } from './DealCard';
-import { useState } from 'react';
 
 interface DealKanbanViewProps {
   deals: Deal[];
@@ -48,8 +46,8 @@ export function DealKanbanView({
     })
   );
 
+  const [showConfetti, setShowConfetti] = useState(false);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  // Track optimistic updates locally
   const [localDeals, setLocalDeals] = useState<Deal[]>(deals);
   
   // Update local deals when props change
@@ -75,7 +73,13 @@ export function DealKanbanView({
     // Make sure we're not dropping on the same stage
     const dealData = localDeals.find(d => d.id === dealId);
     if (dealData && dealData.stage_id !== newStageId) {
-      console.log(`Moving deal ${dealId} to stage ${newStageId}`);
+      // Find if we're dropping into "Closed Won" stage
+      const targetStage = stages.find(s => s.id === newStageId);
+      if (targetStage?.name.toLowerCase() === 'closed won') {
+        setShowConfetti(true);
+        // Hide confetti after 5 seconds
+        setTimeout(() => setShowConfetti(false), 5000);
+      }
       
       // Optimistic update - update local state immediately
       setLocalDeals(prevDeals => 
@@ -89,15 +93,21 @@ export function DealKanbanView({
     }
   };
 
-  // Find the active deal
-  const activeDeal = activeId ? localDeals.find(deal => deal.id === activeId) : null;
-
   return (
     <DndContext 
       sensors={sensors} 
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
+      {showConfetti && (
+        <ReactConfetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          recycle={false}
+          numberOfPieces={200}
+          gravity={0.3}
+        />
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 p-4">
         {stages.map((stage) => (
           <StageColumn 
