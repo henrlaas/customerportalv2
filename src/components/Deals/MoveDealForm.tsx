@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Stage, Deal } from './DealCard';
+import { Stage, Deal } from '@/pages/DealsPage';
 
 interface MoveDealFormProps {
   stages: Stage[];
