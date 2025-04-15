@@ -108,19 +108,24 @@ export function DealKanbanView({
         />
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 p-4">
-        {stages.map((stage) => (
-          <StageColumn 
-            key={stage.id}
-            stage={stage}
-            deals={localDeals.filter(deal => deal.stage_id === stage.id)}
-            companies={companies}
-            profiles={profiles}
-            canModify={canModify}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onMove={onMove}
-          />
-        ))}
+        {stages.map((stage) => {
+          const stageDeals = localDeals.filter(deal => deal.stage_id === stage.id);
+          console.log(`Stage ${stage.name} has ${stageDeals.length} deals`);
+          
+          return (
+            <StageColumn 
+              key={stage.id}
+              stage={stage}
+              deals={stageDeals}
+              companies={companies}
+              profiles={profiles}
+              canModify={canModify}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onMove={onMove}
+            />
+          );
+        })}
       </div>
     </DndContext>
   );

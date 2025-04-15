@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
@@ -31,7 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { zodResolver } from 'zod';
 import * as z from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -40,43 +39,7 @@ import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
 import { DealKanbanView } from '@/components/Deals/DealKanbanView';
 import { DealListView } from '@/components/Deals/DealListView';
 import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog';
-
-// Deal type matching our database schema
-export type Deal = {
-  id: string;
-  title: string;
-  description: string | null;
-  company_id: string | null;
-  stage_id: string | null;
-  value: number | null;
-  probability: number | null;
-  expected_close_date: string | null;
-  assigned_to: string | null;
-  created_at: string;
-  updated_at: string;
-  is_recurring: boolean | null;
-};
-
-// Company type for selecting related companies
-export type Company = {
-  id: string;
-  name: string;
-};
-
-// Stage type for deal stages, making sure it matches DealCard's Stage type
-export type Stage = {
-  id: string;
-  name: string;
-  position: number;
-};
-
-// Profile type for assigned to
-export type Profile = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  role: string;
-};
+import { Deal, Company, Stage, Profile } from '@/components/Deals/types/deal';
 
 const DealsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -107,6 +70,7 @@ const DealsPage = () => {
         return [];
       }
 
+      console.log('Fetched deals:', data?.length || 0);
       return data as Deal[];
     },
   });
@@ -151,6 +115,7 @@ const DealsPage = () => {
         return [];
       }
       
+      console.log('Fetched stages:', data?.length || 0);
       return data as Stage[];
     },
   });
@@ -206,7 +171,7 @@ const DealsPage = () => {
     },
   });
 
-  // Create deal mutation - updated to remove probability
+  // Create deal mutation
   const createMutation = useMutation({
     mutationFn: async (values: DealFormValues) => {
       // Find the first stage (Lead) by position
@@ -253,6 +218,8 @@ const DealsPage = () => {
     mutationFn: async (values: DealFormValues & { id: string }) => {
       const { id, ...dealData } = values;
 
+      console.log('Updating deal with data:', dealData);
+      
       const { data, error } = await updateWithUser('deals', id, {
         title: dealData.title,
         description: dealData.description || null,
@@ -260,6 +227,8 @@ const DealsPage = () => {
         value: dealData.value,
         assigned_to: dealData.assigned_to === 'unassigned' ? null : dealData.assigned_to || null,
         is_recurring: dealData.is_recurring,
+        deal_type: dealData.deal_type,
+        client_deal_type: dealData.client_deal_type,
       });
 
       if (error) throw error;
@@ -283,7 +252,7 @@ const DealsPage = () => {
     },
   });
 
-  // Delete deal mutation
+  // Delete deal mutation 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -318,6 +287,7 @@ const DealsPage = () => {
 
   // Edit deal
   const handleEdit = (deal: Deal) => {
+    console.log('Editing deal:', deal);
     setCurrentDeal(deal);
     setIsEditing(true);
   };
@@ -468,6 +438,8 @@ const DealsPage = () => {
                 value: currentDeal.value || 0,
                 assigned_to: currentDeal.assigned_to || '',
                 is_recurring: currentDeal.is_recurring || false,
+                deal_type: currentDeal.deal_type || 'one-time',
+                client_deal_type: currentDeal.client_deal_type || 'web',
               }}
               isSubmitting={updateMutation.isPending}
               submitLabel="Save Changes"
