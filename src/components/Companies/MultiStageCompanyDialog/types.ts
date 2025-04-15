@@ -26,3 +26,11 @@ export const companyFormSchema = z.object({
 });
 
 export type CompanyFormValues = z.infer<typeof companyFormSchema>;
+
+export interface MultiStageCompanyDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  parentId?: string;
+  defaultValues?: Partial<CompanyFormValues>;
+  dealId?: string;
+}

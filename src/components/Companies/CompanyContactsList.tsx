@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -44,10 +43,10 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Fetch contacts with improved query options
+  // Fetch contacts with improved query options - use fetchCompanyContacts instead of getCompanyContacts
   const { data: contacts = [], isLoading, isError, error } = useQuery({
     queryKey: ['companyContacts', companyId],
-    queryFn: () => companyService.getCompanyContacts(companyId),
+    queryFn: () => companyService.fetchCompanyContacts(companyId),
     staleTime: 10000, // Data considered fresh for 10 seconds
     refetchOnWindowFocus: true, // Refresh when window gets focus
     retry: 1, // Only retry once on failure
@@ -57,9 +56,9 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   console.log('Contacts query status:', { isLoading, isError, contactCount: contacts.length });
   if (isError) console.error('Contacts query error:', error);
   
-  // Delete contact mutation
+  // Delete contact mutation - use deleteContact instead of deleteCompanyContact
   const deleteContactMutation = useMutation({
-    mutationFn: companyService.deleteCompanyContact,
+    mutationFn: companyService.deleteContact,
     onSuccess: () => {
       toast({
         title: 'Contact removed',

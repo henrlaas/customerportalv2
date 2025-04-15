@@ -1,22 +1,21 @@
-
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
+import { userService } from '@/services/userService';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import {
   Dialog,
@@ -24,14 +23,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Form schema
 const contactFormSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  first_name: z.string().min(1, { message: 'First name is required' }),
-  last_name: z.string().min(1, { message: 'Last name is required' }),
+  user_id: z.string().min(1, { message: 'User ID is required' }),
   position: z.string().optional(),
   is_primary: z.boolean().default(false),
   is_admin: z.boolean().default(false),
@@ -54,159 +58,99 @@ export const CreateContactDialog = ({
 }: CreateContactDialogProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
-      email: '',
-      first_name: '',
-      last_name: '',
+      user_id: '',
       position: '',
       is_primary: false,
       is_admin: false,
     },
   });
   
-  // Create user and add as contact mutation
+  // Fetch users
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => userService.listUsers(),
+  });
+  
+  // Create contact mutation - use createContact instead of addCompanyContact
   const createContactMutation = useMutation({
-    mutationFn: async (values: ContactFormValues) => {
-      setIsSubmitting(true);
-      
-      try {
-        // First, invite the user through edge function
-        console.log('Inviting user:', values.email);
-        const { data, error } = await supabase.functions.invoke('user-management', {
-          body: {
-            action: 'invite',
-            email: values.email,
-            firstName: values.first_name,
-            lastName: values.last_name,
-            role: 'client', // Always set role to 'client' for company contacts
-            language: 'en', // Default language
-          },
-        });
-        
-        if (error) {
-          console.error("Function invocation error:", error);
-          throw new Error(error.message);
-        }
-        
-        if (!data?.user?.id) {
-          console.error("No user data returned:", data);
-          throw new Error('Failed to create user');
-        }
-        
-        console.log("User created successfully:", data.user);
-        
-        // Then add user as company contact
-        const contactData = await companyService.addCompanyContact({
-          company_id: companyId,
-          user_id: data.user.id,
-          position: values.position || null,
-          is_primary: values.is_primary,
-          is_admin: values.is_admin,
-        });
-        
-        return contactData;
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
+    mutationFn: companyService.createContact,
     onSuccess: () => {
       toast({
         title: 'Contact added',
-        description: 'The contact has been added and invitation email sent',
+        description: 'The contact has been added successfully',
       });
       
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] });
-      
-      // Reset form and close dialog
+      // Reset form
       form.reset();
-      onClose();
       
-      // Call optional success callback
-      if (onSuccess) {
-        onSuccess();
-      }
+      // Notify parent component
+      if (onSuccess) onSuccess();
+      
+      // Close dialog
+      onClose();
     },
     onError: (error: Error) => {
-      console.error('Error adding contact:', error);
       toast({
         title: 'Error',
         description: `Failed to add contact: ${error.message}`,
         variant: 'destructive',
       });
-    },
+    }
   });
   
   const onSubmit = (values: ContactFormValues) => {
-    createContactMutation.mutate(values);
+    createContactMutation.mutate({
+      ...values,
+      company_id: companyId,
+    });
   };
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Add New Contact</DialogTitle>
           <DialogDescription>
-            Add a new contact to this company. An invitation email will be sent.
+            Assign a user to this company as a contact.
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="rounded-lg bg-muted p-3 mb-2">
-              <p className="text-sm">
-                This contact will be assigned the <strong>client</strong> role and 
-                will have access to their company information when logged in.
-              </p>
-            </div>
-            
             <FormField
               control={form.control}
-              name="email"
+              name="user_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="email@example.com" {...field} />
-                  </FormControl>
+                  <FormLabel>User</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a user" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.user_metadata?.first_name} {user.user_metadata?.last_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Select an existing user to assign as a contact.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
             
             <FormField
               control={form.control}
@@ -215,64 +159,20 @@ export const CreateContactDialog = ({
                 <FormItem>
                   <FormLabel>Position</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. CEO, Marketing Director" {...field} />
+                    <Input placeholder="e.g. CEO" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="is_primary"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                      <FormLabel>Primary Contact</FormLabel>
-                      <FormDescription>
-                        Mark as primary contact
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="is_admin"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                      <FormLabel>Company Admin</FormLabel>
-                      <FormDescription>
-                        Can manage company
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-            
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
               <Button 
                 type="submit" 
-                disabled={isSubmitting || createContactMutation.isPending}
+                disabled={createContactMutation.isPending}
               >
-                {isSubmitting ? 'Adding...' : 'Add Contact'}
+                {createContactMutation.isPending ? 'Adding...' : 'Add Contact'}
               </Button>
             </div>
           </form>

@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { useToast } from '@/components/ui/use-toast';
@@ -59,10 +58,10 @@ export const EditCompanyDialog = ({
     },
   });
   
-  // Fetch company data
-  const { data: company } = useQuery({
+  // Fetch company data - use fetchCompanyById instead of getCompany
+  const { data: company, isLoading } = useQuery({
     queryKey: ['company', companyId],
-    queryFn: () => companyService.getCompany(companyId),
+    queryFn: () => companyService.fetchCompanyById(companyId),
     enabled: isOpen && !!companyId,
   });
   

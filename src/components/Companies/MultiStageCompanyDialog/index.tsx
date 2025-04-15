@@ -1,4 +1,5 @@
 
-import { MultiStageCompanyDialog } from '../MultiStageCompanyDialog';
+import { MultiStageCompanyDialog } from './MultiStageCompanyDialog';
+import type { MultiStageCompanyDialogProps, CompanyFormValues } from './types';
 
-export { MultiStageCompanyDialog };
+export { MultiStageCompanyDialog, type MultiStageCompanyDialogProps, type CompanyFormValues };

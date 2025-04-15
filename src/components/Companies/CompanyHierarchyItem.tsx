@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -311,7 +310,7 @@ const CompanyHierarchyChildren = ({
 }) => {
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['childCompanies', parentId],
-    queryFn: () => companyService.getChildCompanies(parentId),
+    queryFn: () => companyService.fetchChildCompanies(parentId),
   });
   
   if (isLoading) {

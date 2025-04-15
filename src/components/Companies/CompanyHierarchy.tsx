@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -29,17 +28,17 @@ export const CompanyHierarchy = ({ companyId, onSelectCompany }: CompanyHierarch
   
   const { isAdmin, isEmployee } = useAuth();
   
-  // Fetch parent company data
+  // Fetch parent company data - use fetchCompanyById instead of getCompany
   const { data: parentCompany } = useQuery({
     queryKey: ['company', companyId],
-    queryFn: () => companyService.getCompany(companyId),
+    queryFn: () => companyService.fetchCompanyById(companyId),
     enabled: !!companyId,
   });
   
-  // Fetch child companies
+  // Fetch child companies - use fetchChildCompanies instead of getChildCompanies
   const { data: childCompanies = [], isLoading } = useQuery({
     queryKey: ['childCompanies', companyId],
-    queryFn: () => companyService.getChildCompanies(companyId),
+    queryFn: () => companyService.fetchChildCompanies(companyId),
   });
   
   const canModify = isAdmin || isEmployee;
