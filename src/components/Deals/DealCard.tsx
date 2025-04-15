@@ -1,6 +1,6 @@
+
 import React from 'react';
-import { format } from 'date-fns';
-import { Building, Calendar, DollarSign, MoreVertical, ChevronRight, Edit, Trash2, User, Repeat } from 'lucide-react';
+import { Building, Calendar, DollarSign, MoreVertical, Edit, Trash2, User, Repeat } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +12,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useDraggable } from '@dnd-kit/core';
 
-// Import types from DealsPage to ensure consistency
-import { Company, Stage, Profile, Deal } from '@/pages/DealsPage';
+// Import types from the deal types file
+import { Deal, Company, Stage, Profile } from '@/components/Deals/types/deal';
+
+// Import formatters
+import { formatCurrency, formatDate, getCompanyName, getAssigneeName } from './utils/formatters';
 
 interface DealCardProps {
   deal: Deal;
@@ -47,37 +50,6 @@ export const DealCard = ({
     zIndex: isDragging ? 10 : 'auto',
     opacity: isDragging ? 0.8 : 1,
   } : undefined;
-  
-  // Get company name
-  const getCompanyName = (companyId: string | null) => {
-    if (!companyId) return 'No company';
-    const company = companies.find(c => c.id === companyId);
-    return company ? company.name : 'Unknown Company';
-  };
-  
-  // Get user name
-  const getAssigneeName = (userId: string | null) => {
-    if (!userId) return 'Unassigned';
-    const profile = profiles.find(p => p.id === userId);
-    if (!profile) return 'Unknown User';
-    return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
-  };
-  
-  // Updated currency formatting to use kr
-  const formatCurrency = (value: number | null) => {
-    if (value === null) return 'N/A';
-    return new Intl.NumberFormat('no-NO', {
-      style: 'currency',
-      currency: 'NOK',
-      currencyDisplay: 'symbol'
-    }).format(value).replace('NOK', 'kr');
-  };
-  
-  // Format date
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Not set';
-    return format(new Date(dateString), 'MMM d, yyyy');
-  };
   
   return (
     <Card 
@@ -117,7 +89,7 @@ export const DealCard = ({
       <CardContent className="px-4 py-3 space-y-2 text-sm">
         <div className="flex items-center text-gray-600">
           <Building className="h-4 w-4 mr-2 flex-shrink-0" />
-          <span className="truncate">{getCompanyName(deal.company_id)}</span>
+          <span className="truncate">{getCompanyName(deal.company_id, companies)}</span>
         </div>
         <div className="flex items-center text-gray-600">
           <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -129,7 +101,7 @@ export const DealCard = ({
         </div>
         <div className="flex items-center text-gray-600">
           <User className="h-4 w-4 mr-2 flex-shrink-0" />
-          <span>{getAssigneeName(deal.assigned_to)}</span>
+          <span>{getAssigneeName(deal.assigned_to, profiles)}</span>
         </div>
         {deal.is_recurring && (
           <div className="mt-2">
@@ -139,7 +111,21 @@ export const DealCard = ({
             </Badge>
           </div>
         )}
+        {deal.deal_type && (
+          <div className="mt-1">
+            <Badge variant="secondary" className="text-xs">
+              {deal.deal_type === 'recurring' ? 'Monthly' : 'One-time'}
+            </Badge>
+          </div>
+        )}
+        {deal.client_deal_type && (
+          <div className="mt-1">
+            <Badge variant="outline" className="text-xs">
+              {deal.client_deal_type}
+            </Badge>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
-}
+};

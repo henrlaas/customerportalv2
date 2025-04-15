@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -6,15 +7,13 @@ import {
   PointerSensor,
   DragEndEvent,
   useDroppable,
-  UniqueIdentifier
 } from '@dnd-kit/core';
 import { 
   SortableContext, 
   verticalListSortingStrategy 
 } from '@dnd-kit/sortable';
 import ReactConfetti from 'react-confetti';
-import { Card } from '../ui/card';
-import { Deal, Stage, Company, Profile } from '@/pages/DealsPage';
+import { Deal, Stage, Company, Profile } from '@/components/Deals/types/deal';
 import { DealCard } from './DealCard';
 
 interface DealKanbanViewProps {
@@ -47,7 +46,6 @@ export function DealKanbanView({
   );
 
   const [showConfetti, setShowConfetti] = useState(false);
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [localDeals, setLocalDeals] = useState<Deal[]>(deals);
   
   // Update local deals when props change
@@ -56,19 +54,20 @@ export function DealKanbanView({
   }, [deals]);
 
   const handleDragStart = (event: any) => {
-    setActiveId(event.active.id);
+    console.log("Drag started:", event.active.id);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     if (!canModify) return;
     
     const { active, over } = event;
-    setActiveId(null);
     
     if (!active || !over) return;
     
     const dealId = String(active.id);
     const newStageId = String(over.id);
+    
+    console.log(`Moving deal ${dealId} to stage ${newStageId}`);
     
     // Make sure we're not dropping on the same stage
     const dealData = localDeals.find(d => d.id === dealId);
@@ -150,10 +149,13 @@ function StageColumn({
     id: stage.id,
   });
 
+  console.log(`Stage ${stage.name} has ${deals.length} deals`);
+
   return (
     <div key={stage.id} className="flex flex-col h-full">
       <div className="bg-muted p-3 rounded-t-lg">
         <h3 className="font-semibold">{stage.name}</h3>
+        <div className="text-xs text-muted-foreground">{deals.length} deals</div>
       </div>
       <div 
         ref={setNodeRef}
@@ -171,7 +173,7 @@ function StageColumn({
                 canModify={canModify}
                 onEdit={onEdit}
                 onDelete={onDelete}
-                onMove={() => {}} // This is not needed anymore as we're handling moves in DragEnd
+                onMove={() => {}} // This is handled by DragEnd
               />
             ))}
           </div>
