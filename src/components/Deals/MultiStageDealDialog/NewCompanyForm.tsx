@@ -2,7 +2,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -13,17 +12,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-
-const formSchema = z.object({
-  company_name: z.string().min(1, 'Company name is required'),
-  organization_number: z.string().optional(),
-  website: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { newCompanyFormSchema, NewCompanyFormValues } from '../types/deal';
 
 interface NewCompanyFormProps {
-  onNext: (values: FormValues) => void;
+  onNext: (values: NewCompanyFormValues) => void;
   onBack: () => void;
 }
 
@@ -31,8 +23,8 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
   onNext,
   onBack,
 }) => {
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<NewCompanyFormValues>({
+    resolver: zodResolver(newCompanyFormSchema),
     defaultValues: {
       company_name: '',
       organization_number: '',

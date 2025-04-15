@@ -12,6 +12,10 @@ interface CompanySelectionFormProps {
 export const CompanySelectionForm: React.FC<CompanySelectionFormProps> = ({ onNext }) => {
   const [selection, setSelection] = useState<'existing' | 'new' | null>(null);
 
+  const handleSelectionChange = (value: string) => {
+    setSelection(value as 'existing' | 'new');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-center py-4">
@@ -20,7 +24,7 @@ export const CompanySelectionForm: React.FC<CompanySelectionFormProps> = ({ onNe
       
       <RadioGroup
         className="gap-4"
-        onValueChange={(value) => setSelection(value as 'existing' | 'new')}
+        onValueChange={handleSelectionChange}
       >
         <div className="flex items-center space-x-2 border rounded-lg p-4 cursor-pointer hover:border-primary">
           <RadioGroupItem value="existing" id="existing" />

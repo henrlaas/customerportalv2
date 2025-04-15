@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
@@ -391,10 +392,9 @@ const DealsPage = () => {
             </ToggleGroupItem>
           </ToggleGroup>
           {canModify && (
-            <MultiStageDealDialog
-              isOpen={isCreating}
-              onClose={() => setIsCreating(false)}
-            />
+            <Button onClick={() => setIsCreating(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Add Deal
+            </Button>
           )}
         </div>
       </div>
@@ -479,6 +479,12 @@ const DealsPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Multi-Stage Deal Dialog */}
+      <MultiStageDealDialog
+        isOpen={isCreating}
+        onClose={() => setIsCreating(false)}
+      />
     </div>
   );
 };
