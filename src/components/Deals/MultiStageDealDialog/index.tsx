@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +14,7 @@ import { ExistingCompanyForm } from './ExistingCompanyForm';
 import { NewCompanyForm } from './NewCompanyForm';
 import { ContactForm } from './ContactForm';
 import { DealDetailsForm } from './DealDetailsForm';
+import { ProgressStepper } from './ProgressStepper';
 
 type CompanySelection = 'existing' | 'new' | null;
 
@@ -218,6 +218,7 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
         <DialogHeader>
           <DialogTitle>{getStepTitle()}</DialogTitle>
         </DialogHeader>
+        <ProgressStepper currentStep={currentStep.type} />
         {renderStep()}
       </DialogContent>
     </Dialog>
