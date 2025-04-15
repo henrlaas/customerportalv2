@@ -37,9 +37,10 @@ export function DealListView({
           onEdit={onEdit}
           onDelete={onDelete}
           onMove={(dealToMove) => {
-            // In list view, we don't do actual drag and drop
-            // This is just to satisfy the type system
-            onMove(dealToMove.id, dealToMove.stage_id || '');
+            // In list view, we just update the stage using the current stage
+            if (dealToMove.stage_id) {
+              onMove(dealToMove.id, dealToMove.stage_id);
+            }
           }}
         />
       ))}

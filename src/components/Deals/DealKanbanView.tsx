@@ -72,12 +72,13 @@ export function DealKanbanView({
               data-stage-id={stage.id} 
               className="flex-1 p-2 bg-muted/50 rounded-b-lg min-h-[500px]"
             >
-              <div className="space-y-2">
-                {deals
-                  .filter((deal) => deal.stage_id === stage.id)
-                  .map((deal) => (
-                    <div key={deal.id} className="mb-2">
+              <SortableContext items={deals.filter(deal => deal.stage_id === stage.id).map(deal => deal.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {deals
+                    .filter((deal) => deal.stage_id === stage.id)
+                    .map((deal) => (
                       <DealCard
+                        key={deal.id}
                         deal={deal}
                         companies={companies}
                         stages={stages}
@@ -87,9 +88,9 @@ export function DealKanbanView({
                         onDelete={onDelete}
                         onMove={(dealToMove) => onMove(dealToMove.id, stage.id)}
                       />
-                    </div>
-                  ))}
-              </div>
+                    ))}
+                </div>
+              </SortableContext>
             </div>
           </div>
         ))}

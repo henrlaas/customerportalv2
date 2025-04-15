@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { useDraggable } from '@dnd-kit/core';
 
 export type Company = {
   id: string;
@@ -64,6 +65,16 @@ export const DealCard = ({
   onDelete,
   onMove
 }: DealCardProps) => {
+  // Set up draggable functionality
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: deal.id,
+    disabled: !canModify
+  });
+  
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined;
+  
   // Get company name
   const getCompanyName = (companyId: string | null) => {
     if (!companyId) return 'No company';
@@ -95,7 +106,13 @@ export const DealCard = ({
   };
   
   return (
-    <Card className="bg-white shadow-sm">
+    <Card 
+      className="bg-white shadow-sm"
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      style={style}
+    >
       <CardHeader className="pb-2 pt-4 px-4">
         <div className="flex justify-between items-start">
           <h3 className="text-base font-semibold">{deal.title}</h3>
@@ -144,20 +161,7 @@ export const DealCard = ({
           <User className="h-4 w-4 mr-2 flex-shrink-0" />
           <span>{getAssigneeName(deal.assigned_to)}</span>
         </div>
-        <div className="flex justify-between items-center pt-1">
-          <Badge variant={deal.probability && deal.probability > 70 ? "default" : "outline"}>
-            {deal.probability || 0}% Probability
-          </Badge>
-          {deal.probability && deal.probability > 0 && (
-            <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary"
-                style={{ width: `${deal.probability}%` }}
-              />
-            </div>
-          )}
-        </div>
       </CardContent>
     </Card>
   );
-};
+}

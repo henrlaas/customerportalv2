@@ -175,7 +175,7 @@ const DealsPage = () => {
     },
   });
 
-  // Add stage update mutation
+  // Update stage mutation
   const updateStageMutation = useMutation({
     mutationFn: async ({ dealId, stageId }: { dealId: string; stageId: string }) => {
       const { data, error } = await updateWithUser('deals', dealId, {
@@ -187,6 +187,10 @@ const DealsPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deals'] });
+      toast({
+        title: 'Deal updated',
+        description: 'Deal stage updated successfully',
+      });
     },
     onError: (error: any) => {
       toast({
@@ -197,7 +201,7 @@ const DealsPage = () => {
     },
   });
 
-  // Create deal mutation - updated to automatically assign to the first stage
+  // Create deal mutation - updated to remove probability
   const createMutation = useMutation({
     mutationFn: async (values: DealFormValues) => {
       // Find the first stage (Lead) by position
@@ -214,7 +218,6 @@ const DealsPage = () => {
         company_id: values.company_id === 'none' ? null : values.company_id || null,
         stage_id: firstStageId,
         value: values.value,
-        probability: 10, // Default probability for new deals
         expected_close_date: null, // No close date initially
         assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to || null,
         is_recurring: values.is_recurring,
@@ -354,25 +357,6 @@ const DealsPage = () => {
     return profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.id : 'Unknown User';
   };
 
-  // Get status badge (example statuses, adjust as needed)
-  const getStatusBadge = (deal: Deal) => {
-    const { expected_close_date } = deal;
-    const closeDate = expected_close_date ? new Date(expected_close_date) : null;
-    const now = new Date();
-
-    if (!closeDate) {
-      return <Badge variant="outline">No Close Date</Badge>;
-    }
-
-    if (closeDate < now) {
-      return <Badge variant="destructive">Overdue</Badge>;
-    }
-
-    // You can add more sophisticated logic here based on your deal stages
-    return <Badge variant="default">Active</Badge>;
-  };
-
-  // Filter deals by search query
   const filteredDeals = deals.filter(deal => {
     const matchesSearch =
       deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
