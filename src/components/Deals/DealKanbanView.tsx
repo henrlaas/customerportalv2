@@ -49,7 +49,14 @@ export function DealKanbanView({
   );
 
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  // Track optimistic updates locally
+  const [localDeals, setLocalDeals] = useState<Deal[]>(deals);
   
+  // Update local deals when props change
+  React.useEffect(() => {
+    setLocalDeals(deals);
+  }, [deals]);
+
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
   };
@@ -66,15 +73,24 @@ export function DealKanbanView({
     const newStageId = String(over.id);
     
     // Make sure we're not dropping on the same stage
-    const dealData = deals.find(d => d.id === dealId);
+    const dealData = localDeals.find(d => d.id === dealId);
     if (dealData && dealData.stage_id !== newStageId) {
       console.log(`Moving deal ${dealId} to stage ${newStageId}`);
+      
+      // Optimistic update - update local state immediately
+      setLocalDeals(prevDeals => 
+        prevDeals.map(deal => 
+          deal.id === dealId ? { ...deal, stage_id: newStageId } : deal
+        )
+      );
+      
+      // Then persist to database
       onMove(dealId, newStageId);
     }
   };
 
   // Find the active deal
-  const activeDeal = activeId ? deals.find(deal => deal.id === activeId) : null;
+  const activeDeal = activeId ? localDeals.find(deal => deal.id === activeId) : null;
 
   return (
     <DndContext 
@@ -87,7 +103,7 @@ export function DealKanbanView({
           <StageColumn 
             key={stage.id}
             stage={stage}
-            deals={deals.filter(deal => deal.stage_id === stage.id)}
+            deals={localDeals.filter(deal => deal.stage_id === stage.id)}
             companies={companies}
             profiles={profiles}
             canModify={canModify}

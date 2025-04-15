@@ -199,6 +199,8 @@ const DealsPage = () => {
         description: error.message,
         variant: 'destructive',
       });
+      // Force re-fetch to ensure UI is in sync with database after error
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
     },
   });
 
