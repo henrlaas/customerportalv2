@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -199,7 +198,8 @@ function StageColumn({
   profiles,
   canModify,
   onEdit,
-  onDelete
+  onDelete,
+  onMove
 }: StageColumnProps) {
   // Setup the drop area for this stage column
   const { setNodeRef } = useDroppable({
@@ -238,15 +238,4 @@ function StageColumn({
       </div>
     </div>
   );
-}
-
-interface StageColumnProps {
-  stage: Stage;
-  deals: Deal[];
-  companies: Company[];
-  profiles: Profile[];
-  canModify: boolean;
-  onEdit: (deal: Deal) => void;
-  onDelete: (id: string) => void;
-  onMove: (dealId: string, newStageId: string) => void;
 }

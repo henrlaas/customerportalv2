@@ -81,12 +81,16 @@ type MultiStageCompanyDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   parentId?: string;
+  defaultValues?: Partial<CompanyFormValues>;
+  dealId?: string;
 };
 
 export function MultiStageCompanyDialog({
   isOpen,
   onClose,
   parentId,
+  defaultValues,
+  dealId,
 }: MultiStageCompanyDialogProps) {
   const [stage, setStage] = useState(1);
   const [logo, setLogo] = useState<string | null>(null);
@@ -120,6 +124,7 @@ export function MultiStageCompanyDialog({
       is_partner: false,
       advisor_id: '',
       mrr: 0,
+      ...defaultValues, // Merge any provided default values
     },
   });
 
@@ -158,6 +163,11 @@ export function MultiStageCompanyDialog({
         mrr: hasMarketingType ? values.mrr : null, // Only include MRR if Marketing is selected
       };
       
+      // Handle deal ID if provided (converting temp company)
+      if (dealId) {
+        return companyService.convertTempCompany(companyData, dealId);
+      }
+      
       return companyService.createCompany(companyData);
     },
     onSuccess: () => {
@@ -165,6 +175,12 @@ export function MultiStageCompanyDialog({
         title: 'Company created',
         description: 'The company has been created successfully',
       });
+      
+      // Invalidate necessary queries
+      if (dealId) {
+        queryClient.invalidateQueries({ queryKey: ['deals'] });
+        queryClient.invalidateQueries({ queryKey: ['temp-deal-companies'] });
+      }
       if (parentId) {
         queryClient.invalidateQueries({ queryKey: ['childCompanies', parentId] });
       } else {
