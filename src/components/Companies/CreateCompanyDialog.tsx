@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { useToast } from '@/components/ui/use-toast';
@@ -86,7 +87,9 @@ export const CreateCompanyDialog = ({
     mutationFn: (values: CompanyFormValues) => {
       // Create a company object with copied values from parent
       const companyData = {
-        ...values,
+        name: values.name, // Make sure name is explicitly included
+        organization_number: values.organization_number,
+        website: values.website,
         parent_id: parentId,
         logo_url: logo,
         // Copy values from parent company

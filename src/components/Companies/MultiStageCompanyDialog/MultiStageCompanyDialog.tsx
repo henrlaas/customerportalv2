@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -45,6 +46,7 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './types';
+import type { Company } from '@/types/company';
 
 const CLIENT_TYPES = {
   MARKETING: 'Marketing',
@@ -117,8 +119,8 @@ export function MultiStageCompanyDialog({
   }, [website]);
   
   // Create company mutation
-  const createCompanyMutation = useMutation({
-    mutationFn: async (values: CompanyFormValues): Promise<Company> => {
+  const createCompanyMutation = useMutation<Company, Error, CompanyFormValues>({
+    mutationFn: async (values: CompanyFormValues) => {
       // Format values for submission
       const companyData = {
         ...values,

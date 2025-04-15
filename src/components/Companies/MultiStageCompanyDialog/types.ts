@@ -1,5 +1,6 @@
 
 import { z } from 'zod';
+import type { Company } from '@/types/company';
 
 // Form schema for all stages
 export const companyFormSchema = z.object({
@@ -31,6 +32,7 @@ export interface MultiStageCompanyDialogProps {
   isOpen: boolean;
   onClose: () => void;
   parentId?: string;
+  parentCompany?: Company;
   defaultValues?: Partial<CompanyFormValues>;
   dealId?: string;
 }
