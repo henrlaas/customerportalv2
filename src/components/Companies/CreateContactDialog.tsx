@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
-import { userService } from '@/services/userService';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -26,20 +25,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { useInviteUser } from '@/hooks/useInviteUser';
 
 // Form schema
 const contactFormSchema = z.object({
-  user_id: z.string().min(1, { message: 'User ID is required' }),
+  firstName: z.string().min(1, { message: 'First name is required' }),
+  lastName: z.string().min(1, { message: 'Last name is required' }),
+  email: z.string().email({ message: 'Valid email is required' }),
   position: z.string().optional(),
-  is_primary: z.boolean().default(false),
-  is_admin: z.boolean().default(false),
 });
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
@@ -59,45 +52,33 @@ export const CreateContactDialog = ({
 }: CreateContactDialogProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
-      user_id: '',
+      firstName: '',
+      lastName: '',
+      email: '',
       position: '',
-      is_primary: false,
-      is_admin: false,
     },
   });
   
-  // Fetch users
-  const { data: users = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => userService.listUsers(),
-  });
+  // Use invite user hook for creating and inviting users
+  const { mutateAsync: inviteUser } = useInviteUser({});
   
   // Create contact mutation
   const createContactMutation = useMutation({
-    mutationFn: (contactData: ContactFormValues & { company_id: string }) => {
-      // Ensure user_id is always provided as a required field
-      if (!contactData.user_id) {
-        throw new Error("User ID is required");
-      }
-      
-      return companyService.createContact({
-        company_id: contactData.company_id,
-        user_id: contactData.user_id, // Explicitly passing user_id as a required field
-        position: contactData.position,
-        is_primary: contactData.is_primary,
-        is_admin: contactData.is_admin,
-      });
+    mutationFn: async (contactData: { 
+      company_id: string; 
+      user_id: string; 
+      position?: string;
+      is_primary?: boolean;
+      is_admin?: boolean;
+    }) => {
+      return companyService.createContact(contactData);
     },
     onSuccess: () => {
-      toast({
-        title: 'Contact added',
-        description: 'The contact has been added successfully',
-      });
-      
       // Reset form
       form.reset();
       
@@ -119,11 +100,45 @@ export const CreateContactDialog = ({
     }
   });
   
-  const onSubmit = (values: ContactFormValues) => {
-    createContactMutation.mutate({
-      ...values,
-      company_id: companyId,
-    });
+  const onSubmit = async (values: ContactFormValues) => {
+    try {
+      setIsSubmitting(true);
+      
+      // First, invite the user with client role
+      const inviteResponse = await inviteUser({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        role: 'client', // Always set to client role
+        language: 'en'
+      });
+      
+      // Then create the company contact with the newly created user's ID
+      if (inviteResponse && inviteResponse.user && inviteResponse.user.id) {
+        await createContactMutation.mutateAsync({
+          company_id: companyId,
+          user_id: inviteResponse.user.id,
+          position: values.position,
+          is_primary: false,
+          is_admin: false,
+        });
+        
+        toast({
+          title: 'Contact added',
+          description: `${values.firstName} ${values.lastName} has been invited and added as a company contact.`,
+        });
+      } else {
+        throw new Error('Failed to invite user');
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -132,7 +147,7 @@ export const CreateContactDialog = ({
         <DialogHeader>
           <DialogTitle>Add New Contact</DialogTitle>
           <DialogDescription>
-            Assign a user to this company as a contact.
+            Create and invite a new contact for this company. They will receive an email invitation to join.
           </DialogDescription>
         </DialogHeader>
         
@@ -140,30 +155,41 @@ export const CreateContactDialog = ({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="user_id"
+              name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>User</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a user" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.user_metadata?.first_name} {user.user_metadata?.last_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    Select an existing user to assign as a contact.
-                  </FormDescription>
+                  <FormLabel>First Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="john.doe@example.com" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -187,9 +213,9 @@ export const CreateContactDialog = ({
               <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
               <Button 
                 type="submit" 
-                disabled={createContactMutation.isPending}
+                disabled={isSubmitting}
               >
-                {createContactMutation.isPending ? 'Adding...' : 'Add Contact'}
+                {isSubmitting ? 'Adding...' : 'Add Contact'}
               </Button>
             </div>
           </form>

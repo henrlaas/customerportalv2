@@ -5,7 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { InviteUserFormValues } from '@/schemas/userSchemas';
 
 interface UseInviteUserProps {
-  onSuccess?: () => void;
+  onSuccess?: (data?: any) => void;
 }
 
 export function useInviteUser({ onSuccess }: UseInviteUserProps = {}) {
@@ -21,9 +21,9 @@ export function useInviteUser({ onSuccess }: UseInviteUserProps = {}) {
           email: data.email,
           firstName: data.firstName,
           lastName: data.lastName,
-          role: data.role,
+          role: data.role || 'client', // Default to client if no role provided
           team: data.team,
-          language: data.language,
+          language: data.language || 'en',
         }
       });
 
@@ -33,15 +33,15 @@ export function useInviteUser({ onSuccess }: UseInviteUserProps = {}) {
 
       return response.data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       toast({
         title: 'Success',
         description: `Invitation sent to ${variables.email}`,
       });
       
-      // Call onSuccess callback if provided
+      // Call onSuccess callback if provided, passing the data
       if (onSuccess) {
-        onSuccess();
+        onSuccess(data);
       }
     },
     onError: (error: Error) => {
