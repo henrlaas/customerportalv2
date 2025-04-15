@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -18,10 +19,12 @@ import {
   UserPlus,
   Mail,
   Star,
-  Shield
+  Shield,
+  KeyRound
 } from 'lucide-react';
 import { CreateContactDialog } from './CreateContactDialog';
 import { EditContactDialog } from './EditContactDialog';
+import { EditUserDialog } from '@/components/UserManagement/EditUserDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { userService } from '@/services/userService';
 
 type ContactsListProps = {
   companyId: string;
@@ -37,6 +41,7 @@ type ContactsListProps = {
 export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
+  const [isEditingUser, setIsEditingUser] = useState(false);
   const [selectedContact, setSelectedContact] = useState<CompanyContact | null>(null);
   
   const { isAdmin, isEmployee } = useAuth();
@@ -47,14 +52,10 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   const { data: contacts = [], isLoading, isError, error } = useQuery({
     queryKey: ['companyContacts', companyId],
     queryFn: () => companyService.fetchCompanyContacts(companyId),
-    staleTime: 10000, // Data considered fresh for 10 seconds
-    refetchOnWindowFocus: true, // Refresh when window gets focus
-    retry: 1, // Only retry once on failure
+    staleTime: 10000,
+    refetchOnWindowFocus: true,
+    retry: 1,
   });
-  
-  // Log query status for debugging
-  console.log('Contacts query status:', { isLoading, isError, contactCount: contacts.length });
-  if (isError && error) console.error('Contacts query error:', error);
   
   // Delete contact mutation
   const deleteContactMutation = useMutation({
@@ -74,17 +75,37 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
       });
     }
   });
+
+  // Password reset mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: userService.resetPassword,
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Password reset email has been sent',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to send password reset email: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
   
-  // Handle successful contact creation
   const handleContactAdded = () => {
-    // Force a refetch of the contacts data
     queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] });
   };
   
-  // Handlers
   const handleEdit = (contact: CompanyContact) => {
     setSelectedContact(contact);
     setIsEditingContact(true);
+  };
+
+  const handleEditUser = (contact: CompanyContact) => {
+    setSelectedContact(contact);
+    setIsEditingUser(true);
   };
   
   const handleDelete = (id: string) => {
@@ -92,12 +113,14 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
       deleteContactMutation.mutate(id);
     }
   };
+
+  const handleResetPassword = (email: string) => {
+    resetPasswordMutation.mutate(email);
+  };
   
   const canModify = isAdmin || isEmployee;
   
-  // ... keep the rest of the component code unchanged
   return (
-    // ... keep existing JSX code
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Company Contacts</h2>
@@ -161,8 +184,14 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => handleEditUser(contact)}>
+                          <Edit className="mr-2 h-4 w-4" /> Edit User Info
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEdit(contact)}>
-                          <Edit className="mr-2 h-4 w-4" /> Edit
+                          <Edit className="mr-2 h-4 w-4" /> Edit Contact Info
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleResetPassword(contact.email)}>
+                          <KeyRound className="mr-2 h-4 w-4" /> Reset Password
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(contact.id)}>
                           <Trash2 className="mr-2 h-4 w-4" /> Remove
@@ -211,6 +240,23 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
           setSelectedContact(null);
         }}
         contact={selectedContact}
+      />
+
+      <EditUserDialog
+        isOpen={isEditingUser}
+        onClose={() => {
+          setIsEditingUser(false);
+          setSelectedContact(null);
+        }}
+        user={selectedContact ? {
+          id: selectedContact.user_id,
+          email: selectedContact.email,
+          user_metadata: {
+            first_name: selectedContact.first_name,
+            last_name: selectedContact.last_name
+          },
+          created_at: ''
+        } : null}
       />
     </div>
   );
