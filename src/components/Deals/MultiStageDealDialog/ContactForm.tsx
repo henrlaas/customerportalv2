@@ -2,7 +2,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -13,69 +12,64 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-
-const formSchema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Please enter a valid email'),
-  phone: z.string().optional(),
-  position: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { contactFormSchema, ContactFormValues } from '@/components/Deals/types/deal';
 
 interface ContactFormProps {
-  onNext: (values: FormValues) => void;
+  onNext: (data: ContactFormValues) => void;
   onBack: () => void;
+  defaultValues?: ContactFormValues;
 }
 
 export const ContactForm: React.FC<ContactFormProps> = ({
   onNext,
   onBack,
+  defaultValues = {
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    position: '',
+  }
 }) => {
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      position: '',
-    },
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues,
   });
+
+  const onSubmit = (data: ContactFormValues) => {
+    onNext(data);
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onNext)} className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="first_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter first name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="first_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>First Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter first name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <FormField
-            control={form.control}
-            name="last_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter last name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="last_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Last Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter last name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
@@ -84,7 +78,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="Enter email" type="email" {...field} />
+                <Input placeholder="Enter email address" type="email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -96,7 +90,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel>Phone (optional)</FormLabel>
               <FormControl>
                 <Input placeholder="Enter phone number" {...field} />
               </FormControl>
@@ -110,7 +104,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           name="position"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Position</FormLabel>
+              <FormLabel>Position (optional)</FormLabel>
               <FormControl>
                 <Input placeholder="Enter position" {...field} />
               </FormControl>
@@ -123,7 +117,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           <Button type="button" variant="outline" onClick={onBack}>
             Back
           </Button>
-          <Button type="submit">Continue</Button>
+          <Button type="submit">Next</Button>
         </div>
       </form>
     </Form>

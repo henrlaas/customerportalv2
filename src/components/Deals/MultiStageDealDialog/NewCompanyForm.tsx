@@ -12,29 +12,35 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { newCompanyFormSchema, NewCompanyFormValues } from '../types/deal';
+import { newCompanyFormSchema, NewCompanyFormValues } from '@/components/Deals/types/deal';
 
 interface NewCompanyFormProps {
-  onNext: (values: NewCompanyFormValues) => void;
+  onNext: (data: NewCompanyFormValues) => void;
   onBack: () => void;
+  defaultValues?: NewCompanyFormValues;
 }
 
 export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
   onNext,
   onBack,
+  defaultValues = {
+    company_name: '',
+    organization_number: '',
+    website: '',
+  }
 }) => {
   const form = useForm<NewCompanyFormValues>({
     resolver: zodResolver(newCompanyFormSchema),
-    defaultValues: {
-      company_name: '',
-      organization_number: '',
-      website: '',
-    },
+    defaultValues,
   });
+
+  const onSubmit = (data: NewCompanyFormValues) => {
+    onNext(data);
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onNext)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="company_name"
@@ -54,7 +60,7 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           name="organization_number"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Organization Number</FormLabel>
+              <FormLabel>Organization Number (optional)</FormLabel>
               <FormControl>
                 <Input placeholder="Enter organization number" {...field} />
               </FormControl>
@@ -68,7 +74,7 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           name="website"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Website</FormLabel>
+              <FormLabel>Website (optional)</FormLabel>
               <FormControl>
                 <Input placeholder="https://example.com" {...field} />
               </FormControl>
@@ -81,7 +87,7 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           <Button type="button" variant="outline" onClick={onBack}>
             Back
           </Button>
-          <Button type="submit">Continue</Button>
+          <Button type="submit">Next</Button>
         </div>
       </form>
     </Form>

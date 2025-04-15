@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
@@ -40,6 +39,7 @@ import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
 import { DealKanbanView } from '@/components/Deals/DealKanbanView';
 import { DealListView } from '@/components/Deals/DealListView';
 import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog';
+import { EditDealDialog } from '@/components/Deals/EditDealDialog';
 import { Deal, Company, Stage, Profile } from '@/components/Deals/types/deal';
 
 const DealsPage = () => {
@@ -213,45 +213,6 @@ const DealsPage = () => {
     },
   });
 
-  // Update deal mutation
-  const updateMutation = useMutation({
-    mutationFn: async (values: DealFormValues & { id: string }) => {
-      const { id, ...dealData } = values;
-
-      console.log('Updating deal with data:', dealData);
-      
-      const { data, error } = await updateWithUser('deals', id, {
-        title: dealData.title,
-        description: dealData.description || null,
-        company_id: dealData.company_id === 'none' ? null : dealData.company_id || null,
-        value: dealData.value,
-        assigned_to: dealData.assigned_to === 'unassigned' ? null : dealData.assigned_to || null,
-        is_recurring: dealData.is_recurring,
-        deal_type: dealData.deal_type || null,
-        client_deal_type: dealData.client_deal_type || null,
-      });
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Deal updated',
-        description: 'The deal has been updated successfully.',
-      });
-      queryClient.invalidateQueries({ queryKey: ['deals'] });
-      setIsEditing(false);
-      setCurrentDeal(null);
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error updating deal',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
   // Delete deal mutation 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -414,43 +375,18 @@ const DealsPage = () => {
         </>
       )}
 
-      {/* Edit Deal Dialog */}
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Deal</DialogTitle>
-            <DialogDescription>
-              Update the deal information.
-            </DialogDescription>
-          </DialogHeader>
-          {currentDeal && (
-            <DealForm
-              onSubmit={(values) => {
-                updateMutation.mutate({ ...values, id: currentDeal.id });
-              }}
-              companies={companies}
-              stages={stages}
-              profiles={profiles}
-              defaultValues={{
-                title: currentDeal.title,
-                description: currentDeal.description || '',
-                company_id: currentDeal.company_id || '',
-                value: currentDeal.value || 0,
-                assigned_to: currentDeal.assigned_to || '',
-                is_recurring: currentDeal.is_recurring || false,
-                deal_type: currentDeal.deal_type || 'one-time',
-                client_deal_type: currentDeal.client_deal_type || 'web',
-              }}
-              isSubmitting={updateMutation.isPending}
-              submitLabel="Save Changes"
-              onCancel={() => {
-                setIsEditing(false);
-                setCurrentDeal(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Multi-Stage Edit Dialog */}
+      <EditDealDialog
+        isOpen={isEditing}
+        onClose={() => {
+          setIsEditing(false);
+          setCurrentDeal(null);
+        }}
+        deal={currentDeal}
+        companies={companies}
+        stages={stages}
+        profiles={profiles}
+      />
 
       {/* Multi-Stage Deal Dialog */}
       <MultiStageDealDialog
