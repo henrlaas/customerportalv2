@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { Building, Calendar, DollarSign, MoreVertical, ChevronRight, Edit, Trash2, User, Repeat } from 'lucide-react';
@@ -64,13 +63,14 @@ export const DealCard = ({
     return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
   };
   
-  // Format currency
+  // Updated currency formatting to use kr
   const formatCurrency = (value: number | null) => {
     if (value === null) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('no-NO', {
       style: 'currency',
-      currency: 'USD',
-    }).format(value);
+      currency: 'NOK',
+      currencyDisplay: 'symbol'
+    }).format(value).replace('NOK', 'kr');
   };
   
   // Format date
