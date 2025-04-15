@@ -79,9 +79,17 @@ export const CreateContactDialog = ({
   // Create contact mutation
   const createContactMutation = useMutation({
     mutationFn: (contactData: ContactFormValues & { company_id: string }) => {
+      // Ensure user_id is always provided as a required field
+      if (!contactData.user_id) {
+        throw new Error("User ID is required");
+      }
+      
       return companyService.createContact({
-        ...contactData,
-        company_id: companyId,
+        company_id: contactData.company_id,
+        user_id: contactData.user_id, // Explicitly passing user_id as a required field
+        position: contactData.position,
+        is_primary: contactData.is_primary,
+        is_admin: contactData.is_admin,
       });
     },
     onSuccess: () => {
