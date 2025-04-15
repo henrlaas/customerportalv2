@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { Building, Calendar, DollarSign, MoreVertical, ChevronRight, Edit, Trash2, User } from 'lucide-react';
+import { Building, Calendar, DollarSign, MoreVertical, ChevronRight, Edit, Trash2, User, Repeat } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,10 +38,10 @@ export type Deal = {
   stage_id: string | null;
   expected_close_date: string | null;
   value: number | null;
-  probability: number | null;
   assigned_to: string | null;
   created_at: string;
   updated_at: string;
+  is_recurring: boolean | null;
 };
 
 interface DealCardProps {
@@ -66,13 +66,15 @@ export const DealCard = ({
   onMove
 }: DealCardProps) => {
   // Set up draggable functionality
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: deal.id,
     disabled: !canModify
   });
   
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    zIndex: isDragging ? 10 : 'auto',
+    opacity: isDragging ? 0.8 : 1,
   } : undefined;
   
   // Get company name
@@ -107,7 +109,7 @@ export const DealCard = ({
   
   return (
     <Card 
-      className="bg-white shadow-sm"
+      className="bg-white shadow-sm cursor-move"
       ref={setNodeRef}
       {...attributes}
       {...listeners}
@@ -127,10 +129,6 @@ export const DealCard = ({
                 <DropdownMenuItem onClick={() => onEdit(deal)}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onMove(deal)}>
-                  <ChevronRight className="mr-2 h-4 w-4" />
-                  Move
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="text-red-600" 
@@ -161,6 +159,14 @@ export const DealCard = ({
           <User className="h-4 w-4 mr-2 flex-shrink-0" />
           <span>{getAssigneeName(deal.assigned_to)}</span>
         </div>
+        {deal.is_recurring && (
+          <div className="mt-2">
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Repeat className="h-3 w-3" />
+              <span>Recurring</span>
+            </Badge>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

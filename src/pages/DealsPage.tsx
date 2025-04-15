@@ -178,6 +178,7 @@ const DealsPage = () => {
   // Update stage mutation
   const updateStageMutation = useMutation({
     mutationFn: async ({ dealId, stageId }: { dealId: string; stageId: string }) => {
+      console.log(`Updating deal ${dealId} to stage ${stageId}`);
       const { data, error } = await updateWithUser('deals', dealId, {
         stage_id: stageId,
       });
@@ -307,6 +308,7 @@ const DealsPage = () => {
 
   // Handle deal stage change
   const handleMoveStage = (dealId: string, newStageId: string) => {
+    console.log(`Moving deal ${dealId} to stage ${newStageId}`);
     updateStageMutation.mutate({ dealId, stageId: newStageId });
   };
 
