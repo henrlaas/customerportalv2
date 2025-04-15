@@ -12,6 +12,7 @@ export function useDealsView() {
 
   return {
     currentView,
+    setCurrentView,
     toggleView,
     isKanbanView: currentView === 'kanban'
   };

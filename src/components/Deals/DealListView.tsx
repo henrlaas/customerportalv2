@@ -36,7 +36,11 @@ export function DealListView({
           canModify={canModify}
           onEdit={onEdit}
           onDelete={onDelete}
-          onMove={onMove}
+          onMove={(dealToMove) => {
+            // In list view, we don't do actual drag and drop
+            // This is just to satisfy the type system
+            onMove(dealToMove.id, dealToMove.stage_id || '');
+          }}
         />
       ))}
     </div>

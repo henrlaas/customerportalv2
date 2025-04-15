@@ -2,61 +2,31 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutGrid, List, Plus, Search, FileText,
-  Calendar,
-  Building,
-  DollarSign,
-  Tag,
-  MoreVertical,
-  Trash2,
-  Edit,
-  Download,
-  Upload,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  XCircle,
-  Repeat, } from 'lucide-react';
+import { 
+  LayoutGrid, List, Plus, Search, FileText,
+  Calendar, Building, DollarSign, Tag, MoreVertical,
+  Trash2, Edit, Download, Upload, AlertTriangle,
+  CheckCircle, Clock, XCircle, Repeat
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
+  Card, CardContent, CardHeader, CardTitle,
 } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogClose, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from '@/components/ui/form';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
@@ -111,7 +81,7 @@ const DealsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentDeal, setCurrentDeal] = useState<Deal | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const { currentView, toggleView, isKanbanView } = useDealsView();
+  const { currentView, toggleView, isKanbanView, setCurrentView } = useDealsView();
 
   const { toast } = useToast();
   const { isAdmin, isEmployee, user } = useAuth();
@@ -334,7 +304,7 @@ const DealsPage = () => {
 
   // Handle deal stage change
   const handleMoveStage = (dealId: string, newStageId: string) => {
-    updateStageMutation.mutate({ dealId, newStageId });
+    updateStageMutation.mutate({ dealId, stageId: newStageId });
   };
 
   // Edit deal
@@ -485,7 +455,7 @@ const DealsPage = () => {
         </div>
       ) : (
         <>
-          {isKanbanView ? (
+          {currentView === 'kanban' ? (
             <DealKanbanView
               deals={filteredDeals}
               stages={stages}
