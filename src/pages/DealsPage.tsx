@@ -174,23 +174,30 @@ const DealsPage = () => {
   // Create deal mutation
   const createMutation = useMutation({
     mutationFn: async (values: DealFormValues) => {
-      // Find the first stage (Lead) by position
-      let firstStageId = null;
-      if (stages && stages.length > 0) {
-        const firstStage = [...stages].sort((a, b) => a.position - b.position)[0];
-        firstStageId = firstStage?.id || null;
+      // Find the "Lead" stage
+      const { data: leadStage } = await supabase
+        .from('deal_stages')
+        .select('id')
+        .eq('name', 'Lead')
+        .single();
+
+      const stageId = leadStage?.id;
+      
+      if (!stageId) {
+        throw new Error('Lead stage not found');
       }
 
-      // Make sure value is number
       const { data, error } = await insertWithUser('deals', {
         title: values.title,
         description: values.description || null,
         company_id: values.company_id === 'none' ? null : values.company_id || null,
-        stage_id: firstStageId,
+        stage_id: stageId, // Set the Lead stage ID
         value: values.value,
-        expected_close_date: null, // No close date initially
+        expected_close_date: null,
         assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to || null,
         is_recurring: values.is_recurring,
+        deal_type: values.deal_type || null,
+        client_deal_type: values.client_deal_type || null,
       });
       
       if (error) throw error;
