@@ -8,6 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { useDraggable } from '@dnd-kit/core';
 
@@ -92,18 +98,38 @@ export const DealCard = ({
           <div className="flex justify-between items-start">
             <h3 className="text-base font-semibold">{deal.title}</h3>
             <div className="flex items-center gap-2">
-              {/* Deal Type Icon */}
-              {deal.deal_type === 'recurring' ? (
-                <Repeat className="h-4 w-4 text-blue-500" aria-label="Recurring deal" />
-              ) : (
-                <CircleDollarSign className="h-4 w-4 text-green-500" aria-label="One-time deal" />
-              )}
-              {/* Client Deal Type Icon */}
-              {deal.client_deal_type === 'web' ? (
-                <Globe className="h-4 w-4 text-purple-500" aria-label="Web deal" />
-              ) : (
-                <Megaphone className="h-4 w-4 text-orange-500" aria-label="Marketing deal" />
-              )}
+              {/* Deal Type Icon with Tooltip */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {deal.deal_type === 'recurring' ? (
+                      <Repeat className="h-4 w-4 text-blue-500" aria-label="Recurring deal" />
+                    ) : (
+                      <CircleDollarSign className="h-4 w-4 text-green-500" aria-label="One-time deal" />
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{deal.deal_type === 'recurring' ? 'Recurring Deal' : 'One-time Deal'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              {/* Client Deal Type Icon with Tooltip */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {deal.client_deal_type === 'web' ? (
+                      <Globe className="h-4 w-4 text-purple-500" aria-label="Web deal" />
+                    ) : (
+                      <Megaphone className="h-4 w-4 text-orange-500" aria-label="Marketing deal" />
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{deal.client_deal_type === 'web' ? 'Web Development Deal' : 'Marketing Deal'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
               {canModify && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
