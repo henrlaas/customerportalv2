@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  FileText,
-  Plus,
-  Search,
+import { LayoutGrid, List, Plus, Search, FileText,
   Calendar,
   Building,
   DollarSign,
@@ -19,8 +16,7 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Repeat,
-} from 'lucide-react';
+  Repeat, } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -67,7 +63,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useDealsView } from '@/hooks/useDealsView';
 import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
+import { DealKanbanView } from '@/components/Deals/DealKanbanView';
+import { DealListView } from '@/components/Deals/DealListView';
 
 // Deal type matching our database schema
 export type Deal = {
@@ -111,10 +111,10 @@ const DealsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentDeal, setCurrentDeal] = useState<Deal | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<string>('all');
+  const { currentView, toggleView, isKanbanView } = useDealsView();
 
   const { toast } = useToast();
-  const { isAdmin, isEmployee } = useAuth();
+  const { isAdmin, isEmployee, user } = useAuth();
   const queryClient = useQueryClient();
 
   // Fetch deals
@@ -202,6 +202,28 @@ const DealsPage = () => {
       }
 
       return data as Profile[];
+    },
+  });
+
+  // Add stage update mutation
+  const updateStageMutation = useMutation({
+    mutationFn: async ({ dealId, stageId }: { dealId: string; stageId: string }) => {
+      const { data, error } = await updateWithUser('deals', dealId, {
+        stage_id: stageId,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error updating deal stage',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -310,6 +332,11 @@ const DealsPage = () => {
     },
   });
 
+  // Handle deal stage change
+  const handleMoveStage = (dealId: string, newStageId: string) => {
+    updateStageMutation.mutate({ dealId, newStageId });
+  };
+
   // Edit deal
   const handleEdit = (deal: Deal) => {
     setCurrentDeal(deal);
@@ -389,43 +416,58 @@ const DealsPage = () => {
   // Check if user can modify deals (admin or employee)
   const canModify = isAdmin || isEmployee;
 
+  const isLoading = isLoadingDeals || isLoadingCompanies || isLoadingStages || isLoadingProfiles;
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Deals</h1>
-        {canModify && (
-          <Dialog open={isCreating} onOpenChange={setIsCreating}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Deal
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Deal</DialogTitle>
-                <DialogDescription>
-                  Add a new deal to your database.
-                </DialogDescription>
-              </DialogHeader>
-              <DealForm
-                onSubmit={(values) => {
-                  createMutation.mutate(values);
-                }}
-                companies={companies}
-                stages={stages}
-                profiles={profiles}
-                isSubmitting={createMutation.isPending}
-                submitLabel="Create Deal"
-                onCancel={() => setIsCreating(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <div className="flex items-center gap-4">
+          <ToggleGroup type="single" value={currentView} onValueChange={value => value && setCurrentView(value as 'kanban' | 'list')}>
+            <ToggleGroupItem value="kanban" aria-label="Kanban view">
+              <LayoutGrid className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" aria-label="List view">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          {canModify && (
+            <Dialog open={isCreating} onOpenChange={setIsCreating}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Deal
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Deal</DialogTitle>
+                  <DialogDescription>
+                    Add a new deal to your pipeline.
+                  </DialogDescription>
+                </DialogHeader>
+                <DealForm
+                  onSubmit={(values) => {
+                    createMutation.mutate(values);
+                  }}
+                  companies={companies}
+                  stages={stages}
+                  profiles={profiles}
+                  defaultValues={{
+                    assigned_to: user?.id || '',
+                  }}
+                  isSubmitting={createMutation.isPending}
+                  submitLabel="Create Deal"
+                  onCancel={() => setIsCreating(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-grow">
+      <div className="mb-6">
+        <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             type="search"
@@ -437,99 +479,36 @@ const DealsPage = () => {
         </div>
       </div>
 
-      {isLoadingDeals || isLoadingCompanies || isLoadingStages || isLoadingProfiles ? (
+      {isLoading ? (
         <div className="flex justify-center p-8">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredDeals.length === 0 ? (
-            <div className="text-center p-8 text-gray-500">
-              No deals found. Add your first deal to get started.
-            </div>
+        <>
+          {isKanbanView ? (
+            <DealKanbanView
+              deals={filteredDeals}
+              stages={stages}
+              companies={companies}
+              profiles={profiles}
+              canModify={canModify}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onMove={handleMoveStage}
+            />
           ) : (
-            filteredDeals.map(deal => (
-              <Card key={deal.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-gray-500" />
-                      <CardTitle className="text-lg">{deal.title}</CardTitle>
-                      <div className="ml-2">{getStatusBadge(deal)}</div>
-                      {deal.is_recurring && (
-                        <Badge variant="secondary" className="flex items-center gap-1">
-                          <Repeat className="h-3 w-3" /> Recurring
-                        </Badge>
-                      )}
-                    </div>
-                    {canModify && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(deal)}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(deal.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {deal.description && (
-                    <p className="text-sm text-gray-600 mb-3">{deal.description}</p>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
-                    <div className="flex items-center">
-                      <Building className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">Company:</span>
-                      <span className="font-medium ml-1">
-                        {getCompanyName(deal.company_id)}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <Tag className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">Stage:</span>
-                      <span className="font-medium ml-1">
-                        {getStageName(deal.stage_id)}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">Value (MRR):</span>
-                      <span className="font-medium ml-1">
-                        {formatCurrency(deal.value)}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">Close Date:</span>
-                      <span className="font-medium ml-1">
-                        {formatDate(deal.expected_close_date)}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">Assigned To:</span>
-                      <span className="font-medium ml-1">
-                        {getAssignedToName(deal.assigned_to)}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+            <DealListView
+              deals={filteredDeals}
+              stages={stages}
+              companies={companies}
+              profiles={profiles}
+              canModify={canModify}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onMove={handleMoveStage}
+            />
           )}
-        </div>
+        </>
       )}
 
       {/* Edit Deal Dialog */}
