@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -18,6 +17,7 @@ import { DealCard } from './DealCard';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvertTempCompanyDialog } from './ConvertTempCompanyDialog';
+import { formatCurrency } from '../Deals/utils/formatters';
 
 interface DealKanbanViewProps {
   deals: Deal[];
@@ -145,13 +145,14 @@ export function DealKanbanView({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 overflow-x-auto">
         {stages.map((stage) => {
           const stageDeals = localDeals.filter(deal => deal.stage_id === stage.id);
-          console.log(`Stage ${stage.name} has ${stageDeals.length} deals`);
+          const stageTotalValue = stageDeals.reduce((sum, deal) => sum + (deal.value || 0), 0);
           
           return (
             <StageColumn 
               key={stage.id}
               stage={stage}
               deals={stageDeals}
+              totalValue={stageTotalValue}
               companies={companies}
               profiles={profiles}
               canModify={canModify}
@@ -184,6 +185,7 @@ export function DealKanbanView({
 interface StageColumnProps {
   stage: Stage;
   deals: Deal[];
+  totalValue: number;
   companies: Company[];
   profiles: Profile[];
   canModify: boolean;
@@ -195,6 +197,7 @@ interface StageColumnProps {
 function StageColumn({
   stage,
   deals,
+  totalValue,
   companies,
   profiles,
   canModify,
@@ -207,13 +210,11 @@ function StageColumn({
     id: stage.id,
   });
 
-  console.log(`Stage ${stage.name} has ${deals.length} deals`);
-
   return (
     <div key={stage.id} className="flex flex-col h-full min-w-[250px]">
       <div className="bg-muted p-3 rounded-t-lg">
         <h3 className="font-semibold">{stage.name}</h3>
-        <div className="text-xs text-muted-foreground">{deals.length} deals</div>
+        <div className="text-xs text-muted-foreground">{formatCurrency(totalValue)}</div>
       </div>
       <div 
         ref={setNodeRef}
