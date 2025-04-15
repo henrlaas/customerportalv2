@@ -767,6 +767,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      convert_temp_deal_company: {
+        Args: {
+          deal_id_param: string
+          name_param: string
+          organization_number_param: string
+          is_marketing_param: boolean
+          is_web_param: boolean
+          website_param: string
+          phone_param: string
+          invoice_email_param: string
+          street_address_param: string
+          city_param: string
+          postal_code_param: string
+          country_param: string
+          advisor_id_param: string
+          mrr_param: number
+          trial_period_param: boolean
+          is_partner_param: boolean
+          created_by_param: string
+        }
+        Returns: string
+      }
       create_admin_user: {
         Args: { admin_email: string }
         Returns: string

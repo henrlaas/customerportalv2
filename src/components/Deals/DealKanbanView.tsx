@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -15,6 +14,9 @@ import {
 import ReactConfetti from 'react-confetti';
 import { Deal, Stage, Company, Profile } from '@/components/Deals/types/deal';
 import { DealCard } from './DealCard';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { ConvertTempCompanyDialog } from './ConvertTempCompanyDialog';
 
 interface DealKanbanViewProps {
   deals: Deal[];
@@ -47,12 +49,26 @@ export function DealKanbanView({
 
   const [showConfetti, setShowConfetti] = useState(false);
   const [localDeals, setLocalDeals] = useState<Deal[]>(deals);
+  const [showConvertDialog, setShowConvertDialog] = useState(false);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [tempCompanyData, setTempCompanyData] = useState<any>(null);
   
   // Update local deals when props change
   React.useEffect(() => {
     setLocalDeals(deals);
     console.log("DealKanbanView received deals:", deals.length);
   }, [deals]);
+
+  // Fetch temp company info if needed
+  const { data: tempCompanies } = useQuery({
+    queryKey: ['temp-deal-companies'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('temp_deal_companies')
+        .select('*');
+      return data || [];
+    },
+  });
 
   const handleDragStart = (event: any) => {
     console.log("Drag started:", event.active.id);
@@ -69,6 +85,17 @@ export function DealKanbanView({
     const newStageId = String(over.id);
     
     console.log(`Moving deal ${dealId} to stage ${newStageId}`);
+    
+    // Check if we're dropping into "Closed Won" stage and the deal has a temporary company
+    const targetStage = stages.find(s => s.id === newStageId);
+    const deal = deals.find(d => d.id === dealId);
+    const tempCompany = tempCompanies?.find(tc => tc.deal_id === dealId);
+    
+    if (targetStage?.name.toLowerCase() === 'closed won' && !deal?.company_id && tempCompany) {
+      setSelectedDeal(deal);
+      setTempCompanyData(tempCompany);
+      setShowConvertDialog(true);
+    }
     
     // Make sure we're not dropping on the same stage
     const dealData = localDeals.find(d => d.id === dealId);
@@ -128,6 +155,21 @@ export function DealKanbanView({
           );
         })}
       </div>
+      
+      {showConvertDialog && selectedDeal && tempCompanyData && (
+        <ConvertTempCompanyDialog
+          isOpen={showConvertDialog}
+          onClose={() => {
+            setShowConvertDialog(false);
+            setSelectedDeal(null);
+            setTempCompanyData(null);
+          }}
+          dealId={selectedDeal.id}
+          tempCompany={tempCompanyData}
+          dealValue={selectedDeal.value}
+          dealType={selectedDeal.client_deal_type}
+        />
+      )}
     </DndContext>
   );
 }

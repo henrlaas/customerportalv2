@@ -32,12 +32,16 @@ type MultiStageCompanyDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   parentId?: string;
+  defaultValues?: Partial<CompanyFormValues>;
+  dealId?: string;
 };
 
 export function MultiStageCompanyDialog({
   isOpen,
   onClose,
   parentId,
+  defaultValues,
+  dealId,
 }: MultiStageCompanyDialogProps) {
   const [stage, setStage] = useState(1);
   const [logo, setLogo] = useState<string | null>(null);
@@ -98,24 +102,58 @@ export function MultiStageCompanyDialog({
   
   // Create company mutation
   const createCompanyMutation = useMutation({
-    mutationFn: (values: CompanyFormValues) => {
+    mutationFn: async (values: CompanyFormValues) => {
       // Format values for submission
       const companyData = {
         ...values,
         logo_url: logo,
         parent_id: values.parent_id || null,
-        // Pass client_types directly - the service will handle conversion
         client_types: values.client_types,
-        mrr: hasMarketingType ? values.mrr : null, // Only include MRR if Marketing is selected
+        mrr: hasMarketingType ? values.mrr : null,
       };
       
-      return companyService.createCompany(companyData);
+      if (dealId) {
+        // If we're converting a temporary company, use the conversion function
+        const { data, error } = await supabase.rpc('convert_temp_deal_company', {
+          deal_id_param: dealId,
+          name_param: values.name,
+          organization_number_param: values.organization_number || null,
+          is_marketing_param: values.client_types.includes('Marketing'),
+          is_web_param: values.client_types.includes('Web'),
+          website_param: values.website || null,
+          phone_param: values.phone || null,
+          invoice_email_param: values.invoice_email || null,
+          street_address_param: values.street_address || null,
+          city_param: values.city || null,
+          postal_code_param: values.postal_code || null,
+          country_param: values.country || null,
+          advisor_id_param: values.advisor_id || null,
+          mrr_param: values.mrr || 0,
+          trial_period_param: values.trial_period,
+          is_partner_param: values.is_partner,
+          created_by_param: user?.id
+        });
+        
+        if (error) throw error;
+        return data;
+      } else {
+        // Regular company creation
+        return companyService.createCompany(companyData);
+      }
     },
     onSuccess: () => {
       toast({
-        title: 'Company created',
-        description: 'The company has been created successfully',
+        title: 'Success',
+        description: dealId 
+          ? 'Temporary company converted successfully' 
+          : 'Company created successfully',
       });
+      
+      // Invalidate necessary queries
+      if (dealId) {
+        queryClient.invalidateQueries({ queryKey: ['deals'] });
+        queryClient.invalidateQueries({ queryKey: ['temp-deal-companies'] });
+      }
       if (parentId) {
         queryClient.invalidateQueries({ queryKey: ['childCompanies', parentId] });
       } else {
@@ -131,7 +169,9 @@ export function MultiStageCompanyDialog({
     onError: (error: Error) => {
       toast({
         title: 'Error',
-        description: `Failed to create company: ${error.message}`,
+        description: dealId 
+          ? `Failed to convert company: ${error.message}`
+          : `Failed to create company: ${error.message}`,
         variant: 'destructive',
       });
     },
