@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
@@ -348,7 +349,7 @@ const DealsPage = () => {
   const isLoading = isLoadingDeals || isLoadingCompanies || isLoadingStages || isLoadingProfiles;
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="w-full px-4 py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Deals</h1>
         <div className="flex items-center gap-4">
@@ -369,7 +370,7 @@ const DealsPage = () => {
       </div>
 
       <div className="mb-6">
-        <div className="relative">
+        <div className="relative max-w-md">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             type="search"

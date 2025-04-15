@@ -47,7 +47,7 @@ export function DealListView({
   };
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 w-full">
       {localDeals.map((deal) => (
         <DealCard
           key={deal.id}
