@@ -553,10 +553,7 @@ const DealsPage = () => {
                 title: currentDeal.title,
                 description: currentDeal.description || '',
                 company_id: currentDeal.company_id || '',
-                stage_id: currentDeal.stage_id || '',
                 value: currentDeal.value || 0,
-                probability: currentDeal.probability || 50,
-                expected_close_date: currentDeal.expected_close_date || '',
                 assigned_to: currentDeal.assigned_to || '',
                 is_recurring: currentDeal.is_recurring || false,
               }}
