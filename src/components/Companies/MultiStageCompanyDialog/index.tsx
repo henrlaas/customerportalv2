@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -8,6 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,7 @@ export function MultiStageCompanyDialog({
   const [logo, setLogo] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   const totalStages = 3;
   
@@ -75,6 +77,7 @@ export function MultiStageCompanyDialog({
       is_partner: false,
       advisor_id: '',
       mrr: 0,
+      ...defaultValues, // Merge any provided default values
     },
   });
 
@@ -131,7 +134,7 @@ export function MultiStageCompanyDialog({
           mrr_param: values.mrr || 0,
           trial_period_param: values.trial_period,
           is_partner_param: values.is_partner,
-          created_by_param: user?.id
+          created_by_param: user?.id || null
         });
         
         if (error) throw error;
