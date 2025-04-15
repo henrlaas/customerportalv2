@@ -67,7 +67,7 @@ const companyQueryService = {
         .from('company_contacts')
         .select('*')
         .eq('company_id', companyId)
-        .order('last_name', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching company contacts:', error);
