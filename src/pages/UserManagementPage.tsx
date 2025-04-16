@@ -34,8 +34,8 @@ const UserManagementPage = () => {
     queryFn: userService.listUsers,
     retry: 2,
     retryDelay: 1000,
-    onSettled: (_data, error) => {
-      if (error) {
+    meta: {
+      onError: (error: Error) => {
         console.error('Error fetching users:', error);
         toast({
           title: "Error",
