@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -110,7 +109,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       type: file.type,
     };
   };
-
+  
   const onSubmit = async (data: AdFormData) => {
     if (!fileInfo) {
       toast({

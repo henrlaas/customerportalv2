@@ -1,12 +1,11 @@
-
 import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
 import SetPassword from '@/pages/SetPassword';
-import AppLayout from '@/components/Layout/AppLayout';
+import { AppLayout } from '@/components/Layout/AppLayout';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import AuthProvider from '@/contexts/AuthContext';
-import ProtectedRoute from './components/providers/ProtectedRoute';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ProtectedRoute } from './components/providers/ProtectedRoute';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import ThemeProvider from '@/components/providers/ThemeProvider';
@@ -17,7 +16,7 @@ import CompanyDetailsPage from '@/pages/CompanyDetailsPage';
 import TimeTrackingPage from '@/pages/TimeTrackingPage';
 import UserManagementPage from '@/pages/UserManagementPage';
 import CampaignsPage from '@/pages/CampaignsPage';
-import CampaignDetailsPage from '@/pages/CampaignDetailsPage';
+import { CampaignDetailsPage } from '@/pages/CampaignDetailsPage';
 import ClientDashboardPage from '@/pages/ClientDashboardPage';
 import ClientCompanyDetailsPage from '@/pages/ClientCompanyDetailsPage';
 import DealsPage from '@/pages/DealsPage';
@@ -29,7 +28,7 @@ import FinancePage from '@/pages/FinancePage';
 import Unauthorized from '@/pages/Unauthorized';
 import NotFound from '@/pages/NotFound';
 import { supabase } from '@/integrations/supabase/client';
-import AdSetDetailsPage from './pages/AdSetDetailsPage';
+import { AdSetDetailsPage } from './pages/AdSetDetailsPage';
 
 // Initialize storage bucket if it doesn't exist
 async function initializeStorage() {
