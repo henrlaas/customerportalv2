@@ -1,53 +1,37 @@
 
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { AdSetFormData } from '../types/campaign';
+import { AdFormData } from '../types/campaign';
 
+// Temporary basic component that will be expanded later
 interface Props {
-  campaignId: string;
+  adsetId: string;
 }
 
-export function CreateAdSetDialog({ campaignId }: Props) {
+export function CreateAdDialog({ adsetId }: Props) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const form = useForm<AdSetFormData>({
+  const form = useForm<AdFormData>({
     defaultValues: {
       name: '',
-      targeting: '',
-      campaign_id: campaignId,
+      adset_id: adsetId,
     },
   });
 
-  const onSubmit = async (data: AdSetFormData) => {
-    const { error } = await supabase.from('adsets').insert(data);
-    
-    if (error) {
-      toast({
-        title: 'Error creating ad set',
-        description: error.message,
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const onSubmit = async (data: AdFormData) => {
     toast({
-      title: 'Ad set created',
-      description: 'Your ad set has been created successfully.',
-    });
-    
-    // Fix: Use the proper format for invalidating queries
-    await queryClient.invalidateQueries({
-      queryKey: ['adsets', campaignId]
+      title: 'Coming soon',
+      description: 'Ad creation will be implemented in the next phase',
     });
     
     setOpen(false);
@@ -57,14 +41,14 @@ export function CreateAdSetDialog({ campaignId }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size="sm">
           <Plus className="w-4 h-4 mr-2" />
-          Create Ad Set
+          Create Ad
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Ad Set</DialogTitle>
+          <DialogTitle>Create New Ad</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -73,26 +57,14 @@ export function CreateAdSetDialog({ campaignId }: Props) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ad Set Name</FormLabel>
+                  <FormLabel>Ad Name</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="targeting"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Targeting</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} rows={4} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <Button type="submit">Create Ad Set</Button>
+            <Button type="submit">Create Ad</Button>
           </form>
         </Form>
       </DialogContent>
