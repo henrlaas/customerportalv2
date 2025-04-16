@@ -16,10 +16,10 @@ export const handleListUsers = async (
       throw authError;
     }
     
-    // Then get profiles data
+    // Then get profiles data - removing the "team" column which doesn't exist
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, first_name, last_name, role, team, language, phone_number');
+      .select('id, first_name, last_name, role, language, phone_number');
     
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError);
@@ -36,7 +36,7 @@ export const handleListUsers = async (
           first_name: profile.first_name,
           last_name: profile.last_name,
           role: profile.role,
-          team: profile.team,
+          // Removed team field since it doesn't exist
           language: profile.language,
           phone_number: profile.phone_number
         }
@@ -65,3 +65,4 @@ export const handleListUsers = async (
     );
   }
 };
+

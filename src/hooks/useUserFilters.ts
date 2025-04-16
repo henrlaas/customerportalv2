@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { User } from "@/services/userService";
 
@@ -14,11 +13,11 @@ export function useUserFilters(users: User[] = []) {
       .filter(Boolean) as string[]))];
   }, [users]);
   
+  // Since the team field doesn't exist in the database, we'll just provide a default empty list
   const teams: string[] = useMemo(() => {
-    return ["All Teams", ...Array.from(new Set(users
-      .map(user => user.user_metadata?.team || '')
-      .filter(Boolean) as string[]))];
-  }, [users]);
+    // We're keeping this for compatibility, but it will only contain "All Teams" since team doesn't exist
+    return ["All Teams"];
+  }, []);
 
   // Filter users based on search term and filters
   const filteredUsers = useMemo(() => {
@@ -28,14 +27,14 @@ export function useUserFilters(users: User[] = []) {
       const fullName = `${firstName} ${lastName}`.trim();
       const email = user.email || '';
       const role = user.user_metadata?.role || '';
-      const team = user.user_metadata?.team || '';
       
       const matchesSearch = 
         fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         email.toLowerCase().includes(searchTerm.toLowerCase());
         
       const matchesRole = roleFilter === "All Roles" || role === roleFilter;
-      const matchesTeam = teamFilter === "All Teams" || team === teamFilter;
+      // Since we don't have team data, we'll always match on team filter
+      const matchesTeam = true;
       
       return matchesSearch && matchesRole && matchesTeam;
     });
