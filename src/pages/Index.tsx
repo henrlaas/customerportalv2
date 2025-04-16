@@ -7,8 +7,8 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to auth page when visiting the root URL
-    navigate('/auth', { replace: true });
+    // Redirect to sign-in page when visiting the root URL instead of 'auth'
+    navigate('/sign-in', { replace: true });
   }, [navigate]);
 
   return (

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -24,7 +23,7 @@ type FileInfo = {
   file: File;
 };
 
-// Define a type for the watched fields to prevent TypeScript errors
+// Define a concrete type for the watched fields to fix TypeScript errors
 interface WatchedFields {
   headline: string;
   description: string;
@@ -53,7 +52,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     },
   });
 
-  // Type the watched fields correctly
+  // Properly type the watched fields with non-null values
   const watchedFields: WatchedFields = {
     headline: form.watch('headline') || '',
     description: form.watch('description') || '',
@@ -190,6 +189,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     form.reset();
   };
 
+  // Determine which fields to show based on platform
   const showMainText = platform === 'Meta' || platform === 'LinkedIn';
   const showDescription = platform === 'Meta' || platform === 'LinkedIn' || platform === 'Google';
   const showKeywords = platform === 'Google';
