@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -23,6 +24,15 @@ type FileInfo = {
   file: File;
 };
 
+// Define a type for the watched fields to prevent TypeScript errors
+interface WatchedFields {
+  headline: string;
+  description: string;
+  main_text: string;
+  keywords: string;
+  brand_name: string;
+}
+
 export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
@@ -43,12 +53,13 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     },
   });
 
-  const watchedFields = {
-    headline: form.watch('headline'),
-    description: form.watch('description'),
-    main_text: form.watch('main_text'),
-    keywords: form.watch('keywords'),
-    brand_name: form.watch('brand_name'),
+  // Type the watched fields correctly
+  const watchedFields: WatchedFields = {
+    headline: form.watch('headline') || '',
+    description: form.watch('description') || '',
+    main_text: form.watch('main_text') || '',
+    keywords: form.watch('keywords') || '',
+    brand_name: form.watch('brand_name') || '',
   };
 
   const platform = campaignPlatform as keyof typeof PLATFORM_CHARACTER_LIMITS || 'Meta';

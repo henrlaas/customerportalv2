@@ -1,9 +1,10 @@
+
 import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
 import SetPassword from '@/pages/SetPassword';
 import { AppLayout } from '@/components/Layout/AppLayout';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Outlet } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from './components/providers/ProtectedRoute';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -64,7 +65,11 @@ function App() {
               <Route path="/sign-in" element={<Auth />} />
               <Route path="/set-password" element={<SetPassword />} />
               <Route element={<ProtectedRoute />}>
-                <Route element={<AppLayout />}>
+                <Route element={
+                  <AppLayout>
+                    <Outlet />
+                  </AppLayout>
+                }>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/tasks" element={<TasksPage />} />
                   <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
