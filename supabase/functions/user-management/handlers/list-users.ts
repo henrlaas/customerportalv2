@@ -7,16 +7,39 @@ export const handleListUsers = async (
 ) => {
   console.log('Fetching users list');
   
-  const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+  // First get users from auth
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
   
-  if (error) throw error;
+  if (authError) throw authError;
   
-  console.log(`Retrieved ${data.users.length} users`);
+  // Then get profiles data
+  const { data: profiles, error: profilesError } = await supabaseAdmin
+    .from('profiles')
+    .select('id, first_name, last_name, role, team, language, phone_number');
+  
+  if (profilesError) throw profilesError;
+  
+  // Merge users with their profiles
+  const users = authData.users.map(user => {
+    const profile = profiles?.find(p => p.id === user.id) || {};
+    return {
+      ...user,
+      user_metadata: {
+        ...user.user_metadata,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        role: profile.role,
+        team: profile.team,
+        language: profile.language,
+        phone_number: profile.phone_number
+      }
+    };
+  });
+  
+  console.log(`Retrieved ${users.length} users`);
   
   return new Response(
-    JSON.stringify({ 
-      users: data.users
-    }),
+    JSON.stringify({ users }),
     {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },

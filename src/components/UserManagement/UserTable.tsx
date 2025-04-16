@@ -1,4 +1,3 @@
-
 import { User } from "@/services/userService";
 import {
   Table,
@@ -58,7 +57,7 @@ export function UserTable({
     }
   };
 
-  // Get user initials
+  // Get user initials from first_name and last_name
   const getUserInitials = (user: User) => {
     const firstName = user.user_metadata?.first_name || '';
     const lastName = user.user_metadata?.last_name || '';

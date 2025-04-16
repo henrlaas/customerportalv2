@@ -23,7 +23,9 @@ export function useUserFilters(users: User[] = []) {
   // Filter users based on search term and filters
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-      const fullName = `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim();
+      const firstName = user.user_metadata?.first_name || '';
+      const lastName = user.user_metadata?.last_name || '';
+      const fullName = `${firstName} ${lastName}`.trim();
       const email = user.email || '';
       const role = user.user_metadata?.role || '';
       const team = user.user_metadata?.team || '';

@@ -19,9 +19,9 @@ export function useInviteUser({ onSuccess }: UseInviteUserProps = {}) {
         body: {
           action: 'invite',
           email: data.email,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          role: data.role || 'client', // Default to client if no role provided
+          first_name: data.firstName,
+          last_name: data.lastName,
+          role: data.role || 'client',
           team: data.team,
           language: data.language || 'en',
         }
@@ -39,7 +39,6 @@ export function useInviteUser({ onSuccess }: UseInviteUserProps = {}) {
         description: `Invitation sent to ${variables.email}`,
       });
       
-      // Call onSuccess callback if provided, passing the data
       if (onSuccess) {
         onSuccess(data);
       }

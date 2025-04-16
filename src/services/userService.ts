@@ -44,7 +44,7 @@ export const userService = {
             user_metadata: {
               first_name: userData.firstName,
               last_name: userData.lastName,
-              phone_number: userData.phone // Added phone number to user metadata
+              phone_number: userData.phone
             }
           }
         },
