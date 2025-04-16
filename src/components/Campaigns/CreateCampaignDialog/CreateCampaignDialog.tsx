@@ -11,13 +11,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import { CampaignFormData, Platform } from '../types/campaign';
-import { CampaignBasicInfoForm } from './CampaignBasicInfoForm';
-import { CampaignBudgetForm } from './CampaignBudgetForm';
+import { PlusCircle, X } from 'lucide-react';
+import { CampaignFormData } from '../types/campaign';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Form } from '@/components/ui/form';
+import { CampaignDetailsForm } from './CampaignDetailsForm';
+import { CompanySelectionForm } from './CompanySelectionForm';
+import { ProgressStepper } from './ProgressStepper';
 
 const campaignSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -27,6 +28,7 @@ const campaignSchema = z.object({
   end_date: z.date().nullable(),
   budget: z.number().nullable(),
   description: z.string().nullable(),
+  include_subsidiaries: z.boolean().default(false),
 });
 
 export function CreateCampaignDialog() {
@@ -34,7 +36,7 @@ export function CreateCampaignDialog() {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
 
-  const form = useForm<CampaignFormData>({
+  const form = useForm<z.infer<typeof campaignSchema>>({
     resolver: zodResolver(campaignSchema),
     defaultValues: {
       name: '',
@@ -44,10 +46,11 @@ export function CreateCampaignDialog() {
       end_date: null,
       budget: null,
       description: null,
+      include_subsidiaries: false,
     },
   });
 
-  const onSubmit = async (values: CampaignFormData) => {
+  const onSubmit = async (values: z.infer<typeof campaignSchema>) => {
     try {
       // Format dates as ISO strings for Supabase
       const formattedValues = {
@@ -90,6 +93,12 @@ export function CreateCampaignDialog() {
     }
   };
 
+  const handleClose = () => {
+    setOpen(false);
+    form.reset();
+    setStep(1);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -100,19 +109,22 @@ export function CreateCampaignDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>
-            {step === 1 ? 'Campaign Details' : 'Campaign Budget'}
+          <DialogTitle className="text-xl font-bold">
+            New Campaign
           </DialogTitle>
         </DialogHeader>
+        
+        <ProgressStepper currentStep={step} totalSteps={2} />
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             {step === 1 ? (
-              <CampaignBasicInfoForm 
+              <CampaignDetailsForm 
                 form={form}
                 onNext={() => setStep(2)}
               />
             ) : (
-              <CampaignBudgetForm
+              <CompanySelectionForm
                 form={form}
                 onBack={() => setStep(1)}
                 isSubmitting={form.formState.isSubmitting}
