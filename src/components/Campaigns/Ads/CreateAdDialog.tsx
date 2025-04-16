@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -23,7 +24,7 @@ type FileInfo = {
   file: File;
 };
 
-// Define a concrete type for the watched fields to fix TypeScript errors
+// Define concrete types for the watched fields to fix TypeScript errors
 interface WatchedFields {
   headline: string;
   description: string;
