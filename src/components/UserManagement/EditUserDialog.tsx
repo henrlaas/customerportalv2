@@ -32,8 +32,8 @@ export function EditUserDialog({ isOpen, onClose, user }: EditUserDialogProps) {
     resolver: zodResolver(editUserSchema),
     defaultValues: {
       email: '',
-      displayName: '',
-      phone: ''
+      firstName: '',
+      lastName: ''
     },
   });
 
@@ -42,8 +42,8 @@ export function EditUserDialog({ isOpen, onClose, user }: EditUserDialogProps) {
     if (user) {
       form.reset({
         email: user.email || '',
-        displayName: user.user_metadata?.display_name || '',
-        phone: user.user_metadata?.phone_number || ''
+        firstName: user.user_metadata?.first_name || '',
+        lastName: user.user_metadata?.last_name || ''
       });
     }
   }, [user, form]);
@@ -95,33 +95,35 @@ export function EditUserDialog({ isOpen, onClose, user }: EditUserDialogProps) {
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="displayName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Display Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <DialogFooter className="pt-4">
               <Button

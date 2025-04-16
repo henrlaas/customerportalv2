@@ -76,26 +76,19 @@ export const CompanyCardView = ({ companies, onCompanyClick }: CompanyCardViewPr
     if (!advisor) return null;
     
     return {
-      name: advisor.user_metadata?.display_name || advisor.email,
+      name: `${advisor.user_metadata?.first_name || ''} ${advisor.user_metadata?.last_name || ''}`.trim() || advisor.email,
       email: advisor.email,
       // Use initials for avatar fallback since we don't have avatar_url in user_metadata
-      initials: getInitialsFromDisplayName(advisor.user_metadata?.display_name)
+      initials: getInitials(advisor.user_metadata?.first_name, advisor.user_metadata?.last_name)
     };
   };
   
-  // Helper function to get initials from display name
-  const getInitialsFromDisplayName = (displayName?: string): string => {
-    if (!displayName) return '??';
-    
-    // Split by space and get first letter of each part
-    const parts = displayName.split(' ');
-    if (parts.length === 1) {
-      // If only one part, return first letter
-      return displayName.charAt(0).toUpperCase();
-    }
-    
-    // Get first letter of first part and first letter of last part
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  // Helper function to get initials from name
+  const getInitials = (firstName?: string, lastName?: string): string => {
+    let initials = '';
+    if (firstName) initials += firstName.charAt(0).toUpperCase();
+    if (lastName) initials += lastName.charAt(0).toUpperCase();
+    return initials || '??';
   };
   
   return (

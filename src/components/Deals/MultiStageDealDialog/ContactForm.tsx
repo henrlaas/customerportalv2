@@ -24,7 +24,8 @@ export const ContactForm: React.FC<ContactFormProps> = ({
   onNext,
   onBack,
   defaultValues = {
-    display_name: '',
+    first_name: '',
+    last_name: '',
     email: '',
     phone: '',
     position: '',
@@ -44,12 +45,26 @@ export const ContactForm: React.FC<ContactFormProps> = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="display_name"
+          name="first_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Display Name</FormLabel>
+              <FormLabel>First Name</FormLabel>
               <FormControl>
-                <Input placeholder="Enter full name" {...field} />
+                <Input placeholder="Enter first name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="last_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Last Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter last name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

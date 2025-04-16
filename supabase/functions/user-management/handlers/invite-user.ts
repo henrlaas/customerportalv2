@@ -7,13 +7,15 @@ export const handleInviteUser = async (
   supabaseAdmin: SupabaseClient,
   corsHeaders: Record<string, string>
 ) => {
-  const { email, displayName, role, team, language } = body;
+  const { email, firstName, lastName, role, team, language } = body;
   
   console.log(`Inviting user: ${email} with role: ${role}`);
   
+  // Define the full URL path with type parameter
   const redirectUrl = `${origin}/set-password?type=invite`;
   console.log(`Redirect URL: ${redirectUrl}`);
 
+  // Validate inputs
   if (!email) {
     return new Response(
       JSON.stringify({ error: 'Email is required' }),
@@ -24,8 +26,10 @@ export const handleInviteUser = async (
     );
   }
 
+  // Always default to 'client' if no role is provided
   const userRole = role || 'client';
   
+  // Verify the role is valid
   if (!['admin', 'employee', 'client'].includes(userRole)) {
     return new Response(
       JSON.stringify({ error: 'Invalid role' }),
@@ -37,10 +41,12 @@ export const handleInviteUser = async (
   }
 
   try {
+    // Invite the user using the admin API with the updated redirect URL
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       redirectTo: redirectUrl,
       data: {
-        display_name: displayName || '',
+        first_name: firstName || '',
+        last_name: lastName || '',
         role: userRole,
         team: team || '',
         language: language || 'en',

@@ -13,23 +13,9 @@ export const handleListUsers = async (
   
   console.log(`Retrieved ${data.users.length} users`);
   
-  // Make sure user_metadata contains display_name
-  const usersWithDisplayName = data.users.map(user => {
-    if (!user.user_metadata) {
-      user.user_metadata = {};
-    }
-    
-    // If display_name isn't set, derive it from the email
-    if (!user.user_metadata.display_name) {
-      user.user_metadata.display_name = user.email ? user.email.split('@')[0] : 'User';
-    }
-    
-    return user;
-  });
-  
   return new Response(
     JSON.stringify({ 
-      users: usersWithDisplayName
+      users: data.users
     }),
     {
       status: 200,

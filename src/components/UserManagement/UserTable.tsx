@@ -60,17 +60,13 @@ export function UserTable({
 
   // Get user initials
   const getUserInitials = (user: User) => {
-    const displayName = user.user_metadata?.display_name || '';
+    const firstName = user.user_metadata?.first_name || '';
+    const lastName = user.user_metadata?.last_name || '';
     
-    if (displayName) {
-      // Split display name by spaces
-      const parts = displayName.split(' ');
-      if (parts.length === 1) {
-        return displayName.charAt(0).toUpperCase();
-      } else {
-        // First letter of first part and first letter of last part
-        return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
-      }
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    } else if (firstName) {
+      return firstName.charAt(0).toUpperCase();
     } else if (user.email) {
       return user.email.charAt(0).toUpperCase();
     } else {
@@ -108,7 +104,7 @@ export function UserTable({
                     {getUserInitials(user)}
                   </div>
                   <span className="font-medium">
-                    {user.user_metadata?.display_name || user.email}
+                    {user.user_metadata?.first_name || ''} {user.user_metadata?.last_name || ''}
                   </span>
                 </div>
               </TableCell>

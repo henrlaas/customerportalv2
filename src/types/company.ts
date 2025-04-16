@@ -41,6 +41,4 @@ export type CompanyContact = {
   first_name?: string | null;
   last_name?: string | null;
   avatar_url?: string | null;
-  display_name?: string | null; // Add display_name property
 };
-

@@ -6,10 +6,10 @@ export interface User {
   id: string;
   email: string;
   user_metadata: {
-    display_name?: string;
+    first_name?: string;
+    last_name?: string;
     role?: string;
     team?: string;
-    phone_number?: string;
   };
   created_at: string;
 }
@@ -42,7 +42,8 @@ export const userService = {
           userData: {
             email: userData.email,
             user_metadata: {
-              display_name: userData.displayName,
+              first_name: userData.firstName,
+              last_name: userData.lastName,
               phone_number: userData.phone // Added phone number to user metadata
             }
           }

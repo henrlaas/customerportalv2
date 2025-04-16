@@ -29,7 +29,8 @@ import { useInviteUser } from '@/hooks/useInviteUser';
 
 // Form schema
 const contactFormSchema = z.object({
-  displayName: z.string().min(1, { message: 'Name is required' }),
+  firstName: z.string().min(1, { message: 'First name is required' }),
+  lastName: z.string().min(1, { message: 'Last name is required' }),
   email: z.string().email({ message: 'Valid email is required' }),
   position: z.string().optional(),
 });
@@ -56,7 +57,8 @@ export const CreateContactDialog = ({
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
-      displayName: '',
+      firstName: '',
+      lastName: '',
       email: '',
       position: '',
     },
@@ -104,7 +106,8 @@ export const CreateContactDialog = ({
       
       // First, invite the user with client role
       const inviteResponse = await inviteUser({
-        displayName: values.displayName,
+        firstName: values.firstName,
+        lastName: values.lastName,
         email: values.email,
         role: 'client', // Always set to client role
         language: 'en'
@@ -122,7 +125,7 @@ export const CreateContactDialog = ({
         
         toast({
           title: 'Contact added',
-          description: `${values.displayName} has been invited and added as a company contact.`,
+          description: `${values.firstName} ${values.lastName} has been invited and added as a company contact.`,
         });
       } else {
         throw new Error('Failed to invite user');
@@ -152,12 +155,26 @@ export const CreateContactDialog = ({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="displayName"
+              name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>First Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input placeholder="John" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Doe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

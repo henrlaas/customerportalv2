@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Company, CompanyContact } from '@/types/company';
 
@@ -80,26 +81,42 @@ const companyQueryService = {
       // Extract user IDs to fetch profile data
       const userIds = contactsData.map(contact => contact.user_id);
       
+      // Get profile data for these users
+      let profilesMap: Record<string, any> = {};
+      if (userIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.warn('Could not fetch profile information:', profilesError);
+        } else if (profilesData) {
+          // Create a map for quick lookups
+          profilesMap = profilesData.reduce((acc: Record<string, any>, profile) => {
+            acc[profile.id] = profile;
+            return acc;
+          }, {});
+        }
+      }
+
       // Get emails using the edge function
-      let usersMap: Record<string, any> = {};
+      let emailsMap: Record<string, string> = {};
       if (userIds.length > 0) {
         try {
-          const { data: usersData, error: usersError } = await supabase.functions.invoke('user-management', {
+          const { data: emailsData, error: emailsError } = await supabase.functions.invoke('user-management', {
             body: {
               action: 'get-user-emails',
               userIds: userIds
             }
           });
           
-          if (usersError) {
-            console.warn('Could not fetch user data:', usersError);
-          } else if (usersData) {
+          if (emailsError) {
+            console.warn('Could not fetch email addresses:', emailsError);
+          } else if (emailsData) {
             // Create a map for quick lookups
-            usersMap = usersData.reduce((acc: Record<string, any>, user: { id: string, email: string, user_metadata?: any }) => {
-              acc[user.id] = {
-                email: user.email,
-                display_name: user.user_metadata?.display_name || '',
-              };
+            emailsMap = emailsData.reduce((acc: Record<string, string>, item: { id: string, email: string }) => {
+              acc[item.id] = item.email;
               return acc;
             }, {});
           }
@@ -111,8 +128,10 @@ const companyQueryService = {
       // Combine the data
       return contactsData.map(contact => ({
         ...contact,
-        email: usersMap[contact.user_id]?.email || '',
-        display_name: usersMap[contact.user_id]?.display_name || '',
+        email: emailsMap[contact.user_id] || '',
+        first_name: profilesMap[contact.user_id]?.first_name || '',
+        last_name: profilesMap[contact.user_id]?.last_name || '',
+        avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
       }));
     } catch (error: any) {
       console.error('Unexpected error fetching company contacts:', error);
