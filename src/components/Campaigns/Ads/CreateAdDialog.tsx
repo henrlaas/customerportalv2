@@ -1,16 +1,16 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, ArrowRight, ArrowLeft, Check } from 'lucide-react';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Plus, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdFormData, PLATFORM_CHARACTER_LIMITS } from '../types/campaign';
-import { Textarea } from '@/components/ui/textarea';
+import { FileInfo } from './types';
+import { AdMediaUploader } from './AdMediaUploader';
+import { AdFormFields } from './AdFormFields';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -18,19 +18,91 @@ interface Props {
   campaignPlatform?: string;
 }
 
-type FileInfo = {
-  url: string;
-  type: string;
-  file: File;
-};
-
-// Define concrete types for the watched fields to fix TypeScript errors
 interface WatchedFields {
   headline: string;
   description: string;
   main_text: string;
   keywords: string;
   brand_name: string;
+}
+
+function AdPreview({ fileInfo, watchedFields, platform, limits }: {
+  fileInfo: FileInfo | null;
+  watchedFields: WatchedFields;
+  platform: string;
+  limits: Record<string, number>;
+}) {
+  function platformName(platform: string): string {
+    return platform || 'Unknown';
+  }
+
+  function formatFieldName(field: string): string {
+    return field
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  return (
+    <div className="border rounded-lg p-4 bg-muted/20">
+      <h3 className="font-semibold mb-4 text-lg">Ad Preview</h3>
+      <div className="border rounded-md p-3 space-y-4 bg-white">
+        <div className="relative h-40 bg-gray-100 rounded-md overflow-hidden">
+          {fileInfo?.type === 'image' ? (
+            <img
+              src={fileInfo.url}
+              alt="Ad preview"
+              className="w-full h-full object-contain"
+            />
+          ) : fileInfo?.type === 'video' ? (
+            <video
+              src={fileInfo.url}
+              controls
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              No media preview
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          {watchedFields.headline && (
+            <div className="text-base font-medium line-clamp-2">{watchedFields.headline}</div>
+          )}
+
+          {watchedFields.brand_name && (
+            <div className="text-sm text-muted-foreground">{watchedFields.brand_name}</div>
+          )}
+
+          {watchedFields.main_text && (
+            <div className="text-sm line-clamp-3">{watchedFields.main_text}</div>
+          )}
+
+          {watchedFields.description && (
+            <div className="text-xs text-muted-foreground line-clamp-2">{watchedFields.description}</div>
+          )}
+
+          {watchedFields.keywords && (
+            <div className="text-xs">
+              <span className="text-muted-foreground">Keywords:</span> {watchedFields.keywords}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 text-sm text-muted-foreground">
+        <p>Platform: {platformName(platform)} Ad</p>
+        {limits && Object.keys(limits).length > 0 && (
+          <ul className="mt-2 list-disc list-inside">
+            {Object.entries(limits).map(([key, limit]) => (
+              <li key={key}>{formatFieldName(key)}: max {limit} characters</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
@@ -53,7 +125,6 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     },
   });
 
-  // Properly type the watched fields with non-null values
   const watchedFields: WatchedFields = {
     headline: form.watch('headline') || '',
     description: form.watch('description') || '',
@@ -81,7 +152,6 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     }
     
     const previewUrl = URL.createObjectURL(file);
-    
     setFileInfo({
       url: previewUrl,
       type: adType,
@@ -131,11 +201,13 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       return;
     }
     
-    // Upload the file first
+    setUploading(true);
     const uploadedFile = await uploadFile(fileInfo.file);
-    if (!uploadedFile) return;
+    if (!uploadedFile) {
+      setUploading(false);
+      return;
+    }
     
-    // Then create the ad record
     const { error } = await supabase.from('ads').insert({
       ...data,
       ad_type: fileInfo.type,
@@ -149,6 +221,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
         description: error.message,
         variant: 'destructive',
       });
+      setUploading(false);
       return;
     }
 
@@ -157,11 +230,11 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       description: 'Your ad has been created successfully.',
     });
     
-    // Invalidate and refetch
     await queryClient.invalidateQueries({
       queryKey: ['ads', adsetId]
     });
     
+    setUploading(false);
     setOpen(false);
     setStep(1);
     setFileInfo(null);
@@ -180,22 +253,11 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     setStep(2);
   };
 
-  const prevStep = () => {
-    setStep(1);
-  };
-
   const resetDialog = () => {
     setStep(1);
     setFileInfo(null);
     form.reset();
   };
-
-  // Determine which fields to show based on platform
-  const showMainText = platform === 'Meta' || platform === 'LinkedIn';
-  const showDescription = platform === 'Meta' || platform === 'LinkedIn' || platform === 'Google';
-  const showKeywords = platform === 'Google';
-  const showBrandName = platform === 'Snapchat';
-  const showHeadline = true; // All platforms have headline
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
@@ -217,76 +279,11 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {step === 1 && (
               <div className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ad Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <AdMediaUploader
+                  fileInfo={fileInfo}
+                  onFileChange={handleFileChange}
+                  onRemoveFile={() => setFileInfo(null)}
                 />
-                
-                <div className="space-y-2">
-                  <FormLabel>Ad Media (Image/Video)</FormLabel>
-                  <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
-                    {fileInfo ? (
-                      <div className="space-y-4">
-                        <div className="relative h-48 mx-auto max-w-xs">
-                          {fileInfo.type === 'image' ? (
-                            <img 
-                              src={fileInfo.url} 
-                              alt="Ad preview" 
-                              className="w-full h-full object-contain rounded-md"
-                            />
-                          ) : fileInfo.type === 'video' ? (
-                            <video 
-                              src={fileInfo.url} 
-                              controls 
-                              className="w-full h-full object-contain rounded-md"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full text-muted-foreground">
-                              File selected: {fileInfo.file.name}
-                            </div>
-                          )}
-                        </div>
-                        <Button 
-                          type="button" 
-                          variant="secondary" 
-                          onClick={() => setFileInfo(null)}
-                        >
-                          Change File
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex flex-col items-center justify-center py-6">
-                          <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                          <p className="text-gray-600 mb-2">Upload an image or video for your ad</p>
-                          <p className="text-sm text-gray-500 mb-4">Supports: JPG, PNG, GIF, MP4, WebM</p>
-                          <Input
-                            type="file"
-                            accept="image/*,video/*"
-                            className="hidden"
-                            id="file-upload"
-                            onChange={handleFileChange}
-                          />
-                          <label htmlFor="file-upload">
-                            <Button type="button" variant="secondary" asChild>
-                              <span>Browse Files</span>
-                            </Button>
-                          </label>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-                
                 <div className="flex justify-end">
                   <Button 
                     type="button" 
@@ -301,226 +298,21 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
             
             {step === 2 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  {showHeadline && (
-                    <FormField
-                      control={form.control}
-                      name="headline"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Headline 
-                            {limits.headline && (
-                              <span className="text-xs text-muted-foreground ml-2">
-                                ({field.value.length}/{limits.headline})
-                              </span>
-                            )}
-                          </FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              maxLength={limits.headline} 
-                              className={cn(
-                                field.value.length > 0 && limits.headline && 
-                                field.value.length > limits.headline * 0.9 && 
-                                "border-yellow-500"
-                              )}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  
-                  {showDescription && (
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Description
-                            {limits.description && (
-                              <span className="text-xs text-muted-foreground ml-2">
-                                ({field.value.length}/{limits.description})
-                              </span>
-                            )}
-                          </FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              {...field} 
-                              maxLength={limits.description}
-                              className={cn(
-                                field.value.length > 0 && limits.description && 
-                                field.value.length > limits.description * 0.9 && 
-                                "border-yellow-500"
-                              )}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  
-                  {showMainText && (
-                    <FormField
-                      control={form.control}
-                      name="main_text"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Main Text
-                            {limits.main_text && (
-                              <span className="text-xs text-muted-foreground ml-2">
-                                ({field.value.length}/{limits.main_text})
-                              </span>
-                            )}
-                          </FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              {...field} 
-                              rows={4} 
-                              maxLength={limits.main_text}
-                              className={cn(
-                                field.value.length > 0 && limits.main_text && 
-                                field.value.length > limits.main_text * 0.9 && 
-                                "border-yellow-500"
-                              )}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  
-                  {showKeywords && (
-                    <FormField
-                      control={form.control}
-                      name="keywords"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Keywords
-                            {limits.keywords && (
-                              <span className="text-xs text-muted-foreground ml-2">
-                                ({field.value.length}/{limits.keywords})
-                              </span>
-                            )}
-                          </FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              maxLength={limits.keywords}
-                              className={cn(
-                                field.value.length > 0 && limits.keywords && 
-                                field.value.length > limits.keywords * 0.9 && 
-                                "border-yellow-500"
-                              )}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  
-                  {showBrandName && (
-                    <FormField
-                      control={form.control}
-                      name="brand_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Brand Name
-                            {limits.brand_name && (
-                              <span className="text-xs text-muted-foreground ml-2">
-                                ({field.value.length}/{limits.brand_name})
-                              </span>
-                            )}
-                          </FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field}
-                              maxLength={limits.brand_name}
-                              className={cn(
-                                field.value.length > 0 && limits.brand_name && 
-                                field.value.length > limits.brand_name * 0.9 && 
-                                "border-yellow-500"
-                              )}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                </div>
+                <AdFormFields 
+                  form={form}
+                  platform={platform}
+                  limits={limits}
+                />
                 
-                <div className="border rounded-lg p-4 bg-muted/20">
-                  <h3 className="font-semibold mb-4 text-lg">Ad Preview</h3>
-                  <div className="border rounded-md p-3 space-y-4 bg-white">
-                    <div className="relative h-40 bg-gray-100 rounded-md overflow-hidden">
-                      {fileInfo?.type === 'image' ? (
-                        <img 
-                          src={fileInfo.url} 
-                          alt="Ad preview" 
-                          className="w-full h-full object-contain" 
-                        />
-                      ) : fileInfo?.type === 'video' ? (
-                        <video 
-                          src={fileInfo.url} 
-                          controls 
-                          className="w-full h-full object-contain" 
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground">
-                          No media preview
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {watchedFields.headline && (
-                        <div className="text-base font-medium line-clamp-2">{watchedFields.headline}</div>
-                      )}
-                      
-                      {watchedFields.brand_name && (
-                        <div className="text-sm text-muted-foreground">{watchedFields.brand_name}</div>
-                      )}
-                      
-                      {watchedFields.main_text && (
-                        <div className="text-sm line-clamp-3">{watchedFields.main_text}</div>
-                      )}
-                      
-                      {watchedFields.description && (
-                        <div className="text-xs text-muted-foreground line-clamp-2">{watchedFields.description}</div>
-                      )}
-                      
-                      {watchedFields.keywords && (
-                        <div className="text-xs">
-                          <span className="text-muted-foreground">Keywords:</span> {watchedFields.keywords}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 text-sm text-muted-foreground">
-                    <p>Platform: {platformName(platform)} Ad</p>
-                    {limits && Object.keys(limits).length > 0 && (
-                      <ul className="mt-2 list-disc list-inside">
-                        {Object.entries(limits).map(([key, limit]) => (
-                          <li key={key}>{formatFieldName(key)}: max {limit} characters</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
+                <AdPreview
+                  fileInfo={fileInfo}
+                  watchedFields={watchedFields}
+                  platform={platform}
+                  limits={limits}
+                />
                 
                 <div className="flex justify-between md:col-span-2">
-                  <Button type="button" variant="outline" onClick={prevStep}>
+                  <Button type="button" variant="outline" onClick={() => setStep(1)}>
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
                   </Button>
                   <Button type="submit" disabled={uploading}>
@@ -535,14 +327,4 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       </DialogContent>
     </Dialog>
   );
-}
-
-function platformName(platform: string): string {
-  return platform || 'Unknown';
-}
-
-function formatFieldName(field: string): string {
-  return field
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
