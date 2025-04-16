@@ -7,7 +7,7 @@ export const handleInviteUser = async (
   supabaseAdmin: SupabaseClient,
   corsHeaders: Record<string, string>
 ) => {
-  const { email, firstName, lastName, role, team, language } = body;
+  const { email, displayName, role, team, language } = body;
   
   console.log(`Inviting user: ${email} with role: ${role}`);
   
@@ -37,15 +37,10 @@ export const handleInviteUser = async (
   }
 
   try {
-    // Create the display name from first and last name
-    const displayName = `${firstName || ''} ${lastName || ''}`.trim();
-    
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       redirectTo: redirectUrl,
       data: {
-        first_name: firstName || '',
-        last_name: lastName || '',
-        display_name: displayName, // Set the display name in user metadata
+        display_name: displayName || '',
         role: userRole,
         team: team || '',
         language: language || 'en',

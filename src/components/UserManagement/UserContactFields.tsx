@@ -34,35 +34,19 @@ export function UserContactFields({ form }: UserContactFieldsProps) {
         )}
       />
       
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="firstName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('First Name')}</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="lastName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Last Name')}</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+      <FormField
+        control={form.control}
+        name="displayName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t('Display Name')}</FormLabel>
+            <FormControl>
+              <Input placeholder="John Doe" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </>
   );
 }

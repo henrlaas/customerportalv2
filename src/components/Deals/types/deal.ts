@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 // Deal type matching our database schema
@@ -74,8 +73,7 @@ export const newCompanyFormSchema = z.object({
 
 // Schema for contact form
 export const contactFormSchema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
+  display_name: z.string().min(1, 'Display name is required'),
   email: z.string().email('Please enter a valid email'),
   phone: z.string().optional(),
   position: z.string().optional(),
