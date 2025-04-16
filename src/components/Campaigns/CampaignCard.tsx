@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { Calendar, Tag } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 export type Campaign = {
   id: string;
@@ -43,8 +43,10 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
     }
   };
 
+  const navigate = useNavigate();
+
   return (
-    <Card>
+    <Card className="cursor-pointer" onClick={() => navigate(`/campaigns/${campaign.id}`)}>
       <CardHeader className="pb-2">
         <CardTitle>{campaign.name}</CardTitle>
         <CardDescription>{campaign.description || 'No description'}</CardDescription>

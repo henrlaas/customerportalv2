@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +29,7 @@ import MediaPage from "./pages/MediaPage";
 import FinancePage from "./pages/FinancePage";
 import ClientDashboardPage from "./pages/ClientDashboardPage";
 import ClientCompanyDetailsPage from "./pages/ClientCompanyDetailsPage";
+import { CampaignDetailsPage } from "./pages/CampaignDetailsPage";
 
 const queryClient = new QueryClient();
 
@@ -260,6 +260,17 @@ const App = () => (
           {/* Error Routes */}
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="*" element={<NotFound />} />
+          
+          <Route
+            path="/campaigns/:campaignId"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'employee', 'client']}>
+                <AppLayout>
+                  <CampaignDetailsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
