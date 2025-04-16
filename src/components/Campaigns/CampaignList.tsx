@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { CampaignCard, Campaign } from './CampaignCard';
+import { Campaign } from './CampaignCard';
 import { EmptyState } from './EmptyState';
+import { EnhancedCampaignCard } from './EnhancedCampaignCard';
 
 interface CampaignListProps {
   campaigns: Campaign[];
@@ -23,9 +24,9 @@ export const CampaignList: React.FC<CampaignListProps> = ({ campaigns, isLoading
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
       {campaigns.map((campaign) => (
-        <CampaignCard key={campaign.id} campaign={campaign} />
+        <EnhancedCampaignCard key={campaign.id} campaign={campaign} />
       ))}
     </div>
   );

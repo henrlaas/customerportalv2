@@ -9,14 +9,15 @@ import { CampaignList } from '@/components/Campaigns/CampaignList';
 import { Campaign } from '@/components/Campaigns/CampaignCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { CreateCampaignDialog } from '@/components/Campaigns/CreateCampaignDialog/CreateCampaignDialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const CampaignsPage: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [status, setStatus] = useState('all');
   const { user, session } = useAuth();
 
-  // Fetch campaigns from Supabase
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ['campaigns', session?.user?.id],
     queryFn: async () => {
@@ -40,16 +41,17 @@ const CampaignsPage: React.FC = () => {
       
       return data as Campaign[];
     },
-    enabled: !!session?.user?.id, // Only run query if user is authenticated
+    enabled: !!session?.user?.id,
   });
 
-  // Filter campaigns based on search term
-  const filteredCampaigns = campaigns.filter(campaign =>
-    campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    campaign.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter campaigns based on search term and status
+  const filteredCampaigns = campaigns.filter(campaign => {
+    const matchesSearch = campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = status === 'all' || campaign.status.toLowerCase() === status.toLowerCase();
+    return matchesSearch && matchesStatus;
+  });
 
-  // Show authentication warning if not logged in
   if (!session?.user?.id) {
     return (
       <div className="space-y-4">
@@ -69,8 +71,8 @@ const CampaignsPage: React.FC = () => {
         <CreateCampaignDialog />
       </div>
 
-      <div className="mb-4">
-        <div className="relative">
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             type="search"
@@ -80,6 +82,15 @@ const CampaignsPage: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <Tabs defaultValue="all" value={status} onValueChange={setStatus} className="w-full sm:w-auto">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="draft">Draft</TabsTrigger>
+            <TabsTrigger value="paused">Paused</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       <CampaignList 
