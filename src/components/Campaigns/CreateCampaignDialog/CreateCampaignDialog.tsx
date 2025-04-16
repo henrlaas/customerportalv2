@@ -17,6 +17,7 @@ import { CampaignBasicInfoForm } from './CampaignBasicInfoForm';
 import { CampaignBudgetForm } from './CampaignBudgetForm';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Form } from '@/components/ui/form';
 
 const campaignSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -37,6 +38,7 @@ export function CreateCampaignDialog() {
     resolver: zodResolver(campaignSchema),
     defaultValues: {
       name: '',
+      company_id: '',
       platform: 'Meta',
       start_date: null,
       end_date: null,
@@ -102,20 +104,22 @@ export function CreateCampaignDialog() {
             {step === 1 ? 'Campaign Details' : 'Campaign Budget'}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          {step === 1 ? (
-            <CampaignBasicInfoForm 
-              form={form}
-              onNext={() => setStep(2)}
-            />
-          ) : (
-            <CampaignBudgetForm
-              form={form}
-              onBack={() => setStep(1)}
-              isSubmitting={form.formState.isSubmitting}
-            />
-          )}
-        </form>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            {step === 1 ? (
+              <CampaignBasicInfoForm 
+                form={form}
+                onNext={() => setStep(2)}
+              />
+            ) : (
+              <CampaignBudgetForm
+                form={form}
+                onBack={() => setStep(1)}
+                isSubmitting={form.formState.isSubmitting}
+              />
+            )}
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
