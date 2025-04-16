@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -89,7 +88,7 @@ export function DealKanbanView({
     
     console.log(`Moving deal ${dealId} to stage ${newStageId}`);
     
-    // Check if we're dropping into "Closed Won" stage and the deal has a temporary company
+    // Check if we're dropping into "Closed Won" stage
     const targetStage = stages.find(s => s.id === newStageId);
     const deal = deals.find(d => d.id === dealId);
     const tempCompany = tempCompanies?.find(tc => tc.deal_id === dealId);
@@ -98,42 +97,35 @@ export function DealKanbanView({
     console.log("Deal has company_id:", deal?.company_id ? "Yes" : "No");
     console.log("Temp company found:", tempCompany ? "Yes" : "No");
     
-    // Only show convert dialog if:
-    // 1. Target stage is "Closed Won"
-    // 2. Deal has no company_id (not associated with an actual company)
-    // 3. Deal has a temporary company record
-    if (targetStage?.name.toLowerCase() === 'closed won' && 
-        !deal?.company_id && 
-        tempCompany) {
-      console.log("Showing convert dialog for deal:", dealId);
-      setSelectedDeal(deal);
-      setTempCompanyData(tempCompany);
-      setShowConvertDialog(true);
-      
-      // Don't move the deal yet - we'll let the conversion process handle that
-      return;
-    }
-    
     // Make sure we're not dropping on the same stage
     const dealData = localDeals.find(d => d.id === dealId);
-    if (dealData && dealData.stage_id !== newStageId) {
-      // Find if we're dropping into "Closed Won" stage
-      const targetStage = stages.find(s => s.id === newStageId);
-      if (targetStage?.name.toLowerCase() === 'closed won') {
-        setShowConfetti(true);
-        // Hide confetti after 5 seconds
-        setTimeout(() => setShowConfetti(false), 5000);
+    if (!dealData || dealData.stage_id === newStageId) return;
+    
+    // First, update the deal's stage (optimistic update)
+    setLocalDeals(prevDeals => 
+      prevDeals.map(deal => 
+        deal.id === dealId ? { ...deal, stage_id: newStageId } : deal
+      )
+    );
+    
+    // Persist to database
+    onMove(dealId, newStageId);
+    
+    // Show confetti if moving to "Closed Won"
+    if (targetStage?.name.toLowerCase() === 'closed won') {
+      setShowConfetti(true);
+      // Hide confetti after 5 seconds
+      setTimeout(() => setShowConfetti(false), 5000);
+      
+      // Check if we need to show the convert dialog
+      if (!deal?.company_id && tempCompany) {
+        // Wait 500ms before showing the dialog to let the drag animation complete
+        setTimeout(() => {
+          setSelectedDeal(deal);
+          setTempCompanyData(tempCompany);
+          setShowConvertDialog(true);
+        }, 500);
       }
-      
-      // Optimistic update - update local state immediately
-      setLocalDeals(prevDeals => 
-        prevDeals.map(deal => 
-          deal.id === dealId ? { ...deal, stage_id: newStageId } : deal
-        )
-      );
-      
-      // Then persist to database
-      onMove(dealId, newStageId);
     }
   };
 
