@@ -34,15 +34,27 @@ import { AdSetDetailsPage } from './pages/AdSetDetailsPage';
 // Initialize storage bucket if it doesn't exist
 async function initializeStorage() {
   try {
-    const { data, error } = await supabase.storage.createBucket('campaign_media', {
-      public: true,
-      fileSizeLimit: 50 * 1024 * 1024, // 50MB
-    });
+    // Check if bucket exists first
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some(bucket => bucket.name === 'campaign_media');
+    
+    if (!bucketExists) {
+      // Create the bucket if it doesn't exist
+      const { data, error } = await supabase.storage.createBucket('campaign_media', {
+        public: true,
+        fileSizeLimit: 50 * 1024 * 1024, // 50MB
+      });
 
-    if (error && !error.message.includes('already exists')) {
-      console.error('Error creating storage bucket:', error);
+      if (error) {
+        // Only log as an error if it's not a "bucket already exists" error
+        if (!error.message.includes('already exists')) {
+          console.error('Error creating storage bucket:', error);
+        }
+      } else {
+        console.log('Campaign media storage bucket initialized');
+      }
     } else {
-      console.log('Campaign media storage bucket initialized');
+      console.log('Campaign media bucket already exists');
     }
   } catch (error) {
     console.error('Error initializing storage:', error);

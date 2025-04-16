@@ -74,36 +74,82 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     });
   };
 
+  const ensureStorageBucket = async () => {
+    try {
+      // Check if the campaign_media bucket exists
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'campaign_media');
+      
+      if (!bucketExists) {
+        // Create the bucket if it doesn't exist
+        const { error } = await supabase.storage.createBucket('campaign_media', {
+          public: true,
+          fileSizeLimit: 50 * 1024 * 1024, // 50MB
+        });
+        
+        if (error) {
+          console.error('Error creating bucket:', error);
+          throw new Error('Failed to create storage bucket');
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error ensuring storage bucket exists:', error);
+      return false;
+    }
+  };
+
   const uploadFile = async (file: File) => {
     setUploading(true);
     
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    
-    const { data, error } = await supabase.storage
-      .from('campaign_media')
-      .upload(filePath, file);
+    try {
+      // Ensure bucket exists
+      const bucketReady = await ensureStorageBucket();
       
-    if (error) {
-      setUploading(false);
+      if (!bucketReady) {
+        toast({
+          title: 'Storage error',
+          description: 'Could not access storage bucket',
+          variant: 'destructive',
+        });
+        setUploading(false);
+        return null;
+      }
+      
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      
+      // Upload the file
+      const { data, error } = await supabase.storage
+        .from('campaign_media')
+        .upload(filePath, file);
+        
+      if (error) {
+        console.error('Upload error:', error);
+        throw error;
+      }
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('campaign_media')
+        .getPublicUrl(filePath);
+        
+      return {
+        url: publicUrl,
+        path: filePath,
+        type: file.type,
+      };
+    } catch (error: any) {
       toast({
         title: 'Upload error',
         description: error.message,
         variant: 'destructive',
       });
       return null;
+    } finally {
+      setUploading(false);
     }
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from('campaign_media')
-      .getPublicUrl(filePath);
-      
-    setUploading(false);
-    return {
-      url: publicUrl,
-      path: filePath,
-      type: file.type,
-    };
   };
   
   const onSubmit = async (data: AdFormData) => {

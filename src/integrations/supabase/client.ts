@@ -143,18 +143,40 @@ export const supabase = createClient<CustomDatabase>(SUPABASE_URL, SUPABASE_PUBL
   },
 });
 
-// Create attachments bucket if it doesn't exist (will be ignored if exists)
-(async () => {
+// Create attachments and campaign_media buckets if they don't exist
+const initializeBuckets = async () => {
   try {
-    await supabase.storage.createBucket('attachments', {
-      public: true,
-      fileSizeLimit: 50 * 1024 * 1024, // 50MB
-    });
-    console.log('Attachments bucket created or already exists');
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketNames = buckets?.map(bucket => bucket.name) || [];
+    
+    // Create attachments bucket if it doesn't exist
+    if (!bucketNames.includes('attachments')) {
+      await supabase.storage.createBucket('attachments', {
+        public: true,
+        fileSizeLimit: 50 * 1024 * 1024, // 50MB
+      });
+      console.log('Attachments bucket created');
+    } else {
+      console.log('Attachments bucket exists');
+    }
+    
+    // Create campaign_media bucket if it doesn't exist
+    if (!bucketNames.includes('campaign_media')) {
+      await supabase.storage.createBucket('campaign_media', {
+        public: true,
+        fileSizeLimit: 50 * 1024 * 1024, // 50MB
+      });
+      console.log('Campaign media bucket created');
+    } else {
+      console.log('Campaign media bucket exists');
+    }
   } catch (error) {
-    console.error('Error creating attachments bucket:', error);
+    console.error('Error initializing storage buckets:', error);
   }
-})();
+};
+
+// Try to initialize buckets on client load
+initializeBuckets();
 
 // Helper function to add created_by for any table that needs it
 export const insertWithUser = async <T extends keyof CustomDatabase["public"]["Tables"]>(
