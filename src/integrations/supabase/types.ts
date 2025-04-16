@@ -9,6 +9,97 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ads: {
+        Row: {
+          ad_type: string
+          adset_id: string
+          brand_name: string | null
+          created_at: string
+          description: string | null
+          file_type: string
+          file_url: string
+          headline: string | null
+          id: string
+          keywords: string | null
+          main_text: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          ad_type: string
+          adset_id: string
+          brand_name?: string | null
+          created_at?: string
+          description?: string | null
+          file_type: string
+          file_url: string
+          headline?: string | null
+          id?: string
+          keywords?: string | null
+          main_text?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          ad_type?: string
+          adset_id?: string
+          brand_name?: string | null
+          created_at?: string
+          description?: string | null
+          file_type?: string
+          file_url?: string
+          headline?: string | null
+          id?: string
+          keywords?: string | null
+          main_text?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ads_adset_id_fkey"
+            columns: ["adset_id"]
+            isOneToOne: false
+            referencedRelation: "adsets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      adsets: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          name: string
+          targeting: string | null
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          name: string
+          targeting?: string | null
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          targeting?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adsets_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_media: {
         Row: {
           campaign_id: string | null
@@ -59,6 +150,7 @@ export type Database = {
           end_date: string | null
           id: string
           name: string
+          platform: string | null
           start_date: string | null
           status: string
           updated_at: string
@@ -71,6 +163,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           name: string
+          platform?: string | null
           start_date?: string | null
           status?: string
           updated_at?: string
@@ -83,6 +176,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           name?: string
+          platform?: string | null
           start_date?: string | null
           status?: string
           updated_at?: string
