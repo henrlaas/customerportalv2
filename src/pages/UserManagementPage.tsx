@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,13 +34,15 @@ const UserManagementPage = () => {
     queryFn: userService.listUsers,
     retry: 2,
     retryDelay: 1000,
-    onError: (error: Error) => {
-      console.error('Error fetching users:', error);
-      toast({
-        title: "Error",
-        description: `Failed to load users: ${error.message}`,
-        variant: "destructive",
-      });
+    onSettled: (_data, error) => {
+      if (error) {
+        console.error('Error fetching users:', error);
+        toast({
+          title: "Error",
+          description: `Failed to load users: ${error.message}`,
+          variant: "destructive",
+        });
+      }
     }
   });
 
