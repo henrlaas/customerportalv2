@@ -28,6 +28,7 @@ export const ConvertTempCompanyDialog = ({
   const [showCompanyForm, setShowCompanyForm] = useState(false);
 
   const handleConvert = () => {
+    console.log("Converting temp company to permanent company:", tempCompany.company_name);
     setShowCompanyForm(true);
   };
 

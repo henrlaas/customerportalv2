@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -60,13 +61,14 @@ export function DealKanbanView({
     console.log("DealKanbanView received deals:", deals.length);
   }, [deals]);
 
-  // Fetch temp company info if needed
+  // Fetch temp company info 
   const { data: tempCompanies } = useQuery({
     queryKey: ['temp-deal-companies'],
     queryFn: async () => {
       const { data } = await supabase
         .from('temp_deal_companies')
         .select('*');
+      console.log("Temp companies fetched:", data?.length);
       return data || [];
     },
   });
@@ -92,6 +94,10 @@ export function DealKanbanView({
     const deal = deals.find(d => d.id === dealId);
     const tempCompany = tempCompanies?.find(tc => tc.deal_id === dealId);
     
+    console.log("Target stage:", targetStage?.name);
+    console.log("Deal has company_id:", deal?.company_id ? "Yes" : "No");
+    console.log("Temp company found:", tempCompany ? "Yes" : "No");
+    
     // Only show convert dialog if:
     // 1. Target stage is "Closed Won"
     // 2. Deal has no company_id (not associated with an actual company)
@@ -99,9 +105,13 @@ export function DealKanbanView({
     if (targetStage?.name.toLowerCase() === 'closed won' && 
         !deal?.company_id && 
         tempCompany) {
+      console.log("Showing convert dialog for deal:", dealId);
       setSelectedDeal(deal);
       setTempCompanyData(tempCompany);
       setShowConvertDialog(true);
+      
+      // Don't move the deal yet - we'll let the conversion process handle that
+      return;
     }
     
     // Make sure we're not dropping on the same stage
