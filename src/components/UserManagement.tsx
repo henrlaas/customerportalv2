@@ -23,8 +23,7 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
     resolver: zodResolver(inviteUserSchema),
     defaultValues: {
       email: '',
-      firstName: '',
-      lastName: '',
+      displayName: '',
       role: 'employee',
       team: 'Client Services',
       language: 'en',

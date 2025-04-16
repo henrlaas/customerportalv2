@@ -19,8 +19,7 @@ export function useInviteUser({ onSuccess }: UseInviteUserProps = {}) {
         body: {
           action: 'invite',
           email: data.email,
-          firstName: data.firstName,
-          lastName: data.lastName,
+          displayName: data.displayName,
           role: data.role || 'client', // Default to client if no role provided
           team: data.team,
           language: data.language || 'en',
