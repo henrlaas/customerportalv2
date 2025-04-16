@@ -1,3 +1,4 @@
+
 import React, { forwardRef } from 'react';
 import {
   Calendar,
@@ -34,7 +35,7 @@ interface DealCardProps {
   canModify: boolean;
   onEdit: (deal: Deal) => void;
   onDelete: (id: string) => void;
-  onMove: () => void;
+  onMove: (deal: Deal) => void;  // Updated to accept a Deal parameter
 }
 
 const DealCard = forwardRef(({ 

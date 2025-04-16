@@ -246,7 +246,7 @@ function StageColumn({
                 canModify={canModify}
                 onEdit={onEdit}
                 onDelete={onDelete}
-                onMove={() => {}} // This is handled by DragEnd
+                onMove={(dealToMove) => {}} // Updated to accept a parameter
               />
             ))}
           </div>
