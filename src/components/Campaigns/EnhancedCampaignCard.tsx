@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { ChevronDown, ChevronRight, Facebook, Instagram, Linkedin, Twitter, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { Campaign } from './CampaignCard';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import { formatCurrency } from '@/components/Deals/utils/formatters';
 
 interface EnhancedCampaignCardProps {
   campaign: Campaign;
@@ -92,7 +92,7 @@ export const EnhancedCampaignCard = ({ campaign }: EnhancedCampaignCardProps) =>
       <CardContent>
         <div className="mb-4">
           <div className="text-sm">
-            Budget: ${campaign.budget?.toLocaleString() || '0'}
+            Budget: {formatCurrency(campaign.budget)}
           </div>
         </div>
 
