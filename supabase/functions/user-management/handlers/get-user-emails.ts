@@ -1,88 +1,60 @@
 
-import { corsHeaders } from '../utils/cors.ts'
-import { createAdminClient } from '../utils/supabase.ts'
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 
-// Handler for getting emails for a list of user IDs
-export async function handleGetUserEmails(req: Request) {
-  try {
-    const { userIds } = await req.json()
-    
-    if (!Array.isArray(userIds)) {
-      return new Response(
-        JSON.stringify({ error: 'userIds must be an array' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
-    }
-    
-    // Get admin supabase client
-    const supabase = createAdminClient()
+export const handleGetUserEmails = async (
+  body: any,
+  supabaseAdmin: SupabaseClient,
+  corsHeaders: Record<string, string>
+) => {
+  const { userIds } = body;
 
-    // Get user role to determine permission
-    const { data: userData, error: userError } = await supabase.auth.getUser()
-    
-    if (userError) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized', message: userError.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      )
-    }
-
-    const userId = userData.user?.id
-    
-    // Get user role
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single()
-      
-    const isAdminOrEmployee = profileData?.role === 'admin' || profileData?.role === 'employee'
-    
-    let filteredUserIds = userIds
-    
-    // If not admin/employee, only allow access to their own email
-    if (!isAdminOrEmployee) {
-      filteredUserIds = userIds.filter(id => id === userId)
-    }
-    
-    // If no valid IDs after filtering, return empty array
-    if (filteredUserIds.length === 0) {
-      return new Response(
-        JSON.stringify([]),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-    
-    // Query users table securely using admin client
-    const { data, error } = await supabase.auth.admin.listUsers({
-      filter: {
-        id: {
-          in: filteredUserIds.join(',')
-        }
+  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    return new Response(
+      JSON.stringify({ error: 'User IDs array is required' }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
       }
-    })
+    );
+  }
+
+  console.log(`Fetching emails for ${userIds.length} users`);
+
+  try {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
     
     if (error) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch users', details: error.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      console.error('Error fetching users:', error);
+      throw error;
     }
-    
-    // Map to return only id and email
-    const emails = data?.users.map(user => ({
-      id: user.id,
-      email: user.email
-    })) || []
+
+    const filteredUsers = data.users
+      .filter(user => userIds.includes(user.id))
+      .map(user => ({
+        id: user.id,
+        email: user.email,
+        user_metadata: user.user_metadata,
+      }));
+
+    console.log(`Found ${filteredUsers.length} matching users`);
+
+    return new Response(
+      JSON.stringify(filteredUsers),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Unknown error';
+    console.error('Error in getEmails:', error);
     
     return new Response(
-      JSON.stringify(emails),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+      JSON.stringify({ error }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
   }
-}
+};
