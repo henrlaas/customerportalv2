@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { format } from 'date-fns';
 import { Calendar, Tag } from 'lucide-react';
@@ -16,6 +17,7 @@ export type Campaign = {
   end_date: string | null;
   created_at: string;
   updated_at: string;
+  platform: string | null;
 };
 
 interface CampaignCardProps {
