@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -476,7 +475,7 @@ export function MultiStageCompanyDialog({
                           <SelectContent>
                             {users.map((user) => (
                               <SelectItem key={user.id} value={user.id}>
-                                {user.user_metadata?.first_name} {user.user_metadata?.last_name}
+                                {user.user_metadata?.display_name || user.email}
                               </SelectItem>
                             ))}
                           </SelectContent>

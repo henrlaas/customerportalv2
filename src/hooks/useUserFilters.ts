@@ -23,13 +23,13 @@ export function useUserFilters(users: User[] = []) {
   // Filter users based on search term and filters
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-      const fullName = `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim();
+      const displayName = user.user_metadata?.display_name || '';
       const email = user.email || '';
       const role = user.user_metadata?.role || '';
       const team = user.user_metadata?.team || '';
       
       const matchesSearch = 
-        fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         email.toLowerCase().includes(searchTerm.toLowerCase());
         
       const matchesRole = roleFilter === "All Roles" || role === roleFilter;
