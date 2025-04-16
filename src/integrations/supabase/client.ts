@@ -146,12 +146,22 @@ export const supabase = createClient<CustomDatabase>(SUPABASE_URL, SUPABASE_PUBL
 // Check if a bucket exists
 export const bucketExists = async (bucketName: string): Promise<boolean> => {
   try {
+    // First check if user is authenticated
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) {
+      console.log('User not authenticated, cannot check buckets');
+      return false;
+    }
+    
     const { data: buckets, error } = await supabase.storage.listBuckets();
     if (error) {
       console.error('Error checking buckets:', error);
       return false;
     }
-    return buckets?.some(bucket => bucket.name === bucketName) || false;
+    
+    const exists = buckets?.some(bucket => bucket.name === bucketName) || false;
+    console.log(`Bucket "${bucketName}" exists:`, exists);
+    return exists;
   } catch (error) {
     console.error('Error in bucketExists:', error);
     return false;
@@ -202,4 +212,3 @@ export const updateWithUser = async <T extends keyof CustomDatabase["public"]["T
     .update(data as any)
     .eq('id', id as any);
 };
-

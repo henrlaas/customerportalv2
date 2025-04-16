@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft, Check } from 'lucide-react';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase, bucketExists } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdFormData, PLATFORM_CHARACTER_LIMITS, Platform } from '../types/campaign';
 import { FileInfo, WatchedFields } from './types';
@@ -78,19 +78,18 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     setUploading(true);
     
     try {
-      // Check if the campaign_media bucket exists first
-      const bucketReady = await bucketExists('campaign_media');
-      
-      if (!bucketReady) {
+      // Get authenticated session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
         toast({
-          title: 'Storage error',
-          description: 'Campaign media storage is not accessible. Please contact support.',
+          title: 'Authentication error',
+          description: 'You need to be logged in to upload files.',
           variant: 'destructive',
         });
         setUploading(false);
         return null;
       }
-      
+
       const fileExt = file.name.split('.').pop();
       const filePath = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       

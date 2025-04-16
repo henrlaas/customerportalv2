@@ -1,4 +1,3 @@
-
 import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
@@ -38,9 +37,22 @@ function StorageInitializer() {
   const { toast } = useToast();
 
   useEffect(() => {
+    async function checkAuth() {
+      const { data } = await supabase.auth.getSession();
+      return !!data.session;
+    }
+    
     async function initializeStorage() {
       try {
-        // Check if buckets exist
+        // First verify authentication
+        const isAuthenticated = await checkAuth();
+        if (!isAuthenticated) {
+          console.log('User not authenticated, skipping bucket initialization');
+          return;
+        }
+        
+        // List the available buckets
+        console.log('Checking available storage buckets...');
         const { data: buckets, error: listError } = await supabase.storage.listBuckets();
         
         if (listError) {
@@ -48,53 +60,7 @@ function StorageInitializer() {
           return;
         }
         
-        const bucketNames = buckets?.map(bucket => bucket.name) || [];
-        
-        // Try to create campaign_media bucket if it doesn't exist
-        if (!bucketNames.includes('campaign_media')) {
-          try {
-            const { data, error } = await supabase.storage.createBucket('campaign_media', {
-              public: true,
-              fileSizeLimit: 50 * 1024 * 1024, // 50MB
-            });
-            
-            if (error) {
-              // Only log as an error if it's not a "bucket already exists" error
-              if (!error.message.includes('already exists')) {
-                console.error('Error creating campaign_media bucket:', error);
-              }
-            } else {
-              console.log('Campaign media bucket created successfully');
-            }
-          } catch (createError) {
-            console.warn('Unable to create campaign_media bucket, may need admin permissions:', createError);
-          }
-        } else {
-          console.log('Campaign media bucket already exists');
-        }
-        
-        // Try to create attachments bucket if it doesn't exist
-        if (!bucketNames.includes('attachments')) {
-          try {
-            const { data, error } = await supabase.storage.createBucket('attachments', {
-              public: true,
-              fileSizeLimit: 50 * 1024 * 1024, // 50MB
-            });
-            
-            if (error) {
-              // Only log as an error if it's not a "bucket already exists" error
-              if (!error.message.includes('already exists')) {
-                console.error('Error creating attachments bucket:', error);
-              }
-            } else {
-              console.log('Attachments bucket created successfully');
-            }
-          } catch (createError) {
-            console.warn('Unable to create attachments bucket, may need admin permissions:', createError);
-          }
-        } else {
-          console.log('Attachments bucket already exists');
-        }
+        console.log('Available buckets:', buckets?.map(b => b.name).join(', ') || 'None');
       } catch (error) {
         console.error('Error initializing storage:', error);
       }
