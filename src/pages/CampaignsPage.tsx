@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client'; // Updated import
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -62,7 +63,7 @@ const CampaignsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Campaigns</h1>
         <CreateCampaignDialog />
