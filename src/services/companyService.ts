@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Company, CompanyContact } from '@/types/company';
 
@@ -328,14 +327,27 @@ const companyMutationService = {
         mrr_param: companyData.mrr || 0,
         trial_period_param: companyData.trial_period || false,
         is_partner_param: companyData.is_partner || false,
-        created_by_param: null, // The RPC function will use auth.uid() internally
-        logo_url_param: logoUrl, // Add the fetched favicon as logo_url
+        created_by_param: null // The RPC function will use auth.uid() internally
       });
       
       if (error) throw new Error(error.message);
       
       // Fetch the created company by the returned ID to make sure we return a Company object
       const companyId = data as string;
+      
+      // If we have a logo URL, update the company with it in a separate call
+      if (logoUrl) {
+        const { error: logoError } = await supabase
+          .from('companies')
+          .update({ logo_url: logoUrl })
+          .eq('id', companyId);
+        
+        if (logoError) {
+          console.error("Error updating company logo:", logoError);
+        }
+      }
+      
+      // Now fetch the complete company data
       const { data: companyData2, error: error2 } = await supabase
         .from('companies')
         .select('*')
