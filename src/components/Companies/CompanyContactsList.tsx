@@ -140,14 +140,14 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
                 <div className="flex justify-between items-start">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={contact.avatar_url || ''} alt={`${contact.first_name} ${contact.last_name}`} />
+                      <AvatarImage src={contact.avatar_url || ''} alt={contact.display_name} />
                       <AvatarFallback>
-                        {(contact.first_name?.[0] || '')}{(contact.last_name?.[0] || '')}
+                        {contact.display_name ? contact.display_name.charAt(0).toUpperCase() : '?'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <CardTitle className="text-base">
-                        {contact.first_name || ''} {contact.last_name || ''}
+                        {contact.display_name || 'Unnamed User'}
                       </CardTitle>
                       {contact.position && <p className="text-sm text-muted-foreground">{contact.position}</p>}
                     </div>
