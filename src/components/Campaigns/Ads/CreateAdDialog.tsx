@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft, Check } from 'lucide-react';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, bucketExists } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdFormData, PLATFORM_CHARACTER_LIMITS, Platform } from '../types/campaign';
 import { FileInfo, WatchedFields } from './types';
@@ -74,43 +74,17 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     });
   };
 
-  const ensureStorageBucket = async () => {
-    try {
-      // Check if the campaign_media bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'campaign_media');
-      
-      if (!bucketExists) {
-        // Create the bucket if it doesn't exist
-        const { error } = await supabase.storage.createBucket('campaign_media', {
-          public: true,
-          fileSizeLimit: 50 * 1024 * 1024, // 50MB
-        });
-        
-        if (error) {
-          console.error('Error creating bucket:', error);
-          throw new Error('Failed to create storage bucket');
-        }
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error ensuring storage bucket exists:', error);
-      return false;
-    }
-  };
-
   const uploadFile = async (file: File) => {
     setUploading(true);
     
     try {
-      // Ensure bucket exists
-      const bucketReady = await ensureStorageBucket();
+      // Check if the campaign_media bucket exists first
+      const bucketReady = await bucketExists('campaign_media');
       
       if (!bucketReady) {
         toast({
           title: 'Storage error',
-          description: 'Could not access storage bucket',
+          description: 'Campaign media storage is not accessible. Please contact support.',
           variant: 'destructive',
         });
         setUploading(false);
@@ -131,9 +105,9 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       }
       
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      const publicUrl = supabase.storage
         .from('campaign_media')
-        .getPublicUrl(filePath);
+        .getPublicUrl(filePath).data.publicUrl;
         
       return {
         url: publicUrl,

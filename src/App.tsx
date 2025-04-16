@@ -30,39 +30,81 @@ import Unauthorized from '@/pages/Unauthorized';
 import NotFound from '@/pages/NotFound';
 import { supabase } from '@/integrations/supabase/client';
 import { AdSetDetailsPage } from './pages/AdSetDetailsPage';
+import { useToast } from '@/components/ui/use-toast';
+import { useEffect } from 'react';
 
-// Initialize storage bucket if it doesn't exist
-async function initializeStorage() {
-  try {
-    // Check if bucket exists first
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = buckets?.some(bucket => bucket.name === 'campaign_media');
-    
-    if (!bucketExists) {
-      // Create the bucket if it doesn't exist
-      const { data, error } = await supabase.storage.createBucket('campaign_media', {
-        public: true,
-        fileSizeLimit: 50 * 1024 * 1024, // 50MB
-      });
+// Create a component to handle bucket initialization
+function StorageInitializer() {
+  const { toast } = useToast();
 
-      if (error) {
-        // Only log as an error if it's not a "bucket already exists" error
-        if (!error.message.includes('already exists')) {
-          console.error('Error creating storage bucket:', error);
+  useEffect(() => {
+    async function initializeStorage() {
+      try {
+        // Check if buckets exist
+        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+        
+        if (listError) {
+          console.error('Error listing storage buckets:', listError);
+          return;
         }
-      } else {
-        console.log('Campaign media storage bucket initialized');
+        
+        const bucketNames = buckets?.map(bucket => bucket.name) || [];
+        
+        // Try to create campaign_media bucket if it doesn't exist
+        if (!bucketNames.includes('campaign_media')) {
+          try {
+            const { data, error } = await supabase.storage.createBucket('campaign_media', {
+              public: true,
+              fileSizeLimit: 50 * 1024 * 1024, // 50MB
+            });
+            
+            if (error) {
+              // Only log as an error if it's not a "bucket already exists" error
+              if (!error.message.includes('already exists')) {
+                console.error('Error creating campaign_media bucket:', error);
+              }
+            } else {
+              console.log('Campaign media bucket created successfully');
+            }
+          } catch (createError) {
+            console.warn('Unable to create campaign_media bucket, may need admin permissions:', createError);
+          }
+        } else {
+          console.log('Campaign media bucket already exists');
+        }
+        
+        // Try to create attachments bucket if it doesn't exist
+        if (!bucketNames.includes('attachments')) {
+          try {
+            const { data, error } = await supabase.storage.createBucket('attachments', {
+              public: true,
+              fileSizeLimit: 50 * 1024 * 1024, // 50MB
+            });
+            
+            if (error) {
+              // Only log as an error if it's not a "bucket already exists" error
+              if (!error.message.includes('already exists')) {
+                console.error('Error creating attachments bucket:', error);
+              }
+            } else {
+              console.log('Attachments bucket created successfully');
+            }
+          } catch (createError) {
+            console.warn('Unable to create attachments bucket, may need admin permissions:', createError);
+          }
+        } else {
+          console.log('Attachments bucket already exists');
+        }
+      } catch (error) {
+        console.error('Error initializing storage:', error);
       }
-    } else {
-      console.log('Campaign media bucket already exists');
     }
-  } catch (error) {
-    console.error('Error initializing storage:', error);
-  }
+    
+    initializeStorage();
+  }, [toast]);
+  
+  return null;
 }
-
-// Create the storage bucket on app load
-initializeStorage();
 
 const queryClient = new QueryClient();
 
@@ -72,6 +114,7 @@ function App() {
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
+            <StorageInitializer />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/sign-in" element={<Auth />} />

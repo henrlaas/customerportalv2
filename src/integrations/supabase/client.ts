@@ -143,40 +143,26 @@ export const supabase = createClient<CustomDatabase>(SUPABASE_URL, SUPABASE_PUBL
   },
 });
 
-// Create attachments and campaign_media buckets if they don't exist
-const initializeBuckets = async () => {
+// Check if a bucket exists
+export const bucketExists = async (bucketName: string): Promise<boolean> => {
   try {
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketNames = buckets?.map(bucket => bucket.name) || [];
-    
-    // Create attachments bucket if it doesn't exist
-    if (!bucketNames.includes('attachments')) {
-      await supabase.storage.createBucket('attachments', {
-        public: true,
-        fileSizeLimit: 50 * 1024 * 1024, // 50MB
-      });
-      console.log('Attachments bucket created');
-    } else {
-      console.log('Attachments bucket exists');
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    if (error) {
+      console.error('Error checking buckets:', error);
+      return false;
     }
-    
-    // Create campaign_media bucket if it doesn't exist
-    if (!bucketNames.includes('campaign_media')) {
-      await supabase.storage.createBucket('campaign_media', {
-        public: true,
-        fileSizeLimit: 50 * 1024 * 1024, // 50MB
-      });
-      console.log('Campaign media bucket created');
-    } else {
-      console.log('Campaign media bucket exists');
-    }
+    return buckets?.some(bucket => bucket.name === bucketName) || false;
   } catch (error) {
-    console.error('Error initializing storage buckets:', error);
+    console.error('Error in bucketExists:', error);
+    return false;
   }
 };
 
-// Try to initialize buckets on client load
-initializeBuckets();
+// Get public URL for a file
+export const getPublicUrl = (bucketName: string, filePath: string): string => {
+  const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+  return data.publicUrl;
+};
 
 // Helper function to add created_by for any table that needs it
 export const insertWithUser = async <T extends keyof CustomDatabase["public"]["Tables"]>(
@@ -216,3 +202,4 @@ export const updateWithUser = async <T extends keyof CustomDatabase["public"]["T
     .update(data as any)
     .eq('id', id as any);
 };
+
