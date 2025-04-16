@@ -305,6 +305,12 @@ const companyMutationService = {
   // Add method for temp company conversion - fixed to return Company type
   convertTempCompany: async (companyData: any, dealId: string): Promise<Company> => {
     try {
+      // First fetch the favicon if website is provided
+      let logoUrl = null;
+      if (companyData.website) {
+        logoUrl = await companyMutationService.fetchFavicon(companyData.website);
+      }
+
       const { data, error } = await supabase.rpc('convert_temp_deal_company', {
         deal_id_param: dealId,
         name_param: companyData.name,
@@ -322,7 +328,8 @@ const companyMutationService = {
         mrr_param: companyData.mrr || 0,
         trial_period_param: companyData.trial_period || false,
         is_partner_param: companyData.is_partner || false,
-        created_by_param: null // The RPC function will use auth.uid() internally
+        created_by_param: null, // The RPC function will use auth.uid() internally
+        logo_url_param: logoUrl, // Add the fetched favicon as logo_url
       });
       
       if (error) throw new Error(error.message);
