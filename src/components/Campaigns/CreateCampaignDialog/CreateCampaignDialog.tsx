@@ -47,10 +47,23 @@ export function CreateCampaignDialog() {
 
   const onSubmit = async (values: CampaignFormData) => {
     try {
+      // Format dates as ISO strings for Supabase
+      const formattedValues = {
+        ...values,
+        start_date: values.start_date ? values.start_date.toISOString() : null,
+        end_date: values.end_date ? values.end_date.toISOString() : null,
+      };
+
       const { data, error } = await supabase
         .from('campaigns')
         .insert({
-          ...values,
+          name: formattedValues.name,
+          company_id: formattedValues.company_id,
+          platform: formattedValues.platform,
+          start_date: formattedValues.start_date,
+          end_date: formattedValues.end_date,
+          budget: formattedValues.budget,
+          description: formattedValues.description,
           status: 'in_progress',
         })
         .select()
