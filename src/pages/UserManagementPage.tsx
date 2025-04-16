@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,9 +30,20 @@ const UserManagementPage = () => {
   // Fetch users from edge function
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['users'],
-    queryFn: userService.listUsers
+    queryFn: userService.listUsers,
+    retry: 2,
+    retryDelay: 1000,
+    onError: (error: Error) => {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Error",
+        description: `Failed to load users: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   });
 
+  // filtering logic
   const {
     searchTerm,
     setSearchTerm,
@@ -46,6 +56,7 @@ const UserManagementPage = () => {
     filteredUsers
   } = useUserFilters(users);
 
+  // user mutations
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: userService.deleteUser,
@@ -85,6 +96,7 @@ const UserManagementPage = () => {
     },
   });
 
+  // handlers
   // Handle delete confirmation
   const handleDeleteUser = (user: User) => {
     setSelectedUser(user);

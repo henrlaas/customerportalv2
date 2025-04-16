@@ -23,6 +23,8 @@ serve(async (req) => {
     // Get origin for redirects
     const origin = req.headers.get('origin') || 'http://localhost:3000'
     
+    console.log(`Processing action: ${action}`);
+    
     switch(action) {
       case 'invite':
         return await handleInviteUser(body, origin, supabaseAdmin, corsHeaders)
@@ -32,19 +34,22 @@ serve(async (req) => {
         return await handleDeleteUser(body, supabaseAdmin, corsHeaders)
       case 'list':
         return await handleListUsers(supabaseAdmin, corsHeaders)
+      case 'resetPassword':
       case 'reset-password':
         return await handleResetPassword(body, origin, supabaseAdmin, corsHeaders)
       case 'get-user-emails':
         return await handleGetUserEmails(req)
       default:
+        console.error(`Unknown action: ${action}`);
         return new Response(
           JSON.stringify({ error: `Unknown action: ${action}` }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         )
     }
   } catch (error) {
+    console.error('Edge function error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'An unknown error occurred' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }

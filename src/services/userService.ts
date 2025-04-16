@@ -10,6 +10,8 @@ export interface User {
     last_name?: string;
     role?: string;
     team?: string;
+    language?: string;
+    phone_number?: string;
   };
   created_at: string;
 }
@@ -17,6 +19,7 @@ export interface User {
 export const userService = {
   listUsers: async (): Promise<User[]> => {
     try {
+      console.log('Calling user-management edge function with list action');
       const response = await supabase.functions.invoke('user-management', {
         body: { action: 'list' }
       });
