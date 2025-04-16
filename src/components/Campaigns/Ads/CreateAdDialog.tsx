@@ -1,108 +1,23 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { Plus, ArrowLeft, Check } from 'lucide-react';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { AdFormData, PLATFORM_CHARACTER_LIMITS } from '../types/campaign';
-import { FileInfo } from './types';
-import { AdMediaUploader } from './AdMediaUploader';
+import { AdFormData, PLATFORM_CHARACTER_LIMITS, Platform } from '../types/campaign';
+import { FileInfo, WatchedFields } from './types';
+import { AdMediaUploaderStep } from './AdMediaUploaderStep';
 import { AdFormFields } from './AdFormFields';
-import { cn } from '@/lib/utils';
+import { AdPreview } from './AdPreview';
+import { AdProgressStepper } from './AdProgressStepper';
 
 interface Props {
   adsetId: string;
   campaignPlatform?: string;
-}
-
-interface WatchedFields {
-  headline: string;
-  description: string;
-  main_text: string;
-  keywords: string;
-  brand_name: string;
-}
-
-function AdPreview({ fileInfo, watchedFields, platform, limits }: {
-  fileInfo: FileInfo | null;
-  watchedFields: WatchedFields;
-  platform: string;
-  limits: Record<string, number>;
-}) {
-  function platformName(platform: string): string {
-    return platform || 'Unknown';
-  }
-
-  function formatFieldName(field: string): string {
-    return field
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  }
-
-  return (
-    <div className="border rounded-lg p-4 bg-muted/20">
-      <h3 className="font-semibold mb-4 text-lg">Ad Preview</h3>
-      <div className="border rounded-md p-3 space-y-4 bg-white">
-        <div className="relative h-40 bg-gray-100 rounded-md overflow-hidden">
-          {fileInfo?.type === 'image' ? (
-            <img
-              src={fileInfo.url}
-              alt="Ad preview"
-              className="w-full h-full object-contain"
-            />
-          ) : fileInfo?.type === 'video' ? (
-            <video
-              src={fileInfo.url}
-              controls
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              No media preview
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          {watchedFields.headline && (
-            <div className="text-base font-medium line-clamp-2">{watchedFields.headline}</div>
-          )}
-
-          {watchedFields.brand_name && (
-            <div className="text-sm text-muted-foreground">{watchedFields.brand_name}</div>
-          )}
-
-          {watchedFields.main_text && (
-            <div className="text-sm line-clamp-3">{watchedFields.main_text}</div>
-          )}
-
-          {watchedFields.description && (
-            <div className="text-xs text-muted-foreground line-clamp-2">{watchedFields.description}</div>
-          )}
-
-          {watchedFields.keywords && (
-            <div className="text-xs">
-              <span className="text-muted-foreground">Keywords:</span> {watchedFields.keywords}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-4 text-sm text-muted-foreground">
-        <p>Platform: {platformName(platform)} Ad</p>
-        {limits && Object.keys(limits).length > 0 && (
-          <ul className="mt-2 list-disc list-inside">
-            {Object.entries(limits).map(([key, limit]) => (
-              <li key={key}>{formatFieldName(key)}: max {limit} characters</li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
-  );
 }
 
 export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
@@ -236,21 +151,23 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     
     setUploading(false);
     setOpen(false);
-    setStep(1);
-    setFileInfo(null);
-    form.reset();
+    resetDialog();
   };
 
   const nextStep = () => {
-    if (step === 1 && !fileInfo) {
+    if (step === 1 && (!fileInfo || !form.watch('name'))) {
       toast({
-        title: 'Missing file',
-        description: 'Please upload an image or video for your ad.',
+        title: 'Missing information',
+        description: 'Please provide an ad name and upload a media file.',
         variant: 'destructive',
       });
       return;
     }
     setStep(2);
+  };
+
+  const previousStep = () => {
+    setStep(1);
   };
 
   const resetDialog = () => {
@@ -275,32 +192,25 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
           <DialogTitle>Create New Ad</DialogTitle>
         </DialogHeader>
         
+        <AdProgressStepper currentStep={step} totalSteps={2} />
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {step === 1 && (
-              <div className="space-y-6">
-                <AdMediaUploader
-                  fileInfo={fileInfo}
-                  onFileChange={handleFileChange}
-                  onRemoveFile={() => setFileInfo(null)}
-                />
-                <div className="flex justify-end">
-                  <Button 
-                    type="button" 
-                    onClick={nextStep} 
-                    disabled={!form.watch('name') || !fileInfo}
-                  >
-                    Next <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <AdMediaUploaderStep
+                fileInfo={fileInfo}
+                onFileChange={handleFileChange}
+                onRemoveFile={() => setFileInfo(null)}
+                form={form}
+                onNextStep={nextStep}
+              />
             )}
             
             {step === 2 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <AdFormFields 
                   form={form}
-                  platform={platform}
+                  platform={platform as Platform}
                   limits={limits}
                 />
                 
@@ -312,7 +222,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                 />
                 
                 <div className="flex justify-between md:col-span-2">
-                  <Button type="button" variant="outline" onClick={() => setStep(1)}>
+                  <Button type="button" variant="outline" onClick={previousStep}>
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
                   </Button>
                   <Button type="submit" disabled={uploading}>
