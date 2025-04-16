@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Company, CompanyContact } from '@/types/company';
 
@@ -63,18 +64,75 @@ const companyQueryService = {
 
   fetchCompanyContacts: async (companyId: string): Promise<CompanyContact[]> => {
     try {
-      const { data, error } = await supabase
+      console.log(`Fetching contacts for company: ${companyId}`);
+      
+      // First, get the company contacts
+      const { data: contactsData, error: contactsError } = await supabase
         .from('company_contacts')
         .select('*')
         .eq('company_id', companyId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching company contacts:', error);
-        throw new Error(error.message);
+      if (contactsError) {
+        console.error('Error fetching company contacts:', contactsError);
+        throw new Error(contactsError.message);
       }
 
-      return data || [];
+      // Extract user IDs to fetch profile data
+      const userIds = contactsData.map(contact => contact.user_id);
+      
+      // Get profile data for these users
+      let profilesMap: Record<string, any> = {};
+      if (userIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.warn('Could not fetch profile information:', profilesError);
+        } else if (profilesData) {
+          // Create a map for quick lookups
+          profilesMap = profilesData.reduce((acc: Record<string, any>, profile) => {
+            acc[profile.id] = profile;
+            return acc;
+          }, {});
+        }
+      }
+
+      // Get emails using the edge function
+      let emailsMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        try {
+          const { data: emailsData, error: emailsError } = await supabase.functions.invoke('user-management', {
+            body: {
+              action: 'get-user-emails',
+              userIds: userIds
+            }
+          });
+          
+          if (emailsError) {
+            console.warn('Could not fetch email addresses:', emailsError);
+          } else if (emailsData) {
+            // Create a map for quick lookups
+            emailsMap = emailsData.reduce((acc: Record<string, string>, item: { id: string, email: string }) => {
+              acc[item.id] = item.email;
+              return acc;
+            }, {});
+          }
+        } catch (error) {
+          console.error('Error invoking get-user-emails function:', error);
+        }
+      }
+
+      // Combine the data
+      return contactsData.map(contact => ({
+        ...contact,
+        email: emailsMap[contact.user_id] || '',
+        first_name: profilesMap[contact.user_id]?.first_name || '',
+        last_name: profilesMap[contact.user_id]?.last_name || '',
+        avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
+      }));
     } catch (error: any) {
       console.error('Unexpected error fetching company contacts:', error);
       throw error;
