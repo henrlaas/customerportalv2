@@ -34,12 +34,12 @@ export const PLATFORM_COLORS = {
     text: '#fff'
   },
   LinkedIn: {
-    bg: '#0A66C2',
+    bg: '#0077B5',
     text: '#fff'
   },
   Google: {
-    bg: '#fff',
-    text: '#4285F4'
+    bg: '#34A853',
+    text: '#fff'
   },
   Meta: {
     bg: '#0081FB',

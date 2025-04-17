@@ -152,19 +152,17 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
           </div>
 
           <div className="flex items-center gap-2">
-            {campaign.platform && (
-              <div className="w-8 h-8 overflow-hidden flex items-center justify-center">
-                <PlatformBadge 
-                  platform={campaign.platform} 
-                  className="w-8 h-8 !p-0 flex items-center justify-center"
-                  showLabel={false}
-                />
-              </div>
-            )}
-
             <Badge className={getStatusBadgeColor(campaign.status)}>
               {campaign.status}
             </Badge>
+            
+            {campaign.platform && (
+              <PlatformBadge 
+                platform={campaign.platform} 
+                className="w-8 h-8 !p-0 flex items-center justify-center"
+                showLabel={false}
+              />
+            )}
           </div>
         </div>
       </CardHeader>

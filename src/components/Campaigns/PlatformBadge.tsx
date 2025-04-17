@@ -24,10 +24,9 @@ export const PlatformBadge = ({ platform, className, showLabel = false }: Platfo
     <div 
       className={cn(
         "inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium", 
-        text,
         className
       )}
-      style={{ backgroundColor: bg }}
+      style={{ backgroundColor: bg, color: text }}
     >
       <i className={`fa-brands fa-${validPlatform.toLowerCase().replace('linkedin', 'linkedin-in')}`}></i>
       {showLabel && <span>{validPlatform}</span>}
