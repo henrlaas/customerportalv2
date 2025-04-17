@@ -10,18 +10,47 @@ interface PlatformOptionProps {
   icon: React.ReactNode;
   selected: boolean;
   onSelect: (value: Platform) => void;
+  brandColor: string;
 }
 
-const PlatformOption = ({ value, label, icon, selected, onSelect }: PlatformOptionProps) => {
+// Brand colors for each platform
+export const PLATFORM_COLORS = {
+  Meta: {
+    bg: '#0081FB',
+    text: 'text-white'
+  },
+  Google: {
+    bg: '#34A853',
+    text: 'text-white'
+  },
+  LinkedIn: {
+    bg: '#0077B5',
+    text: 'text-white'
+  },
+  Snapchat: {
+    bg: '#FFFC00',
+    text: 'text-black'
+  },
+  Tiktok: {
+    bg: '#000000',
+    text: 'text-white'
+  },
+};
+
+const PlatformOption = ({ value, label, icon, selected, onSelect, brandColor }: PlatformOptionProps) => {
+  // Determine text color based on selected state and platform
+  const textColorClass = selected ? PLATFORM_COLORS[value].text : 'text-foreground';
+  
   return (
     <Button
       type="button"
       variant={selected ? 'default' : 'outline'}
       className={cn(
         "flex flex-col h-auto py-4 px-2 gap-2 w-full justify-center items-center",
-        selected ? "border-2 border-primary" : ""
+        selected ? `border-2 ${textColorClass}` : ""
       )}
       onClick={() => onSelect(value)}
+      style={selected ? { backgroundColor: brandColor } : {}}
     >
       {icon}
       <span>{label}</span>
@@ -35,31 +64,36 @@ interface PlatformSelectorProps {
 }
 
 export function PlatformSelector({ value, onChange }: PlatformSelectorProps) {
-  const platforms: { value: Platform; label: string; icon: React.ReactNode }[] = [
+  const platforms: { value: Platform; label: string; icon: React.ReactNode; brandColor: string }[] = [
     { 
       value: 'Meta', 
       label: 'Meta', 
-      icon: <i className="fa-brands fa-meta text-2xl" aria-hidden="true"></i> 
+      icon: <i className={`fa-brands fa-meta text-2xl ${value === 'Meta' ? PLATFORM_COLORS.Meta.text : ''}`} aria-hidden="true"></i>,
+      brandColor: PLATFORM_COLORS.Meta.bg
     },
     { 
       value: 'Google', 
       label: 'Google', 
-      icon: <i className="fa-brands fa-google text-2xl" aria-hidden="true"></i> 
+      icon: <i className={`fa-brands fa-google text-2xl ${value === 'Google' ? PLATFORM_COLORS.Google.text : ''}`} aria-hidden="true"></i>,
+      brandColor: PLATFORM_COLORS.Google.bg
     },
     { 
       value: 'LinkedIn', 
       label: 'LinkedIn', 
-      icon: <i className="fa-brands fa-linkedin-in text-2xl" aria-hidden="true"></i> 
+      icon: <i className={`fa-brands fa-linkedin-in text-2xl ${value === 'LinkedIn' ? PLATFORM_COLORS.LinkedIn.text : ''}`} aria-hidden="true"></i>,
+      brandColor: PLATFORM_COLORS.LinkedIn.bg
     },
     { 
       value: 'Snapchat', 
       label: 'Snapchat', 
-      icon: <i className="fa-brands fa-snapchat text-2xl" aria-hidden="true"></i> 
+      icon: <i className={`fa-brands fa-snapchat text-2xl ${value === 'Snapchat' ? PLATFORM_COLORS.Snapchat.text : ''}`} aria-hidden="true"></i>,
+      brandColor: PLATFORM_COLORS.Snapchat.bg
     },
     { 
       value: 'Tiktok', 
       label: 'Tiktok', 
-      icon: <i className="fa-brands fa-tiktok text-2xl" aria-hidden="true"></i> 
+      icon: <i className={`fa-brands fa-tiktok text-2xl ${value === 'Tiktok' ? PLATFORM_COLORS.Tiktok.text : ''}`} aria-hidden="true"></i>,
+      brandColor: PLATFORM_COLORS.Tiktok.bg
     },
   ];
 
@@ -73,6 +107,7 @@ export function PlatformSelector({ value, onChange }: PlatformSelectorProps) {
           icon={platform.icon}
           selected={value === platform.value}
           onSelect={onChange}
+          brandColor={platform.brandColor}
         />
       ))}
     </div>

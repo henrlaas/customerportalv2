@@ -5,6 +5,7 @@ import { Calendar, Tag, Clock } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { PlatformBadge } from './PlatformBadge';
 
 export type Campaign = {
   id: string;
@@ -51,8 +52,15 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
   return (
     <Card className="cursor-pointer" onClick={() => navigate(`/campaigns/${campaign.id}`)}>
       <CardHeader className="pb-2">
-        <CardTitle>{campaign.name}</CardTitle>
-        <CardDescription>{campaign.description || 'No description'}</CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>{campaign.name}</CardTitle>
+            <CardDescription>{campaign.description || 'No description'}</CardDescription>
+          </div>
+          {campaign.platform && (
+            <PlatformBadge platform={campaign.platform} />
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="text-sm text-gray-500">

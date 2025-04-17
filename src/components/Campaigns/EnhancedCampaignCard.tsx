@@ -10,26 +10,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '@/components/Deals/utils/formatters';
+import { PlatformBadge } from './PlatformBadge';
 
 interface EnhancedCampaignCardProps {
   campaign: Campaign;
 }
-
-const PlatformIcon = ({ platform }: { platform: string }) => {
-  const iconProps = { className: "h-5 w-5", strokeWidth: 1.5 };
-  switch (platform?.toLowerCase()) {
-    case 'facebook':
-      return <Facebook {...iconProps} className="text-blue-600" />;
-    case 'instagram':
-      return <Instagram {...iconProps} className="text-pink-600" />;
-    case 'linkedin':
-      return <Linkedin {...iconProps} className="text-blue-700" />;
-    case 'twitter':
-      return <Twitter {...iconProps} className="text-blue-400" />;
-    default:
-      return <MessageSquare {...iconProps} className="text-gray-400" />;
-  }
-};
 
 const getStatusColor = (status: string) => {
   switch (status.toLowerCase()) {
@@ -74,13 +59,20 @@ export const EnhancedCampaignCard = ({ campaign }: EnhancedCampaignCardProps) =>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <PlatformIcon platform={campaign.platform || ''} />
+            {campaign.platform ? (
+              <PlatformBadge platform={campaign.platform} />
+            ) : (
+              <MessageSquare className="h-5 w-5 text-gray-400" strokeWidth={1.5} />
+            )}
             <div>
               <Link to={`/campaigns/${campaign.id}`} className="hover:underline">
                 <CardTitle className="text-lg">{campaign.name}</CardTitle>
               </Link>
               <div className="text-sm text-muted-foreground">
-                {formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}
+                {campaign.is_ongoing ? 
+                  'Ongoing Campaign' : 
+                  `${formatDate(campaign.start_date)} - ${formatDate(campaign.end_date)}`
+                }
               </div>
             </div>
           </div>
