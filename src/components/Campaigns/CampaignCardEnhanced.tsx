@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -15,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Link } from 'react-router-dom';
-import { Campaign } from './types/campaign';
+import { Campaign, PLATFORM_COLORS } from './types/campaign';
 import { PlatformIcon } from './PlatformIcon';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';

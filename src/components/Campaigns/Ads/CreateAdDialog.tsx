@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -48,8 +47,9 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     brand_name: form.watch('brand_name') || '',
   };
 
-  const platform = campaignPlatform as keyof typeof PLATFORM_CHARACTER_LIMITS || 'Meta';
-  const limits = PLATFORM_CHARACTER_LIMITS[platform] || {};
+  // Ensure platform is a valid Platform type, or default to 'Meta'
+  const validPlatform = (campaignPlatform as Platform) || 'Meta';
+  const limits = PLATFORM_CHARACTER_LIMITS[validPlatform] || {};
   
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) {
@@ -229,14 +229,14 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <AdFormFields 
                   form={form}
-                  platform={platform as Platform}
+                  platform={validPlatform}
                   limits={limits}
                 />
                 
                 <AdPreview
                   fileInfo={fileInfo}
                   watchedFields={watchedFields}
-                  platform={platform}
+                  platform={validPlatform}
                   limits={limits}
                 />
                 
