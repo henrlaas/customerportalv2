@@ -159,12 +159,14 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
 
           <div className="flex items-center gap-2">
             {campaign.platform && (
-              <div className="rounded-full p-2 flex items-center justify-center" style={platformStyle}>
-                <PlatformIcon 
-                  platform={campaign.platform} 
-                  size={18}
-                  className={PLATFORM_COLORS[campaign.platform as keyof typeof PLATFORM_COLORS]?.text}
-                />
+              <div 
+                className="rounded-full w-8 h-8 flex items-center justify-center" 
+                style={platformStyle}
+              >
+                <i 
+                  className={`fa-brands fa-${campaign.platform.toLowerCase().replace('linkedin', 'linkedin-in')} ${PLATFORM_COLORS[campaign.platform as keyof typeof PLATFORM_COLORS]?.text}`}
+                  style={{ fontSize: '18px' }}
+                ></i>
               </div>
             )}
 
