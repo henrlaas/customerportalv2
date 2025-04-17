@@ -149,6 +149,7 @@ export type Database = {
           description: string | null
           end_date: string | null
           id: string
+          is_ongoing: boolean | null
           name: string
           platform: string | null
           start_date: string | null
@@ -162,6 +163,7 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           id?: string
+          is_ongoing?: boolean | null
           name: string
           platform?: string | null
           start_date?: string | null
@@ -175,6 +177,7 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           id?: string
+          is_ongoing?: boolean | null
           name?: string
           platform?: string | null
           start_date?: string | null

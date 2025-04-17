@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { Calendar, Tag } from 'lucide-react';
+import { Calendar, Tag, Clock } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -18,6 +18,7 @@ export type Campaign = {
   created_at: string;
   updated_at: string;
   platform: string | null;
+  is_ongoing: boolean | null;
 };
 
 interface CampaignCardProps {
@@ -71,11 +72,18 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
             Budget: ${campaign.budget}
           </div>
         )}
-        {campaign.start_date && (
+        {campaign.is_ongoing ? (
           <div className="mt-2 flex items-center text-sm">
-            <Calendar className="h-4 w-4 mr-1 text-gray-500" />
-            {formatDate(campaign.start_date)} to {formatDate(campaign.end_date)}
+            <Clock className="h-4 w-4 mr-1 text-gray-500" />
+            Ongoing Campaign
           </div>
+        ) : (
+          campaign.start_date && (
+            <div className="mt-2 flex items-center text-sm">
+              <Calendar className="h-4 w-4 mr-1 text-gray-500" />
+              {formatDate(campaign.start_date)} to {formatDate(campaign.end_date)}
+            </div>
+          )
         )}
       </CardContent>
     </Card>

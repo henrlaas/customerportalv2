@@ -10,6 +10,7 @@ export interface CampaignFormData {
   budget: number | null;
   description?: string | null;
   include_subsidiaries?: boolean;
+  is_ongoing?: boolean;
 }
 
 export interface AdSetFormData {

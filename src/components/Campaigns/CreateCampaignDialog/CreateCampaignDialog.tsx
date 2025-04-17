@@ -24,6 +24,7 @@ const campaignSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   company_id: z.string().min(1, 'Company is required'),
   platform: z.enum(['Meta', 'Tiktok', 'Google', 'Snapchat', 'LinkedIn'] as const),
+  is_ongoing: z.boolean().default(false),
   start_date: z.date().nullable(),
   end_date: z.date().nullable(),
   budget: z.number().nullable(),
@@ -42,6 +43,7 @@ export function CreateCampaignDialog() {
       name: '',
       company_id: '',
       platform: 'Meta',
+      is_ongoing: false,
       start_date: null,
       end_date: null,
       budget: null,
@@ -70,6 +72,7 @@ export function CreateCampaignDialog() {
           budget: formattedValues.budget,
           description: formattedValues.description,
           status: 'in_progress',
+          is_ongoing: formattedValues.is_ongoing,
         })
         .select()
         .single();
