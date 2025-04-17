@@ -25,14 +25,10 @@ const CampaignsPage: React.FC = () => {
         return [];
       }
       
+      // Avoid using joins with associated_user_id as it's causing schema issues
       const { data, error } = await supabase
         .from('campaigns')
-        .select(`
-          *,
-          companies:company_id(name),
-          users:associated_user_id(id),
-          profiles:associated_user_id(first_name, last_name, avatar_url)
-        `)
+        .select('*, companies:company_id(name)')
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -44,7 +40,30 @@ const CampaignsPage: React.FC = () => {
         return [];
       }
       
-      return data as Campaign[];
+      // If we need user profile data, fetch it separately for campaigns with associated_user_id
+      const campaignsWithProfiles = await Promise.all(
+        data.map(async (campaign) => {
+          if (campaign.associated_user_id) {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('first_name, last_name, avatar_url')
+              .eq('id', campaign.associated_user_id)
+              .single();
+              
+            return {
+              ...campaign,
+              profiles: profileError ? { error: true } : profileData
+            };
+          }
+          
+          return {
+            ...campaign,
+            profiles: null
+          };
+        })
+      );
+      
+      return campaignsWithProfiles as Campaign[];
     },
     enabled: !!session?.user?.id,
   });
