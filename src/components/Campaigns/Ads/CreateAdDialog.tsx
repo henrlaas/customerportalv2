@@ -211,7 +211,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
           Create Ad
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Create New Ad</DialogTitle>
         </DialogHeader>
