@@ -5,6 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { UseFormReturn } from 'react-hook-form';
 import { AdFormData, Platform } from '../types/campaign';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CTA_BUTTON_OPTIONS } from './types';
 
 interface AdFormFieldsProps {
   form: UseFormReturn<AdFormData>;
@@ -18,6 +20,7 @@ export function AdFormFields({ form, platform, limits }: AdFormFieldsProps) {
   const showKeywords = platform === 'Google';
   const showBrandName = platform === 'Snapchat';
   const showHeadline = true;
+  const showCTAButton = platform === 'Meta' || platform === 'LinkedIn';
 
   return (
     <div className="space-y-4">
@@ -123,6 +126,36 @@ export function AdFormFields({ form, platform, limits }: AdFormFieldsProps) {
                   )}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+
+      {showCTAButton && (
+        <FormField
+          control={form.control}
+          name="cta_button"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>CTA Button</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || 'No button'}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a CTA button" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {CTA_BUTTON_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option === 'No button' ? '' : option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

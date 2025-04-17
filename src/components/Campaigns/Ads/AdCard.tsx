@@ -53,6 +53,14 @@ export function AdCard({ ad, campaignPlatform }: Props) {
         {ad.brand_name && (
           <p><span className="font-medium">Brand:</span> {ad.brand_name}</p>
         )}
+        {ad.cta_button && (
+          <div className="mt-3">
+            <span className="font-medium">CTA Button:</span>
+            <span className="inline-block ml-2 px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded-md">
+              {ad.cta_button}
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

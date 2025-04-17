@@ -58,6 +58,14 @@ export function AdPreview({ fileInfo, watchedFields, platform, limits }: AdPrevi
               <span className="text-muted-foreground">Keywords:</span> {watchedFields.keywords}
             </div>
           )}
+
+          {watchedFields.cta_button && (
+            <div className="mt-2">
+              <span className="inline-block px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded-md">
+                {watchedFields.cta_button}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -69,6 +69,7 @@ export interface AdFormData {
   main_text?: string;
   keywords?: string;
   brand_name?: string;
+  cta_button?: string | null;
 }
 
 export interface CampaignFormData {

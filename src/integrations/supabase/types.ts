@@ -15,6 +15,7 @@ export type Database = {
           adset_id: string
           brand_name: string | null
           created_at: string
+          cta_button: string | null
           description: string | null
           file_type: string
           file_url: string
@@ -30,6 +31,7 @@ export type Database = {
           adset_id: string
           brand_name?: string | null
           created_at?: string
+          cta_button?: string | null
           description?: string | null
           file_type: string
           file_url: string
@@ -45,6 +47,7 @@ export type Database = {
           adset_id?: string
           brand_name?: string | null
           created_at?: string
+          cta_button?: string | null
           description?: string | null
           file_type?: string
           file_url?: string

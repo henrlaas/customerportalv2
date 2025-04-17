@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -36,6 +37,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       main_text: '',
       keywords: '',
       brand_name: '',
+      cta_button: '',
     },
   });
 
@@ -45,6 +47,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     main_text: form.watch('main_text') || '',
     keywords: form.watch('keywords') || '',
     brand_name: form.watch('brand_name') || '',
+    cta_button: form.watch('cta_button') || '',
   };
 
   // Ensure platform is a valid Platform type, or default to 'Meta'
