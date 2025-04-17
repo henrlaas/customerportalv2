@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -7,7 +8,7 @@ import {
   ChevronUp, 
   DollarSign,
   Building,
-  ImageIcon
+  MoreHorizontal
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,9 @@ import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/components/Deals/utils/formatters';
 import { fetchFavicon } from '@/services/companyHelpers';
 import { PlatformBadge } from './PlatformBadge';
+import { EditCampaignDialog } from './EditCampaignDialog/EditCampaignDialog';
+import { DeleteCampaignDialog } from './DeleteCampaignDialog/DeleteCampaignDialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface CampaignCardEnhancedProps {
   campaign: Campaign;
@@ -163,6 +167,22 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
                 showLabel={false}
               />
             )}
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <EditCampaignDialog campaign={campaign} trigger={<Button variant="ghost" className="w-full justify-start">Edit Campaign</Button>} />
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
+                  <DeleteCampaignDialog campaign={campaign} trigger={<Button variant="ghost" className="w-full justify-start text-destructive">Delete Campaign</Button>} />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardHeader>
@@ -261,4 +281,4 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
       </CardContent>
     </Card>
   );
-};
+}
