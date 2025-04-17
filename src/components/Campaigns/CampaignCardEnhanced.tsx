@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -165,7 +164,10 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
               >
                 <i 
                   className={`fa-brands fa-${campaign.platform.toLowerCase().replace('linkedin', 'linkedin-in')} ${PLATFORM_COLORS[campaign.platform as keyof typeof PLATFORM_COLORS]?.text}`}
-                  style={{ fontSize: '18px' }}
+                  style={{ 
+                    fontSize: '18px', 
+                    color: campaign.platform === 'Google' ? '#34A853' : undefined 
+                  }}
                 ></i>
               </div>
             )}

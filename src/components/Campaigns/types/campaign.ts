@@ -63,8 +63,8 @@ export const PLATFORM_COLORS = {
     icon: 'tiktok'
   },
   Google: { 
-    bg: '#f0f9ff', 
-    text: 'text-sky-900',
+    bg: '#E6F4EA', // Lighter shade of Google green 
+    text: 'text-green-900',
     icon: 'google' 
   },
   Snapchat: { 

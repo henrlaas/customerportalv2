@@ -26,7 +26,7 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
         `fa-brands fa-${platform.toString().toLowerCase().replace('linkedin', 'linkedin-in')}`,
         className
       )}
-      style={{ fontSize: `${size}px` }}
+      style={{ fontSize: `${size}px`, color: platform === 'Google' ? '#34A853' : undefined }}
     ></i>
   );
 };
