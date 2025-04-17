@@ -1,5 +1,6 @@
+
 import { format } from 'date-fns';
-import { ChevronDown, ChevronRight, Facebook, Instagram, Linkedin, Twitter, MessageSquare } from 'lucide-react';
+import { ChevronDown, ChevronRight, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -60,7 +61,13 @@ export const EnhancedCampaignCard = ({ campaign }: EnhancedCampaignCardProps) =>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
             {campaign.platform ? (
-              <PlatformBadge platform={campaign.platform} />
+              <div className="w-8 h-8 overflow-hidden flex items-center justify-center">
+                <PlatformBadge 
+                  platform={campaign.platform} 
+                  className="w-8 h-8 !p-0 flex items-center justify-center"
+                  showLabel={false}
+                />
+              </div>
             ) : (
               <MessageSquare className="h-5 w-5 text-gray-400" strokeWidth={1.5} />
             )}

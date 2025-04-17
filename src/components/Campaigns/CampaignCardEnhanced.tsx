@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -8,7 +7,6 @@ import {
   ChevronUp, 
   DollarSign,
   Building,
-  User,
   ImageIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,12 +14,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Link } from 'react-router-dom';
-import { Campaign, PLATFORM_COLORS } from './types/campaign';
-import { PlatformIcon } from './PlatformIcon';
+import { Campaign } from './types/campaign';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/components/Deals/utils/formatters';
 import { fetchFavicon } from '@/services/companyHelpers';
+import { PlatformBadge } from './PlatformBadge';
 
 interface CampaignCardEnhancedProps {
   campaign: Campaign;
@@ -109,10 +107,6 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
     `${campaign.profiles.first_name?.[0] || ''}${campaign.profiles.last_name?.[0] || ''}` : 
     'U';
 
-  const platformStyle = campaign.platform ? {
-    backgroundColor: PLATFORM_COLORS[campaign.platform as keyof typeof PLATFORM_COLORS]?.bg
-  } : {};
-
   return (
     <Card className={cn(
       "overflow-hidden transition-all duration-200",
@@ -159,17 +153,12 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
 
           <div className="flex items-center gap-2">
             {campaign.platform && (
-              <div 
-                className="rounded-full w-8 h-8 flex items-center justify-center" 
-                style={platformStyle}
-              >
-                <i 
-                  className={`fa-brands fa-${campaign.platform.toLowerCase().replace('linkedin', 'linkedin-in')} ${PLATFORM_COLORS[campaign.platform as keyof typeof PLATFORM_COLORS]?.text}`}
-                  style={{ 
-                    fontSize: '18px', 
-                    color: campaign.platform === 'Google' ? '#34A853' : undefined 
-                  }}
-                ></i>
+              <div className="w-8 h-8 overflow-hidden flex items-center justify-center">
+                <PlatformBadge 
+                  platform={campaign.platform} 
+                  className="w-8 h-8 !p-0 flex items-center justify-center"
+                  showLabel={false}
+                />
               </div>
             )}
 

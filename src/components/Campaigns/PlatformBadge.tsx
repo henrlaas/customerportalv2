@@ -1,15 +1,15 @@
 
 import React from 'react';
-import { Platform } from './types/campaign';
+import { Platform, PLATFORM_COLORS } from './types/campaign';
 import { cn } from '@/lib/utils';
-import { PLATFORM_COLORS } from './CreateCampaignDialog/PlatformSelector';
 
 interface PlatformBadgeProps {
   platform: Platform | string | null;
   className?: string;
+  showLabel?: boolean;
 }
 
-export const PlatformBadge = ({ platform, className }: PlatformBadgeProps) => {
+export const PlatformBadge = ({ platform, className, showLabel = false }: PlatformBadgeProps) => {
   if (!platform) return null;
   
   // Safely cast platform string to Platform type if it matches
@@ -23,14 +23,14 @@ export const PlatformBadge = ({ platform, className }: PlatformBadgeProps) => {
   return (
     <div 
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium", 
+        "inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium", 
         text,
         className
       )}
       style={{ backgroundColor: bg }}
     >
       <i className={`fa-brands fa-${validPlatform.toLowerCase().replace('linkedin', 'linkedin-in')}`}></i>
-      <span>{validPlatform}</span>
+      {showLabel && <span>{validPlatform}</span>}
     </div>
   );
 };
