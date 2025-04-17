@@ -154,7 +154,7 @@ export function CreateCampaignDialog() {
               <UserSelectionForm
                 form={form}
                 onBack={() => setStep(2)}
-                onNext={onSubmit}
+                onNext={onSubmit} // Now correctly passing the onSubmit function
               />
             )}
           </form>

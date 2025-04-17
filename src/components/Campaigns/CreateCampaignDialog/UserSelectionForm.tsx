@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 type UserSelectionFormProps = {
-  onNext: () => void;
+  onNext: (values: any) => void; // Update the type to accept form values
   onBack: () => void;
   form: any;
 };
@@ -43,6 +43,14 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
       form.setValue('associated_user_id', user.id);
     }
   }, [form, user]);
+
+  // Function to handle form submission
+  const handleSubmit = () => {
+    setLoading(true);
+    const values = form.getValues();
+    onNext(values); // Pass the values to the onNext function
+    setLoading(false);
+  };
 
   return (
     <Form {...form}>
@@ -86,7 +94,7 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
           
           <Button 
             type="button" 
-            onClick={() => form.handleSubmit(onNext)()}
+            onClick={handleSubmit}
             disabled={loading}
           >
             {loading ? 'Saving...' : 'Save Campaign'}
