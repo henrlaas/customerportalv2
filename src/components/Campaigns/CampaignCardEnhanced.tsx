@@ -121,12 +121,12 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-md flex items-center justify-center bg-gray-100 overflow-hidden">
+            <div className="w-8 h-8 rounded-md flex items-center justify-center overflow-hidden">
               {companyFavicon ? (
                 <img
                   src={companyFavicon}
                   alt={`${campaign.companies?.name || 'Company'} favicon`}
-                  className="w-full h-full object-contain bg-transparent"
+                  className="w-full h-full object-contain"
                   onError={(e) => {
                     e.currentTarget.onerror = null; 
                     e.currentTarget.src = ''; 
