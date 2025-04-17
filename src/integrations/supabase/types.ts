@@ -143,6 +143,7 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          associated_user_id: string | null
           budget: number | null
           company_id: string
           created_at: string
@@ -157,6 +158,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          associated_user_id?: string | null
           budget?: number | null
           company_id: string
           created_at?: string
@@ -171,6 +173,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          associated_user_id?: string | null
           budget?: number | null
           company_id?: string
           created_at?: string

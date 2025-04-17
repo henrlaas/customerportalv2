@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { CampaignFormData } from '../types/campaign';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Form } from '@/components/ui/form';
@@ -61,8 +60,11 @@ export function CreateCampaignDialog() {
 
   const onSubmit = async (values: z.infer<typeof campaignSchema>) => {
     try {
-      console.log("Submitting campaign with values:", values);
-      
+      // Ensure associated_user_id is set
+      if (!values.associated_user_id) {
+        values.associated_user_id = user?.id || '';
+      }
+
       // Format dates as ISO strings for Supabase
       const formattedValues = {
         ...values,
