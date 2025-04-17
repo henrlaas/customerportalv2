@@ -15,7 +15,7 @@ export interface AdSetFormData {
   name: string;
   campaign_id: string;
   budget?: number;
-  target_audience?: string;  // Changed from targeting to target_audience
+  targeting?: string;  // Changed back to targeting to match database schema
   start_date?: string;
   end_date?: string;
 }
