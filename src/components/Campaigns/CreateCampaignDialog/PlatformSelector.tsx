@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Platform } from '../types/campaign';
-import { Facebook, MessageCircle, Search, Linkedin, Youtube } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface PlatformOptionProps {
   value: Platform;
@@ -34,15 +34,33 @@ interface PlatformSelectorProps {
   onChange: (value: Platform) => void;
 }
 
-import { cn } from '@/lib/utils';
-
 export function PlatformSelector({ value, onChange }: PlatformSelectorProps) {
   const platforms: { value: Platform; label: string; icon: React.ReactNode }[] = [
-    { value: 'Meta', label: 'Meta', icon: <Facebook size={24} /> },
-    { value: 'Google', label: 'Google', icon: <Search size={24} /> },
-    { value: 'LinkedIn', label: 'LinkedIn', icon: <Linkedin size={24} /> },
-    { value: 'Snapchat', label: 'Snapchat', icon: <MessageCircle size={24} /> },
-    { value: 'Tiktok', label: 'Tiktok', icon: <Youtube size={24} /> },
+    { 
+      value: 'Meta', 
+      label: 'Meta', 
+      icon: <i className="fa-brands fa-meta text-2xl" aria-hidden="true"></i> 
+    },
+    { 
+      value: 'Google', 
+      label: 'Google', 
+      icon: <i className="fa-brands fa-google text-2xl" aria-hidden="true"></i> 
+    },
+    { 
+      value: 'LinkedIn', 
+      label: 'LinkedIn', 
+      icon: <i className="fa-brands fa-linkedin-in text-2xl" aria-hidden="true"></i> 
+    },
+    { 
+      value: 'Snapchat', 
+      label: 'Snapchat', 
+      icon: <i className="fa-brands fa-snapchat text-2xl" aria-hidden="true"></i> 
+    },
+    { 
+      value: 'Tiktok', 
+      label: 'Tiktok', 
+      icon: <i className="fa-brands fa-tiktok text-2xl" aria-hidden="true"></i> 
+    },
   ];
 
   return (
