@@ -45,8 +45,8 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
 
   const handleSubmit = () => {
     setLoading(true);
-    // Continue to the next step
-    onNext();
+    // Don't call onNext() - let the parent form handle the submission
+    form.handleSubmit(onNext)();
     setLoading(false);
   };
 

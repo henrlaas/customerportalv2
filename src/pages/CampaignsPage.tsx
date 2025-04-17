@@ -52,6 +52,12 @@ const CampaignsPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
+  const handleCreateClick = () => {
+    // This function can be used to trigger the create dialog if needed
+    // It's passed to the CampaignList for the EmptyState component
+    // Currently not needed since we have the CreateCampaignDialog button
+  };
+
   if (!session?.user?.id) {
     return (
       <div className="space-y-4">
@@ -96,7 +102,7 @@ const CampaignsPage: React.FC = () => {
       <CampaignList 
         campaigns={filteredCampaigns}
         isLoading={isLoading}
-        onCreateClick={() => {}}
+        onCreateClick={handleCreateClick}
       />
     </div>
   );

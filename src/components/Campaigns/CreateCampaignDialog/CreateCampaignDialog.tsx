@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, X } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { CampaignFormData } from '../types/campaign';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +21,7 @@ import { CompanySelectionForm } from './CompanySelectionForm';
 import { UserSelectionForm } from './UserSelectionForm';
 import { ProgressStepper } from './ProgressStepper';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 const campaignSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -40,6 +41,7 @@ export function CreateCampaignDialog() {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof campaignSchema>>({
     resolver: zodResolver(campaignSchema),
@@ -76,7 +78,7 @@ export function CreateCampaignDialog() {
           end_date: formattedValues.end_date,
           budget: formattedValues.budget,
           description: formattedValues.description,
-          status: 'in_progress',
+          status: 'active',
           is_ongoing: formattedValues.is_ongoing,
           associated_user_id: formattedValues.associated_user_id,
         })
@@ -90,6 +92,9 @@ export function CreateCampaignDialog() {
         description: 'Campaign created successfully',
       });
 
+      // Invalidate the campaigns query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      
       setOpen(false);
       form.reset();
       setStep(1);
@@ -144,7 +149,7 @@ export function CreateCampaignDialog() {
               <UserSelectionForm
                 form={form}
                 onBack={() => setStep(2)}
-                onNext={() => form.handleSubmit(onSubmit)()}
+                onNext={onSubmit}
               />
             )}
           </form>
