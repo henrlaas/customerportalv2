@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Platform } from '../types/campaign';
@@ -17,23 +16,23 @@ interface PlatformOptionProps {
 export const PLATFORM_COLORS = {
   Meta: {
     bg: '#0081FB',
-    text: 'text-white'
+    text: '#FFFFFF'
   },
   Google: {
     bg: '#34A853',
-    text: 'text-white'
+    text: '#FFFFFF'
   },
   LinkedIn: {
     bg: '#0077B5',
-    text: 'text-white'
+    text: '#FFFFFF'
   },
   Snapchat: {
     bg: '#FFFC00',
-    text: 'text-black'
+    text: '#000000'
   },
   Tiktok: {
     bg: '#000000',
-    text: 'text-white'
+    text: '#FFFFFF'
   },
 };
 
