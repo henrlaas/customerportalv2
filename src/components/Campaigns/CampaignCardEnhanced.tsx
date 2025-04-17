@@ -126,7 +126,7 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
                 <img
                   src={companyFavicon}
                   alt={`${campaign.companies?.name || 'Company'} favicon`}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain bg-transparent"
                   onError={(e) => {
                     e.currentTarget.onerror = null; 
                     e.currentTarget.src = ''; 
