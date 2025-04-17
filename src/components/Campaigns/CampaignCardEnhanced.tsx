@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -75,7 +76,12 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
     },
   });
 
-  const userInitials = campaign.profiles ? 
+  // Helper function to check if profiles is valid and not an error
+  const isValidProfile = (profile: any): profile is { first_name: string | null, last_name: string | null, avatar_url: string | null } => {
+    return profile && !('error' in profile);
+  };
+
+  const userInitials = isValidProfile(campaign.profiles) ? 
     `${campaign.profiles.first_name?.[0] || ''}${campaign.profiles.last_name?.[0] || ''}` : 
     'U';
 
@@ -133,12 +139,12 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
-              <AvatarImage src={campaign.profiles?.avatar_url || undefined} />
+              <AvatarImage src={isValidProfile(campaign.profiles) ? campaign.profiles.avatar_url || undefined : undefined} />
               <AvatarFallback>{userInitials}</AvatarFallback>
             </Avatar>
             <span className="text-sm">
-              {campaign.profiles ? 
-                `${campaign.profiles.first_name || ''} ${campaign.profiles.last_name || ''}`.trim() : 
+              {isValidProfile(campaign.profiles) ? 
+                `${campaign.profiles.first_name || ''} ${campaign.profiles.last_name || ''}`.trim() || 'Unnamed' : 
                 'Unassigned'}
             </span>
           </div>

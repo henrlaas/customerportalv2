@@ -23,7 +23,7 @@ export interface Campaign {
     first_name: string | null;
     last_name: string | null;
     avatar_url: string | null;
-  };
+  } | { error: boolean } & String; // Add this union to handle error case
 }
 
 export interface Adset {

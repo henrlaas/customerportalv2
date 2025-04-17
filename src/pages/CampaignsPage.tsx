@@ -51,10 +51,16 @@ const CampaignsPage: React.FC = () => {
 
   // Filter campaigns based on search term and status
   const filteredCampaigns = campaigns.filter(campaign => {
+    // Helper function to safely check if profiles exist and are not an error object
+    const isValidProfile = (profile: any): profile is { first_name: string | null, last_name: string | null } => {
+      return profile && !('error' in profile);
+    };
+    
     const matchesSearch = campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.companies?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (campaign.profiles && `${campaign.profiles.first_name} ${campaign.profiles.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()));
+      (campaign.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (campaign.companies?.name.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (isValidProfile(campaign.profiles) && 
+        `${campaign.profiles.first_name || ''} ${campaign.profiles.last_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesStatus = status === 'all' || campaign.status.toLowerCase() === status.toLowerCase();
     return matchesSearch && matchesStatus;
