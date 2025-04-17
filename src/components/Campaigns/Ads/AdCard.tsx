@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -37,6 +36,7 @@ export function AdCard({ ad, campaignPlatform }: Props) {
           <Badge variant="outline">{ad.ad_type}</Badge>
         </div>
       </CardHeader>
+      
       <CardContent className="text-sm space-y-2">
         {ad.headline && (
           <p><span className="font-medium">Headline:</span> {ad.headline}</p>
@@ -60,6 +60,12 @@ export function AdCard({ ad, campaignPlatform }: Props) {
               {ad.cta_button}
             </span>
           </div>
+        )}
+        
+        {ad.url && (
+          <p>
+            <span className="font-medium">URL:</span> {ad.url}
+          </p>
         )}
       </CardContent>
     </Card>

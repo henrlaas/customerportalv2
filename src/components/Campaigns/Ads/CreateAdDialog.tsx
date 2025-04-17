@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -38,6 +37,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       keywords: '',
       brand_name: '',
       cta_button: '',
+      url: null,
     },
   });
 
@@ -48,6 +48,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     keywords: form.watch('keywords') || '',
     brand_name: form.watch('brand_name') || '',
     cta_button: form.watch('cta_button') || '',
+    url: form.watch('url') || '',
   };
 
   // Ensure platform is a valid Platform type, or default to 'Meta'
@@ -150,6 +151,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       ad_type: fileInfo.type,
       file_url: uploadedFile.url,
       file_type: fileInfo.file.type,
+      url: data.url || null, // Add URL to the ad insertion
     });
     
     if (error) {

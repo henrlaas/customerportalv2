@@ -25,6 +25,7 @@ export type Database = {
           main_text: string | null
           name: string
           updated_at: string
+          url: string | null
         }
         Insert: {
           ad_type: string
@@ -41,6 +42,7 @@ export type Database = {
           main_text?: string | null
           name: string
           updated_at?: string
+          url?: string | null
         }
         Update: {
           ad_type?: string
@@ -57,6 +59,7 @@ export type Database = {
           main_text?: string | null
           name?: string
           updated_at?: string
+          url?: string | null
         }
         Relationships: [
           {

@@ -1,4 +1,3 @@
-
 import { AdPreviewProps } from './types';
 
 export function AdPreview({ fileInfo, watchedFields, platform, limits }: AdPreviewProps) {
@@ -18,11 +17,26 @@ export function AdPreview({ fileInfo, watchedFields, platform, limits }: AdPrevi
       <div className="border rounded-md p-3 space-y-4 bg-white">
         <div className="relative h-40 bg-gray-100 rounded-md overflow-hidden">
           {fileInfo?.type === 'image' ? (
-            <img
-              src={fileInfo.url}
-              alt="Ad preview"
-              className="w-full h-full object-contain"
-            />
+            watchedFields.url ? (
+              <a 
+                href={watchedFields.url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="block"
+              >
+                <img
+                  src={fileInfo.url}
+                  alt="Ad preview"
+                  className="w-full h-full object-contain cursor-pointer"
+                />
+              </a>
+            ) : (
+              <img
+                src={fileInfo.url}
+                alt="Ad preview"
+                className="w-full h-full object-contain"
+              />
+            )
           ) : fileInfo?.type === 'video' ? (
             <video
               src={fileInfo.url}
@@ -67,6 +81,12 @@ export function AdPreview({ fileInfo, watchedFields, platform, limits }: AdPrevi
             </div>
           )}
         </div>
+
+        {watchedFields.url && (
+          <div className="text-xs text-muted-foreground mt-2">
+            URL: {watchedFields.url}
+          </div>
+        )}
       </div>
 
       <div className="mt-4 text-sm text-muted-foreground">

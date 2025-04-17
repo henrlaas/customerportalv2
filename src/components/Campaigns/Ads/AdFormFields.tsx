@@ -1,4 +1,3 @@
-
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -223,6 +222,25 @@ export function AdFormFields({ form, platform, limits }: AdFormFieldsProps) {
           )}
         />
       )}
+      
+      {/* Add URL input field */}
+      <FormField
+        control={form.control}
+        name="url"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>URL</FormLabel>
+            <FormControl>
+              <Input 
+                {...field} 
+                placeholder="Enter URL for the ad"
+                type="url"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 }
