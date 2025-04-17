@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Campaign } from './CampaignCard';
+import { Campaign } from './types/campaign';
 import { EmptyState } from './EmptyState';
-import { EnhancedCampaignCard } from './EnhancedCampaignCard';
+import { CampaignCardEnhanced } from './CampaignCardEnhanced';
+import { motion } from 'framer-motion';
 
 interface CampaignListProps {
   campaigns: Campaign[];
@@ -10,7 +11,11 @@ interface CampaignListProps {
   onCreateClick: () => void;
 }
 
-export const CampaignList: React.FC<CampaignListProps> = ({ campaigns, isLoading, onCreateClick }) => {
+export const CampaignList: React.FC<CampaignListProps> = ({ 
+  campaigns, 
+  isLoading, 
+  onCreateClick 
+}) => {
   if (isLoading) {
     return (
       <div className="flex justify-center p-8">
@@ -24,9 +29,20 @@ export const CampaignList: React.FC<CampaignListProps> = ({ campaigns, isLoading
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-      {campaigns.map((campaign) => (
-        <EnhancedCampaignCard key={campaign.id} campaign={campaign} />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {campaigns.map((campaign, index) => (
+        <motion.div
+          key={campaign.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ 
+            duration: 0.3,
+            delay: index * 0.05,
+            ease: [0.25, 0.1, 0.25, 1]
+          }}
+        >
+          <CampaignCardEnhanced campaign={campaign} />
+        </motion.div>
       ))}
     </div>
   );

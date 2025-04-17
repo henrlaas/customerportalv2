@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { CampaignList } from '@/components/Campaigns/CampaignList';
-import { Campaign } from '@/components/Campaigns/CampaignCard';
+import { Campaign } from '@/components/Campaigns/types/campaign';
 import { useAuth } from '@/contexts/AuthContext';
 import { CreateCampaignDialog } from '@/components/Campaigns/CreateCampaignDialog/CreateCampaignDialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,7 +27,12 @@ const CampaignsPage: React.FC = () => {
       
       const { data, error } = await supabase
         .from('campaigns')
-        .select('*')
+        .select(`
+          *,
+          companies:company_id(name),
+          users:associated_user_id(id),
+          profiles:associated_user_id(first_name, last_name, avatar_url)
+        `)
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -47,15 +52,16 @@ const CampaignsPage: React.FC = () => {
   // Filter campaigns based on search term and status
   const filteredCampaigns = campaigns.filter(campaign => {
     const matchesSearch = campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      campaign.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.companies?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (campaign.profiles && `${campaign.profiles.first_name} ${campaign.profiles.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()));
+    
     const matchesStatus = status === 'all' || campaign.status.toLowerCase() === status.toLowerCase();
     return matchesSearch && matchesStatus;
   });
 
   const handleCreateClick = () => {
     // This function can be used to trigger the create dialog if needed
-    // It's passed to the CampaignList for the EmptyState component
-    // Currently not needed since we have the CreateCampaignDialog button
   };
 
   if (!session?.user?.id) {

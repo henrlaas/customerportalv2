@@ -1,0 +1,59 @@
+
+.campaign-card-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.campaign-card-enter-active {
+  opacity: 1;
+  transform: translateY(0px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.campaign-card-exit {
+  opacity: 1;
+}
+
+.campaign-card-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.adset-expand-enter {
+  max-height: 0;
+  opacity: 0;
+}
+
+.adset-expand-enter-active {
+  max-height: 500px;
+  opacity: 1;
+  transition: max-height 300ms, opacity 300ms;
+}
+
+.adset-expand-exit {
+  max-height: 500px;
+  opacity: 1;
+}
+
+.adset-expand-exit-active {
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 300ms, opacity 300ms;
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.platform-icon-pulse:hover {
+  animation: pulseGlow 1.5s infinite;
+}

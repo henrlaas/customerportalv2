@@ -1,55 +1,81 @@
 
 export type Platform = 'Meta' | 'Tiktok' | 'Google' | 'Snapchat' | 'LinkedIn';
 
-export interface CampaignFormData {
+export interface Campaign {
+  id: string;
   name: string;
+  description: string | null;
+  status: string;
   company_id: string;
-  platform: Platform;
-  start_date: Date | null;
-  end_date: Date | null;
   budget: number | null;
-  description?: string | null;
-  include_subsidiaries?: boolean;
-  is_ongoing?: boolean;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+  updated_at: string;
+  platform: Platform | null;
+  is_ongoing: boolean | null;
+  associated_user_id: string | null;
+  // Joined fields
+  companies?: {
+    name: string;
+  };
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  };
 }
 
-export interface AdSetFormData {
+export interface Adset {
+  id: string;
   name: string;
-  targeting: string;
+  targeting: string | null;
   campaign_id: string;
+  created_at: string;
+  updated_at: string;
+  ads?: Ad[];
 }
 
-export interface AdFormData {
+export interface Ad {
+  id: string;
   name: string;
   adset_id: string;
-  headline?: string;
-  description?: string;
-  main_text?: string;
-  keywords?: string;
-  brand_name?: string;
+  ad_type: string;
+  file_type: string;
+  file_url: string;
+  headline?: string | null;
+  description?: string | null;
+  main_text?: string | null;
+  keywords?: string | null;
+  brand_name?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-export const PLATFORM_CHARACTER_LIMITS = {
-  Meta: {
-    main_text: 255,
-    headline: 90,
-    description: 30
+export const PLATFORM_COLORS = {
+  Meta: { 
+    bg: '#e7f3ff', 
+    text: 'text-blue-900', 
+    icon: 'facebook' 
   },
-  LinkedIn: {
-    main_text: 255,
-    headline: 90,
-    description: 30
+  Tiktok: { 
+    bg: '#f4f4f5', 
+    text: 'text-zinc-900',
+    icon: 'tiktok'
   },
-  Google: {
-    headline: 30,
-    description: 90,
-    keywords: 30
+  Google: { 
+    bg: '#f0f9ff', 
+    text: 'text-sky-900',
+    icon: 'google' 
   },
-  Snapchat: {
-    brand_name: 32,
-    headline: 34
+  Snapchat: { 
+    bg: '#fef9c3', 
+    text: 'text-yellow-900',
+    icon: 'snapchat' 
   },
-  Tiktok: {
-    headline: 100
+  LinkedIn: { 
+    bg: '#dbeafe', 
+    text: 'text-blue-900',
+    icon: 'linkedin' 
   }
 };
