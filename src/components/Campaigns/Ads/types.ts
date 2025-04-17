@@ -1,4 +1,10 @@
 
+export interface FileInfo {
+  url: string;
+  type: string;
+  file: File;
+}
+
 export interface WatchedFields {
   headline: string;
   description: string;
@@ -6,7 +12,7 @@ export interface WatchedFields {
   keywords: string;
   brand_name: string;
   cta_button?: string | null;
-  url?: string | null;  // Add URL to watched fields
+  url?: string | null;
 }
 
 export interface AdPreviewProps {
@@ -15,3 +21,17 @@ export interface AdPreviewProps {
   platform: string;
   limits: Record<string, number>;
 }
+
+export const CTA_BUTTON_OPTIONS = [
+  'No button',
+  'Learn More',
+  'Sign Up',
+  'Shop Now',
+  'Download',
+  'Subscribe',
+  'Contact Us',
+  'Book Now',
+  'Apply Now',
+  'Get Offer',
+  'Get Quote'
+];

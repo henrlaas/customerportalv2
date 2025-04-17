@@ -8,5 +8,94 @@ export interface AdFormData {
   keywords?: string;
   brand_name?: string;
   cta_button?: string | null;
-  url?: string | null;  // Add URL to AdFormData
+  url?: string | null;
 }
+
+export interface AdSetFormData {
+  name: string;
+  campaign_id: string;
+  budget?: number;
+  target_audience?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export type Platform = 'Meta' | 'Google' | 'LinkedIn' | 'Snapchat' | 'Tiktok';
+
+export interface Campaign {
+  id: string;
+  name: string;
+  description?: string;
+  status: 'draft' | 'active' | 'paused' | 'completed';
+  platform: Platform;
+  budget?: number;
+  company_id?: string;
+  associated_user_id?: string;
+  created_at: string;
+  companies?: {
+    name: string;
+  };
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url?: string | null;
+  } | null;
+}
+
+export interface CampaignFormData {
+  name: string;
+  description?: string;
+  platform: Platform;
+  budget?: number;
+  company_id?: string;
+  associated_user_id?: string;
+  status: 'draft' | 'active' | 'paused' | 'completed';
+}
+
+export const PLATFORM_COLORS = {
+  Meta: {
+    bg: '#0081FB',
+    text: 'text-white'
+  },
+  Google: {
+    bg: '#34A853',
+    text: 'text-white'
+  },
+  LinkedIn: {
+    bg: '#0077B5',
+    text: 'text-white'
+  },
+  Snapchat: {
+    bg: '#FFFC00',
+    text: 'text-black'
+  },
+  Tiktok: {
+    bg: '#000000',
+    text: 'text-white'
+  },
+};
+
+export const PLATFORM_CHARACTER_LIMITS = {
+  Meta: {
+    headline: 40,
+    description: 30,
+    main_text: 125,
+  },
+  Google: {
+    headline: 30,
+    description: 90,
+    keywords: 80,
+  },
+  LinkedIn: {
+    headline: 50,
+    description: 60,
+    main_text: 150,
+  },
+  Snapchat: {
+    headline: 34,
+    brand_name: 25,
+  },
+  Tiktok: {
+    headline: 40,
+  }
+};
