@@ -15,7 +15,7 @@ export interface AdSetFormData {
   name: string;
   campaign_id: string;
   budget?: number;
-  target_audience?: string;
+  target_audience?: string;  // Changed from targeting to target_audience
   start_date?: string;
   end_date?: string;
 }
@@ -32,6 +32,10 @@ export interface Campaign {
   company_id?: string;
   associated_user_id?: string;
   created_at: string;
+  // Add the missing properties
+  is_ongoing?: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
   companies?: {
     name: string;
   };
@@ -50,6 +54,10 @@ export interface CampaignFormData {
   company_id?: string;
   associated_user_id?: string;
   status: 'draft' | 'active' | 'paused' | 'completed';
+  // Add missing properties to match Campaign
+  is_ongoing?: boolean;
+  start_date?: Date | null;
+  end_date?: Date | null;
 }
 
 export const PLATFORM_COLORS = {

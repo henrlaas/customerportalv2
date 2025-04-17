@@ -23,7 +23,7 @@ export function CreateAdSetDialog({ campaignId }: Props) {
   const form = useForm<AdSetFormData>({
     defaultValues: {
       name: '',
-      targeting: '',
+      target_audience: '', // Changed from 'targeting' to 'target_audience'
       campaign_id: campaignId,
     },
   });
@@ -82,7 +82,7 @@ export function CreateAdSetDialog({ campaignId }: Props) {
             />
             <FormField
               control={form.control}
-              name="targeting"
+              name="target_audience" // Changed from 'targeting' to 'target_audience'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Targeting</FormLabel>
