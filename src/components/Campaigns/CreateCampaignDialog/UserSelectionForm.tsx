@@ -1,18 +1,12 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-
-const userSelectionSchema = z.object({
-  associated_user_id: z.string().min(1, 'Please select a user')
-});
 
 type UserSelectionFormProps = {
   onNext: () => void;
@@ -43,16 +37,16 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
     }
   });
 
-  const handleSubmit = () => {
-    setLoading(true);
-    // Don't call onNext() - let the parent form handle the submission
-    form.handleSubmit(onNext)();
-    setLoading(false);
-  };
+  // Set default associated_user_id if not already set
+  React.useEffect(() => {
+    if (!form.getValues('associated_user_id') && user?.id) {
+      form.setValue('associated_user_id', user.id);
+    }
+  }, [form, user]);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form className="space-y-6">
         <FormField
           control={form.control}
           name="associated_user_id"
@@ -90,7 +84,11 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
             Back
           </Button>
           
-          <Button type="submit" disabled={loading}>
+          <Button 
+            type="button" 
+            onClick={() => form.handleSubmit(onNext)()}
+            disabled={loading}
+          >
             {loading ? 'Saving...' : 'Save Campaign'}
           </Button>
         </div>

@@ -33,7 +33,7 @@ const campaignSchema = z.object({
   budget: z.number().nullable(),
   description: z.string().nullable(),
   include_subsidiaries: z.boolean().default(false),
-  associated_user_id: z.string().nullable(),
+  associated_user_id: z.string().min(1, 'Associated user is required'),
 });
 
 export function CreateCampaignDialog() {
@@ -55,12 +55,14 @@ export function CreateCampaignDialog() {
       budget: null,
       description: null,
       include_subsidiaries: false,
-      associated_user_id: user?.id || null,
+      associated_user_id: user?.id || '',
     },
   });
 
   const onSubmit = async (values: z.infer<typeof campaignSchema>) => {
     try {
+      console.log("Submitting campaign with values:", values);
+      
       // Format dates as ISO strings for Supabase
       const formattedValues = {
         ...values,
@@ -99,6 +101,7 @@ export function CreateCampaignDialog() {
       form.reset();
       setStep(1);
     } catch (error: any) {
+      console.error("Error creating campaign:", error);
       toast({
         title: 'Error',
         description: error.message,
@@ -113,7 +116,7 @@ export function CreateCampaignDialog() {
     setStep(1);
   };
 
-  const totalSteps = 3; // Update total steps to 3
+  const totalSteps = 3;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
