@@ -1,65 +1,59 @@
 
 import React, { useState } from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Search } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Button } from '@/components/ui/button';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { 
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectLabel,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { supabase } from '@/integrations/supabase/client';
+import { SearchIcon } from 'lucide-react';
 
-interface Props {
-  form: UseFormReturn<any>;
+type CompanySelectionFormProps = {
   onBack: () => void;
-  isSubmitting: boolean;
-}
+  onNext: () => void;
+  form: any;
+};
 
-export function CompanySelectionForm({ form, onBack, isSubmitting }: Props) {
+export function CompanySelectionForm({ onBack, onNext, form }: CompanySelectionFormProps) {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies'],
+  const { data: companies = [], isLoading } = useQuery({
+    queryKey: ['companies', searchTerm],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('companies')
-        .select('id, name, parent_id')
+        .select('id, name')
         .order('name');
+      
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data;
     },
   });
-
-  const includeSubsidiaries = form.watch('include_subsidiaries');
   
-  // Filter companies based on search term
-  const filteredCompanies = companies.filter((company) => {
-    const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (includeSubsidiaries) {
-      return matchesSearch;
-    } else {
-      // Only show parent companies (those without parent_id)
-      return matchesSearch && !company.parent_id;
-    }
-  });
+  const includeSubsidiaries = form.watch('include_subsidiaries');
 
   return (
-    <div className="space-y-4 py-2">
-      <div className="relative mb-6">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+    <div className="space-y-6">
+      <div className="relative">
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
         <Input
-          type="search"
           placeholder="Search companies..."
-          className="pl-9"
+          className="pl-10"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -67,11 +61,42 @@ export function CompanySelectionForm({ form, onBack, isSubmitting }: Props) {
 
       <FormField
         control={form.control}
+        name="company_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Company</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a company" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Companies</SelectLabel>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
         name="include_subsidiaries"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
             <div className="space-y-0.5">
-              <FormLabel className="text-base">Include Subsidiaries</FormLabel>
+              <FormLabel>Include Subsidiaries</FormLabel>
+              <FormDescription>
+                Include all subsidiaries of this company
+              </FormDescription>
             </div>
             <FormControl>
               <Switch
@@ -83,45 +108,21 @@ export function CompanySelectionForm({ form, onBack, isSubmitting }: Props) {
         )}
       />
 
-      <FormField
-        control={form.control}
-        name="company_id"
-        render={({ field }) => (
-          <FormItem className="space-y-3">
-            <FormLabel>Select Company</FormLabel>
-            <FormControl>
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="space-y-2 max-h-64 overflow-y-auto"
-              >
-                {filteredCompanies.length > 0 ? (
-                  filteredCompanies.map((company) => (
-                    <FormItem key={company.id} className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value={company.id} />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        {company.name} {company.parent_id && <span className="text-xs text-muted-foreground">(Subsidiary)</span>}
-                      </FormLabel>
-                    </FormItem>
-                  ))
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">No companies found</div>
-                )}
-              </RadioGroup>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
       <div className="flex justify-between pt-4">
-        <Button type="button" variant="outline" onClick={onBack}>
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onBack}
+        >
           Back
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating...' : 'Create Campaign'}
+        
+        <Button 
+          type="button" 
+          onClick={onNext} 
+          disabled={!form.getValues('company_id')}
+        >
+          Next
         </Button>
       </div>
     </div>

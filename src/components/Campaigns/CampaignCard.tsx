@@ -1,11 +1,13 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { Calendar, Tag, Clock } from 'lucide-react';
+import { Calendar, Tag, Clock, User } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { PlatformBadge } from './PlatformBadge';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export type Campaign = {
   id: string;
@@ -20,6 +22,7 @@ export type Campaign = {
   updated_at: string;
   platform: string | null;
   is_ongoing: boolean | null;
+  associated_user_id: string | null;
 };
 
 interface CampaignCardProps {
@@ -48,6 +51,28 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
   };
 
   const navigate = useNavigate();
+
+  // Fetch associated user details if available
+  const { data: associatedUser } = useQuery({
+    queryKey: ['user', campaign.associated_user_id],
+    queryFn: async () => {
+      if (!campaign.associated_user_id) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', campaign.associated_user_id)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching user:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!campaign.associated_user_id,
+  });
 
   return (
     <Card className="cursor-pointer" onClick={() => navigate(`/campaigns/${campaign.id}`)}>
@@ -92,6 +117,12 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
               {formatDate(campaign.start_date)} to {formatDate(campaign.end_date)}
             </div>
           )
+        )}
+        {associatedUser && (
+          <div className="mt-2 flex items-center text-sm">
+            <User className="h-4 w-4 mr-1 text-gray-500" />
+            Assigned to: {associatedUser.first_name} {associatedUser.last_name}
+          </div>
         )}
       </CardContent>
     </Card>

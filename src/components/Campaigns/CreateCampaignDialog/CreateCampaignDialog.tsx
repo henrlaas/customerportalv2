@@ -18,7 +18,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Form } from '@/components/ui/form';
 import { CampaignDetailsForm } from './CampaignDetailsForm';
 import { CompanySelectionForm } from './CompanySelectionForm';
+import { UserSelectionForm } from './UserSelectionForm';
 import { ProgressStepper } from './ProgressStepper';
+import { useAuth } from '@/contexts/AuthContext';
 
 const campaignSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -30,12 +32,14 @@ const campaignSchema = z.object({
   budget: z.number().nullable(),
   description: z.string().nullable(),
   include_subsidiaries: z.boolean().default(false),
+  associated_user_id: z.string().nullable(),
 });
 
 export function CreateCampaignDialog() {
   const [step, setStep] = React.useState(1);
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<z.infer<typeof campaignSchema>>({
     resolver: zodResolver(campaignSchema),
@@ -49,6 +53,7 @@ export function CreateCampaignDialog() {
       budget: null,
       description: null,
       include_subsidiaries: false,
+      associated_user_id: user?.id || null,
     },
   });
 
@@ -73,6 +78,7 @@ export function CreateCampaignDialog() {
           description: formattedValues.description,
           status: 'in_progress',
           is_ongoing: formattedValues.is_ongoing,
+          associated_user_id: formattedValues.associated_user_id,
         })
         .select()
         .single();
@@ -102,6 +108,8 @@ export function CreateCampaignDialog() {
     setStep(1);
   };
 
+  const totalSteps = 3; // Update total steps to 3
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -117,7 +125,7 @@ export function CreateCampaignDialog() {
           </DialogTitle>
         </DialogHeader>
         
-        <ProgressStepper currentStep={step} totalSteps={2} />
+        <ProgressStepper currentStep={step} totalSteps={totalSteps} />
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -126,11 +134,17 @@ export function CreateCampaignDialog() {
                 form={form}
                 onNext={() => setStep(2)}
               />
-            ) : (
+            ) : step === 2 ? (
               <CompanySelectionForm
                 form={form}
                 onBack={() => setStep(1)}
-                isSubmitting={form.formState.isSubmitting}
+                onNext={() => setStep(3)}
+              />
+            ) : (
+              <UserSelectionForm
+                form={form}
+                onBack={() => setStep(2)}
+                onNext={() => form.handleSubmit(onSubmit)()}
               />
             )}
           </form>
