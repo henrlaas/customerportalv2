@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -120,7 +121,7 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 overflow-hidden">
+            <div className="w-8 h-8 rounded-md flex items-center justify-center bg-gray-100 overflow-hidden">
               {companyFavicon ? (
                 <img
                   src={companyFavicon}
