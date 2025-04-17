@@ -45,7 +45,7 @@ export function CreateAdSetDialog({ campaignId }: Props) {
       description: 'Your ad set has been created successfully.',
     });
     
-    // Fix: Use the proper format for invalidating queries
+    // Invalidate queries to refresh data
     await queryClient.invalidateQueries({
       queryKey: ['adsets', campaignId]
     });
@@ -57,9 +57,9 @@ export function CreateAdSetDialog({ campaignId }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Ad Set
+        <Button variant="ghost" size="sm">
+          <Plus className="w-4 h-4 mr-1" />
+          <span className="sr-only md:not-sr-only md:inline">Add</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

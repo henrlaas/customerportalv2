@@ -1,5 +1,5 @@
 
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,9 +8,11 @@ import { CreateAdDialog } from '@/components/Campaigns/Ads/CreateAdDialog';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 export function AdSetDetailsPage() {
   const { adsetId } = useParams<{ adsetId: string }>();
+  const navigate = useNavigate();
   const [selectedAdsetId, setSelectedAdsetId] = useState<string | null>(adsetId || null);
 
   // Update selected adset when URL param changes
@@ -70,12 +72,23 @@ export function AdSetDetailsPage() {
 
   const campaignPlatform = selectedAdset?.campaigns?.platform;
 
+  const handleBackToCampaign = () => {
+    if (campaignId) {
+      navigate(`/campaigns/${campaignId}`);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-            <span>Campaign: {selectedAdset?.campaigns?.name || 'Loading...'}</span>
+            {campaignId && (
+              <Button variant="ghost" size="sm" className="pl-0" onClick={handleBackToCampaign}>
+                <ArrowLeft className="h-4 w-4 mr-1" /> 
+                Campaign: {selectedAdset?.campaigns?.name || 'Loading...'}
+              </Button>
+            )}
             {campaignPlatform && (
               <>
                 <span>•</span>
@@ -85,7 +98,6 @@ export function AdSetDetailsPage() {
           </div>
           <h1 className="text-2xl font-bold">Ad Sets & Ads</h1>
         </div>
-        {selectedAdsetId && <CreateAdDialog adsetId={selectedAdsetId} campaignPlatform={campaignPlatform} />}
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
@@ -135,6 +147,7 @@ export function AdSetDetailsPage() {
                     </span>
                   )}
                 </h2>
+                {selectedAdsetId && <CreateAdDialog adsetId={selectedAdsetId} campaignPlatform={campaignPlatform} />}
               </div>
               <AdsList ads={ads} campaignPlatform={campaignPlatform} />
             </div>
