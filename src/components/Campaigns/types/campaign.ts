@@ -1,4 +1,3 @@
-
 export type Platform = 'Meta' | 'Tiktok' | 'Google' | 'Snapchat' | 'LinkedIn';
 
 export interface Campaign {

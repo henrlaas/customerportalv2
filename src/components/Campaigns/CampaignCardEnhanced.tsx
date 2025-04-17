@@ -8,7 +8,8 @@ import {
   ChevronUp, 
   DollarSign,
   Building,
-  User
+  User,
+  ImageIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import { PlatformIcon } from './PlatformIcon';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/components/Deals/utils/formatters';
+import { fetchFavicon } from '@/services/companyHelpers';
 
 interface CampaignCardEnhancedProps {
   campaign: Campaign;
@@ -27,6 +29,28 @@ interface CampaignCardEnhancedProps {
 
 export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ campaign }) => {
   const [expanded, setExpanded] = useState(false);
+  const [companyFavicon, setCompanyFavicon] = useState<string | null>(null);
+
+  // Fetch favicon for the company
+  React.useEffect(() => {
+    if (campaign.companies?.name) {
+      const getCompanyInfo = async () => {
+        // First try to get the company details to find the website
+        const { data: companyData } = await supabase
+          .from('companies')
+          .select('website')
+          .eq('id', campaign.company_id)
+          .single();
+        
+        if (companyData?.website) {
+          const favicon = await fetchFavicon(companyData.website);
+          setCompanyFavicon(favicon);
+        }
+      };
+      
+      getCompanyInfo();
+    }
+  }, [campaign.company_id, campaign.companies?.name]);
 
   // Format date for display
   const formatDate = (dateString: string | null) => {
@@ -85,6 +109,10 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
     `${campaign.profiles.first_name?.[0] || ''}${campaign.profiles.last_name?.[0] || ''}` : 
     'U';
 
+  const platformStyle = campaign.platform ? {
+    backgroundColor: PLATFORM_COLORS[campaign.platform as keyof typeof PLATFORM_COLORS]?.bg
+  } : {};
+
   return (
     <Card className={cn(
       "overflow-hidden transition-all duration-200",
@@ -93,10 +121,28 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="rounded-full p-2" style={{ 
-              backgroundColor: campaign.platform ? PLATFORM_COLORS[campaign.platform as keyof typeof PLATFORM_COLORS]?.bg : '#f4f4f5'
-            }}>
-              <PlatformIcon platform={campaign.platform} size={18} />
+            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 overflow-hidden">
+              {companyFavicon ? (
+                <img
+                  src={companyFavicon}
+                  alt={`${campaign.companies?.name || 'Company'} favicon`}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null; 
+                    e.currentTarget.src = ''; 
+                    e.currentTarget.className = 'hidden';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                      const icon = document.createElement('div');
+                      icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect><circle cx="12" cy="12" r="4"></circle></svg>';
+                      icon.className = 'flex items-center justify-center w-full h-full text-gray-400';
+                      parent.appendChild(icon);
+                    }
+                  }}
+                />
+              ) : (
+                <Building className="h-4 w-4 text-gray-400" />
+              )}
             </div>
 
             <div>
@@ -111,9 +157,21 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
             </div>
           </div>
 
-          <Badge className={getStatusBadgeColor(campaign.status)}>
-            {campaign.status}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {campaign.platform && (
+              <div className="rounded-full p-2 flex items-center justify-center" style={platformStyle}>
+                <PlatformIcon 
+                  platform={campaign.platform} 
+                  size={18}
+                  className={PLATFORM_COLORS[campaign.platform as keyof typeof PLATFORM_COLORS]?.text}
+                />
+              </div>
+            )}
+
+            <Badge className={getStatusBadgeColor(campaign.status)}>
+              {campaign.status}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
 
