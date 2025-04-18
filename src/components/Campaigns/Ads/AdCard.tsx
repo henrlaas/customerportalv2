@@ -60,7 +60,7 @@ export function AdCard({ ad, campaignPlatform }: Props) {
     <Card className="overflow-hidden relative">
       {/* Navigation buttons when there are multiple variations */}
       {totalVariations > 1 && (
-        <div className="absolute inset-y-0 left-0 right-0 flex justify-between items-center px-1 z-10 pointer-events-none">
+        <div className="absolute inset-y-0 top-auto bottom-auto left-0 right-0 flex justify-between items-center px-1 z-10 pointer-events-none">
           <Button
             onClick={prevVariation}
             variant="ghost"
