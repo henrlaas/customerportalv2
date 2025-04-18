@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft, Check, Camera, Link, Zap, Sparkles, FileText, Globe } from 'lucide-react';
+import { Plus, ArrowLeft, Check, Camera, Link, Zap, Sparkles, FileText, Globe, AlertCircle } from 'lucide-react';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,24 +39,32 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
   // Ensure platform is a valid Platform type, or default to 'Meta'
   const validPlatform = (campaignPlatform as Platform) || 'Meta';
   
-  // Add a new step for URL and CTA before the final step
+  // Add a new step for URL and CTA right after the first step
   const baseSteps = getStepsForPlatform(validPlatform);
   
-  // Insert a new step for URL and CTA
   const urlStep = {
     title: 'Landing Page & CTA',
     description: 'Add your destination URL and call-to-action',
     fields: [],
     showBasicFields: false
   };
+
+  // Add a confirmation step at the end
+  const confirmationStep = {
+    title: 'Confirm & Create',
+    description: 'Review your ad details and create your ad',
+    fields: [],
+    showBasicFields: false
+  };
   
-  // Insert the URL step before the last step
+  // Insert the URL step after the first step and add confirmation as the last step
   const steps = [
-    ...baseSteps.slice(0, baseSteps.length - 1),
-    urlStep,
-    baseSteps[baseSteps.length - 1]
+    baseSteps[0], // Basic Info
+    urlStep,      // URL & CTA step (now second)
+    ...baseSteps.slice(1, baseSteps.length), // Variation steps
+    confirmationStep // Final confirmation step
   ];
-  
+
   const form = useForm<AdFormData>({
     defaultValues: {
       name: '',
@@ -357,13 +364,57 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     switch (stepIndex) {
       case 0:
         return <Camera className="h-5 w-5 text-primary" />;
-      case steps.length - 2: // URL & CTA step
+      case 1: // URL & CTA step
         return <Globe className="h-5 w-5 text-primary" />;
       case steps.length - 1: // Last step
         return <FileText className="h-5 w-5 text-primary" />;
       default:
         return <FileText className="h-5 w-5 text-primary" />;
     }
+  };
+
+  // Render confirmation step
+  const renderConfirmationStep = () => {
+    return (
+      <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center space-y-4"
+        >
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-primary" />
+          </div>
+          <h3 className="text-xl font-semibold">Ready to Create Your Ad?</h3>
+          <p className="text-muted-foreground">
+            Please review your ad details before proceeding. Once created, you can still edit the ad later.
+          </p>
+        </motion.div>
+
+        <Card className="border-primary/10 shadow-sm hover:shadow-md transition-all duration-300">
+          <CardContent className="p-6 space-y-4">
+            <div className="grid gap-4">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Ad Name:</span>
+                <span className="font-medium">{form.watch('name')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Platform:</span>
+                <span className="font-medium">{validPlatform}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Landing Page:</span>
+                <span className="font-medium">{form.watch('url') || 'Not set'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Call to Action:</span>
+                <span className="font-medium">{form.watch('cta_button') || 'None'}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   };
 
   return (
@@ -416,8 +467,8 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                 </motion.div>
               )}
               
-              {/* URL and CTA dedicated step */}
-              {step === steps.length - 2 && (
+              {/* URL and CTA step - now second step */}
+              {step === 1 && (
                 <motion.div
                   key="step-url-cta"
                   initial={{ opacity: 0, y: 10 }}
@@ -463,7 +514,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
               )}
               
               {/* Variation steps */}
-              {step > 0 && step !== steps.length - 2 && (
+              {step > 1 && step < steps.length - 1 && (
                 <motion.div
                   key={`step-${step}`}
                   initial={{ opacity: 0, y: 10 }}
@@ -493,9 +544,9 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                   
                   {/* Only show preview for certain platforms and steps */}
                   {((validPlatform === 'Meta' || validPlatform === 'LinkedIn') || 
-                    (validPlatform === 'Google' && step === steps.length - 1) ||
-                    (validPlatform === 'Snapchat' && step > 0) ||
-                    (validPlatform === 'Tiktok' && step > 0)) && (
+                    (validPlatform === 'Google' && step === steps.length - 2) ||
+                    (validPlatform === 'Snapchat' && step > 1) ||
+                    (validPlatform === 'Tiktok' && step > 1)) && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -517,6 +568,20 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                       </Card>
                     </motion.div>
                   )}
+                </motion.div>
+              )}
+
+              {/* Confirmation step */}
+              {step === steps.length - 1 && (
+                <motion.div
+                  key="step-confirmation"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="px-6 pb-6"
+                >
+                  {renderConfirmationStep()}
                 </motion.div>
               )}
             </AnimatePresence>
