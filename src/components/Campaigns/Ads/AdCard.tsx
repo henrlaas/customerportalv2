@@ -65,7 +65,7 @@ export function AdCard({ ad, campaignPlatform }: Props) {
             onClick={prevVariation}
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform -ml-10"
+            className="h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background pointer-events-auto"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -73,7 +73,7 @@ export function AdCard({ ad, campaignPlatform }: Props) {
             onClick={nextVariation}
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform ml-10"
+            className="h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background pointer-events-auto"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
