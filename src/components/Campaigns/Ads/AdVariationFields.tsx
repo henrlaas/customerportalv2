@@ -24,8 +24,8 @@ export function AdVariationFields({
   const limits = PLATFORM_CHARACTER_LIMITS[platform] || {};
 
   const getFieldName = (field: string, variationNum: number) => {
-    if (variationNum === 0) return field;
-    return `${field}_variations.${variationNum - 1}.text`;
+    if (variationNum === 0) return field as keyof AdFormData;
+    return `${field}_variations.${variationNum - 1}.text` as keyof AdFormData;
   };
 
   const renderField = (field: string) => {
@@ -39,7 +39,7 @@ export function AdVariationFields({
         key={fieldName}
         control={form.control}
         name={fieldName}
-        render={({ field }) => (
+        render={({ field: formField }) => (
           <FormItem>
             <FormLabel>
               {field === 'main_text' ? 'Main Text' : 
@@ -53,7 +53,7 @@ export function AdVariationFields({
             </FormLabel>
             <FormControl>
               <Component
-                {...field}
+                {...formField}
                 maxLength={limit}
                 className={cn(
                   value?.length > 0 && limit &&
