@@ -1,5 +1,9 @@
+
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   ad: any;
@@ -7,8 +11,72 @@ interface Props {
 }
 
 export function AdCard({ ad, campaignPlatform }: Props) {
+  const [currentVariation, setCurrentVariation] = useState(0);
+  
+  // Parse the variations from JSON strings
+  const headlineVariations = ad.headline_variations ? JSON.parse(ad.headline_variations) : [];
+  const descriptionVariations = ad.description_variations ? JSON.parse(ad.description_variations) : [];
+  const mainTextVariations = ad.main_text_variations ? JSON.parse(ad.main_text_variations) : [];
+  const keywordsVariations = ad.keywords_variations ? JSON.parse(ad.keywords_variations) : [];
+  
+  // Calculate total variations (headline is most common, so we use it as reference)
+  const totalVariations = 1 + headlineVariations.length; // Base + variations
+  
+  const getVariationValue = (field: string, variation: number) => {
+    if (variation === 0) {
+      return ad[field];
+    }
+    
+    const variationsArray = {
+      headline: headlineVariations,
+      description: descriptionVariations,
+      main_text: mainTextVariations,
+      keywords: keywordsVariations
+    }[field];
+    
+    return variationsArray && variationsArray[variation - 1]?.text;
+  };
+
+  const nextVariation = () => {
+    setCurrentVariation((prev) => (prev + 1) % totalVariations);
+  };
+
+  const prevVariation = () => {
+    setCurrentVariation((prev) => (prev - 1 + totalVariations) % totalVariations);
+  };
+
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden relative">
+      {/* Navigation buttons when there are multiple variations */}
+      {totalVariations > 1 && (
+        <div className="absolute inset-y-0 left-0 right-0 flex justify-between items-center px-1 z-10 pointer-events-none">
+          <Button
+            onClick={prevVariation}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background pointer-events-auto"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={nextVariation}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background pointer-events-auto"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+      
+      {totalVariations > 1 && (
+        <div className="absolute top-2 right-2 z-10">
+          <span className="bg-primary/80 text-primary-foreground text-xs px-2 py-1 rounded-full">
+            {currentVariation + 1} / {totalVariations}
+          </span>
+        </div>
+      )}
+      
       {ad.file_url && (
         <div className="relative h-48 bg-muted">
           {ad.ad_type === 'image' ? (
@@ -38,20 +106,30 @@ export function AdCard({ ad, campaignPlatform }: Props) {
       </CardHeader>
       
       <CardContent className="text-sm space-y-2">
-        {ad.headline && (
-          <p><span className="font-medium">Headline:</span> {ad.headline}</p>
+        {getVariationValue('headline', currentVariation) && (
+          <p>
+            <span className="font-medium">Headline:</span> {getVariationValue('headline', currentVariation)}
+          </p>
         )}
-        {ad.description && (
-          <p><span className="font-medium">Description:</span> {ad.description}</p>
+        {getVariationValue('description', currentVariation) && (
+          <p>
+            <span className="font-medium">Description:</span> {getVariationValue('description', currentVariation)}
+          </p>
         )}
-        {ad.main_text && (
-          <p><span className="font-medium">Main Text:</span> {ad.main_text}</p>
+        {getVariationValue('main_text', currentVariation) && (
+          <p>
+            <span className="font-medium">Main Text:</span> {getVariationValue('main_text', currentVariation)}
+          </p>
         )}
-        {ad.keywords && (
-          <p><span className="font-medium">Keywords:</span> {ad.keywords}</p>
+        {getVariationValue('keywords', currentVariation) && (
+          <p>
+            <span className="font-medium">Keywords:</span> {getVariationValue('keywords', currentVariation)}
+          </p>
         )}
         {ad.brand_name && (
-          <p><span className="font-medium">Brand:</span> {ad.brand_name}</p>
+          <p>
+            <span className="font-medium">Brand:</span> {ad.brand_name}
+          </p>
         )}
         {ad.cta_button && (
           <div className="mt-3">

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,9 +11,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AdFormData, PLATFORM_CHARACTER_LIMITS, Platform } from '../types/campaign';
 import { FileInfo, WatchedFields } from './types';
 import { AdMediaUploaderStep } from './AdMediaUploaderStep';
-import { AdFormFields } from './AdFormFields';
 import { AdPreview } from './AdPreview';
-import { AdProgressStepper } from './AdProgressStepper';
+import { TextVariation, getStepsForPlatform, requiresMediaUpload } from './types/variations';
+import { AdVariationStepper } from './AdVariationStepper';
+import { AdVariationFields } from './AdVariationFields';
 
 interface Props {
   adsetId: string;
@@ -21,11 +23,15 @@ interface Props {
 
 export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Ensure platform is a valid Platform type, or default to 'Meta'
+  const validPlatform = (campaignPlatform as Platform) || 'Meta';
+  const steps = getStepsForPlatform(validPlatform);
   
   const form = useForm<AdFormData>({
     defaultValues: {
@@ -51,8 +57,6 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     url: form.watch('url') || '',
   };
 
-  // Ensure platform is a valid Platform type, or default to 'Meta'
-  const validPlatform = (campaignPlatform as Platform) || 'Meta';
   const limits = PLATFORM_CHARACTER_LIMITS[validPlatform] || {};
   
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,9 +132,32 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       setUploading(false);
     }
   };
+
+  // Collect all variations for a specific field
+  const collectVariations = (field: string): TextVariation[] => {
+    const variations: TextVariation[] = [];
+    
+    // Add the base field as the first variation
+    const baseValue = form.watch(field as keyof AdFormData);
+    if (baseValue) {
+      variations.push({ text: baseValue });
+    }
+    
+    // Add other variations if they exist
+    for (let i = 1; i < steps.length; i++) {
+      const variationKey = `${field}_variations.${i-1}.text`;
+      const value = form.watch(variationKey as keyof AdFormData);
+      if (value) {
+        variations.push({ text: value });
+      }
+    }
+    
+    return variations;
+  };
   
   const onSubmit = async (data: AdFormData) => {
-    if (!fileInfo) {
+    // For Google ads, we don't need a file upload
+    if (requiresMediaUpload(validPlatform) && !fileInfo) {
       toast({
         title: 'Missing file',
         description: 'Please upload an image or video for your ad.',
@@ -140,62 +167,106 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     }
     
     setUploading(true);
-    const uploadedFile = await uploadFile(fileInfo.file);
-    if (!uploadedFile) {
-      setUploading(false);
-      return;
+    
+    // Upload file if needed
+    let uploadedFile = null;
+    if (fileInfo) {
+      uploadedFile = await uploadFile(fileInfo.file);
+      if (!uploadedFile && requiresMediaUpload(validPlatform)) {
+        setUploading(false);
+        return;
+      }
     }
     
-    const { error } = await supabase.from('ads').insert({
-      ...data,
-      ad_type: fileInfo.type,
-      file_url: uploadedFile.url,
-      file_type: fileInfo.file.type,
-      url: data.url || null, // Add URL to the ad insertion
-    });
+    // Collect all variations for each field type
+    const headlineVariations = collectVariations('headline');
+    const descriptionVariations = collectVariations('description');
+    const mainTextVariations = collectVariations('main_text');
+    const keywordsVariations = collectVariations('keywords');
     
-    if (error) {
+    try {
+      // Insert the ad with all variations
+      const { error } = await supabase.from('ads').insert({
+        ...data,
+        ad_type: fileInfo?.type || 'text',
+        file_url: uploadedFile?.url || null,
+        file_type: fileInfo?.file.type || null,
+        headline_variations: JSON.stringify(headlineVariations.slice(1)), // Start from index 1 since the first one is the base field
+        description_variations: JSON.stringify(descriptionVariations.slice(1)),
+        main_text_variations: JSON.stringify(mainTextVariations.slice(1)),
+        keywords_variations: JSON.stringify(keywordsVariations.slice(1)),
+        url: data.url || null,
+      });
+      
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Ad created',
+        description: 'Your ad has been created successfully.',
+      });
+      
+      await queryClient.invalidateQueries({
+        queryKey: ['ads', adsetId]
+      });
+      
+      setOpen(false);
+      resetDialog();
+    } catch (error: any) {
       toast({
         title: 'Error creating ad',
         description: error.message,
         variant: 'destructive',
       });
+    } finally {
       setUploading(false);
-      return;
     }
+  };
 
-    toast({
-      title: 'Ad created',
-      description: 'Your ad has been created successfully.',
-    });
+  const validateStep = () => {
+    if (step === 0) {
+      // Check if name is provided
+      const name = form.watch('name');
+      if (!name) {
+        toast({
+          title: 'Missing information',
+          description: 'Please provide an ad name.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+      
+      // For platforms that require media, check if it's uploaded
+      if (requiresMediaUpload(validPlatform) && step === 0 && !fileInfo) {
+        toast({
+          title: 'Missing file',
+          description: 'Please upload an image or video for your ad.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+    }
     
-    await queryClient.invalidateQueries({
-      queryKey: ['ads', adsetId]
-    });
-    
-    setUploading(false);
-    setOpen(false);
-    resetDialog();
+    return true;
   };
 
   const nextStep = () => {
-    if (step === 1 && (!fileInfo || !form.watch('name'))) {
-      toast({
-        title: 'Missing information',
-        description: 'Please provide an ad name and upload a media file.',
-        variant: 'destructive',
-      });
-      return;
+    if (!validateStep()) return;
+    
+    if (step < steps.length - 1) {
+      setStep(step + 1);
     }
-    setStep(2);
   };
 
   const previousStep = () => {
-    setStep(1);
+    if (step > 0) {
+      setStep(step - 1);
+    }
   };
 
   const resetDialog = () => {
-    setStep(1);
+    setStep(0);
     setFileInfo(null);
     form.reset();
   };
@@ -216,43 +287,64 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
           <DialogTitle>Create New Ad</DialogTitle>
         </DialogHeader>
         
-        <AdProgressStepper currentStep={step} totalSteps={2} />
+        <AdVariationStepper 
+          platform={validPlatform}
+          currentStep={step} 
+          steps={steps}
+          onStepChange={setStep}
+        />
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {step === 1 && (
+            {step === 0 && (
               <AdMediaUploaderStep
                 fileInfo={fileInfo}
                 onFileChange={handleFileChange}
                 onRemoveFile={() => setFileInfo(null)}
                 form={form}
                 onNextStep={nextStep}
+                hideFileUpload={!requiresMediaUpload(validPlatform)}
               />
             )}
             
-            {step === 2 && (
+            {step > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <AdFormFields 
+                <AdVariationFields 
                   form={form}
                   platform={validPlatform}
-                  limits={limits}
+                  variation={step}
+                  fields={steps[step].fields || []}
+                  showBasicFields={steps[step].showBasicFields}
                 />
                 
-                <AdPreview
-                  fileInfo={fileInfo}
-                  watchedFields={watchedFields}
-                  platform={validPlatform}
-                  limits={limits}
-                />
+                {/* Only show preview for certain platforms and steps */}
+                {((validPlatform === 'Meta' || validPlatform === 'LinkedIn') || 
+                  (validPlatform === 'Google' && step === steps.length - 1) ||
+                  (validPlatform === 'Snapchat' && step > 0) ||
+                  (validPlatform === 'Tiktok' && step > 0)) && (
+                  <AdPreview
+                    fileInfo={fileInfo}
+                    watchedFields={watchedFields}
+                    platform={validPlatform}
+                    limits={limits}
+                  />
+                )}
                 
                 <div className="flex justify-between md:col-span-2">
                   <Button type="button" variant="outline" onClick={previousStep}>
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
                   </Button>
-                  <Button type="submit" disabled={uploading}>
-                    {uploading ? 'Creating...' : 'Create Ad'} 
-                    {uploading ? null : <Check className="ml-2 h-4 w-4" />}
-                  </Button>
+                  
+                  {step === steps.length - 1 ? (
+                    <Button type="submit" disabled={uploading}>
+                      {uploading ? 'Creating...' : 'Create Ad'} 
+                      {uploading ? null : <Check className="ml-2 h-4 w-4" />}
+                    </Button>
+                  ) : (
+                    <Button type="button" onClick={nextStep}>
+                      Next
+                    </Button>
+                  )}
                 </div>
               </div>
             )}

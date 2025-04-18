@@ -1,3 +1,4 @@
+
 export interface AdFormData {
   name: string;
   adset_id: string;
@@ -8,6 +9,13 @@ export interface AdFormData {
   brand_name?: string;
   cta_button?: string | null;
   url?: string | null;
+  // Add variation fields
+  headline_variations?: { text: string }[];
+  description_variations?: { text: string }[];
+  main_text_variations?: { text: string }[];
+  keywords_variations?: { text: string }[];
+  // Add other fields as needed
+  [key: string]: any; // Allow dynamic field access with index signature
 }
 
 export interface AdSetFormData {
@@ -106,4 +114,3 @@ export const PLATFORM_CHARACTER_LIMITS = {
     headline: 40,
   }
 };
-
