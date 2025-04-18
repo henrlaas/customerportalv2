@@ -33,6 +33,14 @@ export function AdVariationFields({
     const limit = limits[field as keyof typeof limits];
     const value = form.watch(fieldName as any);
     const Component = field === 'main_text' ? Textarea : Input;
+    
+    // Format field label for display
+    const getFieldLabel = (fieldName: string): string => {
+      if (fieldName === 'main_text') return 'Main Text';
+      if (fieldName === 'url') return 'Landing Page URL';
+      if (fieldName === 'cta_button') return 'Call to Action';
+      return fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+    };
 
     return (
       <FormField
@@ -42,8 +50,7 @@ export function AdVariationFields({
         render={({ field: formField }) => (
           <FormItem>
             <FormLabel>
-              {field === 'main_text' ? 'Main Text' : 
-               field.charAt(0).toUpperCase() + field.slice(1)}
+              {getFieldLabel(field)}
               {limit && (
                 <span className="text-xs text-muted-foreground ml-2">
                   ({value?.length || 0}/{limit})

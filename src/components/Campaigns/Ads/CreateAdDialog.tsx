@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -9,12 +8,15 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdFormData, PLATFORM_CHARACTER_LIMITS, Platform } from '../types/campaign';
-import { FileInfo, WatchedFields } from './types';
+import { FileInfo, WatchedFields, CTA_BUTTON_OPTIONS } from './types';
 import { AdMediaUploaderStep } from './AdMediaUploaderStep';
 import { AdPreview } from './AdPreview';
 import { TextVariation, getStepsForPlatform, requiresMediaUpload } from './types/variations';
 import { AdVariationStepper } from './AdVariationStepper';
 import { AdVariationFields } from './AdVariationFields';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Props {
   adsetId: string;
@@ -43,7 +45,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       keywords: '',
       brand_name: '',
       cta_button: '',
-      url: null,
+      url: '',
     },
   });
 
@@ -271,6 +273,55 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     form.reset();
   };
 
+  // Add URL and CTA button fields to the form
+  const renderUrlAndCtaFields = () => {
+    return (
+      <div className="space-y-4">
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Landing Page URL</FormLabel>
+              <FormControl>
+                <Input placeholder="https://example.com/landing-page" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="cta_button"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Call to Action Button</FormLabel>
+              <Select
+                value={field.value || ''}
+                onValueChange={field.onChange}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a CTA button" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {CTA_BUTTON_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option === 'No button' ? '' : option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
       setOpen(newOpen);
@@ -309,13 +360,18 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
             
             {step > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <AdVariationFields 
-                  form={form}
-                  platform={validPlatform}
-                  variation={step}
-                  fields={steps[step].fields || []}
-                  showBasicFields={steps[step].showBasicFields}
-                />
+                <div className="space-y-6">
+                  <AdVariationFields 
+                    form={form}
+                    platform={validPlatform}
+                    variation={step}
+                    fields={steps[step].fields || []}
+                    showBasicFields={steps[step].showBasicFields}
+                  />
+                  
+                  {/* Add URL and CTA fields if this is the final variation step */}
+                  {step === steps.length - 1 && renderUrlAndCtaFields()}
+                </div>
                 
                 {/* Only show preview for certain platforms and steps */}
                 {((validPlatform === 'Meta' || validPlatform === 'LinkedIn') || 
