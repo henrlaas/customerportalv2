@@ -1,27 +1,26 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft, Check, Camera, Link, Zap, Sparkles, FileText, Globe, AlertCircle } from 'lucide-react';
+import { Plus, ArrowLeft, Check, Camera, Link, Zap, Sparkles, FileText, Globe } from 'lucide-react';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdFormData, PLATFORM_CHARACTER_LIMITS, Platform } from '../types/campaign';
-import { FileInfo, WatchedFields, CTA_BUTTON_OPTIONS } from './types';
-import { AdMediaUploaderStep } from './AdMediaUploaderStep';
+import { FileInfo, WatchedFields } from './types';
 import { AdPreview } from './AdPreview';
 import { TextVariation, getStepsForPlatform, requiresMediaUpload } from './types/variations';
-import { AdVariationStepper } from './AdVariationStepper';
-import { AdVariationFields } from './AdVariationFields';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { AdProgressStepper } from './AdProgressStepper';
 import '../animations.css';
+import { BasicInfoStep } from './Steps/BasicInfoStep';
+import { UrlAndCtaStep } from './Steps/UrlAndCtaStep';
+import { VariationStep } from './Steps/VariationStep';
+import { ConfirmationStep } from './Steps/ConfirmationStep';
 
 interface Props {
   adsetId: string;
@@ -190,7 +189,6 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     return variations;
   };
   
-  // This is the explicit form submission handler that will only be triggered when the user clicks the Create Ad button
   const onSubmit = async (data: AdFormData) => {
     // For Google ads, we don't need a file upload
     if (requiresMediaUpload(validPlatform) && !fileInfo) {
@@ -307,59 +305,6 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     form.reset();
   };
 
-  // URL and CTA fields are now in their own step
-  const renderUrlAndCtaFields = () => {
-    return (
-      <div className="space-y-4">
-        <FormField
-          control={form.control}
-          name="url"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-2">
-                <Link className="h-4 w-4 text-primary" /> Landing Page URL
-              </FormLabel>
-              <FormControl>
-                <Input placeholder="https://example.com/landing-page" {...field} className="transition-all focus:ring-2 focus:ring-primary/20" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="cta_button"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-primary" /> Call to Action Button
-              </FormLabel>
-              <Select
-                value={field.value || ''}
-                onValueChange={field.onChange}
-              >
-                <FormControl>
-                  <SelectTrigger className="transition-all focus:ring-2 focus:ring-primary/20">
-                    <SelectValue placeholder="Select a CTA button" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="max-h-[200px]">
-                  {CTA_BUTTON_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option === 'No button' ? '' : option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-    );
-  };
-
   const getStepIcon = (stepIndex: number) => {
     switch (stepIndex) {
       case 0:
@@ -373,48 +318,42 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     }
   };
 
-  // Render confirmation step
-  const renderConfirmationStep = () => {
-    return (
-      <div className="space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-4"
-        >
-          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <AlertCircle className="w-8 h-8 text-primary" />
+  // Render preview component
+  const renderPreview = () => (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3, delay: 0.1 }}
+      className="flex flex-col"
+    >
+      <Card className="border-primary/10 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-background to-muted/20 h-full">
+        <CardContent className="p-6 h-full">
+          <div className="text-lg font-medium text-primary mb-4 flex items-center gap-2">
+            <Sparkles className="h-4 w-4" /> Ad Preview
           </div>
-          <h3 className="text-xl font-semibold">Ready to Create Your Ad?</h3>
-          <p className="text-muted-foreground">
-            Please review your ad details before proceeding. Once created, you can still edit the ad later.
-          </p>
-        </motion.div>
+          <AdPreview
+            fileInfo={fileInfo}
+            watchedFields={watchedFields}
+            platform={validPlatform}
+            limits={limits}
+          />
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
 
-        <Card className="border-primary/10 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardContent className="p-6 space-y-4">
-            <div className="grid gap-4">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Ad Name:</span>
-                <span className="font-medium">{form.watch('name')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Platform:</span>
-                <span className="font-medium">{validPlatform}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Landing Page:</span>
-                <span className="font-medium">{form.watch('url') || 'Not set'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Call to Action:</span>
-                <span className="font-medium">{form.watch('cta_button') || 'None'}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  const showPreview = (currentStep: number) => {
+    // Only show preview for URL step and variations
+    if (currentStep === 1) return true;
+    
+    if (currentStep > 1 && currentStep < steps.length - 1) {
+      return ((validPlatform === 'Meta' || validPlatform === 'LinkedIn') || 
+        (validPlatform === 'Google' && currentStep === steps.length - 2) ||
+        (validPlatform === 'Snapchat' && currentStep > 1) ||
+        (validPlatform === 'Tiktok' && currentStep > 1));
+    }
+    
+    return false;
   };
 
   return (
@@ -454,7 +393,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                 >
                   <Card className="border-primary/10 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
                     <CardContent className="p-6">
-                      <AdMediaUploaderStep
+                      <BasicInfoStep
                         fileInfo={fileInfo}
                         onFileChange={handleFileChange}
                         onRemoveFile={() => setFileInfo(null)}
@@ -467,7 +406,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                 </motion.div>
               )}
               
-              {/* URL and CTA step - now second step */}
+              {/* URL and CTA step - second step */}
               {step === 1 && (
                 <motion.div
                   key="step-url-cta"
@@ -480,36 +419,12 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                   <div className="space-y-6">
                     <Card className="border-primary/10 shadow-sm transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
                       <CardContent className="p-6 space-y-6">
-                        <div className="flex items-center gap-2 text-lg font-medium text-primary mb-2">
-                          <Globe className="h-5 w-5 text-primary" />
-                          <h3>{steps[step].title || `Destination & Call-to-Action`}</h3>
-                        </div>
-                        
-                        {renderUrlAndCtaFields()}
+                        <UrlAndCtaStep form={form} />
                       </CardContent>
                     </Card>
                   </div>
                   
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3, delay: 0.1 }}
-                    className="flex flex-col"
-                  >
-                    <Card className="border-primary/10 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-background to-muted/20 h-full">
-                      <CardContent className="p-6 h-full">
-                        <div className="text-lg font-medium text-primary mb-4 flex items-center gap-2">
-                          <Sparkles className="h-4 w-4" /> Ad Preview
-                        </div>
-                        <AdPreview
-                          fileInfo={fileInfo}
-                          watchedFields={watchedFields}
-                          platform={validPlatform}
-                          limits={limits}
-                        />
-                      </CardContent>
-                    </Card>
-                  </motion.div>
+                  {renderPreview()}
                 </motion.div>
               )}
               
@@ -531,7 +446,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                           <h3>{steps[step].title || `Variation ${step}`}</h3>
                         </div>
                         
-                        <AdVariationFields 
+                        <VariationStep
                           form={form}
                           platform={validPlatform}
                           variation={step}
@@ -542,32 +457,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                     </Card>
                   </div>
                   
-                  {/* Only show preview for certain platforms and steps */}
-                  {((validPlatform === 'Meta' || validPlatform === 'LinkedIn') || 
-                    (validPlatform === 'Google' && step === steps.length - 2) ||
-                    (validPlatform === 'Snapchat' && step > 1) ||
-                    (validPlatform === 'Tiktok' && step > 1)) && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, delay: 0.1 }}
-                      className="flex flex-col"
-                    >
-                      <Card className="border-primary/10 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-background to-muted/20 h-full">
-                        <CardContent className="p-6 h-full">
-                          <div className="text-lg font-medium text-primary mb-4 flex items-center gap-2">
-                            <Sparkles className="h-4 w-4" /> Ad Preview
-                          </div>
-                          <AdPreview
-                            fileInfo={fileInfo}
-                            watchedFields={watchedFields}
-                            platform={validPlatform}
-                            limits={limits}
-                          />
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  )}
+                  {showPreview(step) && renderPreview()}
                 </motion.div>
               )}
 
@@ -581,7 +471,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                   transition={{ duration: 0.3 }}
                   className="px-6 pb-6"
                 >
-                  {renderConfirmationStep()}
+                  <ConfirmationStep form={form} platform={validPlatform} />
                 </motion.div>
               )}
             </AnimatePresence>
