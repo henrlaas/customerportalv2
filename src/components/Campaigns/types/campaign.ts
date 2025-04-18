@@ -1,4 +1,3 @@
-
 export interface AdFormData {
   name: string;
   adset_id: string;
@@ -107,3 +106,4 @@ export const PLATFORM_CHARACTER_LIMITS = {
     headline: 40,
   }
 };
+

@@ -17,12 +17,16 @@ export type Database = {
           created_at: string
           cta_button: string | null
           description: string | null
+          description_variations: Json | null
           file_type: string
           file_url: string
           headline: string | null
+          headline_variations: Json | null
           id: string
           keywords: string | null
+          keywords_variations: Json | null
           main_text: string | null
+          main_text_variations: Json | null
           name: string
           updated_at: string
           url: string | null
@@ -34,12 +38,16 @@ export type Database = {
           created_at?: string
           cta_button?: string | null
           description?: string | null
+          description_variations?: Json | null
           file_type: string
           file_url: string
           headline?: string | null
+          headline_variations?: Json | null
           id?: string
           keywords?: string | null
+          keywords_variations?: Json | null
           main_text?: string | null
+          main_text_variations?: Json | null
           name: string
           updated_at?: string
           url?: string | null
@@ -51,12 +59,16 @@ export type Database = {
           created_at?: string
           cta_button?: string | null
           description?: string | null
+          description_variations?: Json | null
           file_type?: string
           file_url?: string
           headline?: string | null
+          headline_variations?: Json | null
           id?: string
           keywords?: string | null
+          keywords_variations?: Json | null
           main_text?: string | null
+          main_text_variations?: Json | null
           name?: string
           updated_at?: string
           url?: string | null
