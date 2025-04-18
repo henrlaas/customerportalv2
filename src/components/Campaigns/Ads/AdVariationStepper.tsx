@@ -34,7 +34,7 @@ export function AdVariationStepper({
                   variant={currentStep === index ? "default" : "outline"}
                   size="icon"
                   className={cn(
-                    "h-8 w-8 rounded-full transition-all duration-300",
+                    "h-8 w-8 rounded-full transition-all duration-300 press-effect",
                     currentStep === index && "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
                     currentStep > index && "bg-primary/20 text-primary border-primary",
                     currentStep < index && "border-dashed"

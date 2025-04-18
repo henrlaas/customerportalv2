@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft, Check, Camera, Link, Zap, Sparkles, FileText } from 'lucide-react';
+import { Plus, ArrowLeft, Check, Camera, Link, Zap, Sparkles, FileText, Globe } from 'lucide-react';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,7 +39,24 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
   
   // Ensure platform is a valid Platform type, or default to 'Meta'
   const validPlatform = (campaignPlatform as Platform) || 'Meta';
-  const steps = getStepsForPlatform(validPlatform);
+  
+  // Add a new step for URL and CTA before the final step
+  const baseSteps = getStepsForPlatform(validPlatform);
+  
+  // Insert a new step for URL and CTA
+  const urlStep = {
+    title: 'Landing Page & CTA',
+    description: 'Add your destination URL and call-to-action',
+    fields: [],
+    showBasicFields: false
+  };
+  
+  // Insert the URL step before the last step
+  const steps = [
+    ...baseSteps.slice(0, baseSteps.length - 1),
+    urlStep,
+    baseSteps[baseSteps.length - 1]
+  ];
   
   const form = useForm<AdFormData>({
     defaultValues: {
@@ -152,7 +169,10 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     }
     
     // Add other variations if they exist
-    for (let i = 1; i < steps.length; i++) {
+    // Skip the URL step which doesn't have variations
+    const variationsCount = baseSteps.length - 1;
+    
+    for (let i = 1; i < variationsCount; i++) {
       const variationKey = `${field}_variations.${i-1}.text`;
       const value = form.watch(variationKey as any);
       if (value) {
@@ -163,6 +183,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     return variations;
   };
   
+  // This is the explicit form submission handler that will only be triggered when the user clicks the Create Ad button
   const onSubmit = async (data: AdFormData) => {
     // For Google ads, we don't need a file upload
     if (requiresMediaUpload(validPlatform) && !fileInfo) {
@@ -279,7 +300,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     form.reset();
   };
 
-  // Add URL and CTA button fields to the form
+  // URL and CTA fields are now in their own step
   const renderUrlAndCtaFields = () => {
     return (
       <div className="space-y-4">
@@ -336,8 +357,10 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     switch (stepIndex) {
       case 0:
         return <Camera className="h-5 w-5 text-primary" />;
-      case steps.length - 1:
-        return <Link className="h-5 w-5 text-primary" />;
+      case steps.length - 2: // URL & CTA step
+        return <Globe className="h-5 w-5 text-primary" />;
+      case steps.length - 1: // Last step
+        return <FileText className="h-5 w-5 text-primary" />;
       default:
         return <FileText className="h-5 w-5 text-primary" />;
     }
@@ -393,7 +416,54 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                 </motion.div>
               )}
               
-              {step > 0 && (
+              {/* URL and CTA dedicated step */}
+              {step === steps.length - 2 && (
+                <motion.div
+                  key="step-url-cta"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 pb-6"
+                >
+                  <div className="space-y-6">
+                    <Card className="border-primary/10 shadow-sm transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
+                      <CardContent className="p-6 space-y-6">
+                        <div className="flex items-center gap-2 text-lg font-medium text-primary mb-2">
+                          <Globe className="h-5 w-5 text-primary" />
+                          <h3>{steps[step].title || `Destination & Call-to-Action`}</h3>
+                        </div>
+                        
+                        {renderUrlAndCtaFields()}
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className="flex flex-col"
+                  >
+                    <Card className="border-primary/10 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-background to-muted/20 h-full">
+                      <CardContent className="p-6 h-full">
+                        <div className="text-lg font-medium text-primary mb-4 flex items-center gap-2">
+                          <Sparkles className="h-4 w-4" /> Ad Preview
+                        </div>
+                        <AdPreview
+                          fileInfo={fileInfo}
+                          watchedFields={watchedFields}
+                          platform={validPlatform}
+                          limits={limits}
+                        />
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </motion.div>
+              )}
+              
+              {/* Variation steps */}
+              {step > 0 && step !== steps.length - 2 && (
                 <motion.div
                   key={`step-${step}`}
                   initial={{ opacity: 0, y: 10 }}
@@ -417,9 +487,6 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                           fields={steps[step].fields || []}
                           showBasicFields={steps[step].showBasicFields}
                         />
-                        
-                        {/* Add URL and CTA fields if this is the final variation step */}
-                        {step === steps.length - 1 && renderUrlAndCtaFields()}
                       </CardContent>
                     </Card>
                   </div>
