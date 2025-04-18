@@ -23,22 +23,22 @@ export function AdVariationFields({
 }: AdVariationFieldsProps) {
   const limits = PLATFORM_CHARACTER_LIMITS[platform] || {};
 
-  const getFieldName = (field: string, variationNum: number) => {
-    if (variationNum === 0) return field as keyof AdFormData;
-    return `${field}_variations.${variationNum - 1}.text` as keyof AdFormData;
+  const getFieldName = (field: string, variationNum: number): string => {
+    if (variationNum === 0) return field;
+    return `${field}_variations.${variationNum - 1}.text`;
   };
 
   const renderField = (field: string) => {
     const fieldName = getFieldName(field, variation);
     const limit = limits[field as keyof typeof limits];
-    const value = form.watch(fieldName);
+    const value = form.watch(fieldName as any);
     const Component = field === 'main_text' ? Textarea : Input;
 
     return (
       <FormField
         key={fieldName}
         control={form.control}
-        name={fieldName}
+        name={fieldName as any}
         render={({ field: formField }) => (
           <FormItem>
             <FormLabel>

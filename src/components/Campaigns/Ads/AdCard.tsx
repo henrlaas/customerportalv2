@@ -13,11 +13,22 @@ interface Props {
 export function AdCard({ ad, campaignPlatform }: Props) {
   const [currentVariation, setCurrentVariation] = useState(0);
   
-  // Parse the variations from JSON strings
-  const headlineVariations = ad.headline_variations ? JSON.parse(ad.headline_variations) : [];
-  const descriptionVariations = ad.description_variations ? JSON.parse(ad.description_variations) : [];
-  const mainTextVariations = ad.main_text_variations ? JSON.parse(ad.main_text_variations) : [];
-  const keywordsVariations = ad.keywords_variations ? JSON.parse(ad.keywords_variations) : [];
+  // Safely parse JSON strings with error handling
+  const safeParseJson = (jsonString: string | null) => {
+    if (!jsonString) return [];
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error(`Error parsing JSON: ${error}`);
+      return [];
+    }
+  };
+  
+  // Parse the variations from JSON strings with safe parsing
+  const headlineVariations = safeParseJson(ad.headline_variations);
+  const descriptionVariations = safeParseJson(ad.description_variations);
+  const mainTextVariations = safeParseJson(ad.main_text_variations);
+  const keywordsVariations = safeParseJson(ad.keywords_variations);
   
   // Calculate total variations (headline is most common, so we use it as reference)
   const totalVariations = 1 + headlineVariations.length; // Base + variations

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -138,7 +137,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     const variations: TextVariation[] = [];
     
     // Add the base field as the first variation
-    const baseValue = form.watch(field as keyof AdFormData);
+    const baseValue = form.watch(field as any);
     if (baseValue) {
       variations.push({ text: baseValue });
     }
@@ -146,7 +145,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     // Add other variations if they exist
     for (let i = 1; i < steps.length; i++) {
       const variationKey = `${field}_variations.${i-1}.text`;
-      const value = form.watch(variationKey as keyof AdFormData);
+      const value = form.watch(variationKey as any);
       if (value) {
         variations.push({ text: value });
       }
