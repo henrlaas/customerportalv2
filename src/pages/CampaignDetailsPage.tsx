@@ -1,3 +1,4 @@
+
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useState, useEffect } from 'react';
 import { CreateAdDialog } from '@/components/Campaigns/Ads/CreateAdDialog';
 import { AdSetList } from '@/components/Campaigns/Adsets/AdSetList';
+import { Edit, Trash2 } from 'lucide-react';
+import { EditAdSetDialog } from '@/components/Campaigns/Adsets/EditAdSetDialog';
+import { DeleteAdSetDialog } from '@/components/Campaigns/Adsets/DeleteAdSetDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function CampaignDetailsPage() {
   const { campaignId } = useParams<{ campaignId: string }>();
@@ -30,7 +35,7 @@ export function CampaignDetailsPage() {
   });
 
   // Fetch all adsets for this campaign
-  const { data: allAdsets = [] } = useQuery({
+  const { data: allAdsets = [], refetch: refetchAdsets } = useQuery({
     queryKey: ['adsets', campaignId],
     queryFn: async () => {
       if (!campaignId) return [];
@@ -81,20 +86,9 @@ export function CampaignDetailsPage() {
     enabled: !!selectedAdsetId,
   });
 
-  // Refetch function to refresh data
-  const { refetch: refetchAdsets } = useQuery({
-    queryKey: ['adsets', campaignId],
-    queryFn: async () => {
-      if (!campaignId) return [];
-      const { data } = await supabase
-        .from('adsets')
-        .select('*')
-        .eq('campaign_id', campaignId)
-        .order('created_at', { ascending: false });
-      return data || [];
-    },
-    enabled: !!campaignId,
-  });
+  const handleAdsetUpdate = () => {
+    refetchAdsets();
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -129,17 +123,51 @@ export function CampaignDetailsPage() {
               ) : (
                 <ul className="space-y-1">
                   {allAdsets.map((adset) => (
-                    <li key={adset.id}>
+                    <li key={adset.id} className="relative group">
                       <Button
                         variant={adset.id === selectedAdsetId ? "secondary" : "ghost"}
                         className={cn(
-                          "w-full justify-start text-left font-normal",
+                          "w-full justify-start text-left font-normal pr-16",
                           adset.id === selectedAdsetId && "font-medium"
                         )}
                         onClick={() => setSelectedAdsetId(adset.id)}
                       >
                         {adset.name}
                       </Button>
+                      <div className="absolute right-1 top-1/2 -translate-y-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <EditAdSetDialog 
+                                adset={adset} 
+                                onSuccess={handleAdsetUpdate}
+                                trigger={
+                                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                                    <Edit className="h-3.5 w-3.5" />
+                                  </Button>
+                                } 
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>Edit Ad Set</TooltipContent>
+                          </Tooltip>
+
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <DeleteAdSetDialog 
+                                adsetId={adset.id} 
+                                adsetName={adset.name} 
+                                onSuccess={handleAdsetUpdate}
+                                trigger={
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive/90">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                } 
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>Delete Ad Set</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </li>
                   ))}
                 </ul>
