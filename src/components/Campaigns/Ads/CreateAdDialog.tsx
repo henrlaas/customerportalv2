@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft, Check, Camera, FileText, Globe } from 'lucide-react';
@@ -11,7 +10,7 @@ import { requiresMediaUpload } from './types/variations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AdProgressStepper } from './AdProgressStepper';
-import './animations.css';
+import '../animations.css';
 import { BasicInfoStep } from './Steps/BasicInfoStep';
 import { UrlAndCtaStep } from './Steps/UrlAndCtaStep';
 import { VariationStep } from './Steps/VariationStep';
