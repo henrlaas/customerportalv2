@@ -60,7 +60,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
   // Get current variation fields based on step
   const getWatchedFieldsForCurrentVariation = (): WatchedFields => {
     // For step 0 (basic info) or steps beyond variations, use the base fields
-    if (step === 0 || step === 5) {
+    if (step === 0 || step === 7) {
       return {
         headline: form.watch('headline') || '',
         description: form.watch('description') || '',
@@ -72,8 +72,8 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       };
     }
     
-    // For variation steps (1-4), get the specific variation data
-    const variation = step;
+    // For variation steps (2-6), get the specific variation data
+    const variation = step - 1;
     return {
       headline: variation === 1 
         ? form.watch('headline') || '' 
@@ -100,16 +100,16 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       showBasicFields: true
     },
     { 
-      title: 'Variation 1', 
-      description: 'Create your first ad variation',
-      fields: ['headline', 'description', 'main_text'],
-      showBasicFields: true
-    },
-    { 
       title: 'URL & CTA', 
       description: 'Set your landing page and call to action',
       fields: ['url', 'cta_button'],
       showBasicFields: false
+    },
+    { 
+      title: 'Variation 1', 
+      description: 'Create your first ad variation',
+      fields: ['headline', 'description', 'main_text'],
+      showBasicFields: true
     },
     { 
       title: 'Variation 2', 
@@ -125,6 +125,16 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       title: 'Variation 4',
       description: 'Add alternative headline, description and text',
       fields: ['headline', 'description', 'main_text']
+    },
+    { 
+      title: 'Variation 5',
+      description: 'Add alternative headline, description and text',
+      fields: ['headline', 'description', 'main_text']
+    },
+    { 
+      title: 'Confirmation',
+      description: 'Review and create your ad',
+      showBasicFields: false
     }
   ];
 
@@ -250,7 +260,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
         </DialogHeader>
         
         <div className="px-6">
-          <AdProgressStepper currentStep={step + 1} totalSteps={6} />
+          <AdProgressStepper currentStep={step + 1} totalSteps={8} />
         </div>
         
         <Form {...form}>
@@ -279,41 +289,10 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                   />
                 </motion.div>
               )}
-              
-              {step === 1 && (
+            
+              {step === 1 && (validPlatform === 'Meta' || validPlatform === 'LinkedIn') && (
                 <motion.div
                   key="step-1"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 pb-6"
-                >
-                  <div className="space-y-6">
-                    <VariationStep
-                      form={form}
-                      platform={validPlatform}
-                      variation={1}
-                      fields={baseSteps[1].fields || []}
-                      showBasicFields={baseSteps[1].showBasicFields}
-                    />
-                  </div>
-                  
-                  {showPreview(1, validPlatform, baseSteps.length) && (
-                    <AdDialogPreview
-                      fileInfo={fileInfo}
-                      watchedFields={watchedFields}
-                      platform={validPlatform}
-                      limits={limits}
-                      variation={1}
-                    />
-                  )}
-                </motion.div>
-              )}
-
-              {step === 2 && (validPlatform === 'Meta' || validPlatform === 'LinkedIn') && (
-                <motion.div
-                  key="step-2"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -323,8 +302,8 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                   <UrlAndCtaStep form={form} />
                 </motion.div>
               )}
-              
-              {step > 2 && step < baseSteps.length && (
+
+              {step >= 2 && step <= 6 && (
                 <motion.div
                   key={`step-${step}`}
                   initial={{ opacity: 0, y: 10 }}
@@ -337,25 +316,25 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                     <VariationStep
                       form={form}
                       platform={validPlatform}
-                      variation={step}
+                      variation={step - 1}
                       fields={baseSteps[step].fields || []}
                       showBasicFields={baseSteps[step].showBasicFields}
                     />
                   </div>
                   
-                  {showPreview(step, validPlatform, baseSteps.length) && (
+                  {showPreview(step - 1, validPlatform, baseSteps.length) && (
                     <AdDialogPreview
                       fileInfo={fileInfo}
                       watchedFields={watchedFields}
                       platform={validPlatform}
                       limits={limits}
-                      variation={step}
+                      variation={step - 1}
                     />
                   )}
                 </motion.div>
               )}
 
-              {step === baseSteps.length && (
+              {step === baseSteps.length - 1 && (
                 <motion.div
                   key="step-confirmation"
                   initial={{ opacity: 0, y: 10 }}
@@ -383,7 +362,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
               
-              {step === 5 ? (
+              {step === baseSteps.length - 1 ? (
                 <Button 
                   type="button"
                   onClick={handleManualSubmit}
