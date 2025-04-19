@@ -31,13 +31,16 @@ export function AdCard({ ad, campaignPlatform }: Props) {
   const keywordsVariations = safeParseJson(ad.keywords_variations);
   
   // Calculate total variations (headline is most common, so we use it as reference)
-  const totalVariations = 1 + headlineVariations.length; // Base + variations
+  // Include the base variation (0) plus all the others
+  const totalVariations = 1 + headlineVariations.length; 
   
   const getVariationValue = (field: string, variation: number) => {
+    // For variation 0, use the base field value
     if (variation === 0) {
       return ad[field];
     }
     
+    // For variations 1 and above, use the variation array (with index - 1)
     const variationsArray = {
       headline: headlineVariations,
       description: descriptionVariations,
@@ -83,7 +86,7 @@ export function AdCard({ ad, campaignPlatform }: Props) {
       {totalVariations > 1 && (
         <div className="absolute top-2 right-2 z-10">
           <span className="bg-primary/80 text-primary-foreground text-xs px-2 py-1 rounded-full">
-            {currentVariation + 1} / {totalVariations}
+            {currentVariation === 0 ? "Base" : `Variation ${currentVariation}`} / {totalVariations}
           </span>
         </div>
       )}

@@ -14,7 +14,6 @@ export function AdPreview({ fileInfo, watchedFields, platform, limits, variation
 
   // Function to get the correct variation text
   function getVariationText(field: keyof WatchedFields): string {
-    // For any variation (including 0), use the field value from watchedFields
     return watchedFields[field] || '';
   }
 
@@ -60,7 +59,7 @@ export function AdPreview({ fileInfo, watchedFields, platform, limits, variation
         </div>
 
         <div className="space-y-2">
-          {(watchedFields.headline || variation > 0) && (
+          {watchedFields.headline && (
             <div className="text-base font-medium line-clamp-2">
               {getVariationText('headline')}
             </div>
@@ -70,11 +69,11 @@ export function AdPreview({ fileInfo, watchedFields, platform, limits, variation
             <div className="text-sm text-muted-foreground">{watchedFields.brand_name}</div>
           )}
 
-          {(watchedFields.main_text || variation > 0) && (
+          {watchedFields.main_text && (
             <div className="text-sm line-clamp-3">{getVariationText('main_text')}</div>
           )}
 
-          {(watchedFields.description || variation > 0) && (
+          {watchedFields.description && (
             <div className="text-xs text-muted-foreground line-clamp-2">
               {getVariationText('description')}
             </div>

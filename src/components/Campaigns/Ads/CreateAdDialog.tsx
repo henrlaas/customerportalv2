@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -59,8 +60,8 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
 
   // Get current variation fields based on step
   const getWatchedFieldsForCurrentVariation = (): WatchedFields => {
-    // For step 0 (basic info) or steps beyond variations, use the base fields
-    if (step === 0 || step === 7) {
+    // For step 0 (basic info) or step 1 (url & cta) or step 8 (confirmation), return base fields
+    if (step === 0 || step === 1 || step === 7) {
       return {
         headline: form.watch('headline') || '',
         description: form.watch('description') || '',
@@ -73,17 +74,28 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     }
     
     // For variation steps (2-6), get the specific variation data
-    const variation = step - 1;
+    // step 2 = variation 1 (base variation)
+    // step 3 = variation 2 (first actual variation in array)
+    const variationIndex = step - 2;
+    
+    // For the first variation (step 2), use the base fields
+    if (variationIndex === 0) {
+      return {
+        headline: form.watch('headline') || '',
+        description: form.watch('description') || '',
+        main_text: form.watch('main_text') || '',
+        keywords: form.watch('keywords') || '',
+        brand_name: form.watch('brand_name') || '',
+        cta_button: form.watch('cta_button') || '',
+        url: form.watch('url') || '',
+      };
+    }
+    
+    // For variations 2-5 (steps 3-6), use the variations array
     return {
-      headline: variation === 1 
-        ? form.watch('headline') || '' 
-        : form.watch(`headline_variations.${variation-1}.text`) || form.watch('headline') || '',
-      description: variation === 1 
-        ? form.watch('description') || '' 
-        : form.watch(`description_variations.${variation-1}.text`) || form.watch('description') || '',
-      main_text: variation === 1 
-        ? form.watch('main_text') || '' 
-        : form.watch(`main_text_variations.${variation-1}.text`) || form.watch('main_text') || '',
+      headline: form.watch(`headline_variations.${variationIndex-1}.text`) || form.watch('headline') || '',
+      description: form.watch(`description_variations.${variationIndex-1}.text`) || form.watch('description') || '',
+      main_text: form.watch(`main_text_variations.${variationIndex-1}.text`) || form.watch('main_text') || '',
       keywords: form.watch('keywords') || '',
       brand_name: form.watch('brand_name') || '',
       cta_button: form.watch('cta_button') || '',
@@ -316,21 +328,20 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                     <VariationStep
                       form={form}
                       platform={validPlatform}
-                      variation={step - 1}
+                      variation={step - 2} // Adjust variation to be 0-based (step 2 = variation 0)
                       fields={baseSteps[step].fields || []}
                       showBasicFields={baseSteps[step].showBasicFields}
                     />
                   </div>
                   
-                  {showPreview(step - 1, validPlatform, baseSteps.length) && (
-                    <AdDialogPreview
-                      fileInfo={fileInfo}
-                      watchedFields={watchedFields}
-                      platform={validPlatform}
-                      limits={limits}
-                      variation={step - 1}
-                    />
-                  )}
+                  {/* Always show preview for variation steps */}
+                  <AdDialogPreview
+                    fileInfo={fileInfo}
+                    watchedFields={watchedFields}
+                    platform={validPlatform}
+                    limits={limits}
+                    variation={step - 2} // Adjust variation to be 0-based (step 2 = variation 0)
+                  />
                 </motion.div>
               )}
 
