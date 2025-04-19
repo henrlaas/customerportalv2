@@ -20,9 +20,10 @@ interface DeleteAdSetDialogProps {
   adsetId: string;
   adsetName: string;
   onSuccess?: () => void;
+  trigger?: React.ReactNode;
 }
 
-export function DeleteAdSetDialog({ adsetId, adsetName, onSuccess }: DeleteAdSetDialogProps) {
+export function DeleteAdSetDialog({ adsetId, adsetName, onSuccess, trigger }: DeleteAdSetDialogProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -67,9 +68,11 @@ export function DeleteAdSetDialog({ adsetId, adsetName, onSuccess }: DeleteAdSet
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {trigger || (
+          <Button variant="ghost" size="icon">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

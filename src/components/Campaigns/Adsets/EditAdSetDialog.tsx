@@ -15,9 +15,10 @@ interface EditAdSetDialogProps {
     targeting?: string;
   };
   onSuccess?: () => void;
+  trigger?: React.ReactNode;
 }
 
-export function EditAdSetDialog({ adset, onSuccess }: EditAdSetDialogProps) {
+export function EditAdSetDialog({ adset, onSuccess, trigger }: EditAdSetDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(adset.name);
   const [targeting, setTargeting] = useState(adset.targeting || '');
@@ -56,9 +57,11 @@ export function EditAdSetDialog({ adset, onSuccess }: EditAdSetDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Edit className="h-4 w-4" />
-        </Button>
+        {trigger || (
+          <Button variant="ghost" size="icon">
+            <Edit className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
