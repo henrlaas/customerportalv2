@@ -22,6 +22,10 @@ export interface AdPreviewProps {
   limits: Record<string, number>;
 }
 
+export interface TextVariation {
+  text: string;
+}
+
 export const CTA_BUTTON_OPTIONS = [
   'No button',
   'Learn More',

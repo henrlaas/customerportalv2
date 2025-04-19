@@ -5,7 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AdFormData, Platform } from '../../types/campaign';
-import { FileInfo, TextVariation } from '../types';
+import { FileInfo } from '../types';
+import { TextVariation } from '../types';
 
 export const useAdForm = (adsetId: string, campaignPlatform?: string) => {
   const [uploading, setUploading] = useState(false);

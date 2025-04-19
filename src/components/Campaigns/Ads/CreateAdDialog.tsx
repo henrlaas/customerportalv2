@@ -193,7 +193,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
   // Helper function to render the icon
   const renderStepIcon = (stepIndex: number) => {
     const iconData = getStepIcon(stepIndex, { Camera, Globe, FileText });
-    if (iconData && 'type' in iconData && 'props' in iconData) {
+    if (iconData && iconData.type) {
       return createElement(iconData.type, iconData.props);
     }
     return null;
