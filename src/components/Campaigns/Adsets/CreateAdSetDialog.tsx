@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
 const adsetSchema = z.object({
   name: z.string().min(1, { message: 'Ad Set name is required' }),
@@ -31,6 +32,7 @@ const adsetSchema = z.object({
 export function CreateAdSetDialog({ campaignId }: { campaignId: string }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
 
   const form = useForm<z.infer<typeof adsetSchema>>({
     resolver: zodResolver(adsetSchema),
@@ -76,6 +78,7 @@ export function CreateAdSetDialog({ campaignId }: { campaignId: string }) {
 
       queryClient.invalidateQueries({ queryKey: ['adsets', campaignId] });
       form.reset();
+      setOpen(false); // Close the dialog after successful creation
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -86,7 +89,7 @@ export function CreateAdSetDialog({ campaignId }: { campaignId: string }) {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="transition-all hover:scale-105 hover:shadow-md">
           <Plus className="w-4 h-4 mr-2" />
