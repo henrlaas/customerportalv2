@@ -29,6 +29,7 @@ export function CampaignDetailsPage() {
       console.log('Fetching campaign with ID:', campaignId);
       
       try {
+        // First fetch the campaign data without joining to profiles
         const { data, error } = await supabase
           .from('campaigns')
           .select(`
@@ -47,11 +48,6 @@ export function CampaignDetailsPage() {
             companies (
               name,
               logo_url
-            ),
-            profiles (
-              first_name,
-              last_name,
-              avatar_url
             )
           `)
           .eq('id', campaignId)
@@ -64,11 +60,35 @@ export function CampaignDetailsPage() {
         
         if (data) {
           console.log('Campaign data received:', data);
-          const campaignData = {
+          
+          // Initialize with campaign data
+          const campaignData: Campaign = {
             ...data,
             status: data.status as CampaignStatus,
           };
-          return campaignData as unknown as Campaign;
+          
+          // Check if we need to fetch associated user info
+          if (data.associated_user_id) {
+            try {
+              const { data: userData, error: userError } = await supabase
+                .from('profiles')
+                .select('first_name, last_name, avatar_url')
+                .eq('id', data.associated_user_id)
+                .single();
+              
+              if (!userError && userData) {
+                campaignData.profiles = userData;
+              } else {
+                console.log('No user profile found or error fetching user profile');
+                campaignData.profiles = null;
+              }
+            } catch (userError) {
+              console.error('Error fetching associated user:', userError);
+              campaignData.profiles = { error: true };
+            }
+          }
+          
+          return campaignData;
         }
         
         console.log('No campaign data found');

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CampaignDetailsBanner } from '@/components/Campaigns/CampaignDetailsBanner';
-import { Campaign } from '@/components/Campaigns/types/campaign';
+import { Campaign, CampaignStatus } from '@/components/Campaigns/types/campaign';
 
 export function AdSetDetailsPage() {
   const { adsetId } = useParams<{ adsetId: string }>();
@@ -29,33 +29,71 @@ export function AdSetDetailsPage() {
     queryKey: ['campaign', adset?.campaign_id],
     queryFn: async () => {
       if (!adset?.campaign_id) return null;
-      const { data } = await supabase
-        .from('campaigns')
-        .select(`
-          *,
-          companies (
+      try {
+        const { data, error } = await supabase
+          .from('campaigns')
+          .select(`
+            id,
             name,
-            logo_url
-          ),
-          profiles (
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
-        .eq('id', adset.campaign_id)
-        .single();
-      
-      if (data) {
-        const campaignData = {
-          ...data,
-          status: data.status as any, // Cast to the appropriate CampaignStatus type
-        };
+            description,
+            status,
+            platform,
+            budget,
+            company_id,
+            associated_user_id,
+            created_at,
+            is_ongoing,
+            start_date,
+            end_date,
+            companies (
+              name,
+              logo_url
+            )
+          `)
+          .eq('id', adset.campaign_id)
+          .single();
         
-        return campaignData as unknown as Campaign;
+        if (error) {
+          console.error('Error fetching campaign:', error);
+          throw error;
+        }
+        
+        if (data) {
+          // Initialize with campaign data
+          const campaignData: Campaign = {
+            ...data,
+            status: data.status as CampaignStatus,
+          };
+          
+          // Check if we need to fetch associated user info
+          if (data.associated_user_id) {
+            try {
+              const { data: userData, error: userError } = await supabase
+                .from('profiles')
+                .select('first_name, last_name, avatar_url')
+                .eq('id', data.associated_user_id)
+                .single();
+              
+              if (!userError && userData) {
+                campaignData.profiles = userData;
+              } else {
+                console.log('No user profile found or error fetching user profile');
+                campaignData.profiles = null;
+              }
+            } catch (userError) {
+              console.error('Error fetching associated user:', userError);
+              campaignData.profiles = { error: true };
+            }
+          }
+          
+          return campaignData;
+        }
+        
+        return null;
+      } catch (error) {
+        console.error('Failed to fetch campaign details:', error);
+        throw error;
       }
-      
-      return null;
     },
     enabled: !!adset?.campaign_id,
   });
