@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +10,7 @@ export function AdSetDetailsPage() {
   const navigate = useNavigate();
   
   // Fetch the adset details
-  const { data: adset } = useQuery({
+  const { data: adset, isLoading: isLoadingAdset } = useQuery({
     queryKey: ['adset', adsetId],
     queryFn: async () => {
       if (!adsetId) return null;
@@ -61,6 +62,7 @@ export function AdSetDetailsPage() {
 
   return (
     <div>
+      {/* Display the campaign banner at the top of the page */}
       <CampaignDetailsBanner campaign={campaign} onCampaignUpdate={refetchCampaign} />
       
       {/* Rest of the AdSetDetailsPage content */}
