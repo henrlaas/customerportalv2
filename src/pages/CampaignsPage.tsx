@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -101,6 +100,18 @@ const CampaignsPage: React.FC = () => {
     );
   }
 
+  // Helper function to format status for tabs
+  const formatStatus = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'draft': return 'Draft';
+      case 'in-progress': return 'In Progress';
+      case 'ready': return 'Ready';
+      case 'published': return 'Published';
+      case 'archived': return 'Archived';
+      default: return status;
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4 py-8">
       <div className="flex justify-between items-center">
@@ -122,11 +133,9 @@ const CampaignsPage: React.FC = () => {
         <Tabs defaultValue="all" value={status} onValueChange={setStatus} className="w-full sm:w-auto">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="draft">Draft</TabsTrigger>
-            <TabsTrigger value="in-progress">In Progress</TabsTrigger>
-            <TabsTrigger value="ready">Ready</TabsTrigger>
-            <TabsTrigger value="published">Published</TabsTrigger>
-            <TabsTrigger value="archived">Archived</TabsTrigger>
+            {['draft', 'in-progress', 'ready', 'published', 'archived'].map((s) => (
+              <TabsTrigger key={s} value={s}>{formatStatus(s)}</TabsTrigger>
+            ))}
           </TabsList>
         </Tabs>
       </div>

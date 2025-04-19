@@ -61,17 +61,11 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
     return format(new Date(dateString), 'MMM d, yyyy');
   };
 
-  // Get status badge color
+  // Modify the status badge color function to use more readable status labels
   const getStatusBadgeColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
       case 'draft':
         return 'bg-gray-100 text-gray-800';
-      case 'paused':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800';
       case 'in-progress':
         return 'bg-blue-100 text-blue-800';
       case 'ready':
@@ -82,6 +76,24 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Helper function to convert status to a more readable format
+  const formatStatus = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'draft':
+        return 'Draft';
+      case 'in-progress':
+        return 'In Progress';
+      case 'ready':
+        return 'Ready';
+      case 'published':
+        return 'Published';
+      case 'archived':
+        return 'Archived';
+      default:
+        return status;
     }
   };
 
@@ -166,7 +178,7 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
 
           <div className="flex items-center gap-2">
             <Badge className={getStatusBadgeColor(campaign.status)}>
-              {campaign.status}
+              {formatStatus(campaign.status)}
             </Badge>
             
             {campaign.platform && (
