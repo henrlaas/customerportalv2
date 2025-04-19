@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CampaignDetailsBanner } from '@/components/Campaigns/CampaignDetailsBanner';
-import { Campaign, CampaignStatus } from '@/components/Campaigns/types/campaign';
+import { Campaign, CampaignStatus, Platform } from '@/components/Campaigns/types/campaign';
 
 export function AdSetDetailsPage() {
   const { adsetId } = useParams<{ adsetId: string }>();
@@ -59,10 +59,11 @@ export function AdSetDetailsPage() {
         }
         
         if (data) {
-          // Initialize with campaign data
+          // Initialize with campaign data and properly cast platform as Platform type
           const campaignData: Campaign = {
             ...data,
             status: data.status as CampaignStatus,
+            platform: data.platform as Platform, // Cast platform string to Platform type
           };
           
           // Check if we need to fetch associated user info

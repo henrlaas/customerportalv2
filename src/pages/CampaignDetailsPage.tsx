@@ -15,7 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { CampaignDetailsBanner } from '@/components/Campaigns/CampaignDetailsBanner';
 import { AdSetList } from '@/components/Campaigns/Adsets/AdSetList';
 import { AdsList } from '@/components/Campaigns/Ads/AdsList';
-import { Campaign, CampaignStatus } from '@/components/Campaigns/types/campaign';
+import { Campaign, CampaignStatus, Platform } from '@/components/Campaigns/types/campaign';
 
 export function CampaignDetailsPage() {
   const { campaignId } = useParams<{ campaignId: string }>();
@@ -61,10 +61,11 @@ export function CampaignDetailsPage() {
         if (data) {
           console.log('Campaign data received:', data);
           
-          // Initialize with campaign data
+          // Initialize with campaign data and properly cast platform as Platform type
           const campaignData: Campaign = {
             ...data,
             status: data.status as CampaignStatus,
+            platform: data.platform as Platform, // Cast platform string to Platform type
           };
           
           // Check if we need to fetch associated user info
@@ -164,7 +165,7 @@ export function CampaignDetailsPage() {
     id: campaignId,
     name: 'Loading Campaign...',
     status: 'draft' as CampaignStatus,
-    platform: 'Meta',
+    platform: 'Meta' as Platform, // Properly cast as Platform type
     created_at: new Date().toISOString(),
     companies: {
       name: 'Loading...'
