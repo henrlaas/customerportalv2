@@ -1,3 +1,4 @@
+
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -114,7 +115,7 @@ export function CampaignDetailsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Campaign Banner */}
-      <CampaignDetailsBanner campaign={campaign} onCampaignUpdate={refetchCampaign} />
+      {campaign && <CampaignDetailsBanner campaign={campaign} onCampaignUpdate={refetchCampaign} />}
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-6">
