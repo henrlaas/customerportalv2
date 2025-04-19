@@ -1,6 +1,12 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft, Check, Camera, FileText, Globe } from 'lucide-react';
+import { Plus, ArrowLeft, Check, Camera, FileText, Globe, Link } from 'lucide-react';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -100,6 +106,12 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       showBasicFields: true
     },
     { 
+      title: 'URL & CTA', 
+      description: 'Set your landing page and call to action',
+      fields: ['url', 'cta_button'],
+      showBasicFields: false
+    },
+    { 
       title: 'Variation 2', 
       description: 'Add alternative headline, description and text',
       fields: ['headline', 'description', 'main_text']
@@ -111,11 +123,6 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     },
     { 
       title: 'Variation 4',
-      description: 'Add alternative headline, description and text',
-      fields: ['headline', 'description', 'main_text']
-    },
-    { 
-      title: 'Variation 5',
       description: 'Add alternative headline, description and text',
       fields: ['headline', 'description', 'main_text']
     }
@@ -273,7 +280,51 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                 </motion.div>
               )}
               
-              {step > 0 && step < 5 && (
+              {step === 1 && (
+                <motion.div
+                  key="step-1"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 pb-6"
+                >
+                  <div className="space-y-6">
+                    <VariationStep
+                      form={form}
+                      platform={validPlatform}
+                      variation={1}
+                      fields={baseSteps[1].fields || []}
+                      showBasicFields={baseSteps[1].showBasicFields}
+                    />
+                  </div>
+                  
+                  {showPreview(1, validPlatform, baseSteps.length) && (
+                    <AdDialogPreview
+                      fileInfo={fileInfo}
+                      watchedFields={watchedFields}
+                      platform={validPlatform}
+                      limits={limits}
+                      variation={1}
+                    />
+                  )}
+                </motion.div>
+              )}
+
+              {step === 2 && (validPlatform === 'Meta' || validPlatform === 'LinkedIn') && (
+                <motion.div
+                  key="step-2"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="px-6 pb-6"
+                >
+                  <UrlAndCtaStep form={form} />
+                </motion.div>
+              )}
+              
+              {step > 2 && step < baseSteps.length && (
                 <motion.div
                   key={`step-${step}`}
                   initial={{ opacity: 0, y: 10 }}
@@ -304,7 +355,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                 </motion.div>
               )}
 
-              {step === 5 && (
+              {step === baseSteps.length && (
                 <motion.div
                   key="step-confirmation"
                   initial={{ opacity: 0, y: 10 }}
