@@ -4,9 +4,10 @@ import { AdSetCard } from './AdSetCard';
 interface Props {
   adsets: any[];
   campaignId: string;
+  onUpdate?: () => void;
 }
 
-export function AdSetList({ adsets, campaignId }: Props) {
+export function AdSetList({ adsets, campaignId, onUpdate }: Props) {
   if (adsets.length === 0) {
     return (
       <div className="text-center p-8 border rounded-lg bg-muted/50">
@@ -19,7 +20,7 @@ export function AdSetList({ adsets, campaignId }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {adsets.map((adset) => (
-        <AdSetCard key={adset.id} adset={adset} />
+        <AdSetCard key={adset.id} adset={adset} onUpdate={onUpdate} />
       ))}
     </div>
   );

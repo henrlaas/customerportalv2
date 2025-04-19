@@ -1,4 +1,3 @@
-
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useState, useEffect } from 'react';
 import { CreateAdDialog } from '@/components/Campaigns/Ads/CreateAdDialog';
+import { AdSetList } from '@/components/Campaigns/Adsets/AdSetList';
 
 export function CampaignDetailsPage() {
   const { campaignId } = useParams<{ campaignId: string }>();
@@ -79,6 +79,21 @@ export function CampaignDetailsPage() {
       return data;
     },
     enabled: !!selectedAdsetId,
+  });
+
+  // Refetch function to refresh data
+  const { refetch: refetchAdsets } = useQuery({
+    queryKey: ['adsets', campaignId],
+    queryFn: async () => {
+      if (!campaignId) return [];
+      const { data } = await supabase
+        .from('adsets')
+        .select('*')
+        .eq('campaign_id', campaignId)
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!campaignId,
   });
 
   return (

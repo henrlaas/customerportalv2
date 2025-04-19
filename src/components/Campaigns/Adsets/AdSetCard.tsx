@@ -1,13 +1,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateAdDialog } from '../Ads/CreateAdDialog';
+import { EditAdSetDialog } from './EditAdSetDialog';
+import { DeleteAdSetDialog } from './DeleteAdSetDialog';
 import { Link } from 'react-router-dom';
 
 interface Props {
   adset: any;
+  onUpdate?: () => void;
 }
 
-export function AdSetCard({ adset }: Props) {
+export function AdSetCard({ adset, onUpdate }: Props) {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-2">
@@ -15,7 +18,15 @@ export function AdSetCard({ adset }: Props) {
           <Link to={`/adsets/${adset.id}`} className="hover:underline">
             <CardTitle className="text-lg">{adset.name}</CardTitle>
           </Link>
-          <CreateAdDialog adsetId={adset.id} campaignPlatform={adset.campaigns?.platform} />
+          <div className="flex items-center gap-1">
+            <EditAdSetDialog adset={adset} onSuccess={onUpdate} />
+            <DeleteAdSetDialog 
+              adsetId={adset.id} 
+              adsetName={adset.name} 
+              onSuccess={onUpdate} 
+            />
+            <CreateAdDialog adsetId={adset.id} campaignPlatform={adset.campaigns?.platform} />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="text-sm">
