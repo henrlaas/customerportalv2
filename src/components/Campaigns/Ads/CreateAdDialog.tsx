@@ -272,6 +272,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                       watchedFields={watchedFields}
                       platform={validPlatform}
                       limits={limits}
+                      variation={step}
                     />
                   )}
                 </motion.div>

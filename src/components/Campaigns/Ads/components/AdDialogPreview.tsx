@@ -11,9 +11,16 @@ interface AdDialogPreviewProps {
   watchedFields: WatchedFields;
   platform: Platform;
   limits: Record<string, number>;
+  variation?: number;
 }
 
-export const AdDialogPreview = ({ fileInfo, watchedFields, platform, limits }: AdDialogPreviewProps) => {
+export const AdDialogPreview = ({ 
+  fileInfo, 
+  watchedFields, 
+  platform, 
+  limits,
+  variation = 0 
+}: AdDialogPreviewProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -31,9 +38,10 @@ export const AdDialogPreview = ({ fileInfo, watchedFields, platform, limits }: A
             watchedFields={watchedFields}
             platform={platform}
             limits={limits}
+            variation={variation}
           />
         </CardContent>
       </Card>
     </motion.div>
   );
-};
+}

@@ -1,6 +1,7 @@
+
 import { AdPreviewProps } from './types';
 
-export function AdPreview({ fileInfo, watchedFields, platform, limits }: AdPreviewProps) {
+export function AdPreview({ fileInfo, watchedFields, platform, limits, variation = 0 }: AdPreviewProps) {
   function platformName(platform: string): string {
     return platform || 'Unknown';
   }
@@ -11,9 +12,20 @@ export function AdPreview({ fileInfo, watchedFields, platform, limits }: AdPrevi
       .replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
+  // Function to get the correct variation text
+  function getVariationText(field: keyof WatchedFields): string {
+    if (variation === 0) return watchedFields[field] || '';
+    
+    const variationField = `${field}_variations`;
+    const variations = form?.watch(variationField);
+    return variations?.[variation - 1]?.text || watchedFields[field] || '';
+  }
+
   return (
     <div className="border rounded-lg p-4 bg-muted/20">
-      <h3 className="font-semibold mb-4 text-lg">Ad Preview</h3>
+      <h3 className="font-semibold mb-4 text-lg">
+        Ad Preview {variation > 0 && `- Variation ${variation}`}
+      </h3>
       <div className="border rounded-md p-3 space-y-4 bg-white">
         <div className="relative h-40 bg-gray-100 rounded-md overflow-hidden">
           {fileInfo?.type === 'image' ? (
@@ -51,20 +63,24 @@ export function AdPreview({ fileInfo, watchedFields, platform, limits }: AdPrevi
         </div>
 
         <div className="space-y-2">
-          {watchedFields.headline && (
-            <div className="text-base font-medium line-clamp-2">{watchedFields.headline}</div>
+          {(watchedFields.headline || variation > 0) && (
+            <div className="text-base font-medium line-clamp-2">
+              {getVariationText('headline')}
+            </div>
           )}
 
           {watchedFields.brand_name && (
             <div className="text-sm text-muted-foreground">{watchedFields.brand_name}</div>
           )}
 
-          {watchedFields.main_text && (
-            <div className="text-sm line-clamp-3">{watchedFields.main_text}</div>
+          {(watchedFields.main_text || variation > 0) && (
+            <div className="text-sm line-clamp-3">{getVariationText('main_text')}</div>
           )}
 
-          {watchedFields.description && (
-            <div className="text-xs text-muted-foreground line-clamp-2">{watchedFields.description}</div>
+          {(watchedFields.description || variation > 0) && (
+            <div className="text-xs text-muted-foreground line-clamp-2">
+              {getVariationText('description')}
+            </div>
           )}
 
           {watchedFields.keywords && (

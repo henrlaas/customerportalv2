@@ -1,4 +1,3 @@
-
 export interface FileInfo {
   url: string;
   type: string;
@@ -20,6 +19,7 @@ export interface AdPreviewProps {
   watchedFields: WatchedFields;
   platform: string;
   limits: Record<string, number>;
+  variation?: number; // Add variation number
 }
 
 export interface TextVariation {
