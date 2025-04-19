@@ -1,4 +1,6 @@
 
+import { AdCard } from './AdCard';
+
 interface Props {
   ads: any[];
   campaignPlatform?: string;
