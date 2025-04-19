@@ -15,9 +15,9 @@ interface Props {
 
 export function AdSetCard({ adset, onUpdate }: Props) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden relative">
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-center">
           <Link to={`/adsets/${adset.id}`} className="hover:underline">
             <CardTitle className="text-lg">{adset.name}</CardTitle>
           </Link>
@@ -54,18 +54,16 @@ export function AdSetCard({ adset, onUpdate }: Props) {
                 <TooltipContent>Delete Ad Set</TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <CreateAdDialog adsetId={adset.id} campaignPlatform={adset.campaigns?.platform} />
           </div>
         </div>
       </CardHeader>
-      <CardContent className="text-sm">
-        {adset.targeting && (
+      {adset.targeting && (
+        <CardContent className="text-sm">
           <p className="text-muted-foreground">
             <span className="font-medium">Targeting:</span> {adset.targeting}
           </p>
-        )}
-      </CardContent>
+        </CardContent>
+      )}
     </Card>
   );
 }
-
