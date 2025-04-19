@@ -1,16 +1,19 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, Edit, Trash2, MoreHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { EditAdDialog } from './EditAdDialog/EditAdDialog';
+import { DeleteAdDialog } from './DeleteAdDialog/DeleteAdDialog';
 
 interface Props {
   ad: any;
   campaignPlatform?: string;
+  onAdUpdate?: () => void;
 }
 
-export function AdCard({ ad, campaignPlatform }: Props) {
+export function AdCard({ ad, campaignPlatform, onAdUpdate }: Props) {
   const [currentVariation, setCurrentVariation] = useState(0);
   
   // Safely parse JSON strings with error handling
@@ -91,6 +94,44 @@ export function AdCard({ ad, campaignPlatform }: Props) {
         </div>
       )}
       
+      {/* Add dropdown menu for actions */}
+      <div className="absolute top-2 right-2 z-10">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <EditAdDialog 
+                ad={ad} 
+                onSuccess={onAdUpdate}
+                trigger={
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Ad
+                  </Button>
+                } 
+              />
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
+              <DeleteAdDialog 
+                adId={ad.id}
+                adName={ad.name}
+                onSuccess={onAdUpdate}
+                trigger={
+                  <Button variant="ghost" className="w-full justify-start text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Ad
+                  </Button>
+                } 
+              />
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {ad.file_url && (
         <div className="relative h-48 bg-muted">
           {ad.ad_type === 'image' ? (
@@ -112,6 +153,7 @@ export function AdCard({ ad, campaignPlatform }: Props) {
           )}
         </div>
       )}
+      
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg">{ad.name}</CardTitle>

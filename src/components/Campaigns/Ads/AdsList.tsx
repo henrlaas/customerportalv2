@@ -1,12 +1,11 @@
 
-import { AdCard } from './AdCard';
-
 interface Props {
   ads: any[];
   campaignPlatform?: string;
+  onAdUpdate?: () => void;
 }
 
-export function AdsList({ ads, campaignPlatform }: Props) {
+export function AdsList({ ads, campaignPlatform, onAdUpdate }: Props) {
   if (ads.length === 0) {
     return (
       <div className="text-center p-8 border rounded-lg bg-muted/50">
@@ -19,7 +18,12 @@ export function AdsList({ ads, campaignPlatform }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {ads.map((ad) => (
-        <AdCard key={ad.id} ad={ad} campaignPlatform={campaignPlatform} />
+        <AdCard 
+          key={ad.id} 
+          ad={ad} 
+          campaignPlatform={campaignPlatform}
+          onAdUpdate={onAdUpdate}
+        />
       ))}
     </div>
   );
