@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdFormData, PLATFORM_CHARACTER_LIMITS, Platform } from '../types/campaign';
 import { FileInfo, WatchedFields } from './types';
-import { AdPreview } from './AdPreview';
 import { TextVariation, getStepsForPlatform, requiresMediaUpload } from './types/variations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -189,7 +187,13 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     return variations;
   };
   
-  const onSubmit = async (data: AdFormData) => {
+  const handleManualSubmit = async () => {
+    // Check if we're already uploading
+    if (uploading) return;
+    
+    // Get form data
+    const data = form.getValues();
+    
     // For Google ads, we don't need a file upload
     if (requiresMediaUpload(validPlatform) && !fileInfo) {
       toast({
@@ -225,7 +229,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
         ad_type: fileInfo?.type || 'text',
         file_url: uploadedFile?.url || null,
         file_type: fileInfo?.file.type || null,
-        headline_variations: JSON.stringify(headlineVariations.slice(1)), // Start from index 1 since the first one is the base field
+        headline_variations: JSON.stringify(headlineVariations.slice(1)),
         description_variations: JSON.stringify(descriptionVariations.slice(1)),
         main_text_variations: JSON.stringify(mainTextVariations.slice(1)),
         keywords_variations: JSON.stringify(keywordsVariations.slice(1)),
@@ -256,6 +260,12 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     } finally {
       setUploading(false);
     }
+  };
+
+  // Keep original onSubmit for completeness but we won't use it
+  const onSubmit = async (data: AdFormData) => {
+    console.log('Form submission prevented - using manual submission instead');
+    // Not using this function anymore
   };
 
   const validateStep = () => {
@@ -380,8 +390,10 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
         </div>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Changed to div instead of form to prevent automatic submission */}
+          <div className="space-y-4">
             <AnimatePresence mode="wait">
+              {/* ... keep existing code (step components) */}
               {step === 0 && (
                 <motion.div
                   key="step-0"
@@ -492,7 +504,8 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
               
               {step === steps.length - 1 ? (
                 <Button 
-                  type="submit" 
+                  type="button" // Changed from "submit" to "button"
+                  onClick={handleManualSubmit} // Use our manual submit handler
                   disabled={uploading}
                   className="transition-all duration-200 hover:bg-primary-foreground/90 hover:text-primary hover:scale-105 shadow-sm hover:shadow-md"
                 >
@@ -509,7 +522,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                 </Button>
               )}
             </div>
-          </form>
+          </div>
         </Form>
       </DialogContent>
     </Dialog>
