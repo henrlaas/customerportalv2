@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -64,41 +65,11 @@ export function AdCard({ ad, campaignPlatform, onAdUpdate }: Props) {
 
   return (
     <Card className="overflow-hidden relative">
-      {/* Navigation buttons with updated positioning */}
-      {totalVariations > 1 && (
-        <div className="absolute inset-x-0 bottom-2 flex justify-between items-center px-2 z-10 pointer-events-none">
-          <Button
-            onClick={prevVariation}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background pointer-events-auto"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={nextVariation}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background pointer-events-auto"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-      
-      {totalVariations > 1 && (
-        <div className="absolute top-2 right-2 z-10">
-          <span className="bg-primary/80 text-primary-foreground text-xs px-2 py-1 rounded-full">
-            {currentVariation === 0 ? "Base" : `Variation ${currentVariation}`} / {totalVariations}
-          </span>
-        </div>
-      )}
-      
-      {/* Add dropdown menu for actions */}
-      <div className="absolute top-2 right-2 z-10">
+      {/* Actions dropdown menu - now positioned in the top right corner */}
+      <div className="absolute top-2 right-2 z-20">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -132,6 +103,38 @@ export function AdCard({ ad, campaignPlatform, onAdUpdate }: Props) {
         </DropdownMenu>
       </div>
 
+      {/* Navigation buttons */}
+      {totalVariations > 1 && (
+        <div className="absolute inset-x-0 bottom-2 flex justify-between items-center px-2 z-10 pointer-events-none">
+          <Button
+            onClick={prevVariation}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background pointer-events-auto"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={nextVariation}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background pointer-events-auto"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+      
+      {/* Variation indicator */}
+      {totalVariations > 1 && (
+        <div className="absolute top-2 left-2 z-10">
+          <span className="bg-primary/80 text-primary-foreground text-xs px-2 py-1 rounded-full">
+            {currentVariation === 0 ? "Base" : `Variation ${currentVariation}`} / {totalVariations}
+          </span>
+        </div>
+      )}
+
+      {/* Ad Media */}
       {ad.file_url && (
         <div className="relative h-48 bg-muted">
           {ad.ad_type === 'image' ? (
@@ -154,6 +157,7 @@ export function AdCard({ ad, campaignPlatform, onAdUpdate }: Props) {
         </div>
       )}
       
+      {/* Ad Content */}
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg">{ad.name}</CardTitle>
