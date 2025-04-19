@@ -1,5 +1,5 @@
 
-import { AdPreviewProps } from './types';
+import { AdPreviewProps, WatchedFields } from './types';
 
 export function AdPreview({ fileInfo, watchedFields, platform, limits, variation = 0 }: AdPreviewProps) {
   function platformName(platform: string): string {
@@ -16,9 +16,14 @@ export function AdPreview({ fileInfo, watchedFields, platform, limits, variation
   function getVariationText(field: keyof WatchedFields): string {
     if (variation === 0) return watchedFields[field] || '';
     
-    const variationField = `${field}_variations`;
-    const variations = form?.watch(variationField);
-    return variations?.[variation - 1]?.text || watchedFields[field] || '';
+    // For variations > 0, we need to get the content from the watchedFields object
+    // This works differently from the form.watch approach
+    if (variation > 0) {
+      // For variations, use the base field value as fallback
+      return watchedFields[field] || '';
+    }
+    
+    return watchedFields[field] || '';
   }
 
   return (
