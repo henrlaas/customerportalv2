@@ -28,41 +28,59 @@ export function CampaignDetailsPage() {
       if (!campaignId) return null;
       console.log('Fetching campaign with ID:', campaignId);
       
-      const { data, error } = await supabase
-        .from('campaigns')
-        .select(`
-          *,
-          companies (
+      try {
+        const { data, error } = await supabase
+          .from('campaigns')
+          .select(`
+            id,
             name,
-            logo_url
-          ),
-          profiles (
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
-        .eq('id', campaignId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching campaign:', error);
+            description,
+            status,
+            platform,
+            budget,
+            company_id,
+            associated_user_id,
+            created_at,
+            is_ongoing,
+            start_date,
+            end_date,
+            companies (
+              name,
+              logo_url
+            ),
+            profiles (
+              first_name,
+              last_name,
+              avatar_url
+            )
+          `)
+          .eq('id', campaignId)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching campaign:', error);
+          throw error;
+        }
+        
+        if (data) {
+          console.log('Campaign data received:', data);
+          const campaignData = {
+            ...data,
+            status: data.status as CampaignStatus,
+          };
+          return campaignData as unknown as Campaign;
+        }
+        
+        console.log('No campaign data found');
         return null;
+      } catch (error) {
+        console.error('Failed to fetch campaign details:', error);
+        throw error;
       }
-      
-      if (data) {
-        console.log('Campaign data received:', data);
-        const campaignData = {
-          ...data,
-          status: data.status as CampaignStatus,
-        };
-        return campaignData as unknown as Campaign;
-      }
-      
-      console.log('No campaign data found');
-      return null;
     },
     enabled: !!campaignId,
+    retry: 2,
+    retryDelay: 1000, // Retry after 1 second
   });
 
   // Fetch all adsets for this campaign
@@ -122,7 +140,7 @@ export function CampaignDetailsPage() {
   };
 
   // Create a placeholder campaign if the real campaign data isn't available
-  const placeholderCampaign: Campaign | null = campaign || (campaignId ? {
+  const displayCampaign: Campaign | null = campaign || (campaignId ? {
     id: campaignId,
     name: 'Loading Campaign...',
     status: 'draft' as CampaignStatus,
@@ -137,7 +155,7 @@ export function CampaignDetailsPage() {
     <div className="flex flex-col min-h-screen">
       {/* Always render the banner with either real data or placeholder */}
       <CampaignDetailsBanner 
-        campaign={placeholderCampaign} 
+        campaign={displayCampaign} 
         onCampaignUpdate={refetchCampaign} 
       />
       
