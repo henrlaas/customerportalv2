@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdFormData, PLATFORM_CHARACTER_LIMITS, Platform } from '../types/campaign';
 import { FileInfo, WatchedFields } from './types';
+import { AdPreview } from './AdPreview'; // Added import for AdPreview
 import { TextVariation, getStepsForPlatform, requiresMediaUpload } from './types/variations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -393,7 +394,6 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
           {/* Changed to div instead of form to prevent automatic submission */}
           <div className="space-y-4">
             <AnimatePresence mode="wait">
-              {/* ... keep existing code (step components) */}
               {step === 0 && (
                 <motion.div
                   key="step-0"
