@@ -74,24 +74,20 @@ export function AdSetDetailsPage() {
             {adset ? (
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Budget</p>
-                  <p>${adset.budget || 'Not specified'}</p>
-                </div>
-                <div>
                   <p className="text-sm font-medium text-muted-foreground">Targeting</p>
                   <p>{adset.targeting || 'Not specified'}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Duration</p>
-                  <p>
-                    {adset.start_date && adset.end_date 
-                      ? `${new Date(adset.start_date).toLocaleDateString()} - ${new Date(adset.end_date).toLocaleDateString()}`
-                      : 'No date range specified'}
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Campaign ID</p>
+                  <p>{adset.campaign_id}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Created At</p>
                   <p>{new Date(adset.created_at).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Updated At</p>
+                  <p>{new Date(adset.updated_at).toLocaleString()}</p>
                 </div>
               </div>
             ) : (
