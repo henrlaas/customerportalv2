@@ -1,160 +1,113 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { AdsList } from '@/components/Campaigns/Ads/AdsList';
-import { CreateAdDialog } from '@/components/Campaigns/Ads/CreateAdDialog';
-import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { CampaignDetailsBanner } from '@/components/Campaigns/CampaignDetailsBanner';
+import { Campaign } from '@/components/Campaigns/types/campaign';
 
 export function AdSetDetailsPage() {
   const { adsetId } = useParams<{ adsetId: string }>();
   const navigate = useNavigate();
-  const [selectedAdsetId, setSelectedAdsetId] = useState<string | null>(adsetId || null);
-
-  // Update selected adset when URL param changes
-  useEffect(() => {
-    if (adsetId) {
-      setSelectedAdsetId(adsetId);
-    }
-  }, [adsetId]);
-
-  // Fetch the campaign from the selected adset
-  const { data: selectedAdset } = useQuery({
-    queryKey: ['adset', selectedAdsetId],
+  
+  // Fetch the adset details
+  const { data: adset } = useQuery({
+    queryKey: ['adset', adsetId],
     queryFn: async () => {
-      if (!selectedAdsetId) return null;
+      if (!adsetId) return null;
       const { data } = await supabase
         .from('adsets')
-        .select('*, campaigns(*)')
-        .eq('id', selectedAdsetId)
+        .select('*')
+        .eq('id', adsetId)
         .single();
       return data;
     },
-    enabled: !!selectedAdsetId,
+    enabled: !!adsetId,
   });
-
-  // Get campaign ID for fetching all adsets
-  const campaignId = selectedAdset?.campaigns?.id;
-
-  // Fetch all adsets for this campaign
-  const { data: allAdsets = [] } = useQuery({
-    queryKey: ['adsets', campaignId],
+  
+  // Fetch the campaign details associated with this adset
+  const { data: campaign, refetch: refetchCampaign } = useQuery({
+    queryKey: ['campaign', adset?.campaign_id],
     queryFn: async () => {
-      if (!campaignId) return [];
+      if (!adset?.campaign_id) return null;
       const { data } = await supabase
-        .from('adsets')
-        .select('*')
-        .eq('campaign_id', campaignId)
-        .order('created_at', { ascending: false });
-      return data || [];
+        .from('campaigns')
+        .select(`
+          *,
+          companies (
+            name,
+            logo_url
+          ),
+          profiles (
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
+        .eq('id', adset.campaign_id)
+        .single();
+      
+      if (data) {
+        const campaignData = {
+          ...data,
+          status: data.status as any, // Cast to the appropriate CampaignStatus type
+        };
+        
+        return campaignData as unknown as Campaign;
+      }
+      
+      return null;
     },
-    enabled: !!campaignId,
+    enabled: !!adset?.campaign_id,
   });
-
-  // Fetch ads for the selected adset
-  const { data: ads = [] } = useQuery({
-    queryKey: ['ads', selectedAdsetId],
-    queryFn: async () => {
-      if (!selectedAdsetId) return [];
-      const { data } = await supabase
-        .from('ads')
-        .select('*')
-        .eq('adset_id', selectedAdsetId)
-        .order('created_at', { ascending: false });
-      return data || [];
-    },
-    enabled: !!selectedAdsetId,
-  });
-
-  const campaignPlatform = selectedAdset?.campaigns?.platform;
-
-  const handleBackToCampaign = () => {
-    if (campaignId) {
-      navigate(`/campaigns/${campaignId}`);
-    }
-  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-            {campaignId && (
-              <Button variant="ghost" size="sm" className="pl-0" onClick={handleBackToCampaign}>
-                <ArrowLeft className="h-4 w-4 mr-1" /> 
-                Campaign: {selectedAdset?.campaigns?.name || 'Loading...'}
-              </Button>
-            )}
-            {campaignPlatform && (
-              <>
-                <span>•</span>
-                <span>Platform: {campaignPlatform}</span>
-              </>
-            )}
-          </div>
-          <h1 className="text-2xl font-bold">Ad Sets & Ads</h1>
-        </div>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Adsets sidebar */}
-        <div className="w-full md:w-64 flex-shrink-0 border rounded-lg">
-          <div className="p-4 border-b bg-muted/30">
-            <h2 className="font-medium text-lg">Ad Sets</h2>
-          </div>
-          <ScrollArea className="h-[calc(100vh-250px)]">
-            <div className="p-2">
-              {allAdsets.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No ad sets available</p>
+    <div>
+      <CampaignDetailsBanner campaign={campaign} onCampaignUpdate={refetchCampaign} />
+      
+      {/* Rest of the AdSetDetailsPage content */}
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6">Ad Set Details: {adset?.name}</h1>
+        
+        {/* You can add more content related to the adset here */}
+        <div className="grid gap-6">
+          <div className="p-6 border rounded-lg shadow-sm bg-card">
+            <h2 className="text-xl font-semibold mb-4">Ad Set Information</h2>
+            {adset ? (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Budget</p>
+                  <p>${adset.budget || 'Not specified'}</p>
                 </div>
-              ) : (
-                <ul className="space-y-1">
-                  {allAdsets.map((adset) => (
-                    <li key={adset.id}>
-                      <Button
-                        variant={adset.id === selectedAdsetId ? "secondary" : "ghost"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          adset.id === selectedAdsetId && "font-medium"
-                        )}
-                        onClick={() => setSelectedAdsetId(adset.id)}
-                      >
-                        {adset.name}
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* Ads content area */}
-        <div className="flex-1">
-          {selectedAdsetId ? (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-medium">
-                  {selectedAdset?.name} 
-                  {selectedAdset?.targeting && (
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      ({selectedAdset.targeting})
-                    </span>
-                  )}
-                </h2>
-                {selectedAdsetId && <CreateAdDialog adsetId={selectedAdsetId} campaignPlatform={campaignPlatform} />}
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Targeting</p>
+                  <p>{adset.targeting || 'Not specified'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Duration</p>
+                  <p>
+                    {adset.start_date && adset.end_date 
+                      ? `${new Date(adset.start_date).toLocaleDateString()} - ${new Date(adset.end_date).toLocaleDateString()}`
+                      : 'No date range specified'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Created At</p>
+                  <p>{new Date(adset.created_at).toLocaleString()}</p>
+                </div>
               </div>
-              <AdsList ads={ads} campaignPlatform={campaignPlatform} />
-            </div>
-          ) : (
-            <div className="text-center py-12 border rounded-lg bg-muted/30">
-              <h3 className="text-lg font-medium mb-2">Select an Ad Set</h3>
-              <p className="text-muted-foreground">Choose an ad set from the sidebar to view its ads.</p>
+            ) : (
+              <p>Loading ad set details...</p>
+            )}
+          </div>
+          
+          {/* Add button to view campaign */}
+          {adset?.campaign_id && (
+            <div className="flex justify-end">
+              <button 
+                onClick={() => navigate(`/campaigns/${adset.campaign_id}`)}
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+              >
+                View Campaign Details
+              </button>
             </div>
           )}
         </div>
