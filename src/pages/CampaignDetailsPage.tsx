@@ -1,3 +1,4 @@
+
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,12 +43,18 @@ export function CampaignDetailsPage() {
         .eq('id', campaignId)
         .single();
       
-      // Ensure the status is a valid CampaignStatus
+      // Safely handle the data type conversion
       if (data) {
-        data.status = data.status as CampaignStatus;
+        // Ensure status is a valid CampaignStatus
+        const campaignData = {
+          ...data,
+          status: data.status as CampaignStatus,
+        };
+        
+        return campaignData as unknown as Campaign;
       }
       
-      return data as Campaign | null;
+      return null;
     },
     enabled: !!campaignId,
   });

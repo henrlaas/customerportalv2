@@ -92,11 +92,12 @@ export interface Campaign {
     name: string;
     logo_url?: string | null;
   };
+  // Update profiles type to handle potential errors or null values
   profiles?: {
     first_name: string | null;
     last_name: string | null;
     avatar_url?: string | null;
-  } | null;
+  } | null | { error: boolean };
 }
 
 export interface CampaignFormData {
