@@ -28,7 +28,7 @@ export const PLATFORM_COLORS = {
   },
   Snapchat: {
     bg: '#FFFC00',
-    text: '#000000'
+    text: '#000000'  // Changed to black as requested
   },
   Tiktok: {
     bg: '#000000',
