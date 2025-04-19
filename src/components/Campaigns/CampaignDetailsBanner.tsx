@@ -91,10 +91,13 @@ export function CampaignDetailsBanner({ campaign, onCampaignUpdate }: CampaignDe
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {campaign.companies?.logo_url && (
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={campaign.companies.logo_url} alt={campaign.companies?.name || 'Company logo'} />
-                <AvatarFallback>{campaign.companies?.name?.charAt(0) || 'C'}</AvatarFallback>
-              </Avatar>
+              <div className="h-12 w-12 rounded-md overflow-hidden">
+                <img 
+                  src={campaign.companies.logo_url} 
+                  alt={campaign.companies?.name || 'Company logo'} 
+                  className="h-full w-full object-cover"
+                />
+              </div>
             )}
             <div>
               <h1 className="text-2xl font-bold mb-1">{campaign.name}</h1>
