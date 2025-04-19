@@ -19,7 +19,7 @@ import { useAdForm } from './hooks/useAdForm';
 import { useAdDialog } from './hooks/useAdDialog';
 import { AdDialogPreview } from './components/AdDialogPreview';
 import { getStepIcon, showPreview } from './utils/stepUtils';
-import { FileInfo } from './types';
+import { FileInfo, WatchedFields } from './types';
 import { createElement } from 'react';
 
 interface Props {
@@ -51,14 +51,85 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     validateStep: validateStepFn,
   } = useAdDialog();
 
-  const watchedFields = {
-    headline: form.watch('headline') || '',
-    description: form.watch('description') || '',
-    main_text: form.watch('main_text') || '',
-    keywords: form.watch('keywords') || '',
-    brand_name: form.watch('brand_name') || '',
-    cta_button: form.watch('cta_button') || '',
-    url: form.watch('url') || '',
+  // Get current variation fields based on step
+  const getWatchedFieldsForCurrentVariation = (): WatchedFields => {
+    // For step 0 (basic info) or steps beyond variations, use the base fields
+    if (step === 0 || step === 5) {
+      return {
+        headline: form.watch('headline') || '',
+        description: form.watch('description') || '',
+        main_text: form.watch('main_text') || '',
+        keywords: form.watch('keywords') || '',
+        brand_name: form.watch('brand_name') || '',
+        cta_button: form.watch('cta_button') || '',
+        url: form.watch('url') || '',
+      };
+    }
+    
+    // For variation steps (1-4), get the specific variation data
+    const variation = step;
+    return {
+      headline: variation === 1 
+        ? form.watch('headline') || '' 
+        : form.watch(`headline_variations.${variation-1}.text`) || form.watch('headline') || '',
+      description: variation === 1 
+        ? form.watch('description') || '' 
+        : form.watch(`description_variations.${variation-1}.text`) || form.watch('description') || '',
+      main_text: variation === 1 
+        ? form.watch('main_text') || '' 
+        : form.watch(`main_text_variations.${variation-1}.text`) || form.watch('main_text') || '',
+      keywords: form.watch('keywords') || '',
+      brand_name: form.watch('brand_name') || '',
+      cta_button: form.watch('cta_button') || '',
+      url: form.watch('url') || '',
+    };
+  };
+
+  const watchedFields = getWatchedFieldsForCurrentVariation();
+
+  const baseSteps = [
+    { 
+      title: 'Basic Info', 
+      description: 'Set your ad name and upload media',
+      showBasicFields: true
+    },
+    { 
+      title: 'Variation 1', 
+      description: 'Create your first ad variation',
+      fields: ['headline', 'description', 'main_text'],
+      showBasicFields: true
+    },
+    { 
+      title: 'Variation 2', 
+      description: 'Add alternative headline, description and text',
+      fields: ['headline', 'description', 'main_text']
+    },
+    { 
+      title: 'Variation 3',
+      description: 'Add alternative headline, description and text',
+      fields: ['headline', 'description', 'main_text']
+    },
+    { 
+      title: 'Variation 4',
+      description: 'Add alternative headline, description and text',
+      fields: ['headline', 'description', 'main_text']
+    },
+    { 
+      title: 'Variation 5',
+      description: 'Add alternative headline, description and text',
+      fields: ['headline', 'description', 'main_text']
+    }
+  ];
+
+  const limits = PLATFORM_CHARACTER_LIMITS[validPlatform] || {};
+  
+  // Helper function to render the icon
+  const renderStepIcon = (stepIndex: number) => {
+    const iconData = getStepIcon(stepIndex, { Camera, Globe, FileText });
+    if (iconData && iconData.type) {
+      return createElement(iconData.type, iconData.props);
+    }
+    return null;
   };
 
   const handleManualSubmit = async () => {
@@ -151,51 +222,6 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       type: adType,
       file
     });
-  };
-
-  const baseSteps = [
-    { 
-      title: 'Basic Info', 
-      description: 'Set your ad name and upload media',
-      showBasicFields: true
-    },
-    { 
-      title: 'Variation 1', 
-      description: 'Create your first ad variation',
-      fields: ['headline', 'description', 'main_text'],
-      showBasicFields: true
-    },
-    { 
-      title: 'Variation 2', 
-      description: 'Add alternative headline, description and text',
-      fields: ['headline', 'description', 'main_text']
-    },
-    { 
-      title: 'Variation 3',
-      description: 'Add alternative headline, description and text',
-      fields: ['headline', 'description', 'main_text']
-    },
-    { 
-      title: 'Variation 4',
-      description: 'Add alternative headline, description and text',
-      fields: ['headline', 'description', 'main_text']
-    },
-    { 
-      title: 'Variation 5',
-      description: 'Add alternative headline, description and text',
-      fields: ['headline', 'description', 'main_text']
-    }
-  ];
-
-  const limits = PLATFORM_CHARACTER_LIMITS[validPlatform] || {};
-  
-  // Helper function to render the icon
-  const renderStepIcon = (stepIndex: number) => {
-    const iconData = getStepIcon(stepIndex, { Camera, Globe, FileText });
-    if (iconData && iconData.type) {
-      return createElement(iconData.type, iconData.props);
-    }
-    return null;
   };
 
   return (

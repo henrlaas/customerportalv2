@@ -14,15 +14,7 @@ export function AdPreview({ fileInfo, watchedFields, platform, limits, variation
 
   // Function to get the correct variation text
   function getVariationText(field: keyof WatchedFields): string {
-    if (variation === 0) return watchedFields[field] || '';
-    
-    // For variations > 0, we need to get the content from the watchedFields object
-    // This works differently from the form.watch approach
-    if (variation > 0) {
-      // For variations, use the base field value as fallback
-      return watchedFields[field] || '';
-    }
-    
+    // For any variation (including 0), use the field value from watchedFields
     return watchedFields[field] || '';
   }
 
