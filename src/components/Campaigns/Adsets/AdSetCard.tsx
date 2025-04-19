@@ -4,6 +4,9 @@ import { CreateAdDialog } from '../Ads/CreateAdDialog';
 import { EditAdSetDialog } from './EditAdSetDialog';
 import { DeleteAdSetDialog } from './DeleteAdSetDialog';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Edit, Trash2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Props {
   adset: any;
@@ -19,12 +22,38 @@ export function AdSetCard({ adset, onUpdate }: Props) {
             <CardTitle className="text-lg">{adset.name}</CardTitle>
           </Link>
           <div className="flex items-center gap-1">
-            <EditAdSetDialog adset={adset} onSuccess={onUpdate} />
-            <DeleteAdSetDialog 
-              adsetId={adset.id} 
-              adsetName={adset.name} 
-              onSuccess={onUpdate} 
-            />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <EditAdSetDialog 
+                    adset={adset} 
+                    onSuccess={onUpdate}
+                    trigger={
+                      <Button variant="ghost" size="icon">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    } 
+                  />
+                </TooltipTrigger>
+                <TooltipContent>Edit Ad Set</TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DeleteAdSetDialog 
+                    adsetId={adset.id} 
+                    adsetName={adset.name} 
+                    onSuccess={onUpdate}
+                    trigger={
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    } 
+                  />
+                </TooltipTrigger>
+                <TooltipContent>Delete Ad Set</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <CreateAdDialog adsetId={adset.id} campaignPlatform={adset.campaigns?.platform} />
           </div>
         </div>
@@ -39,3 +68,4 @@ export function AdSetCard({ adset, onUpdate }: Props) {
     </Card>
   );
 }
+
