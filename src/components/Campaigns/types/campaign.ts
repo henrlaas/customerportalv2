@@ -90,6 +90,7 @@ export interface Campaign {
   end_date?: string | null;
   companies?: {
     name: string;
+    logo_url?: string | null;
   };
   profiles?: {
     first_name: string | null;

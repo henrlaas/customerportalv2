@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { CampaignDetailsBanner } from '@/components/Campaigns/CampaignDetailsBanner';
 import { AdSetList } from '@/components/Campaigns/Adsets/AdSetList';
 import { AdsList } from '@/components/Campaigns/Ads/AdsList';
+import { Campaign, CampaignStatus } from '@/components/Campaigns/types/campaign';
 
 export function CampaignDetailsPage() {
   const { campaignId } = useParams<{ campaignId: string }>();
@@ -40,7 +41,13 @@ export function CampaignDetailsPage() {
         `)
         .eq('id', campaignId)
         .single();
-      return data;
+      
+      // Ensure the status is a valid CampaignStatus
+      if (data) {
+        data.status = data.status as CampaignStatus;
+      }
+      
+      return data as Campaign | null;
     },
     enabled: !!campaignId,
   });

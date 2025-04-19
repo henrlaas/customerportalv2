@@ -1,6 +1,6 @@
 
 import { format } from 'date-fns';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import { PlatformBadge } from './PlatformBadge';
@@ -74,11 +74,10 @@ export function CampaignDetailsBanner({ campaign, onCampaignUpdate }: CampaignDe
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {campaign.companies?.logo_url && (
-              <Avatar 
-                className="h-12 w-12" 
-                src={campaign.companies.logo_url}
-                alt={campaign.companies?.name || 'Company logo'} 
-              />
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={campaign.companies.logo_url} alt={campaign.companies?.name || 'Company logo'} />
+                <AvatarFallback>{campaign.companies?.name?.charAt(0) || 'C'}</AvatarFallback>
+              </Avatar>
             )}
             <div>
               <h1 className="text-2xl font-bold mb-1">{campaign.name}</h1>
