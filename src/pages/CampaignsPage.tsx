@@ -120,12 +120,13 @@ const CampaignsPage: React.FC = () => {
           />
         </div>
         <Tabs defaultValue="all" value={status} onValueChange={setStatus} className="w-full sm:w-auto">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
             <TabsTrigger value="draft">Draft</TabsTrigger>
-            <TabsTrigger value="paused">Paused</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="in-progress">In Progress</TabsTrigger>
+            <TabsTrigger value="ready">Ready</TabsTrigger>
+            <TabsTrigger value="published">Published</TabsTrigger>
+            <TabsTrigger value="archived">Archived</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

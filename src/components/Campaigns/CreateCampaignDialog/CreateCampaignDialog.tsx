@@ -55,6 +55,7 @@ export function CreateCampaignDialog() {
       description: null,
       include_subsidiaries: false,
       associated_user_id: user?.id || '',
+      status: 'draft', // Set initial status to draft
     },
   });
 
