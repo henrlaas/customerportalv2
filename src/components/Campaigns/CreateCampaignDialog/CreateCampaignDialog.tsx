@@ -33,6 +33,7 @@ const campaignSchema = z.object({
   description: z.string().nullable(),
   include_subsidiaries: z.boolean().default(false),
   associated_user_id: z.string().min(1, 'Associated user is required'),
+  status: z.enum(['draft', 'in-progress', 'ready', 'published', 'archived']).default('draft'),
 });
 
 export function CreateCampaignDialog() {
@@ -55,7 +56,7 @@ export function CreateCampaignDialog() {
       description: null,
       include_subsidiaries: false,
       associated_user_id: user?.id || '',
-      status: 'draft', // Set initial status to draft
+      status: 'draft', // Default status for new campaigns is draft
     },
   });
 
@@ -83,7 +84,7 @@ export function CreateCampaignDialog() {
           end_date: formattedValues.end_date,
           budget: formattedValues.budget,
           description: formattedValues.description,
-          status: 'active',
+          status: formattedValues.status,
           is_ongoing: formattedValues.is_ongoing,
           associated_user_id: formattedValues.associated_user_id,
         })
@@ -155,7 +156,7 @@ export function CreateCampaignDialog() {
               <UserSelectionForm
                 form={form}
                 onBack={() => setStep(2)}
-                onNext={onSubmit} // Now correctly passing the onSubmit function
+                onNext={onSubmit}
               />
             )}
           </form>

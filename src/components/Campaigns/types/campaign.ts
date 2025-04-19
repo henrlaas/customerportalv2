@@ -1,3 +1,4 @@
+
 export interface FileInfo {
   url: string;
   type: string;
@@ -70,11 +71,14 @@ export interface AdSetFormData {
 
 export type Platform = 'Meta' | 'Google' | 'LinkedIn' | 'Snapchat' | 'Tiktok';
 
+// Update the status type to match our new requirements
+export type CampaignStatus = 'draft' | 'in-progress' | 'ready' | 'published' | 'archived';
+
 export interface Campaign {
   id: string;
   name: string;
   description?: string;
-  status: 'draft' | 'in-progress' | 'ready' | 'published' | 'archived';
+  status: CampaignStatus;
   platform: Platform;
   budget?: number;
   company_id?: string;
@@ -101,7 +105,7 @@ export interface CampaignFormData {
   budget?: number;
   company_id?: string;
   associated_user_id?: string;
-  status: 'draft' | 'in-progress' | 'ready' | 'published' | 'archived';
+  status: CampaignStatus;
   // Add missing properties to match Campaign
   is_ongoing?: boolean;
   start_date?: Date | null;
@@ -154,4 +158,33 @@ export const PLATFORM_CHARACTER_LIMITS = {
   Tiktok: {
     headline: 40,
   }
+};
+
+// Add a mapping for campaign status colors
+export const CAMPAIGN_STATUS_COLORS = {
+  'draft': {
+    bg: 'bg-gray-100',
+    text: 'text-gray-800',
+    border: 'border-gray-200'
+  },
+  'in-progress': {
+    bg: 'bg-blue-100',
+    text: 'text-blue-800',
+    border: 'border-blue-200'
+  },
+  'ready': {
+    bg: 'bg-yellow-100',
+    text: 'text-yellow-800',
+    border: 'border-yellow-200'
+  },
+  'published': {
+    bg: 'bg-green-100',
+    text: 'text-green-800',
+    border: 'border-green-200'
+  },
+  'archived': {
+    bg: 'bg-slate-100',
+    text: 'text-slate-800',
+    border: 'border-slate-200'
+  },
 };

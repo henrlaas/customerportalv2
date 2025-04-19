@@ -21,7 +21,7 @@ import { UserSelectionForm } from '../CreateCampaignDialog/UserSelectionForm';
 import { ProgressStepper } from '../CreateCampaignDialog/ProgressStepper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
-import { Campaign } from '../types/campaign';
+import { Campaign, CampaignStatus } from '../types/campaign';
 
 const campaignSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -34,6 +34,7 @@ const campaignSchema = z.object({
   description: z.string().nullable().optional(),
   include_subsidiaries: z.boolean().default(false),
   associated_user_id: z.string().min(1, 'Associated user is required'),
+  status: z.enum(['draft', 'in-progress', 'ready', 'published', 'archived']).default('draft'),
 });
 
 interface EditCampaignDialogProps {
@@ -61,6 +62,7 @@ export function EditCampaignDialog({ campaign, trigger }: EditCampaignDialogProp
       description: campaign.description || null,
       include_subsidiaries: false, // Default value
       associated_user_id: campaign.associated_user_id || user?.id || '',
+      status: (campaign.status as CampaignStatus) || 'draft',
     },
   });
 
@@ -90,6 +92,7 @@ export function EditCampaignDialog({ campaign, trigger }: EditCampaignDialogProp
           description: formattedValues.description,
           is_ongoing: formattedValues.is_ongoing,
           associated_user_id: formattedValues.associated_user_id,
+          status: formattedValues.status,
         })
         .eq('id', campaign.id)
         .select();
@@ -131,6 +134,7 @@ export function EditCampaignDialog({ campaign, trigger }: EditCampaignDialogProp
       description: campaign.description || null,
       include_subsidiaries: false,
       associated_user_id: campaign.associated_user_id || user?.id || '',
+      status: (campaign.status as CampaignStatus) || 'draft',
     });
   };
 
