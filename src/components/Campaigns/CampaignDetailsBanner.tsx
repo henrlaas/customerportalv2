@@ -44,6 +44,23 @@ export function CampaignDetailsBanner({ campaign, onCampaignUpdate }: CampaignDe
     }
   };
 
+  const formatStatus = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'draft':
+        return 'Draft';
+      case 'in-progress':
+        return 'In Progress';
+      case 'ready':
+        return 'Ready';
+      case 'published':
+        return 'Published';
+      case 'archived':
+        return 'Archived';
+      default:
+        return status;
+    }
+  };
+
   const handleStatusChange = async (newStatus: string) => {
     try {
       const { error } = await supabase
@@ -55,7 +72,7 @@ export function CampaignDetailsBanner({ campaign, onCampaignUpdate }: CampaignDe
 
       toast({
         title: 'Status updated',
-        description: `Campaign status has been updated to ${newStatus}`,
+        description: `Campaign status has been updated to ${formatStatus(newStatus)}`,
       });
       
       onCampaignUpdate();
@@ -104,7 +121,7 @@ export function CampaignDetailsBanner({ campaign, onCampaignUpdate }: CampaignDe
           
           <div className="flex items-center gap-2">
             <Badge className={getStatusColor(campaign.status)}>
-              {campaign.status}
+              {formatStatus(campaign.status)}
             </Badge>
             
             <Select
