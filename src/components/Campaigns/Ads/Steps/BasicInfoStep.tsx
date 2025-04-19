@@ -2,7 +2,6 @@
 import { UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { UploadCloud, X } from 'lucide-react';
 import { AdFormData } from '../../types/campaign';
 import { FileInfo } from '../types';
@@ -102,11 +101,7 @@ export function BasicInfoStep({
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button type="button" onClick={onNextStep}>
-          Next
-        </Button>
-      </div>
+      {/* Removed the extra Next button */}
     </div>
   );
 }
