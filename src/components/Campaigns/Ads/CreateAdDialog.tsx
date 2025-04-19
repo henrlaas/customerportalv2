@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft, Check, Camera, FileText, Globe } from 'lucide-react';
@@ -20,6 +21,7 @@ import { useAdDialog } from './hooks/useAdDialog';
 import { AdDialogPreview } from './components/AdDialogPreview';
 import { getStepIcon, showPreview } from './utils/stepUtils';
 import { FileInfo } from './types';
+import { createElement } from 'react';
 
 interface Props {
   adsetId: string;
@@ -187,6 +189,15 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
   ];
 
   const limits = PLATFORM_CHARACTER_LIMITS[validPlatform] || {};
+  
+  // Helper function to render the icon
+  const renderStepIcon = (stepIndex: number) => {
+    const iconData = getStepIcon(stepIndex, { Camera, Globe, FileText });
+    if (iconData && 'type' in iconData && 'props' in iconData) {
+      return createElement(iconData.type, iconData.props);
+    }
+    return null;
+  };
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {

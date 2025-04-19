@@ -1,14 +1,15 @@
 
 import { Platform } from '../../types/campaign';
+import { ReactNode } from 'react';
 
-export const getStepIcon = (stepIndex: number, icons: { Camera: any; Globe: any; FileText: any }) => {
+export const getStepIcon = (stepIndex: number, icons: { Camera: any; Globe: any; FileText: any }): ReactNode => {
   switch (stepIndex) {
     case 0:
-      return <icons.Camera className="h-5 w-5 text-primary" />;
+      return icons.Camera && { type: icons.Camera, props: { className: "h-5 w-5 text-primary" } };
     case 1:
-      return <icons.Globe className="h-5 w-5 text-primary" />;
+      return icons.Globe && { type: icons.Globe, props: { className: "h-5 w-5 text-primary" } };
     default:
-      return <icons.FileText className="h-5 w-5 text-primary" />;
+      return icons.FileText && { type: icons.FileText, props: { className: "h-5 w-5 text-primary" } };
   }
 };
 
