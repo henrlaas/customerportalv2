@@ -9,7 +9,8 @@ import {
   Building,
   MoreHorizontal,
   ArrowRightCircle,
-  Archive
+  Archive,
+  Repeat
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -211,12 +212,17 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
       <CardContent>
         <div className="grid grid-cols-2 gap-4 mb-3">
           <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-4 w-4 text-gray-500" />
-            <span>
-              {campaign.is_ongoing ? 
-                'Ongoing Campaign' : 
-                `${formatDate(campaign.start_date)} - ${formatDate(campaign.end_date)}`}
-            </span>
+            {campaign.is_ongoing ? (
+              <div className="flex items-center gap-2">
+                <Repeat className="h-4 w-4 text-gray-500" />
+                <span>Ongoing</span>
+              </div>
+            ) : (
+              <>
+                <Calendar className="h-4 w-4 text-gray-500" />
+                <span>{formatDate(campaign.start_date)} - ${formatDate(campaign.end_date)}</span>
+              </>
+            )}
           </div>
           
           {campaign.budget && (

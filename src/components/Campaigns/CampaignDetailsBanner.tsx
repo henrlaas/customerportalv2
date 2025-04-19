@@ -2,7 +2,7 @@
 import { format } from 'date-fns';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Repeat } from 'lucide-react';
 import { PlatformBadge } from './PlatformBadge';
 import { Campaign } from './types/campaign';
 import { EditCampaignDialog } from './EditCampaignDialog/EditCampaignDialog';
@@ -109,12 +109,16 @@ export function CampaignDetailsBanner({ campaign, onCampaignUpdate }: CampaignDe
                   </>
                 )}
                 <span>•</span>
-                <span>
-                  {campaign.is_ongoing ? 
-                    'Ongoing Campaign' : 
-                    `${formatDate(campaign.start_date)} - ${formatDate(campaign.end_date)}`
-                  }
-                </span>
+                {campaign.is_ongoing ? (
+                  <div className="flex items-center gap-1">
+                    <Repeat className="h-3.5 w-3.5" />
+                    <span>Ongoing</span>
+                  </div>
+                ) : (
+                  <span>
+                    {formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}
+                  </span>
+                )}
               </div>
             </div>
           </div>
