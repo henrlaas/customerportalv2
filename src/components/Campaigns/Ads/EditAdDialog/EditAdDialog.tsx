@@ -23,14 +23,14 @@ export function EditAdDialog({ ad, trigger, onSuccess }: EditAdDialogProps) {
       const { error } = await supabase
         .from('ads')
         .update({
-          name: formData.get('name'),
-          headline: formData.get('headline'),
-          description: formData.get('description'),
-          main_text: formData.get('main_text'),
-          keywords: formData.get('keywords'),
-          url: formData.get('url'),
-          cta_button: formData.get('cta_button'),
-          brand_name: formData.get('brand_name'),
+          name: formData.get('name')?.toString() || '',
+          headline: formData.get('headline')?.toString() || '',
+          description: formData.get('description')?.toString() || '',
+          main_text: formData.get('main_text')?.toString() || '',
+          keywords: formData.get('keywords')?.toString() || '',
+          url: formData.get('url')?.toString() || '',
+          cta_button: formData.get('cta_button')?.toString() || '',
+          brand_name: formData.get('brand_name')?.toString() || '',
         })
         .eq('id', ad.id);
 
