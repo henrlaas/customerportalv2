@@ -22,11 +22,13 @@ export function CampaignDetailsPage() {
   const [selectedAdsetId, setSelectedAdsetId] = useState<string | null>(null);
 
   // Fetch the campaign details
-  const { data: campaign, refetch: refetchCampaign } = useQuery({
+  const { data: campaign, isLoading: isLoadingCampaign, error: campaignError, refetch: refetchCampaign } = useQuery({
     queryKey: ['campaign', campaignId],
     queryFn: async () => {
       if (!campaignId) return null;
-      const { data } = await supabase
+      console.log('Fetching campaign with ID:', campaignId);
+      
+      const { data, error } = await supabase
         .from('campaigns')
         .select(`
           *,
@@ -43,7 +45,13 @@ export function CampaignDetailsPage() {
         .eq('id', campaignId)
         .single();
       
+      if (error) {
+        console.error('Error fetching campaign:', error);
+        return null;
+      }
+      
       if (data) {
+        console.log('Campaign data received:', data);
         const campaignData = {
           ...data,
           status: data.status as CampaignStatus,
@@ -51,6 +59,7 @@ export function CampaignDetailsPage() {
         return campaignData as unknown as Campaign;
       }
       
+      console.log('No campaign data found');
       return null;
     },
     enabled: !!campaignId,
@@ -112,10 +121,39 @@ export function CampaignDetailsPage() {
     refetchAdsets();
   };
 
+  // Create a placeholder campaign if the real campaign data isn't available
+  const placeholderCampaign: Campaign | null = campaign || (campaignId ? {
+    id: campaignId,
+    name: 'Loading Campaign...',
+    status: 'draft' as CampaignStatus,
+    platform: 'Meta',
+    created_at: new Date().toISOString(),
+    companies: {
+      name: 'Loading...'
+    }
+  } as Campaign : null);
+
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Campaign Banner */}
-      {campaign && <CampaignDetailsBanner campaign={campaign} onCampaignUpdate={refetchCampaign} />}
+      {/* Always render the banner with either real data or placeholder */}
+      <CampaignDetailsBanner 
+        campaign={placeholderCampaign} 
+        onCampaignUpdate={refetchCampaign} 
+      />
+      
+      {/* Show loading state if campaign is still loading */}
+      {isLoadingCampaign && (
+        <div className="container mx-auto px-4 py-2 text-center text-muted-foreground">
+          Loading campaign details...
+        </div>
+      )}
+      
+      {/* Show error if there was an error fetching campaign */}
+      {campaignError && (
+        <div className="container mx-auto px-4 py-2 text-center text-destructive">
+          Error loading campaign: {(campaignError as Error).message}
+        </div>
+      )}
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-6">
