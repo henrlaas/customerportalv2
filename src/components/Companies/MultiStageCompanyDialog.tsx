@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -45,8 +44,9 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
-import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './MultiStageCompanyDialog/types';
+import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './types';
 import type { Company } from '@/types/company';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CLIENT_TYPES = {
   MARKETING: 'Marketing',
@@ -64,6 +64,7 @@ export function MultiStageCompanyDialog({
   const [logo, setLogo] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   const totalStages = 3;
   
@@ -73,7 +74,7 @@ export function MultiStageCompanyDialog({
     queryFn: () => userService.listUsers(),
   });
   
-  // Create form with all fields
+  // Create form with all fields and set default user
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
@@ -86,11 +87,11 @@ export function MultiStageCompanyDialog({
       street_address: '',
       city: '',
       postal_code: '',
-      country: '',
+      country: 'Norge',
       parent_id: parentId || '',
       trial_period: false,
       is_partner: false,
-      advisor_id: '',
+      advisor_id: user?.id || '', // Set default advisor to current user
       mrr: 0,
       ...defaultValues, // Merge any provided default values
     },
@@ -130,6 +131,7 @@ export function MultiStageCompanyDialog({
         client_types: values.client_types,
         mrr: hasMarketingType ? values.mrr : null, // Only include MRR if Marketing is selected
         name: values.name, // Ensure name is included
+        country: 'Norge', // Ensure Norway is always set
       };
       
       // Handle deal ID if provided (converting temp company)
@@ -185,7 +187,6 @@ export function MultiStageCompanyDialog({
     }
   };
   
-  // ... rest of the component code
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
@@ -418,7 +419,7 @@ export function MultiStageCompanyDialog({
                         <FormItem>
                           <FormLabel>City</FormLabel>
                           <FormControl>
-                            <Input placeholder="New York" {...field} />
+                            <Input placeholder="Oslo" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -432,7 +433,7 @@ export function MultiStageCompanyDialog({
                         <FormItem>
                           <FormLabel>Postal Code</FormLabel>
                           <FormControl>
-                            <Input placeholder="10001" {...field} />
+                            <Input placeholder="0123" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -446,7 +447,9 @@ export function MultiStageCompanyDialog({
                         <FormItem>
                           <FormLabel>Country</FormLabel>
                           <FormControl>
-                            <Input placeholder="USA" {...field} />
+                            <div className="flex items-center gap-2 h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
+                              🇳🇴 Norge
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -580,8 +583,8 @@ export function MultiStageCompanyDialog({
                 <Button 
                   type="submit"
                   className={cn(
-                    "flex items-center gap-1",
-                    stage === totalStages ? "" : "bg-secondary hover:bg-secondary/80"
+                    "flex items-center gap-1 bg-black hover:bg-black/90",
+                    stage === totalStages ? "" : "bg-black hover:bg-black/90"
                   )}
                   disabled={createCompanyMutation.isPending}
                 >
