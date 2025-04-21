@@ -90,9 +90,11 @@ const CompanyDetailsPage = () => {
           <TabsTrigger value="contacts" className="flex items-center">
             <Users className="h-4 w-4 mr-2" /> Contacts
           </TabsTrigger>
-          <TabsTrigger value="hierarchy" className="flex items-center">
-            <Layers className="h-4 w-4 mr-2" /> Hierarchy
-          </TabsTrigger>
+          {company.is_partner && (
+            <TabsTrigger value="hierarchy" className="flex items-center">
+              <Layers className="h-4 w-4 mr-2" /> Hierarchy
+            </TabsTrigger>
+          )}
         </TabsList>
         
         <TabsContent value="overview">
@@ -103,12 +105,14 @@ const CompanyDetailsPage = () => {
           <CompanyContactsList companyId={company.id} />
         </TabsContent>
         
-        <TabsContent value="hierarchy">
-          <CompanyHierarchy 
-            companyId={company.id}
-            onSelectCompany={handleCompanyClick}
-          />
-        </TabsContent>
+        {company.is_partner && (
+          <TabsContent value="hierarchy">
+            <CompanyHierarchy 
+              companyId={company.id}
+              onSelectCompany={handleCompanyClick}
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
