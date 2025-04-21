@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,7 +60,7 @@ function CommentForm({ adId, onComment }: { adId: string, onComment: () => void 
     onSuccess: () => {
       setComment('');
       toast({ title: 'Comment Added' });
-      queryClient.invalidateQueries(['ad_comments', adId]);
+      queryClient.invalidateQueries({ queryKey: ['ad_comments', adId] });
       onComment();
     },
     onError: () => {
@@ -188,7 +189,7 @@ export default function AdDetailsPage() {
     },
     onSuccess: () => {
       toast({ title: 'Ad deleted.' });
-      queryClient.invalidateQueries(['ads']);
+      queryClient.invalidateQueries({ queryKey: ['ads'] });
       navigate(-1);
     },
     onError: (err: any) => {
@@ -199,7 +200,7 @@ export default function AdDetailsPage() {
   if (isLoading || !ad) return <div className="container mx-auto mt-12 text-center">Loading...</div>;
 
   // Parse variations (ensure fallback to empty arrays)
-  const safeParse = (json: string | null) => {
+  const safeParse = (json: any): any[] => {
     if (!json) return [];
     try {
       if (typeof json === 'string') return JSON.parse(json);
