@@ -26,7 +26,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
 
     return (
       <div className="relative">
-        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-muted-foreground">
+        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-sm text-muted-foreground">
           🇳🇴 +47
         </div>
         <Input
@@ -34,7 +34,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
           ref={ref}
           value={displayValue || ''}
           onChange={handleChange}
-          className={cn("pl-16", className)}
+          className={cn("pl-16 text-sm", className)}
           type="tel"
         />
       </div>
