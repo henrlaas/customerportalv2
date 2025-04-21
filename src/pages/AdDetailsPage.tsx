@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -136,6 +137,68 @@ export default function AdDetailsPage() {
       toast({ title: 'Failed to delete', description: err.message, variant: 'destructive' });
     }
   });
+  
+  // Query for ad-specific comments
+  const { data: pointComments = [], refetch: refetchComments } = useQuery({
+    queryKey: ['ad_point_comments', adId],
+    queryFn: async () => {
+      if (!adId) return [];
+      const { data } = await supabase
+        .from('ad_comments')
+        .select('*')
+        .eq('ad_id', adId);
+      return data || [];
+    },
+    enabled: !!adId,
+  });
+  
+  // Mutation for adding point-specific comments
+  const addCommentMutation = useMutation({
+    mutationFn: async (comment: { ad_id: string; x: number; y: number; text: string }) => {
+      const { error, data } = await supabase
+        .from('ad_comments')
+        .insert(comment)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ad_point_comments', adId] });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Failed to add comment', description: err.message, variant: 'destructive' });
+    }
+  });
+  
+  // Mutation for resolving comments
+  const resolveCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase
+        .from('ad_comments')
+        .update({ isResolved: true })
+        .eq('id', commentId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ad_point_comments', adId] });
+      toast({ title: 'Comment resolved' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Failed to resolve comment', description: err.message, variant: 'destructive' });
+    }
+  });
+
+  const handleAddComment = (comment: { x: number; y: number; text: string }) => {
+    if (!adId) return;
+    addCommentMutation.mutate({ ...comment, ad_id: adId });
+  };
+  
+  const handleResolveComment = (commentId: string) => {
+    resolveCommentMutation.mutate(commentId);
+  };
 
   const safeParse = (json: any): any[] => {
     if (!json) return [];
@@ -166,8 +229,9 @@ export default function AdDetailsPage() {
                 fileUrl={ad.file_url}
                 fileType={ad.ad_type}
                 adId={ad.id}
-                comments={[]} // TODO: Implement point-specific comments
-                onCommentAdd={() => {}} // TODO: Implement point-specific comment adding
+                comments={pointComments}
+                onCommentAdd={handleAddComment}
+                onCommentResolve={handleResolveComment}
               />
             )}
 
@@ -255,3 +319,4 @@ export default function AdDetailsPage() {
     </AppLayout>
   );
 }
+
