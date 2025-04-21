@@ -47,6 +47,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './types';
 import type { Company } from '@/types/company';
 import { useAuth } from '@/contexts/AuthContext';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 const CLIENT_TYPES = {
   MARKETING: 'Marketing',
@@ -248,7 +249,7 @@ export function MultiStageCompanyDialog({
                   name="organization_number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Organization Number</FormLabel>
+                      <FormLabel>Organization Number*</FormLabel>
                       <FormControl>
                         <Input placeholder="123456-7890" {...field} />
                       </FormControl>
@@ -340,7 +341,7 @@ export function MultiStageCompanyDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <Globe className="h-4 w-4" /> Website
+                        <Globe className="h-4 w-4" /> Website*
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="https://example.com" {...field} />
@@ -359,10 +360,10 @@ export function MultiStageCompanyDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" /> Phone Number
+                        <Phone className="h-4 w-4" /> Phone Number*
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="+1 (555) 123-4567" {...field} />
+                        <PhoneInput {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -375,7 +376,7 @@ export function MultiStageCompanyDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" /> Invoice Email
+                        <Mail className="h-4 w-4" /> Invoice Email*
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="invoices@example.com" {...field} />
@@ -403,7 +404,7 @@ export function MultiStageCompanyDialog({
                       name="street_address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Street Address</FormLabel>
+                          <FormLabel>Street Address*</FormLabel>
                           <FormControl>
                             <Input placeholder="123 Main St" {...field} />
                           </FormControl>
@@ -417,7 +418,7 @@ export function MultiStageCompanyDialog({
                       name="city"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>City</FormLabel>
+                          <FormLabel>City*</FormLabel>
                           <FormControl>
                             <Input placeholder="Oslo" {...field} />
                           </FormControl>
@@ -431,7 +432,7 @@ export function MultiStageCompanyDialog({
                       name="postal_code"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Postal Code</FormLabel>
+                          <FormLabel>Postal Code*</FormLabel>
                           <FormControl>
                             <Input placeholder="0123" {...field} />
                           </FormControl>
@@ -465,7 +466,7 @@ export function MultiStageCompanyDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          <User className="h-4 w-4" /> Advisor
+                          <User className="h-4 w-4" /> Advisor*
                         </FormLabel>
                         <Select
                           onValueChange={field.onChange}
@@ -498,11 +499,11 @@ export function MultiStageCompanyDialog({
                       name="mrr"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Monthly Recurring Revenue</FormLabel>
+                          <FormLabel>Monthly Recurring Revenue*</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
-                              placeholder="1000"
+                              placeholder="0"
                               {...field}
                               onChange={(e) => field.onChange(e.target.valueAsNumber)}
                             />
