@@ -1,4 +1,3 @@
-
 import { MapPin, User } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { 
@@ -20,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CompanyFormValues } from './types';
+import React from 'react';
 
 interface CompanyAddressSettingsFormProps {
   form: UseFormReturn<CompanyFormValues>;
@@ -32,6 +32,11 @@ export const CompanyAddressSettingsForm = ({
   users, 
   hasMarketingType 
 }: CompanyAddressSettingsFormProps) => {
+  // Set Norway as default country when form loads
+  React.useEffect(() => {
+    form.setValue('country', 'Norge');
+  }, []);
+
   return (
     <>
       <div className="bg-muted p-4 rounded-lg">
@@ -60,7 +65,7 @@ export const CompanyAddressSettingsForm = ({
               <FormItem>
                 <FormLabel>City</FormLabel>
                 <FormControl>
-                  <Input placeholder="New York" {...field} />
+                  <Input placeholder="Oslo" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -74,7 +79,7 @@ export const CompanyAddressSettingsForm = ({
               <FormItem>
                 <FormLabel>Postal Code</FormLabel>
                 <FormControl>
-                  <Input placeholder="10001" {...field} />
+                  <Input placeholder="0123" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -88,7 +93,9 @@ export const CompanyAddressSettingsForm = ({
               <FormItem>
                 <FormLabel>Country</FormLabel>
                 <FormControl>
-                  <Input placeholder="USA" {...field} />
+                  <div className="flex items-center gap-2 h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
+                    🇳🇴 Norge
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -96,6 +103,7 @@ export const CompanyAddressSettingsForm = ({
           />
         </div>
       </div>
+      
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
@@ -155,6 +163,7 @@ export const CompanyAddressSettingsForm = ({
           />
         )}
       </div>
+      
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
