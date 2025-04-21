@@ -38,6 +38,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, User, Lock, Bell } from 'lucide-react';
 import FileUploader from '@/components/FileUploader';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 const SettingsPage = () => {
   const { user, profile } = useAuth();
@@ -401,7 +402,7 @@ const SettingsPage = () => {
                             <FormItem>
                               <FormLabel>Phone Number</FormLabel>
                               <FormControl>
-                                <Input placeholder="+1 (555) 123-4567" {...field} />
+                                <PhoneInput placeholder="Enter phone number" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
