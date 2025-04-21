@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import {
   Form,
   FormControl,
@@ -32,6 +33,7 @@ const contactFormSchema = z.object({
   firstName: z.string().min(1, { message: 'First name is required' }),
   lastName: z.string().min(1, { message: 'Last name is required' }),
   email: z.string().email({ message: 'Valid email is required' }),
+  phoneNumber: z.string().optional(),
   position: z.string().optional(),
 });
 
@@ -60,6 +62,7 @@ export const CreateContactDialog = ({
       firstName: '',
       lastName: '',
       email: '',
+      phoneNumber: '',
       position: '',
     },
   });
@@ -109,6 +112,7 @@ export const CreateContactDialog = ({
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
+        phoneNumber: values.phoneNumber,
         role: 'client', // Always set to client role
         language: 'en'
       });
@@ -189,6 +193,20 @@ export const CreateContactDialog = ({
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="john.doe@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <PhoneInput {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -2,53 +2,65 @@
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { InviteUserFormValues } from '@/schemas/userSchemas';
 
-interface UseInviteUserProps {
-  onSuccess?: (data?: any) => void;
-}
+type InviteUserParams = {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string; 
+  role?: string;
+  language?: string;
+  redirect?: string;
+};
 
-export function useInviteUser({ onSuccess }: UseInviteUserProps = {}) {
+type UseInviteUserProps = {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+};
+
+export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) => {
   const { toast } = useToast();
-  
+
   return useMutation({
-    mutationFn: async (data: InviteUserFormValues) => {
-      console.log('Inviting user with data:', data);
-      
-      const response = await supabase.functions.invoke('user-management', {
+    mutationFn: async (params: InviteUserParams) => {
+      // Get the current URL for redirect
+      const siteUrl = window.location.origin;
+      const redirectUrl = params.redirect || `${siteUrl}/set-password`;
+
+      const { data, error } = await supabase.functions.invoke('user-management', {
         body: {
-          action: 'invite',
-          email: data.email,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          role: data.role || 'client',
-          team: data.team,
-          language: data.language || 'en',
-        }
+          action: 'invite-user',
+          email: params.email,
+          firstName: params.firstName,
+          lastName: params.lastName,
+          phoneNumber: params.phoneNumber,
+          role: params.role || 'client',
+          language: params.language || 'en',
+          redirect: redirectUrl,
+        },
       });
 
-      if (response.error) {
-        throw new Error(response.error.message || 'Error inviting user');
+      if (error) {
+        console.error('Error inviting user:', error);
+        throw new Error(error.message);
       }
 
-      return response.data;
+      return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       toast({
-        title: 'Success',
-        description: `Invitation sent to ${variables.email}`,
+        title: 'User invited',
+        description: 'An invitation has been sent to the user.',
       });
-      
-      if (onSuccess) {
-        onSuccess(data);
-      }
+      if (onSuccess) onSuccess();
     },
     onError: (error: Error) => {
       toast({
         title: 'Error',
-        description: error.message,
+        description: `Failed to invite user: ${error.message}`,
         variant: 'destructive',
       });
-    }
+      if (onError) onError(error);
+    },
   });
-}
+};
