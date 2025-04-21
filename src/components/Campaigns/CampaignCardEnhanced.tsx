@@ -10,7 +10,8 @@ import {
   MoreHorizontal,
   ArrowRightCircle,
   Archive,
-  Repeat
+  Repeat,
+  Copy
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import { PlatformBadge } from './PlatformBadge';
 import { EditCampaignDialog } from './EditCampaignDialog/EditCampaignDialog';
 import { DeleteCampaignDialog } from './DeleteCampaignDialog/DeleteCampaignDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/components/ui/use-toast';
 
 interface CampaignCardEnhancedProps {
   campaign: Campaign;
@@ -133,6 +135,40 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
     `${campaign.profiles.first_name?.[0] || ''}${campaign.profiles.last_name?.[0] || ''}` : 
     'U';
 
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const duplicateMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const { data, error } = await supabase
+        .rpc('duplicate_campaign', {
+          campaign_id_param: campaignId
+        });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Campaign duplicated",
+        description: "The campaign and its assets have been duplicated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error duplicating campaign",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDuplicate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    duplicateMutation.mutate(campaign.id);
+  };
+
   return (
     <Card className={cn(
       "overflow-hidden transition-all duration-200",
@@ -197,8 +233,14 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <EditCampaignDialog campaign={campaign} trigger={<Button variant="ghost" className="w-full justify-start">Edit Campaign</Button>} />
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleDuplicate}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  <span>Duplicate Campaign</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
                   <DeleteCampaignDialog campaign={campaign} trigger={<Button variant="ghost" className="w-full justify-start text-destructive">Delete Campaign</Button>} />

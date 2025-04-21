@@ -990,6 +990,10 @@ export type Database = {
         Args: { admin_email: string }
         Returns: string
       }
+      duplicate_campaign: {
+        Args: { campaign_id_param: string }
+        Returns: string
+      }
       get_accessible_companies: {
         Args: { user_uuid: string }
         Returns: string[]
