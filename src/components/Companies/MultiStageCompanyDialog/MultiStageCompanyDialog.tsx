@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -40,6 +41,7 @@ import {
   MapPin,
   Phone,
   User,
+  AlertCircle,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
@@ -48,6 +50,7 @@ import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } fr
 import type { Company } from '@/types/company';
 import { useAuth } from '@/contexts/AuthContext';
 import { PhoneInput } from '@/components/ui/phone-input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const CLIENT_TYPES = {
   MARKETING: 'Marketing',
@@ -66,6 +69,7 @@ export function MultiStageCompanyDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [showValidationError, setShowValidationError] = useState(false);
   
   const totalStages = 3;
   
@@ -96,7 +100,13 @@ export function MultiStageCompanyDialog({
       mrr: 0,
       ...defaultValues, // Merge any provided default values
     },
+    mode: 'onChange',
   });
+
+  // Reset validation error state when stage changes or form values change
+  useEffect(() => {
+    setShowValidationError(false);
+  }, [stage, form.formState.submitCount]);
 
   // Watch for website changes to fetch favicon
   const website = form.watch('website');
@@ -177,16 +187,66 @@ export function MultiStageCompanyDialog({
   const onSubmit = (values: CompanyFormValues) => {
     if (stage < totalStages) {
       setStage(stage + 1);
+      setShowValidationError(false);
     } else {
       createCompanyMutation.mutate(values);
+    }
+  };
+
+  const handleNextClick = async () => {
+    const stageFields = {
+      1: ['name', 'organization_number', 'client_types'],
+      2: ['website', 'phone', 'invoice_email'],
+      3: ['street_address', 'city', 'postal_code', 'advisor_id', ...(hasMarketingType ? ['mrr'] : [])]
+    };
+    
+    // Validate only the fields for the current stage
+    const result = await form.trigger(stageFields[stage as keyof typeof stageFields] as any);
+    
+    if (result) {
+      form.handleSubmit(onSubmit)();
+    } else {
+      setShowValidationError(true);
+      // Show toast with validation errors
+      toast({
+        title: "Validation Error",
+        description: "Please fill all required fields correctly",
+        variant: "destructive",
+      });
+      
+      // Force form revalidation to show all errors
+      await form.trigger(stageFields[stage as keyof typeof stageFields] as any);
     }
   };
   
   const goBack = () => {
     if (stage > 1) {
       setStage(stage - 1);
+      setShowValidationError(false);
     }
   };
+  
+  // Get current stage errors
+  const getCurrentStageErrors = () => {
+    const { errors } = form.formState;
+    const stageFields = {
+      1: ['name', 'organization_number', 'client_types'],
+      2: ['website', 'phone', 'invoice_email'],
+      3: ['street_address', 'city', 'postal_code', 'advisor_id', ...(hasMarketingType ? ['mrr'] : [])]
+    };
+    
+    const currentFields = stageFields[stage as keyof typeof stageFields] || [];
+    
+    return currentFields.filter(field => 
+      errors[field as keyof typeof errors]
+    ).map(field => {
+      const error = errors[field as keyof typeof errors];
+      return error?.message as string;
+    });
+  };
+  
+  const stageErrors = getCurrentStageErrors();
+  const hasStageErrors = stageErrors.length > 0;
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -209,6 +269,21 @@ export function MultiStageCompanyDialog({
             style={{ width: `${(stage / totalStages) * 100}%` }}
           ></div>
         </div>
+
+        {/* Validation error alert */}
+        {showValidationError && hasStageErrors && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <div className="text-sm font-medium">Please fix the following errors:</div>
+              <ul className="text-sm mt-1 list-disc pl-4">
+                {stageErrors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -471,6 +546,7 @@ export function MultiStageCompanyDialog({
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -582,11 +658,12 @@ export function MultiStageCompanyDialog({
                   Cancel
                 </Button>
                 <Button 
-                  type="submit"
+                  type="button"
                   className={cn(
                     "flex items-center gap-1 bg-black hover:bg-black/90",
                     stage === totalStages ? "" : "bg-black hover:bg-black/90"
                   )}
+                  onClick={handleNextClick}
                   disabled={createCompanyMutation.isPending}
                 >
                   {createCompanyMutation.isPending 
