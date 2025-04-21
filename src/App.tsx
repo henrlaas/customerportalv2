@@ -31,6 +31,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AdSetDetailsPage } from './pages/AdSetDetailsPage';
 import { useToast } from '@/components/ui/use-toast';
 import { useEffect } from 'react';
+import AdDetailsPage from '@/pages/AdDetailsPage';
 
 // Create a component to handle bucket initialization
 function StorageInitializer() {
@@ -85,6 +86,8 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/sign-in" element={<Auth />} />
               <Route path="/set-password" element={<SetPassword />} />
+              {/* Add ad details page route */}
+              <Route path="/ads/:adId" element={<AdDetailsPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route element={
                   <AppLayout>
