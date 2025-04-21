@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -44,7 +45,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
-import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './types';
+import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './MultiStageCompanyDialog/types';
 import type { Company } from '@/types/company';
 import { useAuth } from '@/contexts/AuthContext';
 
