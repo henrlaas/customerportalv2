@@ -11,8 +11,11 @@ export const companyMutationService = {
       throw new Error('Company name is required');
     }
     
-    // Format company data for submission
-    const companyData = prepareCompanyData(company);
+    // Format company data for submission and ensure Norway is set as the country
+    const companyData = {
+      ...prepareCompanyData(company),
+      country: 'Norge'
+    };
     
     console.log('Creating company with data:', companyData);
     
@@ -32,8 +35,11 @@ export const companyMutationService = {
   
   // Update company
   updateCompany: async (id: string, company: Partial<Company> & { client_types?: string[] }): Promise<Company> => {
-    // Format company data for submission
-    const companyData = prepareCompanyData(company);
+    // Format company data for submission and ensure Norway is set as the country
+    const companyData = {
+      ...prepareCompanyData(company),
+      country: 'Norge'
+    };
     
     const { data, error } = await supabase
       .from('companies')
