@@ -40,36 +40,6 @@ export const handleInviteUser = async (
   }
 
   try {
-    // Check if user already exists
-    const { data: existingUsers, error: searchError } = await supabaseAdmin.auth.admin.listUsers({
-      filter: {
-        email: email
-      }
-    });
-
-    if (searchError) {
-      console.error(`Error checking existing user: ${searchError.message}`);
-      return new Response(
-        JSON.stringify({ error: searchError.message }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
-    }
-
-    // If users exist with this email, return a clear error
-    if (existingUsers && existingUsers.users && existingUsers.users.length > 0) {
-      console.log(`User with email ${email} already exists`);
-      return new Response(
-        JSON.stringify({ error: 'A user with this email address already exists' }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
-    }
-
     console.log(`Inviting user: ${email} with role: ${role}, firstName: ${firstName}, lastName: ${lastName}`);
     
     // Generate a random password for the new user

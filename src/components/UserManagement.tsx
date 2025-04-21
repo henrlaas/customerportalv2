@@ -41,14 +41,12 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
   });
 
   const onSubmit = (data: InviteUserFormValues) => {
-    console.log('Form data submitted:', data);
-    
     // Ensure data is correctly shaped to match InviteUserParams
     const inviteData = {
       email: data.email, // Make sure email is always present
       firstName: data.firstName,
       lastName: data.lastName,
-      phoneNumber: data.phone, // Map phone to phoneNumber to match the API expectation
+      phoneNumber: data.phone, // Fix: use phone instead of phoneNumber to match the schema
       role: data.role,
       language: data.language,
       team: data.team

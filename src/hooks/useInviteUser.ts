@@ -28,20 +28,9 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
       const siteUrl = window.location.origin;
       const redirectUrl = params.redirect || `${siteUrl}/set-password`;
 
-      // Log the parameters being sent to the edge function
-      console.log('Inviting user with params:', {
-        action: 'invite',
-        email: params.email,
-        firstName: params.firstName,
-        lastName: params.lastName,
-        phoneNumber: params.phoneNumber,
-        role: params.role || 'client',
-        team: params.team,
-      });
-
       const { data, error } = await supabase.functions.invoke('user-management', {
         body: {
-          action: 'invite', // Using 'invite' to match handler expectation
+          action: 'invite', // Changed from 'invite-user' to 'invite' to match handler expectation
           email: params.email,
           firstName: params.firstName,
           lastName: params.lastName,
@@ -55,13 +44,7 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
 
       if (error) {
         console.error('Error inviting user:', error);
-        throw new Error(error.message || 'Failed to invite user');
-      }
-
-      // If the edge function returns an error in the data object
-      if (data && data.error) {
-        console.error('Error from edge function:', data.error);
-        throw new Error(data.error);
+        throw new Error(error.message);
       }
 
       return data;
@@ -74,16 +57,9 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
       if (onSuccess) onSuccess();
     },
     onError: (error: Error) => {
-      let errorMessage = error.message;
-      
-      // Check if it's a duplicate email error
-      if (errorMessage.includes('already exists')) {
-        errorMessage = 'A user with this email address already exists.';
-      }
-      
       toast({
         title: 'Error',
-        description: `Failed to invite user: ${errorMessage}`,
+        description: `Failed to invite user: ${error.message}`,
         variant: 'destructive',
       });
       if (onError) onError(error);
