@@ -46,7 +46,7 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
       email: data.email, // Make sure email is always present
       firstName: data.firstName,
       lastName: data.lastName,
-      phoneNumber: data.phoneNumber,
+      phoneNumber: data.phone, // Fix: use phone instead of phoneNumber to match the schema
       role: data.role,
       language: data.language,
       team: data.team
