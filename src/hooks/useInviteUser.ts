@@ -55,7 +55,7 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
 
       if (error) {
         console.error('Error inviting user:', error);
-        throw error;
+        throw new Error(error.message || 'Failed to invite user');
       }
 
       // If the edge function returns an error in the data object

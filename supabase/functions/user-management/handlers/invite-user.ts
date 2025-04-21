@@ -58,7 +58,7 @@ export const handleInviteUser = async (
       );
     }
 
-    // If users exist with this email, return an error
+    // If users exist with this email, return a clear error
     if (existingUsers && existingUsers.users && existingUsers.users.length > 0) {
       console.log(`User with email ${email} already exists`);
       return new Response(

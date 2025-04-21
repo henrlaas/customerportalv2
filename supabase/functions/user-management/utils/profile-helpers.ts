@@ -15,18 +15,6 @@ export const updateUserProfile = async (
   try {
     console.log(`Updating profile for user ID: ${userId} with data:`, JSON.stringify(userData));
     
-    // Check if profile already exists
-    const { data: existingProfile, error: fetchError } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows returned
-      console.error('Error checking existing profile:', fetchError.message);
-      throw fetchError;
-    }
-    
     // Prepare update data object
     const updateData: Record<string, any> = {
       id: userId, // Ensure ID is set for upsert
@@ -42,16 +30,22 @@ export const updateUserProfile = async (
       updateData.team = userData.team;
     }
     
-    // If profile doesn't exist, add created_at
-    if (!existingProfile) {
+    // Check if profile already exists
+    const { data: existingProfile, error: fetchError } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (!existingProfile && !fetchError) {
+      // If profile doesn't exist and there's no error, add created_at
       updateData.created_at = new Date().toISOString();
     }
 
     // Use upsert to handle both insert and update cases
     const { error } = await supabaseAdmin
       .from('profiles')
-      .upsert(updateData)
-      .select();
+      .upsert(updateData);
 
     if (error) {
       console.error('Error updating user profile:', error.message);
