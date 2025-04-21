@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -48,6 +47,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './MultiStageCompanyDialog/types';
 import type { Company } from '@/types/company';
 import { useAuth } from '@/contexts/AuthContext';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 const CLIENT_TYPES = {
   MARKETING: 'Marketing',
@@ -363,7 +363,7 @@ export function MultiStageCompanyDialog({
                         <Phone className="h-4 w-4" /> Phone Number
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="+1 (555) 123-4567" {...field} />
+                        <PhoneInput {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
