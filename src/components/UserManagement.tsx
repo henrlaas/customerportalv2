@@ -41,7 +41,18 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
   });
 
   const onSubmit = (data: InviteUserFormValues) => {
-    inviteUserMutation.mutate(data);
+    // Ensure data is correctly shaped to match InviteUserParams
+    const inviteData = {
+      email: data.email, // Make sure email is always present
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phoneNumber: data.phoneNumber,
+      role: data.role,
+      language: data.language,
+      team: data.team
+    };
+    
+    inviteUserMutation.mutate(inviteData);
   };
 
   return (

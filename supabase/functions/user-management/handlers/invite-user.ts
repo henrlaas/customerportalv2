@@ -12,6 +12,7 @@ export const handleInviteUser = async (
     role?: string;
     language?: string;
     redirect?: string;
+    team?: string;
   },
   supabaseAdmin: SupabaseClient,
   corsHeaders: Record<string, string>
@@ -23,7 +24,8 @@ export const handleInviteUser = async (
     phoneNumber, 
     role = "client", 
     language = "en",
-    redirect 
+    redirect,
+    team
   } = body;
 
   if (!email) {
@@ -52,7 +54,8 @@ export const handleInviteUser = async (
         last_name: lastName,
         phone_number: phoneNumber,
         role,
-        language
+        language,
+        team
       }
     });
 
@@ -73,7 +76,8 @@ export const handleInviteUser = async (
         firstName,
         lastName,
         phoneNumber,
-        language
+        language,
+        team
       });
     }
 

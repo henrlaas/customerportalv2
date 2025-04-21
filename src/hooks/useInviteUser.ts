@@ -11,6 +11,7 @@ type InviteUserParams = {
   role?: string;
   language?: string;
   redirect?: string;
+  team?: string; // Add team as an optional parameter
 };
 
 type UseInviteUserProps = {
@@ -37,6 +38,7 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
           role: params.role || 'client',
           language: params.language || 'en',
           redirect: redirectUrl,
+          team: params.team, // Forward team parameter to the edge function
         },
       });
 
