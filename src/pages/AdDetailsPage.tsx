@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -100,6 +99,31 @@ function HistoryLog({ adId }: { adId: string }) {
   );
 }
 
+// Interface to handle the conversion between database schema and our frontend Comment type
+interface CommentData {
+  id: string;
+  ad_id: string;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  x?: number;
+  y?: number;
+  is_resolved?: boolean;
+}
+
+// Helper to convert database comment to frontend Comment format
+const mapDatabaseToComment = (comment: CommentData): any => {
+  // Map database fields to our Comment interface expected by AdMediaViewer
+  return {
+    id: comment.id,
+    x: comment.x || 50, // Default to center if not specified
+    y: comment.y || 50, // Default to center if not specified
+    text: comment.comment,
+    isResolved: comment.is_resolved || false
+  };
+};
+
 export default function AdDetailsPage() {
   const { adId } = useParams<{ adId: string }>();
   const navigate = useNavigate();
@@ -139,7 +163,7 @@ export default function AdDetailsPage() {
   });
   
   // Query for ad-specific comments
-  const { data: pointComments = [], refetch: refetchComments } = useQuery({
+  const { data: pointCommentsRaw = [], refetch: refetchComments } = useQuery({
     queryKey: ['ad_point_comments', adId],
     queryFn: async () => {
       if (!adId) return [];
@@ -152,12 +176,29 @@ export default function AdDetailsPage() {
     enabled: !!adId,
   });
   
+  // Map database comments to our frontend Comment format
+  const pointComments = pointCommentsRaw.map(mapDatabaseToComment);
+  
   // Mutation for adding point-specific comments
   const addCommentMutation = useMutation({
-    mutationFn: async (comment: { ad_id: string; x: number; y: number; text: string }) => {
+    mutationFn: async (comment: { x: number; y: number; text: string }) => {
+      // Get user ID from authentication
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      
+      if (!userId || !adId) {
+        throw new Error("User not authenticated or ad ID missing");
+      }
+      
       const { error, data } = await supabase
         .from('ad_comments')
-        .insert(comment)
+        .insert({
+          ad_id: adId,
+          comment: comment.text,
+          user_id: userId,
+          x: comment.x,
+          y: comment.y
+        })
         .select()
         .single();
       
@@ -177,7 +218,7 @@ export default function AdDetailsPage() {
     mutationFn: async (commentId: string) => {
       const { error } = await supabase
         .from('ad_comments')
-        .update({ isResolved: true })
+        .update({ is_resolved: true })
         .eq('id', commentId);
       
       if (error) throw error;
@@ -193,7 +234,7 @@ export default function AdDetailsPage() {
 
   const handleAddComment = (comment: { x: number; y: number; text: string }) => {
     if (!adId) return;
-    addCommentMutation.mutate({ ...comment, ad_id: adId });
+    addCommentMutation.mutate(comment);
   };
   
   const handleResolveComment = (commentId: string) => {
@@ -319,4 +360,3 @@ export default function AdDetailsPage() {
     </AppLayout>
   );
 }
-
