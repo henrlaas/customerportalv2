@@ -28,6 +28,17 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
       const siteUrl = window.location.origin;
       const redirectUrl = params.redirect || `${siteUrl}/set-password`;
 
+      // Log the parameters being sent to the edge function
+      console.log('Inviting user with params:', {
+        action: 'invite',
+        email: params.email,
+        firstName: params.firstName,
+        lastName: params.lastName,
+        phoneNumber: params.phoneNumber,
+        role: params.role || 'client',
+        team: params.team,
+      });
+
       const { data, error } = await supabase.functions.invoke('user-management', {
         body: {
           action: 'invite', // Using 'invite' to match handler expectation

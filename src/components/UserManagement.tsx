@@ -41,6 +41,8 @@ export function UserManagement({ onSuccess }: UserManagementProps) {
   });
 
   const onSubmit = (data: InviteUserFormValues) => {
+    console.log('Form data submitted:', data);
+    
     // Ensure data is correctly shaped to match InviteUserParams
     const inviteData = {
       email: data.email, // Make sure email is always present
