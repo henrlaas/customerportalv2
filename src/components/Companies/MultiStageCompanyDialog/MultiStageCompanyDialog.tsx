@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -47,6 +46,7 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './types';
 import type { Company } from '@/types/company';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CLIENT_TYPES = {
   MARKETING: 'Marketing',
@@ -64,6 +64,7 @@ export function MultiStageCompanyDialog({
   const [logo, setLogo] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   const totalStages = 3;
   
@@ -73,7 +74,7 @@ export function MultiStageCompanyDialog({
     queryFn: () => userService.listUsers(),
   });
   
-  // Create form with all fields
+  // Create form with all fields and set default user
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
@@ -90,7 +91,7 @@ export function MultiStageCompanyDialog({
       parent_id: parentId || '',
       trial_period: false,
       is_partner: false,
-      advisor_id: '',
+      advisor_id: user?.id || '', // Set default advisor to current user
       mrr: 0,
       ...defaultValues, // Merge any provided default values
     },

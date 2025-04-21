@@ -1,4 +1,3 @@
-
 import { MapPin, User } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { 
