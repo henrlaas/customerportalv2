@@ -15,24 +15,33 @@ export type Database = {
           comment: string
           created_at: string
           id: string
+          is_resolved: boolean | null
           updated_at: string
           user_id: string
+          x: number | null
+          y: number | null
         }
         Insert: {
           ad_id: string
           comment: string
           created_at?: string
           id?: string
+          is_resolved?: boolean | null
           updated_at?: string
           user_id: string
+          x?: number | null
+          y?: number | null
         }
         Update: {
           ad_id?: string
           comment?: string
           created_at?: string
           id?: string
+          is_resolved?: boolean | null
           updated_at?: string
           user_id?: string
+          x?: number | null
+          y?: number | null
         }
         Relationships: [
           {
