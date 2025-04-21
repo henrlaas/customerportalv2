@@ -57,9 +57,16 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
       if (onSuccess) onSuccess();
     },
     onError: (error: Error) => {
+      let errorMessage = error.message;
+      
+      // Check if it's a duplicate email error
+      if (errorMessage.includes('already exists')) {
+        errorMessage = 'A user with this email address already exists.';
+      }
+      
       toast({
         title: 'Error',
-        description: `Failed to invite user: ${error.message}`,
+        description: `Failed to invite user: ${errorMessage}`,
         variant: 'destructive',
       });
       if (onError) onError(error);
