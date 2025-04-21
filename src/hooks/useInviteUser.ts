@@ -30,7 +30,7 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
 
       const { data, error } = await supabase.functions.invoke('user-management', {
         body: {
-          action: 'invite', // Changed from 'invite-user' to 'invite' to match handler expectation
+          action: 'invite', // Using 'invite' to match handler expectation
           email: params.email,
           firstName: params.firstName,
           lastName: params.lastName,
@@ -44,7 +44,13 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
 
       if (error) {
         console.error('Error inviting user:', error);
-        throw new Error(error.message);
+        throw error;
+      }
+
+      // If the edge function returns an error in the data object
+      if (data && data.error) {
+        console.error('Error from edge function:', data.error);
+        throw new Error(data.error);
       }
 
       return data;
