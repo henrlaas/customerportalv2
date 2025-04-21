@@ -8,6 +8,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { UseFormReturn } from 'react-hook-form';
 import { InviteUserFormValues } from '@/schemas/userSchemas';
 
@@ -63,6 +64,20 @@ export function UserContactFields({ form }: UserContactFieldsProps) {
           )}
         />
       </div>
+
+      <FormField
+        control={form.control}
+        name="phone"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t('Phone Number')}</FormLabel>
+            <FormControl>
+              <PhoneInput {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </>
   );
 }

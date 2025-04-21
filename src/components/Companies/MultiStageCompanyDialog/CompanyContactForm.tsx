@@ -10,6 +10,7 @@ import {
   FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { CompanyFormValues } from './types';
 
 interface CompanyContactFormProps {
@@ -47,7 +48,7 @@ export const CompanyContactForm = ({ form }: CompanyContactFormProps) => {
               <Phone className="h-4 w-4" /> Phone Number
             </FormLabel>
             <FormControl>
-              <Input placeholder="+1 (555) 123-4567" {...field} />
+              <PhoneInput {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>

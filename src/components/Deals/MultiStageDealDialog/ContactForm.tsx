@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { contactFormSchema, ContactFormValues } from '@/components/Deals/types/deal';
 
 interface ContactFormProps {
@@ -90,9 +91,9 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone (optional)</FormLabel>
+              <FormLabel>Phone</FormLabel>
               <FormControl>
-                <Input placeholder="Enter phone number" {...field} />
+                <PhoneInput placeholder="Enter phone number" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
