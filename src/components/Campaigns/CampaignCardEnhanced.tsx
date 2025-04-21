@@ -26,7 +26,7 @@ import { fetchFavicon } from '@/services/companyHelpers';
 import { PlatformBadge } from './PlatformBadge';
 import { EditCampaignDialog } from './EditCampaignDialog/EditCampaignDialog';
 import { DeleteCampaignDialog } from './DeleteCampaignDialog/DeleteCampaignDialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
 
 interface CampaignCardEnhancedProps {
@@ -164,8 +164,8 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
     },
   });
 
-  const handleDuplicate = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Fix the event type to match what DropdownMenuItem expects
+  const handleDuplicate = () => {
     duplicateMutation.mutate(campaign.id);
   };
 
