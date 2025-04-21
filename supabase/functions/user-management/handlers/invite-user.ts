@@ -14,6 +14,7 @@ export const handleInviteUser = async (
     redirect?: string;
     team?: string;
   },
+  origin: string,
   supabaseAdmin: SupabaseClient,
   corsHeaders: Record<string, string>
 ) => {
@@ -39,7 +40,7 @@ export const handleInviteUser = async (
   }
 
   try {
-    console.log(`Inviting user: ${email}`);
+    console.log(`Inviting user: ${email} with role: ${role}, firstName: ${firstName}, lastName: ${lastName}`);
     
     // Generate a random password for the new user
     const randomPassword = Math.random().toString(36).slice(-10);
@@ -72,13 +73,20 @@ export const handleInviteUser = async (
 
     // If user was created successfully, update their profile
     if (userData.user && userData.user.id) {
-      await updateUserProfile(supabaseAdmin, userData.user.id, {
-        firstName,
-        lastName,
-        phoneNumber,
-        language,
-        team
-      });
+      console.log(`Updating profile for user: ${userData.user.id}`);
+      try {
+        await updateUserProfile(supabaseAdmin, userData.user.id, {
+          firstName,
+          lastName,
+          phoneNumber,
+          language,
+          team
+        });
+        console.log("Profile updated successfully");
+      } catch (profileError) {
+        console.error("Error updating profile:", profileError);
+        // Continue with the invitation process even if profile update fails
+      }
     }
 
     // Send a password reset email so the user can set their own password

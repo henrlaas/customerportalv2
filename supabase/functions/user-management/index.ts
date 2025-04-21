@@ -27,6 +27,7 @@ serve(async (req) => {
     
     switch(action) {
       case 'invite':
+      case 'invite-user': // Handle both 'invite' and 'invite-user' for backward compatibility
         return await handleInviteUser(body, origin, supabaseAdmin, corsHeaders)
       case 'update':
         return await handleUpdateUser(body, supabaseAdmin, corsHeaders)

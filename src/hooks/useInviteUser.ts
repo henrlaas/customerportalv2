@@ -30,7 +30,7 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
 
       const { data, error } = await supabase.functions.invoke('user-management', {
         body: {
-          action: 'invite-user',
+          action: 'invite', // Changed from 'invite-user' to 'invite' to match handler expectation
           email: params.email,
           firstName: params.firstName,
           lastName: params.lastName,
