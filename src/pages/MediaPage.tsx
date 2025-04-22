@@ -32,6 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -70,6 +71,12 @@ interface MediaFile {
   isImage?: boolean;
   isVideo?: boolean;
   isDocument?: boolean;
+}
+
+// Define media data structure
+interface MediaData {
+  folders: MediaFile[];
+  files: MediaFile[];
 }
 
 // Define view modes
@@ -136,7 +143,7 @@ const MediaPage: React.FC = () => {
   };
 
   // Fetch media files from Supabase storage
-  const { data: mediaData = [], isLoading: isLoadingMedia } = useQuery({
+  const { data: mediaData = { folders: [], files: [] }, isLoading: isLoadingMedia } = useQuery({
     queryKey: ['mediaFiles', currentPath, session?.user?.id, filters, activeTab],
     queryFn: async () => {
       if (!session?.user?.id) {
@@ -223,7 +230,7 @@ const MediaPage: React.FC = () => {
             };
           }) || [];
         
-        return { folders: folderItems, files: fileItems };
+        return { folders: folderItems, files: fileItems } as MediaData;
       } catch (error: any) {
         toast({
           title: 'Error fetching media',
