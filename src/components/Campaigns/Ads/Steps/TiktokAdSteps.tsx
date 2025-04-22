@@ -29,6 +29,28 @@ export function TiktokAdSteps({ step, setStep, fileInfo, setFileInfo, form, toas
 
   // Cast validPlatform to the Platform type which is expected by AdDialogPreview
   const typedPlatform = validPlatform as Platform;
+  
+  // This function validates step 0 for TikTok ads
+  const validateStep0 = () => {
+    const adName = form.watch('name')?.trim();
+    if (!adName) {
+      toast({
+        title: 'Missing information',
+        description: 'Please provide an ad name.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+    if (!fileInfo) {
+      toast({
+        title: 'Missing file',
+        description: 'Please upload an image or video for your ad.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+    return true;
+  };
 
   return (
     <>
@@ -89,32 +111,7 @@ export function TiktokAdSteps({ step, setStep, fileInfo, setFileInfo, form, toas
               </div>
             )}
           </div>
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              onClick={() => {
-                const adName = form.watch('name')?.trim();
-                if (!adName) {
-                  toast({
-                    title: 'Missing information',
-                    description: 'Please provide an ad name.',
-                    variant: 'destructive',
-                  });
-                  return;
-                }
-                if (!fileInfo) {
-                  toast({
-                    title: 'Missing file',
-                    description: 'Please upload an image or video for your ad.',
-                    variant: 'destructive',
-                  });
-                  return;
-                }
-                setStep(1);
-              }}>
-              Next
-            </Button>
-          </div>
+          {/* We're removing the standalone next button here as it's now handled by the parent dialog */}
         </motion.div>
       )}
 

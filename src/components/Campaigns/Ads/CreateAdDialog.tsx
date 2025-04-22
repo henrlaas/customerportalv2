@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -22,7 +23,6 @@ import { TiktokAdSteps } from './Steps/TiktokAdSteps';
 import { GoogleAdSteps } from './Steps/GoogleAdSteps';
 import { DefaultPlatformAdSteps } from './Steps/DefaultPlatformAdSteps';
 import { FileInfo } from './types';
-import { createElement } from 'react';
 
 interface Props {
   adsetId: string;
@@ -101,6 +101,86 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
 
   const watchedFields = getWatchedFieldsForCurrentVariation();
   const limits = PLATFORM_CHARACTER_LIMITS[validPlatform] || {};
+  
+  // Helper function to submit the final ad
+  const submitAd = async () => {
+    if (uploading) return;
+    const data = form.getValues();
+    if (requiresMediaUpload(validPlatform) && !fileInfo) {
+      toast({
+        title: 'Missing file',
+        description: 'Please upload an image or video for your ad.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setUploading(true);
+    let uploadedFile = null;
+    if (fileInfo) {
+      uploadedFile = await uploadFile(fileInfo.file);
+      if (!uploadedFile && requiresMediaUpload(validPlatform)) {
+        setUploading(false);
+        return;
+      }
+    }
+    const headlineVariations = collectVariations('headline');
+    const descriptionVariations = collectVariations('description');
+    const mainTextVariations = collectVariations('main_text');
+    const keywordsVariations = collectVariations('keywords');
+    try {
+      const adData = {
+        name: data.name,
+        adset_id: adsetId,
+        headline: data.headline || null,
+        description: data.description || null,
+        main_text: data.main_text || null,
+        keywords: data.keywords || null,
+        brand_name: data.brand_name || null,
+        headline_variations: JSON.stringify(headlineVariations),
+        description_variations: JSON.stringify(descriptionVariations),
+        main_text_variations: JSON.stringify(mainTextVariations),
+        keywords_variations: JSON.stringify(keywordsVariations),
+        url: data.url || null,
+        cta_button: data.cta_button || null,
+      };
+      if (validPlatform === 'Google') {
+        const { error } = await supabase.from('ads').insert({
+          ...adData,
+          ad_type: 'text',
+          file_url: null,
+          file_type: null
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('ads').insert({
+          ...adData,
+          ad_type: fileInfo?.type || 'text',
+          file_url: uploadedFile?.url || null,
+          file_type: fileInfo?.file.type || null
+        });
+        if (error) throw error;
+      }
+      toast({
+        title: 'Ad created',
+        description: 'Your ad has been created successfully.',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['ads', adsetId]
+      });
+      setOpen(false);
+      resetDialog(setFileInfo, form);
+    } catch (error: any) {
+      toast({
+        title: 'Error creating ad',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const isLastStep = isSnapchat || isTikTok ? step === 1 : step === steps.length - 1;
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
@@ -190,85 +270,25 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
               </Button>
               <Button 
                 type="button" 
-                onClick={async () => {
-                  if (uploading) return;
-                  const data = form.getValues();
-                  if (requiresMediaUpload(validPlatform) && !fileInfo) {
-                    toast({
-                      title: 'Missing file',
-                      description: 'Please upload an image or video for your ad.',
-                      variant: 'destructive',
-                    });
-                    return;
-                  }
-                  setUploading(true);
-                  let uploadedFile = null;
-                  if (fileInfo) {
-                    uploadedFile = await uploadFile(fileInfo.file);
-                    if (!uploadedFile && requiresMediaUpload(validPlatform)) {
-                      setUploading(false);
-                      return;
-                    }
-                  }
-                  const headlineVariations = collectVariations('headline');
-                  const descriptionVariations = collectVariations('description');
-                  const mainTextVariations = collectVariations('main_text');
-                  const keywordsVariations = collectVariations('keywords');
-                  try {
-                    const adData = {
-                      name: data.name,
-                      adset_id: adsetId,
-                      headline: data.headline || null,
-                      description: data.description || null,
-                      main_text: data.main_text || null,
-                      keywords: data.keywords || null,
-                      brand_name: data.brand_name || null,
-                      headline_variations: JSON.stringify(headlineVariations),
-                      description_variations: JSON.stringify(descriptionVariations),
-                      main_text_variations: JSON.stringify(mainTextVariations),
-                      keywords_variations: JSON.stringify(keywordsVariations),
-                      url: data.url || null,
-                      cta_button: data.cta_button || null,
-                    };
-                    if (validPlatform === 'Google') {
-                      const { error } = await supabase.from('ads').insert({
-                        ...adData,
-                        ad_type: 'text',
-                        file_url: null,
-                        file_type: null
-                      });
-                      if (error) throw error;
+                onClick={() => {
+                  if (isLastStep) {
+                    submitAd();
+                  } else {
+                    // For platform-specific steps with internal validation
+                    if (isTikTok || isSnapchat) {
+                      // These platforms have their own validation inside their components
+                      // So we don't need to do anything here - they handle their own nextStep
                     } else {
-                      const { error } = await supabase.from('ads').insert({
-                        ...adData,
-                        ad_type: fileInfo?.type || 'text',
-                        file_url: uploadedFile?.url || null,
-                        file_type: fileInfo?.file.type || null
-                      });
-                      if (error) throw error;
+                      // For other platforms, use the validateStep utility
+                      if (validateStepFn(step, form, fileInfo, validPlatform, requiresMediaUpload, toast)) {
+                        setStep(step + 1);
+                      }
                     }
-                    toast({
-                      title: 'Ad created',
-                      description: 'Your ad has been created successfully.',
-                    });
-                    await queryClient.invalidateQueries({
-                      queryKey: ['ads', adsetId]
-                    });
-                    setOpen(false);
-                    resetDialog(setFileInfo, form);
-                  } catch (error: any) {
-                    toast({
-                      title: 'Error creating ad',
-                      description: error.message,
-                      variant: 'destructive',
-                    });
-                  } finally {
-                    setUploading(false);
                   }
                 }}
                 className="bg-primary hover:bg-primary/90"
               >
-                Create Ad
+                {isLastStep ? "Create Ad" : "Next"}
               </Button>
             </div>
           </div>

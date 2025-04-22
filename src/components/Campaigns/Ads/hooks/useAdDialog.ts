@@ -44,6 +44,36 @@ export const useAdDialog = () => {
         return false;
       }
     }
+
+    // Platform-specific validations can be added here
+    if (platform === 'Tiktok') {
+      if (step === 0) {
+        // First step validation for TikTok (already handled in general step 0 validation)
+        return true;
+      } else if (step === 1) {
+        // Second step validation for TikTok
+        const headline = form.watch('headline');
+        const url = form.watch('url');
+        
+        if (!headline || headline.trim() === '') {
+          toast({
+            title: 'Missing headline',
+            description: 'Please provide a headline for your TikTok ad.',
+            variant: 'destructive',
+          });
+          return false;
+        }
+        
+        if (!url || url.trim() === '') {
+          toast({
+            title: 'Missing URL',
+            description: 'Please provide a URL for your TikTok ad.',
+            variant: 'destructive',
+          });
+          return false;
+        }
+      }
+    }
     
     return true;
   };
