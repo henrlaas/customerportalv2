@@ -673,6 +673,60 @@ export type Database = {
           },
         ]
       }
+      media_favorites: {
+        Row: {
+          created_at: string
+          file_path: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      media_metadata: {
+        Row: {
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          original_name: string | null
+          tags: string[] | null
+          upload_date: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          original_name?: string | null
+          tags?: string[] | null
+          upload_date?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          original_name?: string | null
+          tags?: string[] | null
+          upload_date?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -997,6 +1051,10 @@ export type Database = {
       get_accessible_companies: {
         Args: { user_uuid: string }
         Returns: string[]
+      }
+      get_user_display_name: {
+        Args: { user_id: string }
+        Returns: string
       }
       get_users_email: {
         Args: { user_ids: string[] }
