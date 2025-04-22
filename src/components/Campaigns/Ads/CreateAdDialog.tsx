@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft, Check, Camera, FileText, Globe, Link } from 'lucide-react';
 import { Form } from '@/components/ui/form';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdFormData, PLATFORM_CHARACTER_LIMITS, Platform } from '../types/campaign';
@@ -68,36 +69,32 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       ? [{ label: 'Media & Name' }, { label: 'Details & Preview' }]
       : getStepsForPlatform(validPlatform);
 
-  // Helper for preview fields specific to Snapchat
-  const getWatchedFieldsForSnapchat = () => ({
-    headline: form.watch('headline') || '',
-    description: '', // Snapchat ads might not use description field
-    main_text: '',   // Not used for Snapchat
-    keywords: '',
-    brand_name: form.watch('brand_name') || '',
-    cta_button: '',
-    url: form.watch('url') || '',
-  });
-
-  // Helper for preview fields specific to TikTok
-  const getWatchedFieldsForTikTok = () => ({
-    headline: form.watch('headline') || '',
-    description: '', // Only headline and URL for TikTok
-    main_text: '',
-    keywords: '',
-    brand_name: '',
-    cta_button: '',
-    url: form.watch('url') || '',
-  });
-
-  // Helper for preview fields for current variation
+  // Helper for getting watched fields for current variation or platform-specific fields
   const getWatchedFieldsForCurrentVariation = () => {
     if (isSnapchat) {
-      return getWatchedFieldsForSnapchat();
+      return {
+        headline: form.watch('headline') || '',
+        description: '', // Snapchat ads might not use description field
+        main_text: '',   // Not used for Snapchat
+        keywords: '',
+        brand_name: form.watch('brand_name') || '',
+        cta_button: '',
+        url: form.watch('url') || '',
+      };
     }
+    
     if (isTikTok) {
-      return getWatchedFieldsForTikTok();
+      return {
+        headline: form.watch('headline') || '',
+        description: '', // Only headline and URL for TikTok
+        main_text: '',
+        keywords: '',
+        brand_name: '',
+        cta_button: '',
+        url: form.watch('url') || '',
+      };
     }
+    
     // For other platforms, look at the current variation (step - 2 is the variation index)
     const variation = Math.max(0, step - 2);
     return {
@@ -415,7 +412,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                     <div>
                       <AdDialogPreview
                         fileInfo={fileInfo}
-                        watchedFields={getWatchedFieldsForSnapchat()}
+                        watchedFields={getWatchedFieldsForCurrentVariation()}
                         platform={validPlatform}
                         limits={{ headline: 60, brand_name: 50 }}
                         variation={0}
@@ -554,7 +551,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                     <div>
                       <AdDialogPreview
                         fileInfo={fileInfo}
-                        watchedFields={getWatchedFieldsForTikTok()}
+                        watchedFields={getWatchedFieldsForCurrentVariation()}
                         platform={validPlatform}
                         limits={{ headline: 80 }}
                         variation={0}
@@ -898,4 +895,98 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
                           file_url: uploadedFile?.url,
                           file_type: fileInfo.file.type,
                           headline: headline || null,
-                          brand
+                          url: url || null,
+                        };
+                        
+                        // Add brand_name field for Snapchat
+                        if (isSnapchat) {
+                          const brandName = form.watch('brand_name')?.trim();
+                          insertFields.brand_name = brandName || null;
+                        }
+                        
+                        const { error } = await supabase.from('ads').insert(insertFields);
+                        
+                        if (error) throw error;
+                        
+                        toast({
+                          title: 'Ad created',
+                          description: 'Your ad has been created successfully.',
+                        });
+                        
+                        await queryClient.invalidateQueries({
+                          queryKey: ['ads', adsetId]
+                        });
+                        
+                        setOpen(false);
+                        resetDialog(setFileInfo, form);
+                      } catch (error: any) {
+                        toast({
+                          title: 'Error creating ad',
+                          description: error.message,
+                          variant: 'destructive',
+                        });
+                      } finally {
+                        setUploading(false);
+                      }
+                    }}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    {uploading ? "Creating..." : "Create Ad"}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={() => setStep(step + 1)}
+                  >
+                    Next
+                  </Button>
+                )
+              ) : (
+                <>
+                  {step === steps.length - 1 ? (
+                    <Button 
+                      type="button"
+                      onClick={handleManualSubmit}
+                      disabled={uploading}
+                      className="bg-primary hover:bg-primary/90"
+                    >
+                      {uploading ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="mr-2 h-4 w-4" /> Create Ad
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        // Only validate on step 0
+                        if (step === 0) {
+                          if (validateStepFn(step, form, fileInfo, validPlatform, requiresMediaUpload, toast)) {
+                            setStep(step + 1);
+                          }
+                        } else {
+                          setStep(step + 1);
+                        }
+                      }}
+                    >
+                      Next
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
