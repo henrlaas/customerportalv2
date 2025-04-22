@@ -26,7 +26,7 @@ export const getStepsForPlatform = (platform: Platform): AdFormStep[] => {
         { 
           title: 'Variation 1', 
           description: 'Create your first ad variation',
-          fields: ['headline', 'description', 'main_text'],
+          fields: ['headline', 'description', 'main_text', 'cta_button', 'url'],
           showBasicFields: true
         },
         { 
