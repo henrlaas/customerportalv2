@@ -1,4 +1,3 @@
-
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -164,6 +163,11 @@ export function CampaignDetailsPage() {
     refetchAdsets();
   };
 
+  // New: AdSet selector handler for sidebar menu
+  const handleSelectAdset = (adsetId: string) => {
+    setSelectedAdsetId(adsetId);
+  };
+
   // Create a placeholder campaign if the real campaign data isn't available
   const displayCampaign: Campaign | null = campaign || (campaignId ? {
     id: campaignId,
@@ -190,7 +194,7 @@ export function CampaignDetailsPage() {
           Loading campaign details...
         </div>
       )}
-      
+
       {/* Show error if there was an error fetching campaign */}
       {campaignError && (
         <div className="container mx-auto px-4 py-2 text-center text-destructive">
@@ -208,13 +212,14 @@ export function CampaignDetailsPage() {
             </div>
             <ScrollArea className="h-[calc(100vh-250px)]">
               <div className="p-2">
-                {allAdsets.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No ad sets available</p>
-                  </div>
-                ) : (
-                  <AdSetList adsets={allAdsets} campaignId={campaignId!} onUpdate={handleAdsetUpdate} disableModifications={disableModifications} />
-                )}
+                <AdSetList
+                  adsets={allAdsets}
+                  campaignId={campaignId!}
+                  onUpdate={handleAdsetUpdate}
+                  disableModifications={disableModifications}
+                  selectedAdsetId={selectedAdsetId}
+                  onSelectAdset={handleSelectAdset}
+                />
               </div>
             </ScrollArea>
           </div>
