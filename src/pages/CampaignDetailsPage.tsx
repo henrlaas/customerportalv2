@@ -1,4 +1,3 @@
-
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +19,10 @@ import { Campaign, CampaignStatus, Platform } from '@/components/Campaigns/types
 export function CampaignDetailsPage() {
   const { campaignId } = useParams<{ campaignId: string }>();
   const [selectedAdsetId, setSelectedAdsetId] = useState<string | null>(null);
+
+  // Determine if modifications should be disabled
+  const campaignStatus = campaign?.status?.toLowerCase?.() || '';
+  const disableModifications = ['ready', 'published', 'archived'].includes(campaignStatus);
 
   // Fetch the campaign details
   const { data: campaign, isLoading: isLoadingCampaign, error: campaignError, refetch: refetchCampaign } = useQuery({
@@ -200,7 +203,7 @@ export function CampaignDetailsPage() {
           <div className="w-full md:w-64 flex-shrink-0 border rounded-lg">
             <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
               <h2 className="font-medium text-lg">Ad Sets</h2>
-              {campaignId && <CreateAdSetDialog campaignId={campaignId} />}
+              {campaignId && <CreateAdSetDialog campaignId={campaignId} disabled={disableModifications} />}
             </div>
             <ScrollArea className="h-[calc(100vh-250px)]">
               <div className="p-2">
@@ -209,56 +212,7 @@ export function CampaignDetailsPage() {
                     <p>No ad sets available</p>
                   </div>
                 ) : (
-                  <ul className="space-y-1">
-                    {allAdsets.map((adset) => (
-                      <li key={adset.id} className="relative group">
-                        <Button
-                          variant={adset.id === selectedAdsetId ? "secondary" : "ghost"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal pr-16",
-                            adset.id === selectedAdsetId && "font-medium"
-                          )}
-                          onClick={() => setSelectedAdsetId(adset.id)}
-                        >
-                          {adset.name}
-                        </Button>
-                        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <EditAdSetDialog 
-                                  adset={adset} 
-                                  onSuccess={handleAdsetUpdate}
-                                  trigger={
-                                    <Button variant="ghost" size="icon" className="h-7 w-7">
-                                      <Edit className="h-3.5 w-3.5" />
-                                    </Button>
-                                  } 
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent>Edit Ad Set</TooltipContent>
-                            </Tooltip>
-
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <DeleteAdSetDialog 
-                                  adsetId={adset.id} 
-                                  adsetName={adset.name} 
-                                  onSuccess={handleAdsetUpdate}
-                                  trigger={
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive/90">
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  } 
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent>Delete Ad Set</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  <AdSetList adsets={allAdsets} campaignId={campaignId!} onUpdate={handleAdsetUpdate} disableModifications={disableModifications} />
                 )}
               </div>
             </ScrollArea>
@@ -277,9 +231,11 @@ export function CampaignDetailsPage() {
                       </span>
                     )}
                   </h2>
-                  {selectedAdsetId && <CreateAdDialog adsetId={selectedAdsetId} campaignPlatform={campaign?.platform} />}
+                  {selectedAdsetId && (
+                    <CreateAdDialog adsetId={selectedAdsetId} campaignPlatform={campaign?.platform} disabled={disableModifications} />
+                  )}
                 </div>
-                <AdsList ads={ads} campaignPlatform={campaign?.platform} />
+                <AdsList ads={ads} campaignPlatform={campaign?.platform} disableModifications={disableModifications} />
               </div>
             ) : (
               <div className="text-center py-12 border rounded-lg bg-muted/30">

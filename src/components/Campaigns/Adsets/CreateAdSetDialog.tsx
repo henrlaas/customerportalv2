@@ -29,7 +29,7 @@ const adsetSchema = z.object({
   targeting: z.string().optional(),
 });
 
-export function CreateAdSetDialog({ campaignId }: { campaignId: string }) {
+export function CreateAdSetDialog({ campaignId, disabled = false }: { campaignId: string, disabled?: boolean }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -91,7 +91,7 @@ export function CreateAdSetDialog({ campaignId }: { campaignId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="transition-all hover:scale-105 hover:shadow-md">
+        <Button size="sm" className="transition-all hover:scale-105 hover:shadow-md" disabled={disabled}>
           <Plus className="w-4 h-4 mr-2" />
           Create Ad Set
         </Button>

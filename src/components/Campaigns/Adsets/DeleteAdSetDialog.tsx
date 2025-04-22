@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,9 +20,10 @@ interface DeleteAdSetDialogProps {
   adsetName: string;
   onSuccess?: () => void;
   trigger?: React.ReactNode;
+  disabled?: boolean;
 }
 
-export function DeleteAdSetDialog({ adsetId, adsetName, onSuccess, trigger }: DeleteAdSetDialogProps) {
+export function DeleteAdSetDialog({ adsetId, adsetName, onSuccess, trigger, disabled = false }: DeleteAdSetDialogProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -69,7 +69,7 @@ export function DeleteAdSetDialog({ adsetId, adsetName, onSuccess, trigger }: De
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" disabled={disabled}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
@@ -83,10 +83,10 @@ export function DeleteAdSetDialog({ adsetId, adsetName, onSuccess, trigger }: De
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading || disabled}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
-            disabled={isLoading}
+            disabled={isLoading || disabled}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             Delete

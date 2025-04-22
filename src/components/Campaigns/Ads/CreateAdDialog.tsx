@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -27,9 +26,10 @@ import { FileInfo } from './types';
 interface Props {
   adsetId: string;
   campaignPlatform?: string;
+  disabled?: boolean;
 }
 
-export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
+export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: Props) {
   const validPlatform = (campaignPlatform as Platform) || 'Meta';
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -188,7 +188,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
       if (!newOpen) resetDialog(setFileInfo, form);
     }}>
       <DialogTrigger asChild>
-        <Button size="sm" className="transition-all hover:scale-105 hover:shadow-md">
+        <Button size="sm" className="transition-all hover:scale-105 hover:shadow-md" disabled={disabled}>
           <Plus className="w-4 h-4 mr-2" />
           Create Ad
         </Button>

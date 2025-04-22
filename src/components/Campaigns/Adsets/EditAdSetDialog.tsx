@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -16,9 +15,10 @@ interface EditAdSetDialogProps {
   };
   onSuccess?: () => void;
   trigger?: React.ReactNode;
+  disabled?: boolean;
 }
 
-export function EditAdSetDialog({ adset, onSuccess, trigger }: EditAdSetDialogProps) {
+export function EditAdSetDialog({ adset, onSuccess, trigger, disabled = false }: EditAdSetDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(adset.name);
   const [targeting, setTargeting] = useState(adset.targeting || '');
@@ -58,7 +58,7 @@ export function EditAdSetDialog({ adset, onSuccess, trigger }: EditAdSetDialogPr
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" disabled={disabled}>
             <Edit className="h-4 w-4" />
           </Button>
         )}
@@ -88,10 +88,10 @@ export function EditAdSetDialog({ adset, onSuccess, trigger }: EditAdSetDialogPr
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={disabled}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || disabled}>
               Save Changes
             </Button>
           </div>

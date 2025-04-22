@@ -5,9 +5,10 @@ interface Props {
   adsets: any[];
   campaignId: string;
   onUpdate?: () => void;
+  disableModifications?: boolean;
 }
 
-export function AdSetList({ adsets, campaignId, onUpdate }: Props) {
+export function AdSetList({ adsets, campaignId, onUpdate, disableModifications = false }: Props) {
   if (adsets.length === 0) {
     return (
       <div className="text-center p-8 border rounded-lg bg-muted/50">
@@ -20,7 +21,7 @@ export function AdSetList({ adsets, campaignId, onUpdate }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {adsets.map((adset) => (
-        <AdSetCard key={adset.id} adset={adset} onUpdate={onUpdate} />
+        <AdSetCard key={adset.id} adset={adset} onUpdate={onUpdate} disableModifications={disableModifications} />
       ))}
     </div>
   );

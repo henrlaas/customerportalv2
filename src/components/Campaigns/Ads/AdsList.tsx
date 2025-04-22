@@ -5,9 +5,10 @@ interface Props {
   ads: any[];
   campaignPlatform?: string;
   onAdUpdate?: () => void;
+  disableModifications?: boolean;
 }
 
-export function AdsList({ ads, campaignPlatform, onAdUpdate }: Props) {
+export function AdsList({ ads, campaignPlatform, onAdUpdate, disableModifications = false }: Props) {
   if (ads.length === 0) {
     return (
       <div className="text-center p-8 border rounded-lg bg-muted/50">
@@ -24,7 +25,8 @@ export function AdsList({ ads, campaignPlatform, onAdUpdate }: Props) {
           key={ad.id} 
           ad={ad} 
           campaignPlatform={campaignPlatform}
-          onAdUpdate={onAdUpdate}
+          onAdUpdate={disableModifications ? undefined : onAdUpdate}
+          disableModifications={disableModifications}
         />
       ))}
     </div>

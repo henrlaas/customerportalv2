@@ -11,9 +11,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 interface Props {
   adset: any;
   onUpdate?: () => void;
+  disableModifications?: boolean;
 }
 
-export function AdSetCard({ adset, onUpdate }: Props) {
+export function AdSetCard({ adset, onUpdate, disableModifications = false }: Props) {
   return (
     <Card className="overflow-hidden relative">
       <CardHeader className="pb-2">
@@ -28,8 +29,9 @@ export function AdSetCard({ adset, onUpdate }: Props) {
                   <EditAdSetDialog 
                     adset={adset} 
                     onSuccess={onUpdate}
+                    disabled={disableModifications}
                     trigger={
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" disabled={disableModifications}>
                         <Edit className="h-4 w-4" />
                       </Button>
                     } 
@@ -44,8 +46,9 @@ export function AdSetCard({ adset, onUpdate }: Props) {
                     adsetId={adset.id} 
                     adsetName={adset.name} 
                     onSuccess={onUpdate}
+                    disabled={disableModifications}
                     trigger={
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90">
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90" disabled={disableModifications}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     } 
