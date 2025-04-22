@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -219,29 +218,45 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     const keywordsVariations = collectVariations('keywords');
 
     try {
-      // Modified to handle Google ads without file uploads
-      const adData: Record<string, any> = {
-        ...data,
+      // Define the base ad data that is common for all platforms
+      const adData = {
+        name: data.name,
+        adset_id: adsetId,
+        headline: data.headline || null,
+        description: data.description || null,
+        main_text: data.main_text || null,
+        keywords: data.keywords || null,
+        brand_name: data.brand_name || null,
         headline_variations: JSON.stringify(headlineVariations),
         description_variations: JSON.stringify(descriptionVariations),
         main_text_variations: JSON.stringify(mainTextVariations),
         keywords_variations: JSON.stringify(keywordsVariations),
         url: data.url || null,
+        cta_button: data.cta_button || null,
       };
-
-      // For Google ads, we don't need to set file-related fields
-      // For other platforms, include the file information
-      if (validPlatform === 'Google') {
-        adData.ad_type = 'text';
-      } else {
-        adData.ad_type = fileInfo?.type || 'text';
-        adData.file_url = uploadedFile?.url || null;
-        adData.file_type = fileInfo?.file.type || null;
-      }
-
-      const { error } = await supabase.from('ads').insert(adData);
       
-      if (error) throw error;
+      // Set platform-specific properties
+      if (validPlatform === 'Google') {
+        // For Google ads (text only)
+        const { error } = await supabase.from('ads').insert({
+          ...adData,
+          ad_type: 'text',
+          file_url: null,
+          file_type: null
+        });
+        
+        if (error) throw error;
+      } else {
+        // For other platforms that require media
+        const { error } = await supabase.from('ads').insert({
+          ...adData,
+          ad_type: fileInfo?.type || 'text',
+          file_url: uploadedFile?.url || null,
+          file_type: fileInfo?.file.type || null
+        });
+        
+        if (error) throw error;
+      }
 
       toast({
         title: 'Ad created',
