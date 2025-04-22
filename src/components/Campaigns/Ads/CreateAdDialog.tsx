@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -218,17 +219,27 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     const keywordsVariations = collectVariations('keywords');
 
     try {
-      const { error } = await supabase.from('ads').insert({
+      // Modified to handle Google ads without file uploads
+      const adData: Record<string, any> = {
         ...data,
-        ad_type: fileInfo?.type || (validPlatform === 'Google' ? 'text' : 'text'),
-        file_url: uploadedFile?.url || null,
-        file_type: fileInfo?.file.type || (validPlatform === 'Google' ? null : null),
         headline_variations: JSON.stringify(headlineVariations),
         description_variations: JSON.stringify(descriptionVariations),
         main_text_variations: JSON.stringify(mainTextVariations),
         keywords_variations: JSON.stringify(keywordsVariations),
         url: data.url || null,
-      });
+      };
+
+      // For Google ads, we don't need to set file-related fields
+      // For other platforms, include the file information
+      if (validPlatform === 'Google') {
+        adData.ad_type = 'text';
+      } else {
+        adData.ad_type = fileInfo?.type || 'text';
+        adData.file_url = uploadedFile?.url || null;
+        adData.file_type = fileInfo?.file.type || null;
+      }
+
+      const { error } = await supabase.from('ads').insert(adData);
       
       if (error) throw error;
 
@@ -629,5 +640,3 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     </Dialog>
   );
 }
-
-// NOTE: This file is now quite long (over 400 lines). You may wish to refactor into smaller component files for easier maintainability.

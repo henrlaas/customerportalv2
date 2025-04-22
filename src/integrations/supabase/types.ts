@@ -97,8 +97,8 @@ export type Database = {
           cta_button: string | null
           description: string | null
           description_variations: Json | null
-          file_type: string
-          file_url: string
+          file_type: string | null
+          file_url: string | null
           headline: string | null
           headline_variations: Json | null
           id: string
@@ -118,8 +118,8 @@ export type Database = {
           cta_button?: string | null
           description?: string | null
           description_variations?: Json | null
-          file_type: string
-          file_url: string
+          file_type?: string | null
+          file_url?: string | null
           headline?: string | null
           headline_variations?: Json | null
           id?: string
@@ -139,8 +139,8 @@ export type Database = {
           cta_button?: string | null
           description?: string | null
           description_variations?: Json | null
-          file_type?: string
-          file_url?: string
+          file_type?: string | null
+          file_url?: string | null
           headline?: string | null
           headline_variations?: Json | null
           id?: string
