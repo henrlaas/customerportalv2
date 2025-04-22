@@ -7,9 +7,10 @@ interface Props {
   ad: any;
   campaignPlatform?: string;
   onAdUpdate?: () => void;
+  disableModifications?: boolean;
 }
 
-export function AdCard({ ad }: Props) {
+export function AdCard({ ad, disableModifications }: Props) {
   const navigate = useNavigate();
 
   // Determine the file badge type

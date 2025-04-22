@@ -1,3 +1,4 @@
+
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,10 +20,6 @@ import { Campaign, CampaignStatus, Platform } from '@/components/Campaigns/types
 export function CampaignDetailsPage() {
   const { campaignId } = useParams<{ campaignId: string }>();
   const [selectedAdsetId, setSelectedAdsetId] = useState<string | null>(null);
-
-  // Determine if modifications should be disabled
-  const campaignStatus = campaign?.status?.toLowerCase?.() || '';
-  const disableModifications = ['ready', 'published', 'archived'].includes(campaignStatus);
 
   // Fetch the campaign details
   const { data: campaign, isLoading: isLoadingCampaign, error: campaignError, refetch: refetchCampaign } = useQuery({
@@ -106,6 +103,10 @@ export function CampaignDetailsPage() {
     retry: 2,
     retryDelay: 1000, // Retry after 1 second
   });
+
+  // Determine if modifications should be disabled
+  const campaignStatus = campaign?.status?.toLowerCase?.() || '';
+  const disableModifications = ['ready', 'published', 'archived'].includes(campaignStatus);
 
   // Fetch all adsets for this campaign
   const { data: allAdsets = [], refetch: refetchAdsets } = useQuery({
