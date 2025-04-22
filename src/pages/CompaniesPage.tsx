@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +11,7 @@ import { CompanyFilters } from '@/components/Companies/CompanyFilters';
 import { CompanyListView } from '@/components/Companies/CompanyListView';
 import { CompanyCardView } from '@/components/Companies/CompanyCardView';
 import { Company } from '@/types/company';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -95,8 +95,30 @@ const CompaniesPage = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center p-8">
-              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            <div>
+              {/* List skeletons for list view, card skeletons for card view */}
+              {viewMode === 'list' ? (
+                <div className="space-y-1">
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-1/3" />
+                    <Skeleton className="h-8 w-1/6" />
+                  </div>
+                  {Array.from({ length: 6 }).map((_, rowIdx) => (
+                    <div key={rowIdx} className="flex gap-2">
+                      <Skeleton className="h-8 w-1/3" />
+                      <Skeleton className="h-8 w-1/4" />
+                      <Skeleton className="h-8 w-1/6" />
+                      <Skeleton className="h-8 w-1/6" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <Skeleton className="h-40 w-full rounded-xl" key={idx} />
+                  ))}
+                </div>
+              )}
             </div>
           ) : filteredCompanies.length === 0 ? (
             <div className="text-center p-8 bg-muted/10 rounded-lg">
