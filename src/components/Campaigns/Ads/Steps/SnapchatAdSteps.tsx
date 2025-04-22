@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { AdDialogPreview } from '../components/AdDialogPreview';
 import { FileInfo } from '../types';
+import { Platform } from '../../types/campaign';
 
 interface Props {
   step: number;
@@ -25,6 +26,9 @@ export function SnapchatAdSteps({ step, setStep, fileInfo, setFileInfo, form, to
     cta_button: '',
     url: form.watch('url') || '',
   });
+
+  // Cast validPlatform to the Platform type which is expected by AdDialogPreview
+  const typedPlatform = validPlatform as Platform;
 
   return (
     <>
@@ -161,7 +165,7 @@ export function SnapchatAdSteps({ step, setStep, fileInfo, setFileInfo, form, to
             <AdDialogPreview
               fileInfo={fileInfo}
               watchedFields={getWatchedFieldsForCurrentVariation()}
-              platform={validPlatform}
+              platform={typedPlatform}
               limits={{ headline: 60, brand_name: 50 }}
               variation={0}
             />
