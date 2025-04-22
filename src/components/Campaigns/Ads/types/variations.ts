@@ -1,4 +1,3 @@
-
 import { AdFormData, Platform } from '../../types/campaign';
 import { FileInfo } from '../types';
 
@@ -13,6 +12,7 @@ export interface AdFormStep {
   showBasicFields?: boolean;
 }
 
+// Centralized per-platform step logic
 export const getStepsForPlatform = (platform: Platform): AdFormStep[] => {
   switch (platform) {
     case 'Meta':
@@ -21,12 +21,17 @@ export const getStepsForPlatform = (platform: Platform): AdFormStep[] => {
         { 
           title: 'Basic Info', 
           description: 'Set your ad name and upload media',
-          showBasicFields: true
+          showBasicFields: true,
+        },
+        { 
+          title: 'URL & CTA', 
+          description: 'Set your landing page and call to action',
+          fields: ['url', 'cta_button'],
         },
         { 
           title: 'Variation 1', 
           description: 'Create your first ad variation',
-          fields: ['headline', 'description', 'main_text', 'cta_button', 'url'],
+          fields: ['headline', 'description', 'main_text'],
           showBasicFields: true
         },
         { 
@@ -48,9 +53,19 @@ export const getStepsForPlatform = (platform: Platform): AdFormStep[] => {
           title: 'Variation 5',
           description: 'Add alternative headline, description and text',
           fields: ['headline', 'description', 'main_text']
+        },
+        { 
+          title: 'Confirmation',
+          description: 'Review and create your ad',
+          showBasicFields: false
         }
       ];
     case 'Google':
+      // Step 1: Ad name
+      // Step 2: 10 headlines
+      // Step 3: 4 descriptions
+      // Step 4: 5 keyword sets
+      // Step 5: URL + preview
       return [
         { 
           title: 'Basic Info', 
