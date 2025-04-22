@@ -41,6 +41,7 @@ import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X } from 'luc
 import { TaskForm } from '@/components/Tasks/TaskForm';
 import { TaskFilters } from '@/components/Tasks/TaskFilters';
 import { Skeleton } from '@/components/ui/skeleton'; // <-- Added import
+import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -309,25 +310,7 @@ export const TasksPage = () => {
       
       {/* Tasks table */}
       {isLoadingTasks ? (
-        <div className="bg-white rounded-md border shadow-sm overflow-hidden w-full p-4">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-1/3 mb-2" />
-            <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: 7 }).map((_, idx) => (
-                <Skeleton key={idx} className="h-6 w-full" />
-              ))}
-            </div>
-            <div className="mt-3 space-y-2">
-              {Array.from({ length: 6 }).map((_, rowIdx) => (
-                <div className="grid grid-cols-7 gap-2" key={rowIdx}>
-                  {Array.from({ length: 7 }).map((_, colIdx) => (
-                    <Skeleton key={colIdx} className="h-6 w-full" />
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <CenteredSpinner />
       ) : tasks.length === 0 ? (
         <div className="text-center p-12 border rounded-lg bg-muted/50">
           <h3 className="text-lg font-medium mb-2">No tasks found</h3>
