@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -71,6 +72,26 @@ export function CreateAdDialog({ adsetId, campaignPlatform }: Props) {
     cta_button: '',
     url: form.watch('url') || '',
   });
+
+  // Helper for preview fields for current variation
+  const getWatchedFieldsForCurrentVariation = () => {
+    // For Snapchat, use the Snapchat-specific fields
+    if (isSnapchat) {
+      return getWatchedFieldsForSnapchat();
+    }
+    
+    // For other platforms, look at the current variation (step - 2 is the variation index)
+    const variation = Math.max(0, step - 2);
+    return {
+      headline: form.watch(`headline_variations.${variation}.text`) || form.watch('headline') || '',
+      description: form.watch(`description_variations.${variation}.text`) || form.watch('description') || '',
+      main_text: form.watch(`main_text_variations.${variation}.text`) || form.watch('main_text') || '',
+      keywords: form.watch(`keywords_variations.${variation}.text`) || form.watch('keywords') || '',
+      brand_name: form.watch('brand_name') || '',
+      cta_button: form.watch('cta_button') || '',
+      url: form.watch('url') || '',
+    };
+  };
 
   const watchedFields = getWatchedFieldsForCurrentVariation();
 
