@@ -28,7 +28,7 @@ export const PLATFORM_COLORS = {
   },
   Snapchat: {
     bg: '#FFFC00',
-    text: '#000000'  // Updated to black as requested
+    text: '#000000'  // Explicitly set text to black
   },
   Tiktok: {
     bg: '#000000',
@@ -49,10 +49,18 @@ const PlatformOption = ({ value, label, icon, selected, onSelect, brandColor }: 
         selected ? `border-2 ${textColorClass}` : ""
       )}
       onClick={() => onSelect(value)}
-      style={selected ? { backgroundColor: brandColor } : {}}
+      style={selected ? { 
+        backgroundColor: brandColor, 
+        color: PLATFORM_COLORS[value].text  // Explicitly set text color
+      } : {}}
     >
-      {icon}
-      <span>{label}</span>
+      {React.cloneElement(icon, { 
+        className: cn(
+          icon.props.className, 
+          selected ? PLATFORM_COLORS[value].text : '' 
+        ) 
+      })}
+      <span className={textColorClass}>{label}</span>
     </Button>
   );
 };
