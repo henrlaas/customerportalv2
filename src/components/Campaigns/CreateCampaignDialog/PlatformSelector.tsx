@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Platform } from '../types/campaign';
@@ -6,7 +7,7 @@ import { cn } from '@/lib/utils';
 interface PlatformOptionProps {
   value: Platform;
   label: string;
-  icon: React.ReactNode;
+  icon: React.ReactElement; // Changed from ReactNode to ReactElement to ensure it's a React element
   selected: boolean;
   onSelect: (value: Platform) => void;
   brandColor: string;
@@ -71,7 +72,7 @@ interface PlatformSelectorProps {
 }
 
 export function PlatformSelector({ value, onChange }: PlatformSelectorProps) {
-  const platforms: { value: Platform; label: string; icon: React.ReactNode; brandColor: string }[] = [
+  const platforms: { value: Platform; label: string; icon: React.ReactElement; brandColor: string }[] = [
     { 
       value: 'Meta', 
       label: 'Meta', 
