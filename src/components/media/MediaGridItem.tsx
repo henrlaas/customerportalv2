@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -78,19 +79,19 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
 
   return (
     <Card className={`
-      w-full h-full flex flex-col 
+      w-full h-[260px] flex flex-col 
       ${item.isFolder 
         ? "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" 
         : "overflow-hidden relative"
       }`}
     >
-      <CardContent className="p-0 flex-1 flex flex-col">
+      <CardContent className="p-0 flex-1 flex flex-col h-full">
         <div 
-          className="flex-1 p-4 flex flex-col items-center justify-center"
+          className="h-36 p-4 flex items-center justify-center"
           onClick={() => item.isFolder && onNavigate?.(item.name)}
         >
           {item.fileType.startsWith('image/') && !item.isFolder ? (
-            <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+            <div className="w-full h-full flex items-center justify-center overflow-hidden">
               <img 
                 src={item.url} 
                 alt={item.name} 
@@ -98,13 +99,13 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
               />
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex items-center justify-center h-full">
               {getFileIcon(item)}
             </div>
           )}
         </div>
         
-        <div className="w-full p-4 border-t bg-muted/10">
+        <div className="w-full p-4 border-t bg-muted/10 mt-auto flex-shrink-0">
           <div className="w-full">
             <p className="font-medium truncate mb-2" title={item.name}>
               {item.name}
