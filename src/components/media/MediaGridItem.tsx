@@ -24,7 +24,7 @@ import {
   FileTextIcon,
   Download,
   Trash2,
-  ArrowLeft,
+  ArrowDown,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
 
@@ -132,7 +132,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
               className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm border shadow-sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              <ArrowLeft className={`h-4 w-4 transform transition-transform duration-300 ${isMenuOpen ? '-rotate-180' : ''}`} />
+              <ArrowDown className={`h-4 w-4 transform transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} />
             </Button>
 
             <div 
