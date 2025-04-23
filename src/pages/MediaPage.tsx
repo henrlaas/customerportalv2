@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useAuth } from '@/contexts/AuthContext';
@@ -399,19 +400,20 @@ const MediaPage: React.FC = () => {
                     const oldPath = currentPath 
                       ? `${currentPath}/${folderToRename}`
                       : folderToRename;
-                  renameFolderMutation.mutate({
-                    oldPath,
-                    newName: newFolderNameForRename
-                  });
-                  setFolderToRename(null);
-                }
-              }}
-              disabled={!newFolderNameForRename.trim()}
-            >
-              Rename
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+                    renameFolderMutation.mutate({
+                      oldPath,
+                      newName: newFolderNameForRename
+                    });
+                    setFolderToRename(null);
+                  }
+                }}
+                disabled={!newFolderNameForRename.trim()}
+              >
+                Rename
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DndContext>
     </div>
   );
