@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +27,26 @@ export const useMediaOperations = (currentPath: string, session: any, activeTab:
             : file.name;
         }
         
+        // Check if file with same name already exists
+        const { data: existingFile } = await supabase
+          .storage
+          .from(bucketId)
+          .list(currentPath);
+        
+        const fileExists = existingFile?.some(existingItem => existingItem.name === file.name);
+        
+        if (fileExists) {
+          // Generate unique filename by adding timestamp
+          const extension = file.name.split('.').pop();
+          const baseName = file.name.replace(`.${extension}`, '');
+          const timestamp = new Date().getTime();
+          const uniqueFileName = `${baseName}_${timestamp}.${extension}`;
+          
+          filePath = currentPath 
+            ? `${currentPath}/${uniqueFileName}`
+            : uniqueFileName;
+        }
+        
         // Upload to Supabase storage
         const { data: uploadData, error: uploadError } = await supabase
           .storage
@@ -45,19 +64,43 @@ export const useMediaOperations = (currentPath: string, session: any, activeTab:
           .from(bucketId)
           .getPublicUrl(filePath);
           
-        // Create metadata record
-        const { error: metadataError } = await supabase
+        // Check if metadata for this file path already exists
+        const { data: existingMetadata } = await supabase
           .from('media_metadata')
-          .insert({
-            file_path: filePath,
-            uploaded_by: session.user.id,
-            file_size: file.size,
-            mime_type: file.type,
-            original_name: file.name,
-            bucket_id: bucketId
-          });
-          
-        if (metadataError) throw metadataError;
+          .select('*')
+          .eq('file_path', filePath)
+          .eq('bucket_id', bucketId)
+          .maybeSingle();
+        
+        if (existingMetadata) {
+          // Update existing metadata
+          const { error: metadataError } = await supabase
+            .from('media_metadata')
+            .update({
+              file_size: file.size,
+              mime_type: file.type,
+              original_name: file.name,
+              upload_date: new Date()
+            })
+            .eq('file_path', filePath)
+            .eq('bucket_id', bucketId);
+            
+          if (metadataError) throw metadataError;
+        } else {
+          // Create new metadata record
+          const { error: metadataError } = await supabase
+            .from('media_metadata')
+            .insert({
+              file_path: filePath,
+              uploaded_by: session.user.id,
+              file_size: file.size,
+              mime_type: file.type,
+              original_name: file.name,
+              bucket_id: bucketId
+            });
+              
+          if (metadataError) throw metadataError;
+        }
         
         return { path: uploadData?.path, bucketId };
       } catch (error: any) {

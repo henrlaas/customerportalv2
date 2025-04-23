@@ -101,28 +101,30 @@ const MediaPage: React.FC = () => {
     return `User ${userId.substring(0, 8)}`;
   }, [userNamesCache]);
 
-  // Handle file upload with dropzone
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      // For company media, ensure we're in a company folder
-      if (activeTab === 'company' && !currentPath) {
-        toast({
-          title: 'Upload failed',
-          description: 'Please navigate into a company folder before uploading files',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      setIsUploading(true);
-      uploadFileMutation.mutate(acceptedFiles[0], {
-        onSettled: () => {
-          setIsUploading(false);
-          setIsUploadDialogOpen(false);
+  // Configuring dropzone
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0) {
+        // For company media, ensure we're in a company folder
+        if (activeTab === 'company' && !currentPath) {
+          toast({
+            title: 'Upload failed',
+            description: 'Please navigate into a company folder before uploading files',
+            variant: 'destructive',
+          });
+          return;
         }
-      });
+
+        setIsUploading(true);
+        uploadFileMutation.mutate(acceptedFiles[0], {
+          onSettled: () => {
+            setIsUploading(false);
+            setIsUploadDialogOpen(false);
+          }
+        });
+      }
     }
-  }, [uploadFileMutation, activeTab, currentPath, toast]);
+  });
 
   // Handle folder creation
   const handleCreateFolder = () => {
