@@ -13,6 +13,7 @@ export interface MediaFile {
   isImage?: boolean;
   isVideo?: boolean;
   isDocument?: boolean;
+  fileCount?: number;
 }
 
 export interface MediaData {
@@ -31,3 +32,4 @@ export interface FilterOptions {
   };
   favorites: boolean;
 }
+

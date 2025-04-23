@@ -89,7 +89,10 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
           </p>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-muted-foreground">
-              {formatFileSize(item.size)}
+              {item.isFolder 
+                ? `${item.fileCount || 0} files`
+                : formatFileSize(item.size)
+              }
             </span>
             {!item.isFolder && item.uploadedBy && (
               <>

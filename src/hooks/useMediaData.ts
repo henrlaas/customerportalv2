@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -51,16 +50,32 @@ export const useMediaData = (
         // Process folders first
         const folderItems = folders
           ?.filter(item => item.id === null)
-          .map(folder => ({
-            id: folder.name,
-            name: folder.name,
-            fileType: 'folder',
-            url: '',
-            size: 0,
-            created_at: folder.created_at || new Date().toISOString(),
-            favorited: false,
-            isFolder: true,
-          })) || [];
+          .map(async folder => {
+            // Get the count of files in this folder
+            const { data: folderContents, error: folderError } = await supabase
+              .storage
+              .from('media')
+              .list(`${currentPath ? `${currentPath}/` : ''}${folder.name}`, {
+                limit: 100,
+                offset: 0,
+              });
+
+            const fileCount = folderContents?.filter(item => item.id !== null).length || 0;
+
+            return {
+              id: folder.name,
+              name: folder.name,
+              fileType: 'folder',
+              url: '',
+              size: 0,
+              created_at: folder.created_at || new Date().toISOString(),
+              favorited: false,
+              isFolder: true,
+              fileCount,
+            };
+          }) || [];
+
+        const resolvedFolderItems = await Promise.all(folderItems);
           
         // Process files with their metadata
         const fileItems = folders
@@ -96,7 +111,7 @@ export const useMediaData = (
             };
           }) || [];
         
-        return { folders: folderItems, files: fileItems } as MediaData;
+        return { folders: resolvedFolderItems, files: fileItems } as MediaData;
       } catch (error: any) {
         toast({
           title: 'Error fetching media',

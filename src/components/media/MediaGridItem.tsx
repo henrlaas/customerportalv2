@@ -99,7 +99,10 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
               {item.name}
             </p>
             <p className="text-xs text-muted-foreground">
-              {formatFileSize(item.size)}
+              {item.isFolder 
+                ? `${item.fileCount || 0} files`
+                : formatFileSize(item.size)
+              }
             </p>
             {!item.isFolder && item.uploadedBy && (
               <div className="flex items-center gap-2 mt-2">
