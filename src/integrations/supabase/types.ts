@@ -696,6 +696,7 @@ export type Database = {
       }
       media_metadata: {
         Row: {
+          bucket_id: string | null
           file_path: string
           file_size: number | null
           id: string
@@ -706,6 +707,7 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          bucket_id?: string | null
           file_path: string
           file_size?: number | null
           id?: string
@@ -716,6 +718,7 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          bucket_id?: string | null
           file_path?: string
           file_size?: number | null
           id?: string

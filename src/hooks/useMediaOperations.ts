@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,8 +16,6 @@ export const useMediaOperations = (currentPath: string, session: any) => {
       
       try {
         // Determine the correct bucket
-        // This uses the URL path to determine if we're in the companies section
-        // A more robust approach would be to pass the activeTab as a parameter
         const isCompaniesSection = window.location.pathname.includes('companies') || 
                                  window.location.search.includes('tab=companies');
         const bucketId = isCompaniesSection ? 'companies_media' : 'media';
@@ -54,7 +51,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
             file_size: file.size,
             mime_type: file.type,
             original_name: file.name,
-            bucket_id: bucketId
+            bucket_id: bucketId  // Include the bucket ID here
           });
           
         if (metadataError) throw metadataError;
