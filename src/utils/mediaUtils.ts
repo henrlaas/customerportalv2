@@ -1,3 +1,4 @@
+
 export const getFileTypeFromName = (fileName: string): string => {
   const extension = fileName.split('.').pop()?.toLowerCase() || '';
   if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(extension)) {
@@ -88,5 +89,66 @@ export const cleanupMediaBucket = async () => {
         .delete()
         .eq('file_path', item.name);
     }
+  }
+};
+
+// New function to find problematic entries in the storage bucket
+export const detectAnomalousEntries = async () => {
+  try {
+    // List all items in the media bucket
+    const { data: contents, error: listError } = await supabase
+      .storage
+      .from('media')
+      .list();
+
+    if (listError) {
+      console.error("Error listing bucket contents:", listError);
+      return { anomalies: [], error: listError.message };
+    }
+
+    // Identify problematic entries
+    const anomalies = contents?.filter(item => {
+      // Check for empty names, undefined names, or other issues
+      const hasEmptyName = !item.name || item.name.trim() === "";
+      const hasInvalidName = item.name === "." || item.name === ".." || item.name === "/";
+      const hasNoProperID = !item.id && item.name !== undefined; // Folders typically lack IDs
+      
+      return hasEmptyName || hasInvalidName || hasNoProperID;
+    }) || [];
+
+    return { anomalies, totalItems: contents?.length || 0 };
+  } catch (error: any) {
+    console.error("Error detecting anomalous entries:", error);
+    return { anomalies: [], error: error.message };
+  }
+};
+
+// New function to specifically remove problematic entries
+export const removeAnomalousEntry = async (entryName: string) => {
+  try {
+    // If the entry name is empty or undefined, we'll use a special marker
+    const pathToRemove = entryName || ".empty_entry";
+    
+    // Try to remove it as a file
+    await supabase
+      .storage
+      .from('media')
+      .remove([pathToRemove]);
+      
+    // Also clean up any associated metadata
+    await supabase
+      .from('media_metadata')
+      .delete()
+      .eq('file_path', pathToRemove);
+      
+    await supabase
+      .from('media_favorites')
+      .delete()
+      .eq('file_path', pathToRemove);
+      
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error removing anomalous entry:", error);
+    return { success: false, error: error.message };
   }
 };

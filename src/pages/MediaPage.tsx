@@ -56,7 +56,7 @@ import { ViewMode, SortOption, FilterOptions, MediaFile } from '@/types/media';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { cleanupMediaBucket } from '@/utils/mediaUtils';
+import { cleanupMediaBucket, detectAnomalousEntries, removeAnomalousEntry } from '@/utils/mediaUtils';
 
 const MediaPage: React.FC = () => {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -76,6 +76,10 @@ const MediaPage: React.FC = () => {
   const [userNamesCache, setUserNamesCache] = React.useState<{[userId: string]: string}>({});
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  
+  // Add state for anomalous entries
+  const [isCheckingAnomalies, setIsCheckingAnomalies] = useState(false);
+  const [anomalousEntries, setAnomalousEntries] = useState<any[]>([]);
   
   // Set up filter state
   const [filters, setFilters] = useState<FilterOptions>({
@@ -224,6 +228,78 @@ const MediaPage: React.FC = () => {
     };
   }, [mediaData, searchQuery, sortOption, activeTab]);
 
+  // Add function to check for anomalous entries
+  const handleCheckAnomalies = async () => {
+    setIsCheckingAnomalies(true);
+    try {
+      const { anomalies, totalItems, error } = await detectAnomalousEntries();
+      
+      if (error) {
+        toast({
+          title: "Error checking for anomalies",
+          description: error,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setAnomalousEntries(anomalies);
+      
+      if (anomalies.length === 0) {
+        toast({
+          title: "No anomalies found",
+          description: `Checked ${totalItems} items in the media bucket.`,
+        });
+      } else {
+        toast({
+          title: `Found ${anomalies.length} anomalous entries`,
+          description: "Use the 'Fix Anomalies' button to clean them up.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error checking for anomalies",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingAnomalies(false);
+    }
+  };
+  
+  // Add function to fix anomalous entries
+  const handleFixAnomalies = async () => {
+    if (anomalousEntries.length === 0) {
+      toast({
+        title: "No anomalies to fix",
+        description: "Run 'Check for Anomalies' first.",
+      });
+      return;
+    }
+    
+    try {
+      // Fix each anomalous entry
+      for (const entry of anomalousEntries) {
+        await removeAnomalousEntry(entry.name);
+      }
+      
+      toast({
+        title: "Anomalies fixed",
+        description: `Successfully cleaned up ${anomalousEntries.length} problematic items.`,
+      });
+      
+      // Clear the list and refresh the media data
+      setAnomalousEntries([]);
+      queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
+    } catch (error: any) {
+      toast({
+        title: "Error fixing anomalies",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCleanupBucket = async () => {
     try {
       await cleanupMediaBucket();
@@ -248,6 +324,32 @@ const MediaPage: React.FC = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Files</h1>
         <div className="flex gap-2">
+          {/* Add anomaly detection buttons */}
+          <Button
+            variant="outline"
+            onClick={handleCheckAnomalies}
+            disabled={isCheckingAnomalies}
+            className="mr-2"
+          >
+            {isCheckingAnomalies ? (
+              <>
+                <span className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                Checking...
+              </>
+            ) : (
+              'Check for Anomalies'
+            )}
+          </Button>
+          {anomalousEntries.length > 0 && (
+            <Button
+              variant="secondary"
+              onClick={handleFixAnomalies}
+              className="mr-2"
+            >
+              Fix Anomalies ({anomalousEntries.length})
+            </Button>
+          )}
+          
           {/* Add cleanup button */}
           <Button
             variant="destructive"
