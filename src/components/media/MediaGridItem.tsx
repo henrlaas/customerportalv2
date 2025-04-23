@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -54,7 +53,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     : item.name;
 
   // Check if this is a company folder (in the root of companies tab)
-  const isCompanyFolder = currentPath === '' && filePath.startsWith('companies/');
+  const isCompanyFolder = currentPath === '' && item.isFolder;
 
   // Function to get user initials
   const getUserInitials = (displayName: string) => {

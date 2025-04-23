@@ -23,12 +23,51 @@ export const useMediaData = (
       try {
         // Use different bucket based on active tab
         const bucketId = activeTab === 'companies' ? 'companies_media' : 'media';
-        const basePath = currentPath || '';
+        
+        // For companies tab, only fetch company folders at root level
+        if (activeTab === 'companies' && !currentPath) {
+          // Fetch all companies to create virtual folders
+          const { data: companies, error: companiesError } = await supabase
+            .from('companies')
+            .select('id, name, created_at');
+            
+          if (companiesError) throw companiesError;
+          
+          const folders = (companies || []).map(company => ({
+            id: company.id,
+            name: company.name,
+            fileType: 'folder',
+            url: '',
+            size: 0,
+            created_at: company.created_at,
+            favorited: false,
+            isFolder: true,
+            fileCount: 0, // We'll update this below
+          }));
 
+          // Get file counts for each company folder
+          for (const folder of folders) {
+            const { data: contents, error: countError } = await supabase
+              .storage
+              .from(bucketId)
+              .list(folder.id, {
+                limit: 100,
+                offset: 0,
+              });
+              
+            if (!countError && contents) {
+              folder.fileCount = contents.filter(item => item.id !== null).length;
+            }
+          }
+          
+          return { folders, files: [] };
+        }
+
+        // For subfolders in companies tab or other tabs
         const { data: items, error } = await supabase
           .storage
           .from(bucketId)
-          .list(basePath, {
+          .list(currentPath, {
             limit: 100,
             offset: 0,
             sortBy: { column: 'name', order: 'asc' }

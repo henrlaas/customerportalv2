@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MediaFile } from '@/types/media';
 import { Button } from '@/components/ui/button';
