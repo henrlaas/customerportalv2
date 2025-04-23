@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -73,11 +74,22 @@ export const useMediaData = (
 
         // Filter out items based on the active tab
         const filteredFolders = folders?.filter(item => {
-          if (activeTab === 'all') {
-            // In all files tab, don't show company folders at root
-            return item.id === null && (!listPath || !listPath.startsWith('companies/'));
+          // Exclude .folder files
+          if (item.name === '.folder') return false;
+          
+          if (item.id === null) { // It's a folder
+            if (activeTab === 'all') {
+              // In "All Files" tab, exclude any folders at root level that start with "companies/"
+              if (!currentPath) {
+                return !item.name.startsWith('companies');
+              }
+              
+              // Also exclude subfolders within company folders
+              return !listPath.startsWith('companies/');
+            }
+            return true; // Include all folders in other tabs
           }
-          return item.id === null;
+          return false; // Exclude files from folder list
         }) || [];
 
         // Then get files from media_metadata for additional metadata
