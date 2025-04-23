@@ -1,0 +1,33 @@
+
+export interface MediaFile {
+  id: string;
+  name: string;
+  fileType: string;
+  url: string;
+  size: number;
+  created_at: string;
+  uploadedBy?: string;
+  favorited: boolean;
+  selected?: boolean;
+  isFolder: boolean;
+  isImage?: boolean;
+  isVideo?: boolean;
+  isDocument?: boolean;
+}
+
+export interface MediaData {
+  folders: MediaFile[];
+  files: MediaFile[];
+}
+
+export type ViewMode = 'grid' | 'list';
+export type SortOption = 'newest' | 'oldest' | 'name' | 'size';
+
+export interface FilterOptions {
+  fileTypes: string[];
+  dateRange: {
+    start: Date | null;
+    end: Date | null;
+  };
+  favorites: boolean;
+}
