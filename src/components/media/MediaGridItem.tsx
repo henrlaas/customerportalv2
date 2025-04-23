@@ -129,18 +129,18 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
             <Button
               size="icon"
               variant="ghost"
-              className="absolute top-2 left-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm border shadow-sm"
+              className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm border shadow-sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              <ArrowLeft className={`h-4 w-4 transform transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} />
+              <ArrowLeft className={`h-4 w-4 transform transition-transform duration-300 ${isMenuOpen ? '-rotate-180' : ''}`} />
             </Button>
 
             <div 
-              className={`absolute left-0 top-12 transition-all duration-300 ease-in-out transform ${
-                isMenuOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
+              className={`absolute right-0 top-12 transition-all duration-300 ease-in-out transform ${
+                isMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
               }`}
             >
-              <div className="ml-2 p-1 flex flex-col gap-1 bg-background/90 rounded-r-lg backdrop-blur-sm border shadow-sm">
+              <div className="mr-2 p-1 flex flex-col gap-1 bg-background/90 rounded-l-lg backdrop-blur-sm border shadow-sm">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
