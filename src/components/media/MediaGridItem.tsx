@@ -80,13 +80,13 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
   return (
     <Card className={`${item.isFolder ? 
       "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" : 
-      "overflow-hidden relative"} w-full aspect-[4/5]`}>
-      <CardContent className="p-0 h-full flex flex-col">
+      "overflow-hidden relative"} w-full h-full flex flex-col`}>
+      <CardContent className="p-0 flex-1 flex flex-col">
         <div 
           className="flex-1 p-4 flex flex-col items-center justify-center"
           onClick={() => item.isFolder && onNavigate?.(item.name)}
         >
-          {item.fileType.startsWith('image/') ? (
+          {item.fileType.startsWith('image/') && !item.isFolder ? (
             <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
               <img 
                 src={item.url} 
