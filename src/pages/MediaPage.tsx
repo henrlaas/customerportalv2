@@ -433,8 +433,7 @@ const MediaPage: React.FC = () => {
                     setFolderToRename(null);
                   }
                 }}
-                disabled={!newFolderNameForRename.trim()}
-              >
+                disabled={!newFolderNameForRename.trim()}>
                 Rename
               </Button>
             </DialogFooter>

@@ -10,10 +10,10 @@ import { useAuth } from '@/contexts/AuthContext';
 export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
   const [isDragging, setIsDragging] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState<MediaFile | null>(null);
-  const { renameFolderMutation } = useMediaOperations(currentPath, null, activeTab);
+  const { session } = useAuth(); // Get the session directly from AuthContext
+  const { renameFolderMutation } = useMediaOperations(currentPath, session, activeTab);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { session } = useAuth(); // Get the session directly from AuthContext
 
   const handleDragStart = (event: any) => {
     const fileData = event.active.data.current as MediaFile;

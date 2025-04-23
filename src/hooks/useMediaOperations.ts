@@ -1,9 +1,9 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Session } from '@supabase/supabase-js';
 
-export const useMediaOperations = (currentPath: string, session: any, activeTab: string) => {
+export const useMediaOperations = (currentPath: string, session: Session | null, activeTab: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
