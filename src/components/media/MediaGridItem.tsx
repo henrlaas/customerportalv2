@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -174,7 +173,11 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
                         className="h-8 w-8 rounded-full"
                         asChild
                       >
-                        <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                        <a 
+                          href={item.url} 
+                          download={item.name}
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Download className="h-4 w-4" />
                         </a>
                       </Button>
