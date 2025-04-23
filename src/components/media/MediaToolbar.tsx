@@ -1,105 +1,123 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronRight, GridIcon, ListIcon, SearchIcon } from 'lucide-react';
-import { ViewMode, SortOption } from '@/types/media';
+import { Button } from '@/components/ui/button';
+import { ListIcon, GridIcon, ChevronRightIcon, Heart } from 'lucide-react';
+import { ViewMode, SortOption, FilterOptions } from '@/types/media';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface MediaToolbarProps {
+  currentPath: string;
   searchQuery: string;
   viewMode: ViewMode;
-  currentPath: string;
+  filters: FilterOptions;
   onSearchChange: (value: string) => void;
   onSortChange: (value: SortOption) => void;
+  onFiltersChange: (filters: FilterOptions) => void;
   onViewModeChange: (mode: ViewMode) => void;
   onNavigateToBreadcrumb: (index: number) => void;
 }
 
 export const MediaToolbar: React.FC<MediaToolbarProps> = ({
+  currentPath,
   searchQuery,
   viewMode,
-  currentPath,
+  filters,
   onSearchChange,
   onSortChange,
+  onFiltersChange,
   onViewModeChange,
   onNavigateToBreadcrumb,
 }) => {
-  // Build breadcrumbs from currentPath
   const breadcrumbs = currentPath 
-    ? currentPath.split('/').filter(Boolean) 
-    : [];
+    ? ['Root', ...currentPath.split('/')] 
+    : ['Root'];
 
   return (
-    <div className="flex flex-col space-y-4">
-      <div className="flex items-center justify-between">
-        {/* Breadcrumbs */}
-        <div className="flex items-center overflow-x-auto whitespace-nowrap">
-          <Button
-            variant="ghost"
-            className="text-muted-foreground hover:text-foreground px-2"
-            onClick={() => onNavigateToBreadcrumb(-1)}
-          >
-            Home
-          </Button>
-          
-          {breadcrumbs.map((crumb, index) => (
-            <React.Fragment key={index}>
-              <ChevronRight className="h-4 w-4 mx-1 text-muted-foreground" />
-              <Button
-                variant="ghost"
-                className="text-muted-foreground hover:text-foreground px-2"
-                onClick={() => onNavigateToBreadcrumb(index)}
-              >
-                {crumb}
-              </Button>
-            </React.Fragment>
-          ))}
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            {breadcrumbs.map((crumb, index) => (
+              <React.Fragment key={index}>
+                {index > 0 && <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />}
+                <button
+                  onClick={() => onNavigateToBreadcrumb(index - 1)}
+                  className="text-sm hover:text-primary transition-colors"
+                >
+                  {crumb}
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
         </div>
-
-        {/* View Toggle */}
         <div className="flex items-center gap-2">
           <Button
-            variant="ghost"
+            variant={filters.favorites ? "default" : "outline"}
             size="icon"
-            className={viewMode === 'grid' ? 'bg-muted' : ''}
-            onClick={() => onViewModeChange('grid')}
+            onClick={() => onFiltersChange({
+              ...filters,
+              favorites: !filters.favorites
+            })}
+            className={`${filters.favorites ? 'text-white' : ''}`}
           >
-            <GridIcon className="h-4 w-4" />
+            <Heart className={`h-4 w-4 ${filters.favorites ? 'fill-current' : ''}`} />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={viewMode === 'list' ? 'bg-muted' : ''}
-            onClick={() => onViewModeChange('list')}
+          <Select
+            value={viewMode}
+            onValueChange={(value: ViewMode) => onViewModeChange(value)}
           >
-            <ListIcon className="h-4 w-4" />
-          </Button>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue>
+                {viewMode === 'grid' ? 'Grid View' : 'List View'}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="grid">
+                <div className="flex items-center gap-2">
+                  <GridIcon className="h-4 w-4" />
+                  Grid
+                </div>
+              </SelectItem>
+              <SelectItem value="list">
+                <div className="flex items-center gap-2">
+                  <ListIcon className="h-4 w-4" />
+                  List
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            onValueChange={(value: SortOption) => onSortChange(value)}
+            defaultValue="newest"
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="oldest">Oldest</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="size">Size</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
-
-      {/* Search & Sort */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
           <Input
             placeholder="Search files..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9"
+            className="max-w-sm"
           />
         </div>
-        <Select onValueChange={(value) => onSortChange(value as SortOption)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">Newest</SelectItem>
-            <SelectItem value="oldest">Oldest</SelectItem>
-            <SelectItem value="name">Name</SelectItem>
-            <SelectItem value="size">Size</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
     </div>
   );

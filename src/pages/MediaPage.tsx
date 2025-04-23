@@ -53,7 +53,7 @@ const MediaPage: React.FC = () => {
   const [userNamesCache, setUserNamesCache] = React.useState<{[userId: string]: string}>({});
   const { toast } = useToast();
   
-  // Set up filter state
+  // Update the filters state definition to include favorites handling
   const [filters, setFilters] = useState<FilterOptions>({
     fileTypes: [],
     dateRange: { start: null, end: null },
@@ -247,8 +247,10 @@ const MediaPage: React.FC = () => {
           currentPath={currentPath}
           searchQuery={searchQuery}
           viewMode={viewMode}
+          filters={filters}
           onSearchChange={setSearchQuery}
           onSortChange={setSortOption}
+          onFiltersChange={setFilters}
           onViewModeChange={setViewMode}
           onNavigateToBreadcrumb={navigateToBreadcrumb}
         />

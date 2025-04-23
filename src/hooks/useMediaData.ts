@@ -23,6 +23,12 @@ export const useMediaData = (
       }
       
       try {
+        // Get favorites for the current user
+        const { data: favorites } = await supabase
+          .from('media_favorites')
+          .select('*')
+          .eq('user_id', session.user.id);
+
         // Handle company files tab
         if (activeTab === 'company') {
           // At root level, return company folders
@@ -92,23 +98,19 @@ export const useMediaData = (
             .from('media_metadata')
             .select('*')
             .eq('bucket_id', 'companymedia');
-          
-          // Get favorites
-          const { data: favorites } = await supabase
-            .from('media_favorites')
-            .select('*')
-            .eq('user_id', session.user.id);
 
-          const files = (items || [])
+          let files = (items || [])
             .filter(item => item.id !== null && !item.name.endsWith('.folder'))
             .map(file => {
-              const filePath = `${currentPath}/${file.name}`;
+              const filePath = currentPath 
+                ? `${currentPath}/${file.name}`
+                : file.name;
               const metadata = mediaMetadata?.find(meta => 
                 meta.file_path === filePath && meta.bucket_id === 'companymedia'
               );
               
               const isFavorited = favorites?.some(fav => 
-                fav.file_path === filePath
+                fav.file_path === filePath && fav.bucket_id === 'companymedia'
               ) || false;
               
               const url = supabase.storage
@@ -124,7 +126,7 @@ export const useMediaData = (
                 url,
                 size: file.metadata?.size || 0,
                 created_at: file.created_at || new Date().toISOString(),
-                uploadedBy: metadata?.uploaded_by || '',  // Make sure this is never null or undefined
+                uploadedBy: metadata?.uploaded_by || '',
                 favorited: isFavorited,
                 isFolder: false,
                 isImage: fileType.startsWith('image/'),
@@ -133,6 +135,11 @@ export const useMediaData = (
                 bucketId: 'companymedia'
               };
             });
+
+          // Apply favorites filter if enabled
+          if (filters.favorites) {
+            files = files.filter(file => file.favorited);
+          }
 
           return { folders, files };
         }
@@ -161,19 +168,14 @@ export const useMediaData = (
             bucketId: 'media'
           }));
 
-        // Get metadata and favorites for files
+        // Get metadata for files
         const { data: mediaMetadata } = await supabase
           .from('media_metadata')
           .select('*')
           .eq('bucket_id', 'media');
-          
-        const { data: favorites } = await supabase
-          .from('media_favorites')
-          .select('*')
-          .eq('user_id', session.user.id);
 
         // Filter out .folder files from files
-        const files = (items || [])
+        let files = (items || [])
           .filter(item => item.id !== null && !item.name.endsWith('.folder'))
           .map(file => {
             const filePath = currentPath 
@@ -185,7 +187,7 @@ export const useMediaData = (
             );
             
             const isFavorited = favorites?.some(fav => 
-              fav.file_path === filePath
+              fav.file_path === filePath && fav.bucket_id === 'media'
             ) || false;
             
             const url = supabase.storage
@@ -201,7 +203,7 @@ export const useMediaData = (
               url,
               size: file.metadata?.size || 0,
               created_at: file.created_at || new Date().toISOString(),
-              uploadedBy: metadata?.uploaded_by || '',  // Make sure this is never null or undefined
+              uploadedBy: metadata?.uploaded_by || '',
               favorited: isFavorited,
               isFolder: false,
               isImage: fileType.startsWith('image/'),
@@ -210,6 +212,11 @@ export const useMediaData = (
               bucketId: 'media'
             };
           });
+
+        // Apply favorites filter if enabled
+        if (filters.favorites) {
+          files = files.filter(file => file.favorited);
+        }
 
         return { folders, files };
       } catch (error: any) {
