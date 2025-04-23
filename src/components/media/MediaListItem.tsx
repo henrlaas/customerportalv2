@@ -176,7 +176,7 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
           </>
         )}
         
-        {/* Only show dropdown for files and subfolders, but not for company root folders */}
+        {/* Only show dropdown for files and folders, but not for company root folders */}
         {!isCompanyRootFolder && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -192,8 +192,8 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
             <DropdownMenuContent align="end" className="bg-white z-50">
               {item.isFolder ? (
                 <>
-                  {/* Only show rename for internal folders or company subfolders */}
-                  {onRename && (isInsideCompanyFolder || item.bucketId === 'media') && (
+                  {/* Show rename option for any subfolder (including company subfolders) */}
+                  {onRename && !isCompanyRootFolder && (
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
