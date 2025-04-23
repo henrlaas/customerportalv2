@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import {
   FileTextIcon,
   Download,
   Trash2,
+  ArrowLeft,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
 
@@ -46,6 +47,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
   currentPath,
   getUploaderDisplayName,
 }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const filePath = currentPath 
     ? `${currentPath}/${item.name}`
     : item.name;
@@ -123,106 +125,88 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
         </div>
 
         {!item.isFolder && (
-          <div className="absolute bottom-2 right-2 flex space-x-1 bg-background/90 rounded-full p-1 backdrop-blur-sm border shadow-sm">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 rounded-full"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onFavorite(filePath, item.favorited, e);
-                    }}
-                  >
-                    <HeartIcon 
-                      className={`h-4 w-4 ${item.favorited ? 'fill-red-500 text-red-500' : ''}`} 
-                    />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {item.favorited ? 'Remove from favorites' : 'Add to favorites'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 rounded-full"
-                    asChild
-                  >
-                    <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                      <Download className="h-4 w-4" />
-                    </a>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Download file
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(item.name, false);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Delete file
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <DropdownMenu>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
+          <>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="absolute top-2 left-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm border shadow-sm"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <ArrowLeft className={`h-4 w-4 transform transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} />
+            </Button>
+
+            <div 
+              className={`absolute left-0 top-12 transition-all duration-300 ease-in-out transform ${
+                isMenuOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
+              }`}
+            >
+              <div className="ml-2 p-1 flex flex-col gap-1 bg-background/90 rounded-r-lg backdrop-blur-sm border shadow-sm">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 rounded-full"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onFavorite(filePath, item.favorited, e);
+                        }}
                       >
-                        <ChevronDown className="h-4 w-4" />
+                        <HeartIcon 
+                          className={`h-4 w-4 ${item.favorited ? 'fill-red-500 text-red-500' : ''}`} 
+                        />
                       </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    More options
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer">
-                    Download
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-red-500 focus:text-red-500"
-                  onClick={() => onDelete(item.name, false)}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {item.favorited ? 'Remove from favorites' : 'Add to favorites'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 rounded-full"
+                        asChild
+                      >
+                        <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Download file
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(item.name, false);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Delete file
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+          </>
         )}
 
         {item.isFolder && (
