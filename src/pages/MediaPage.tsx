@@ -78,8 +78,8 @@ const MediaPage: React.FC = () => {
   const { toast } = useToast();
   
   // Add state for anomalous entries
-  const [isCheckingAnomalies, setIsCheckingAnomalies] = useState(false);
-  const [anomalousEntries, setAnomalousEntries] = useState<any[]>([]);
+  // const [isCheckingAnomalies, setIsCheckingAnomalies] = useState(false);
+  // const [anomalousEntries, setAnomalousEntries] = useState<any[]>([]);
   
   // Set up filter state
   const [filters, setFilters] = useState<FilterOptions>({
@@ -229,94 +229,94 @@ const MediaPage: React.FC = () => {
   }, [mediaData, searchQuery, sortOption, activeTab]);
 
   // Add function to check for anomalous entries
-  const handleCheckAnomalies = async () => {
-    setIsCheckingAnomalies(true);
-    try {
-      const { anomalies, totalItems, error } = await detectAnomalousEntries();
+  // const handleCheckAnomalies = async () => {
+  //   setIsCheckingAnomalies(true);
+  //   try {
+  //     const { anomalies, totalItems, error } = await detectAnomalousEntries();
       
-      if (error) {
-        toast({
-          title: "Error checking for anomalies",
-          description: error,
-          variant: "destructive",
-        });
-        return;
-      }
+  //     if (error) {
+  //       toast({
+  //         title: "Error checking for anomalies",
+  //         description: error,
+  //         variant: "destructive",
+  //       });
+  //       return;
+  //     }
       
-      setAnomalousEntries(anomalies);
+  //     setAnomalousEntries(anomalies);
       
-      if (anomalies.length === 0) {
-        toast({
-          title: "No anomalies found",
-          description: `Checked ${totalItems} items in the media bucket.`,
-        });
-      } else {
-        toast({
-          title: `Found ${anomalies.length} anomalous entries`,
-          description: "Use the 'Fix Anomalies' button to clean them up.",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error checking for anomalies",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsCheckingAnomalies(false);
-    }
-  };
+  //     if (anomalies.length === 0) {
+  //       toast({
+  //         title: "No anomalies found",
+  //         description: `Checked ${totalItems} items in the media bucket.`,
+  //       });
+  //     } else {
+  //       toast({
+  //         title: `Found ${anomalies.length} anomalous entries`,
+  //         description: "Use the 'Fix Anomalies' button to clean them up.",
+  //       });
+  //     }
+  //   } catch (error: any) {
+  //     toast({
+  //       title: "Error checking for anomalies",
+  //       description: error.message,
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsCheckingAnomalies(false);
+  //   }
+  // };
   
   // Add function to fix anomalous entries
-  const handleFixAnomalies = async () => {
-    if (anomalousEntries.length === 0) {
-      toast({
-        title: "No anomalies to fix",
-        description: "Run 'Check for Anomalies' first.",
-      });
-      return;
-    }
+  // const handleFixAnomalies = async () => {
+  //   if (anomalousEntries.length === 0) {
+  //     toast({
+  //       title: "No anomalies to fix",
+  //       description: "Run 'Check for Anomalies' first.",
+  //     });
+  //     return;
+  //   }
     
-    try {
-      // Fix each anomalous entry
-      for (const entry of anomalousEntries) {
-        await removeAnomalousEntry(entry.name);
-      }
+  //   try {
+  //     // Fix each anomalous entry
+  //     for (const entry of anomalousEntries) {
+  //       await removeAnomalousEntry(entry.name);
+  //     }
       
-      toast({
-        title: "Anomalies fixed",
-        description: `Successfully cleaned up ${anomalousEntries.length} problematic items.`,
-      });
+  //     toast({
+  //       title: "Anomalies fixed",
+  //       description: `Successfully cleaned up ${anomalousEntries.length} problematic items.`,
+  //     });
       
-      // Clear the list and refresh the media data
-      setAnomalousEntries([]);
-      queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
-    } catch (error: any) {
-      toast({
-        title: "Error fixing anomalies",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+  //     // Clear the list and refresh the media data
+  //     setAnomalousEntries([]);
+  //     queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
+  //   } catch (error: any) {
+  //     toast({
+  //       title: "Error fixing anomalies",
+  //       description: error.message,
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
-  const handleCleanupBucket = async () => {
-    try {
-      await cleanupMediaBucket();
-      toast({
-        title: "Cleanup successful",
-        description: "All files and folders have been removed",
-      });
-      // Refresh the media list
-      queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
-    } catch (error: any) {
-      toast({
-        title: "Cleanup failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+  // const handleCleanupBucket = async () => {
+  //   try {
+  //     await cleanupMediaBucket();
+  //     toast({
+  //       title: "Cleanup successful",
+  //       description: "All files and folders have been removed",
+  //     });
+  //     // Refresh the media list
+  //     queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
+  //   } catch (error: any) {
+  //     toast({
+  //       title: "Cleanup failed",
+  //       description: error.message,
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
   return (
     
@@ -325,7 +325,7 @@ const MediaPage: React.FC = () => {
         <h1 className="text-2xl font-bold">Files</h1>
         <div className="flex gap-2">
           {/* Add anomaly detection buttons */}
-          <Button
+          {/* <Button
             variant="outline"
             onClick={handleCheckAnomalies}
             disabled={isCheckingAnomalies}
@@ -351,13 +351,13 @@ const MediaPage: React.FC = () => {
           )}
           
           {/* Add cleanup button */}
-          <Button
+          {/* <Button
             variant="destructive"
             onClick={handleCleanupBucket}
             className="mr-2"
           >
             Clean Bucket
-          </Button>
+          </Button> */}
           <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-background border text-foreground px-4 py-2 rounded hover:bg-muted">
