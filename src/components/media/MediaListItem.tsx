@@ -46,13 +46,10 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
     : item.name;
     
   // Check if this is a company root folder (in the root of companies tab)
-  const isCompanyRootFolder = item.isCompanyFolder;
+  const isCompanyRootFolder = item.isCompanyFolder && !currentPath;
   
   // Check if we're inside a company folder structure
   const isInsideCompanyFolder = item.bucketId === 'companymedia' && currentPath;
-  
-  // Check if this is a subfolder within a company folder
-  const isCompanySubfolder = isInsideCompanyFolder && item.isFolder;
 
   // Function to get user initials
   const getUserInitials = (displayName: string) => {
@@ -192,8 +189,8 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
             <DropdownMenuContent align="end" className="bg-white z-50">
               {item.isFolder ? (
                 <>
-                  {/* Show rename option for any subfolder (including company subfolders) */}
-                  {onRename && !isCompanyRootFolder && (
+                  {/* Show rename option for any folders except company root folders */}
+                  {onRename && (
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
