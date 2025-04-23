@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,6 +25,7 @@ import {
   FileTextIcon,
   Download,
   Trash2,
+  Pencil,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
 
@@ -237,7 +239,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
                           onRename?.(item.name);
                         }}
                       >
-                        <pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
