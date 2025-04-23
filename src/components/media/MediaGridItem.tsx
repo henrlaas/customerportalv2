@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,7 +17,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  ChevronDown,
+  Menu,
   HeartIcon,
   FolderIcon,
   FileImageIcon,
@@ -24,7 +25,6 @@ import {
   FileTextIcon,
   Download,
   Trash2,
-  ArrowDown,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
 
@@ -132,7 +132,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
               className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm border shadow-sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              <ArrowDown className={`h-4 w-4 transform transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} />
+              <Menu className={`h-4 w-4 transform transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} />
             </Button>
 
             <div 
@@ -210,19 +210,19 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
         )}
 
         {item.isFolder && (
-          <div className="absolute top-2 right-2 flex space-x-1">
+          <div className="absolute top-2 right-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-7 w-7 rounded-full bg-black/20 hover:bg-black/30 text-white"
+                  className="h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm border shadow-sm"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <ChevronDown className="h-4 w-4" />
+                  <Menu className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
@@ -254,3 +254,4 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     </Card>
   );
 };
+
