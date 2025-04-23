@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MediaFile } from '@/types/media';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,8 @@ import {
   FileImageIcon,
   FileVideoIcon,
   FileTextIcon,
+  Download,
+  Trash2,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
 
@@ -114,18 +117,53 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
         </div>
       </div>
       
-      <div className="ml-4 flex items-center gap-2">
+      <div className="flex items-center gap-2">
         {!item.isFolder && (
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8"
-            onClick={(e) => onFavorite(filePath, item.favorited, e)}
-          >
-            <HeartIcon 
-              className={`h-4 w-4 ${item.favorited ? 'fill-red-500 text-red-500' : ''}`} 
-            />
-          </Button>
+          <>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.stopPropagation();
+                onFavorite(filePath, item.favorited, e);
+              }}
+              aria-label={item.favorited ? "Remove from favorites" : "Add to favorites"}
+            >
+              <HeartIcon 
+                className={`h-4 w-4 ${item.favorited ? 'fill-red-500 text-red-500' : ''}`} 
+              />
+            </Button>
+            
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(item.url, '_blank');
+              }}
+              aria-label="Download file"
+              asChild
+            >
+              <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer">
+                <Download className="h-4 w-4" />
+              </a>
+            </Button>
+            
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(item.name, false);
+              }}
+              aria-label="Delete file"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </>
         )}
         
         <DropdownMenu>

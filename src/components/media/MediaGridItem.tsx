@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,6 +23,8 @@ import {
   FileImageIcon,
   FileVideoIcon,
   FileTextIcon,
+  Download,
+  Trash2,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
 
@@ -120,16 +123,19 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
           </div>
         </div>
 
-        <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {!item.isFolder && (
+        {!item.isFolder && (
+          <div className="absolute bottom-2 right-2 flex space-x-1 bg-background/80 rounded-full p-1 backdrop-blur-sm border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 rounded-full bg-black/20 hover:bg-black/30 text-white"
-                    onClick={(e) => onFavorite(filePath, item.favorited, e)}
+                    className="h-8 w-8 rounded-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFavorite(filePath, item.favorited, e);
+                    }}
                   >
                     <HeartIcon 
                       className={`h-4 w-4 ${item.favorited ? 'fill-red-500 text-red-500' : ''}`} 
@@ -141,61 +147,124 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )}
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 rounded-full bg-black/20 hover:bg-black/30 text-white"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {item.isFolder ? (
-                <>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRename?.(item.name);
-                    }}
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 rounded-full"
+                    asChild
                   >
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-500 focus:text-red-500"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(item.name, true);
-                    }}
-                  >
-                    Delete
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                  <DropdownMenuItem asChild>
-                    <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer">
-                      Download
+                    <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                      <Download className="h-4 w-4" />
                     </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-500 focus:text-red-500"
-                    onClick={() => onDelete(item.name, false)}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Download file
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(item.name, false);
+                    }}
                   >
-                    Delete
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Delete file
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <DropdownMenu>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 rounded-full"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    More options
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer">
+                    Download
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-red-500 focus:text-red-500"
+                  onClick={() => onDelete(item.name, false)}
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+
+        {item.isFolder && (
+          <div className="absolute top-2 right-2 flex space-x-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 rounded-full bg-black/20 hover:bg-black/30 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRename?.(item.name);
+                  }}
+                >
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-red-500 focus:text-red-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(item.name, true);
+                  }}
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+        
         {item.favorited && !item.isFolder && (
-          <div className="absolute top-0 left-0 m-2">
-            <HeartIcon className="h-4 w-4 fill-red-500 text-red-500" />
+          <div className="absolute top-2 left-2">
+            <HeartIcon className="h-5 w-5 fill-red-500 text-red-500" />
           </div>
         )}
       </CardContent>
