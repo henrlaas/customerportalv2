@@ -32,7 +32,7 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
     const fileData = active.data.current as MediaFile;
     const targetFolder = over.data.current as MediaFile;
     
-    if (!fileData || !targetFolder || !targetFolder.isFolder) return;
+    if (!fileData || !targetFolder) return;
 
     // Check if user is logged in
     if (!session?.user?.id) {
@@ -43,6 +43,9 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
       });
       return;
     }
+
+    // Skip if not dropping on a folder
+    if (!targetFolder.isFolder) return;
 
     // Don't allow dropping into company root folders from internal tab
     if (activeTab === 'internal' && targetFolder.isCompanyFolder) {
