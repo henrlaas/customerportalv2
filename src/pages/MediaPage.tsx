@@ -199,21 +199,9 @@ const MediaPage: React.FC = () => {
     };
   }, [mediaData, searchQuery, sortOption]);
 
-  // Show authentication warning if not logged in
-  if (!session?.user?.id) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Media Library</h1>
-        <div className="text-center p-12 border rounded-lg bg-muted/50">
-          <h3 className="text-lg font-medium mb-2">Authentication Required</h3>
-          <p className="text-muted-foreground mb-4">Please log in to access the media library</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Disable folder creation for company tab
-  const canCreateFolder = activeTab === 'internal';
+  // Determine if we can add rename functionality
+  // Allow renaming folders for internal tab or inside company folders
+  const canRename = activeTab === 'internal' || (activeTab === 'company' && currentPath);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4 py-8">
@@ -247,7 +235,7 @@ const MediaPage: React.FC = () => {
         onNavigate={navigateToFolder}
         onFavorite={handleFavoriteToggle}
         onDelete={handleDelete}
-        onRename={canCreateFolder ? (name) => {
+        onRename={canRename ? (name) => {
           setFolderToRename(name);
           setNewFolderNameForRename(name);
         } : undefined}
