@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,7 +32,7 @@ interface MediaGridItemProps {
   item: MediaFile;
   onNavigate?: (folderName: string) => void;
   onFavorite: (filePath: string, isFavorited: boolean, event?: React.MouseEvent) => void;
-  onDelete: (name: string, isFolder: boolean) => void;
+  onDelete: (name: string, isFolder: boolean, bucketId?: string) => void;
   onRename?: (name: string) => void;
   currentPath: string;
   getUploaderDisplayName: (userId: string) => string;
@@ -55,6 +54,8 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
 
   // Check if this is a company folder (in the root of companies tab)
   const isCompanyFolder = item.isCompanyFolder;
+  // Check if we're inside a company folder
+  const isInsideCompanyFolder = item.bucketId === 'companymedia' && currentPath;
 
   // Function to get user initials
   const getUserInitials = (displayName: string) => {
@@ -137,8 +138,11 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
           </div>
         </div>
 
-        {/* Only show action menu for non-company folders OR regular files */}
-        {(!isCompanyFolder || !item.isFolder) && (
+        {/* Only show action menu for: 
+            - regular files
+            - folders inside company folders
+            - but not for company root folders */}
+        {(!isCompanyFolder && (isInsideCompanyFolder || item.bucketId === 'media')) && (
           <>
             <Button
               size="icon"
@@ -208,8 +212,8 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
                   </TooltipProvider>
                 )}
                 
-                {/* Only show rename for normal folders */}
-                {item.isFolder && !isCompanyFolder && onRename && (
+                {/* Show rename for folders in company directories or normal folders */}
+                {item.isFolder && onRename && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -232,29 +236,27 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
                   </TooltipProvider>
                 )}
                 
-                {/* Only show delete for normal folders or any files */}
-                {(!isCompanyFolder || !item.isFolder) && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete(item.name, item.isFolder);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {item.isFolder ? 'Delete folder' : 'Delete file'}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+                {/* Show delete for any files or folders that aren't company root folders */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(item.name, item.isFolder, item.bucketId);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {item.isFolder ? 'Delete folder' : 'Delete file'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           </>

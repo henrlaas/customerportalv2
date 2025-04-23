@@ -7,18 +7,27 @@ interface MediaHeaderProps {
   onNewFolder: () => void;
   onUpload: () => void;
   canCreateFolder?: boolean;
+  activeTab: string;
+  currentPath: string;
 }
 
 export const MediaHeader: React.FC<MediaHeaderProps> = ({
   onNewFolder,
   onUpload,
   canCreateFolder = true,
+  activeTab,
+  currentPath,
 }) => {
+  // Show folder creation button if:
+  // - In internal files tab, OR
+  // - In company files tab AND inside a company folder (currentPath exists)
+  const showFolderButton = activeTab === 'internal' || (activeTab === 'company' && currentPath);
+
   return (
     <div className="flex justify-between items-center">
       <h1 className="text-2xl font-bold">Files</h1>
       <div className="flex gap-2">
-        {canCreateFolder && (
+        {showFolderButton && (
           <Button 
             className="bg-background border text-foreground px-4 py-2 rounded hover:bg-muted"
             onClick={onNewFolder}

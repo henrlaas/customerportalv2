@@ -65,12 +65,14 @@ export const MediaContent: React.FC<MediaContentProps> = ({
           )}
         </div>
         <h3 className="text-lg font-medium mb-2">No files here yet</h3>
-        <p className="text-muted-foreground mb-6">Upload files {activeTab === 'internal' ? 'or create folders ' : ''}to get started</p>
+        <p className="text-muted-foreground mb-6">
+          Upload files {(activeTab === 'internal' || currentPath) ? 'or create folders ' : ''}to get started
+        </p>
         <div className="flex justify-center gap-4">
           <Button onClick={onUpload}>
             Upload Files
           </Button>
-          {activeTab === 'internal' && (
+          {(activeTab === 'internal' || currentPath) && (
             <Button variant="outline" onClick={onNewFolder}>
               Create Folder
             </Button>

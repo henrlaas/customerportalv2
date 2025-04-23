@@ -220,7 +220,8 @@ const MediaPage: React.FC = () => {
       <MediaHeader 
         onNewFolder={() => setIsFolderDialogOpen(true)}
         onUpload={() => setIsUploadDialogOpen(true)}
-        canCreateFolder={canCreateFolder}
+        activeTab={activeTab}
+        currentPath={currentPath}
       />
       
       <MediaToolbar
