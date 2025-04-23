@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -71,6 +72,19 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     } else {
       return <FileTextIcon className="h-12 w-12 mb-2 text-gray-500" />;
     }
+  };
+
+  // Function to handle file download
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Create a hidden anchor element to trigger download
+    const downloadLink = document.createElement('a');
+    downloadLink.href = item.url;
+    downloadLink.download = item.name;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
   };
 
   return (
@@ -171,15 +185,9 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 rounded-full"
-                        asChild
+                        onClick={handleDownload}
                       >
-                        <a 
-                          href={item.url} 
-                          download={item.name}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Download className="h-4 w-4" />
-                        </a>
+                        <Download className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
