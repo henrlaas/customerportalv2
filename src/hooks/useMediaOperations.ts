@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -153,12 +154,13 @@ export const useMediaOperations = (currentPath: string, session: any, activeTab:
         throw new Error('You must be logged in to delete files');
       }
       
-      // If trying to delete a company folder, reject
-      if (isFolder && bucketId === 'companymedia') {
+      // Prevent deletion of company root folders
+      const isCompanyRootFolder = path === '' && bucketId === 'companymedia';
+      if (isFolder && isCompanyRootFolder) {
         throw new Error('Company folders cannot be deleted');
       }
       
-      if (isFolder && bucketId === 'media') {
+      if (isFolder) {
         const folderPath = path 
           ? `${path}/${name}`
           : name;
@@ -246,6 +248,11 @@ export const useMediaOperations = (currentPath: string, session: any, activeTab:
       
       // Determine the correct bucket based on the activeTab parameter
       const bucketId = activeTab === 'company' ? 'companymedia' : 'media';
+      
+      // Prevent renaming of company root folders
+      if (bucketId === 'companymedia' && !oldPath.includes('/')) {
+        throw new Error('Company root folders cannot be renamed');
+      }
 
       const oldFolderPath = `${oldPath}/.folder`;
       const newFolderPath = oldPath.includes('/')

@@ -50,6 +50,9 @@ export const MediaContent: React.FC<MediaContentProps> = ({
   onNewFolder,
   getUploaderDisplayName,
 }) => {
+  // Determine if we're inside a company folder (not at root)
+  const isInsideCompanyFolder = activeTab === 'company' && currentPath;
+  
   if (isLoading) {
     return <CenteredSpinner />;
   }
@@ -72,7 +75,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({
           <Button onClick={onUpload}>
             Upload Files
           </Button>
-          {(activeTab === 'internal' || currentPath) && (
+          {(activeTab === 'internal' || isInsideCompanyFolder) && (
             <Button variant="outline" onClick={onNewFolder}>
               Create Folder
             </Button>
@@ -108,7 +111,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({
                       onNavigate={onNavigate}
                       onFavorite={onFavorite}
                       onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
-                      onRename={activeTab === 'internal' || (activeTab === 'company' && currentPath) ? onRename : undefined}
+                      onRename={(activeTab === 'internal' || isInsideCompanyFolder) ? onRename : undefined}
                       currentPath={currentPath}
                       getUploaderDisplayName={getUploaderDisplayName}
                     />
@@ -118,7 +121,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({
                       onNavigate={onNavigate}
                       onFavorite={onFavorite}
                       onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
-                      onRename={activeTab === 'internal' || (activeTab === 'company' && currentPath) ? onRename : undefined}
+                      onRename={(activeTab === 'internal' || isInsideCompanyFolder) ? onRename : undefined}
                       currentPath={currentPath}
                       getUploaderDisplayName={getUploaderDisplayName}
                     />

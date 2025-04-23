@@ -18,6 +18,7 @@ import {
   FileTextIcon,
   Download,
   Trash2,
+  Pencil,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
 
@@ -44,8 +45,14 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
     ? `${currentPath}/${item.name}`
     : item.name;
     
-  // Check if this is a company folder (in the root of companies tab)
-  const isCompanyFolder = item.isCompanyFolder;
+  // Check if this is a company root folder (in the root of companies tab)
+  const isCompanyRootFolder = item.isCompanyFolder;
+  
+  // Check if we're inside a company folder structure
+  const isInsideCompanyFolder = item.bucketId === 'companymedia' && currentPath;
+  
+  // Check if this is a subfolder within a company folder
+  const isCompanySubfolder = isInsideCompanyFolder && item.isFolder;
 
   // Function to get user initials
   const getUserInitials = (displayName: string) => {
@@ -169,8 +176,8 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
           </>
         )}
         
-        {/* Only show dropdown for files and non-company folders */}
-        {!isCompanyFolder && (
+        {/* Only show dropdown for files and subfolders, but not for company root folders */}
+        {!isCompanyRootFolder && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -185,14 +192,18 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
             <DropdownMenuContent align="end" className="bg-white z-50">
               {item.isFolder ? (
                 <>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRename?.(item.name);
-                    }}
-                  >
-                    Rename
-                  </DropdownMenuItem>
+                  {/* Only show rename for internal folders or company subfolders */}
+                  {onRename && (isInsideCompanyFolder || item.bucketId === 'media') && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRename(item.name);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Rename
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     className="text-red-500 focus:text-red-500"
                     onClick={(e) => {
@@ -200,6 +211,7 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
                       onDelete(item.name, true);
                     }}
                   >
+                    <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </DropdownMenuItem>
                 </>
@@ -207,6 +219,7 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
                 <>
                   <DropdownMenuItem asChild>
                     <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer">
+                      <Download className="h-4 w-4 mr-2" />
                       Download
                     </a>
                   </DropdownMenuItem>
@@ -217,6 +230,7 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
                       onDelete(item.name, false);
                     }}
                   >
+                    <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </DropdownMenuItem>
                 </>
