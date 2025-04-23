@@ -47,9 +47,6 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
     
   // Check if this is a company root folder (in the root of companies tab)
   const isCompanyRootFolder = item.isCompanyFolder && !currentPath;
-  
-  // Check if we're inside a company folder structure
-  const isInsideCompanyFolder = item.bucketId === 'companymedia' && currentPath;
 
   // Function to get user initials
   const getUserInitials = (displayName: string) => {

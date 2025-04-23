@@ -55,12 +55,6 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
 
   // Check if this is a company root folder (in the root of companies tab)
   const isCompanyRootFolder = item.isCompanyFolder && !currentPath;
-  
-  // Check if we're inside a company folder structure
-  const isInsideCompanyFolder = item.bucketId === 'companymedia' && currentPath;
-
-  // Check if this is a subfolder within a company folder
-  const isCompanySubfolder = isInsideCompanyFolder && item.isFolder;
 
   const handleFolderClick = () => {
     if (item.isFolder && onNavigate) {

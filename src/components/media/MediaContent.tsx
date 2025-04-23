@@ -96,38 +96,43 @@ export const MediaContent: React.FC<MediaContentProps> = ({
           <h2 className="text-lg font-medium mb-4">Folders</h2>
           <div className={gridContainerClass}>
             <AnimatePresence>
-              {filteredMedia.folders.map((folder) => (
-                <motion.div
-                  key={folder.id}
-                  variants={itemVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  layout
-                >
-                  {viewMode === 'grid' ? (
-                    <MediaGridItem
-                      item={folder}
-                      onNavigate={onNavigate}
-                      onFavorite={onFavorite}
-                      onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
-                      onRename={onRename}
-                      currentPath={currentPath}
-                      getUploaderDisplayName={getUploaderDisplayName}
-                    />
-                  ) : (
-                    <MediaListItem
-                      item={folder}
-                      onNavigate={onNavigate}
-                      onFavorite={onFavorite}
-                      onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
-                      onRename={onRename}
-                      currentPath={currentPath}
-                      getUploaderDisplayName={getUploaderDisplayName}
-                    />
-                  )}
-                </motion.div>
-              ))}
+              {filteredMedia.folders.map((folder) => {
+                // Only show rename option if not company root folder
+                const canRename = !(folder.isCompanyFolder && !currentPath);
+                
+                return (
+                  <motion.div
+                    key={folder.id}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    layout
+                  >
+                    {viewMode === 'grid' ? (
+                      <MediaGridItem
+                        item={folder}
+                        onNavigate={onNavigate}
+                        onFavorite={onFavorite}
+                        onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
+                        onRename={canRename && onRename ? onRename : undefined}
+                        currentPath={currentPath}
+                        getUploaderDisplayName={getUploaderDisplayName}
+                      />
+                    ) : (
+                      <MediaListItem
+                        item={folder}
+                        onNavigate={onNavigate}
+                        onFavorite={onFavorite}
+                        onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
+                        onRename={canRename && onRename ? onRename : undefined}
+                        currentPath={currentPath}
+                        getUploaderDisplayName={getUploaderDisplayName}
+                      />
+                    )}
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         </div>
