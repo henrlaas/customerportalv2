@@ -55,6 +55,7 @@ export const useMediaData = (
                 });
                 
               if (!countError && contents) {
+                // Exclude .folder files from count
                 folder.fileCount = contents.filter(item => !item.name.endsWith('.folder')).length;
               }
             }
@@ -70,6 +71,9 @@ export const useMediaData = (
           
           if (error) throw error;
 
+          // Filter out .folder files
+          const filteredItems = items?.filter(item => !item.name.endsWith('.folder')) || [];
+
           // Get metadata and process files
           const { data: mediaMetadata } = await supabase
             .from('media_metadata')
@@ -82,8 +86,7 @@ export const useMediaData = (
             .select('*')
             .eq('user_id', session.user.id);
 
-          const files = items
-            ?.filter(item => !item.name.endsWith('.folder'))
+          const files = filteredItems
             .map(file => {
               const filePath = `${currentPath}/${file.name}`;
               const metadata = mediaMetadata?.find(meta => 
@@ -115,7 +118,7 @@ export const useMediaData = (
                 isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
                 bucketId: 'companymedia'
               };
-            }) || [];
+            });
 
           return { folders: [], files };
         }
@@ -128,8 +131,9 @@ export const useMediaData = (
         
         if (error) throw error;
 
+        // Filter out .folder files from folders
         const folders = (items || [])
-          .filter(item => item.id === null)
+          .filter(item => item.id === null && !item.name.endsWith('.folder'))
           .map(folder => ({
             id: folder.name,
             name: folder.name,
@@ -154,8 +158,9 @@ export const useMediaData = (
           .select('*')
           .eq('user_id', session.user.id);
 
+        // Filter out .folder files from files
         const files = (items || [])
-          .filter(item => item.id !== null)
+          .filter(item => item.id !== null && !item.name.endsWith('.folder'))
           .map(file => {
             const filePath = currentPath 
               ? `${currentPath}/${file.name}`
