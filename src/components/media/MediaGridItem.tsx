@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -75,7 +74,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
   return (
     <Card className={`${item.isFolder ? 
       "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" : 
-      "overflow-hidden"} w-full aspect-[4/5]`}>
+      "overflow-hidden relative"} w-full aspect-[4/5]`}>
       <CardContent className="p-0 h-full flex flex-col">
         <div 
           className="flex-1 p-4 flex flex-col items-center justify-center"
@@ -124,7 +123,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
         </div>
 
         {!item.isFolder && (
-          <div className="absolute bottom-2 right-2 flex space-x-1 bg-background/80 rounded-full p-1 backdrop-blur-sm border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute bottom-2 right-2 flex space-x-1 bg-background/90 rounded-full p-1 backdrop-blur-sm border shadow-sm">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -233,7 +232,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-7 w-7 rounded-full bg-black/20 hover:bg-black/30 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-7 w-7 rounded-full bg-black/20 hover:bg-black/30 text-white"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ChevronDown className="h-4 w-4" />
