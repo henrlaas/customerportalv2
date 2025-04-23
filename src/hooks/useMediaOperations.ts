@@ -18,8 +18,8 @@ export const useMediaOperations = (currentPath: string, session: any) => {
       try {
         // Determine the correct bucket
         const isCompaniesSection = window.location.pathname.includes('companies') || 
-                                 window.location.search.includes('tab=companies');
-        const bucketId = isCompaniesSection ? 'companies_media' : 'media';
+                                 window.location.search.includes('tab=company');
+        const bucketId = isCompaniesSection ? 'company_media' : 'media';
         
         // Define the file path
         const filePath = currentPath 
@@ -52,7 +52,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
             file_size: file.size,
             mime_type: file.type,
             original_name: file.name,
-            bucket_id: bucketId  // Include the bucket ID here
+            bucket_id: bucketId
           });
           
         if (metadataError) throw metadataError;

@@ -49,13 +49,13 @@ export const useMediaData = (
               const { data: contents, error: countError } = await supabase
                 .storage
                 .from('company_media')
-                .list(folder.id, {
+                .list(folder.name, {
                   limit: 100,
                   offset: 0,
                 });
                 
               if (!countError && contents) {
-                folder.fileCount = contents.filter(item => item.id !== null).length;
+                folder.fileCount = contents.filter(item => !item.name.endsWith('.folder')).length;
               }
             }
             
@@ -83,7 +83,7 @@ export const useMediaData = (
             .eq('user_id', session.user.id);
 
           const files = items
-            ?.filter(item => item.id !== null && item.name !== '.folder')
+            ?.filter(item => !item.name.endsWith('.folder'))
             .map(file => {
               const filePath = `${currentPath}/${file.name}`;
               const metadata = mediaMetadata?.find(meta => 
@@ -91,7 +91,7 @@ export const useMediaData = (
               );
               
               const isFavorited = favorites?.some(fav => 
-                fav.file_path === filePath
+                fav.file_path === filePath && fav.bucket_id === 'company_media'
               ) || false;
               
               const url = supabase.storage
