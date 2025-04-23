@@ -21,11 +21,13 @@ interface MediaTabsProps {
   onUpload: () => void;
   onNewFolder: () => void;
   getUploaderDisplayName: (userId: string) => string;
+  favorites?: MediaFile[];
 }
 
 export const MediaTabs: React.FC<MediaTabsProps> = ({
   activeTab,
   onTabChange,
+  favorites,
   ...contentProps
 }) => {
   return (

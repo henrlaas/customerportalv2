@@ -90,7 +90,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({
 
   return (
     <div className="space-y-8">
-      {filteredMedia.folders.length > 0 && activeTab !== 'favorites' && (
+      {filteredMedia.folders.length > 0 && (
         <div>
           <h2 className="text-lg font-medium mb-4">Folders</h2>
           <div className={gridContainerClass}>
@@ -150,7 +150,14 @@ export const MediaContent: React.FC<MediaContentProps> = ({
                     <MediaGridItem
                       item={file}
                       onFavorite={onFavorite}
-                      onDelete={(name) => onDelete(name, false)}
+                      onDelete={(name) => {
+                        // Don't allow deletion from favorites tab - it should just remove from favorites
+                        if (activeTab === 'favorites') {
+                          onFavorite(file.name, true);
+                        } else {
+                          onDelete(name, false);
+                        }
+                      }}
                       currentPath={currentPath}
                       getUploaderDisplayName={getUploaderDisplayName}
                     />
@@ -158,7 +165,14 @@ export const MediaContent: React.FC<MediaContentProps> = ({
                     <MediaListItem
                       item={file}
                       onFavorite={onFavorite}
-                      onDelete={(name) => onDelete(name, false)}
+                      onDelete={(name) => {
+                        // Don't allow deletion from favorites tab - it should just remove from favorites
+                        if (activeTab === 'favorites') {
+                          onFavorite(file.name, true);
+                        } else {
+                          onDelete(name, false);
+                        }
+                      }}
                       currentPath={currentPath}
                       getUploaderDisplayName={getUploaderDisplayName}
                     />

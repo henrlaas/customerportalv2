@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +16,13 @@ export const useMediaOperations = (currentPath: string, session: any) => {
       }
       
       try {
+        // Determine the correct bucket
+        // This uses the URL path to determine if we're in the companies section
+        // A more robust approach would be to pass the activeTab as a parameter
+        const isCompaniesSection = window.location.pathname.includes('companies') || 
+                                 window.location.search.includes('tab=companies');
+        const bucketId = isCompaniesSection ? 'companies_media' : 'media';
+        
         // Define the file path
         const filePath = currentPath 
           ? `${currentPath}/${file.name}`
@@ -23,7 +31,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         // Upload to Supabase storage
         const { data: uploadData, error: uploadError } = await supabase
           .storage
-          .from('media')
+          .from(bucketId)
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false
@@ -34,7 +42,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         // Get the public URL
         const { data: { publicUrl } } = supabase
           .storage
-          .from('media')
+          .from(bucketId)
           .getPublicUrl(filePath);
           
         // Create metadata record
@@ -45,22 +53,23 @@ export const useMediaOperations = (currentPath: string, session: any) => {
             uploaded_by: session.user.id,
             file_size: file.size,
             mime_type: file.type,
-            original_name: file.name
+            original_name: file.name,
+            bucket_id: bucketId
           });
           
         if (metadataError) throw metadataError;
         
-        return { path: uploadData?.path };
+        return { path: uploadData?.path, bucketId };
       } catch (error: any) {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: 'File uploaded',
         description: 'Your file has been uploaded successfully',
       });
-      queryClient.invalidateQueries({ queryKey: ['mediaFiles', currentPath] });
+      queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
     },
     onError: (error: any) => {
       toast({
@@ -82,13 +91,18 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         throw new Error('Folder name cannot be empty');
       }
       
+      // Determine the correct bucket based on URL
+      const isCompaniesSection = window.location.pathname.includes('companies') || 
+                               window.location.search.includes('tab=companies');
+      const bucketId = isCompaniesSection ? 'companies_media' : 'media';
+      
       const folderPath = currentPath
         ? `${currentPath}/${folderName}/.folder` 
         : `${folderName}/.folder`;
       
       const { error } = await supabase
         .storage
-        .from('media')
+        .from(bucketId)
         .upload(folderPath, new Blob([''], { type: 'text/plain' }), {
           cacheControl: '3600',
           upsert: false
@@ -96,14 +110,14 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         
       if (error) throw error;
       
-      return { folderName };
+      return { folderName, bucketId };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: 'Folder created',
         description: 'Your folder has been created successfully',
       });
-      queryClient.invalidateQueries({ queryKey: ['mediaFiles', currentPath] });
+      queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
     },
     onError: (error: any) => {
       toast({
@@ -121,6 +135,11 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         throw new Error('You must be logged in to delete files');
       }
       
+      // Determine the correct bucket based on URL
+      const isCompaniesSection = window.location.pathname.includes('companies') || 
+                               window.location.search.includes('tab=companies');
+      const bucketId = isCompaniesSection ? 'companies_media' : 'media';
+      
       if (isFolder) {
         const folderPath = path 
           ? `${path}/${name}`
@@ -128,7 +147,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
           
         const { data: folderContents, error: listError } = await supabase
           .storage
-          .from('media')
+          .from(bucketId)
           .list(folderPath);
           
         if (listError) throw listError;
@@ -148,13 +167,13 @@ export const useMediaOperations = (currentPath: string, session: any) => {
             
           await supabase
             .storage
-            .from('media')
+            .from(bucketId)
             .remove([itemPath]);
         }
         
         await supabase
           .storage
-          .from('media')
+          .from(bucketId)
           .remove([`${folderPath}/.folder`]);
       } else {
         const filePath = path 
@@ -173,7 +192,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
           
         const { error } = await supabase
           .storage
-          .from('media')
+          .from(bucketId)
           .remove([filePath]);
           
         if (error) throw error;
@@ -184,7 +203,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         title: 'Deleted',
         description: 'Item was deleted successfully',
       });
-      queryClient.invalidateQueries({ queryKey: ['mediaFiles', currentPath] });
+      queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
     },
     onError: (error: any) => {
       toast({
@@ -202,6 +221,11 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         throw new Error('You must be logged in to rename folders');
       }
 
+      // Determine the correct bucket based on URL
+      const isCompaniesSection = window.location.pathname.includes('companies') || 
+                               window.location.search.includes('tab=companies');
+      const bucketId = isCompaniesSection ? 'companies_media' : 'media';
+
       const oldFolderPath = oldPath ? `${oldPath}/.folder` : '.folder';
       const newFolderPath = oldPath.includes('/')
         ? `${oldPath.substring(0, oldPath.lastIndexOf('/'))}/${newName}/.folder`
@@ -209,7 +233,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
 
       const { data: files, error: listError } = await supabase
         .storage
-        .from('media')
+        .from(bucketId)
         .list(oldPath);
 
       if (listError) throw listError;
@@ -222,7 +246,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
 
         const { error: moveError } = await supabase
           .storage
-          .from('media')
+          .from(bucketId)
           .move(oldFilePath, newFilePath);
 
         if (moveError) throw moveError;
@@ -240,7 +264,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
 
       const { error: moveFolderError } = await supabase
         .storage
-        .from('media')
+        .from(bucketId)
         .move(oldFolderPath, newFolderPath);
 
       if (moveFolderError) throw moveFolderError;
@@ -250,7 +274,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         title: 'Folder renamed',
         description: 'The folder has been renamed successfully',
       });
-      queryClient.invalidateQueries({ queryKey: ['mediaFiles', currentPath] });
+      queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
     },
     onError: (error: any) => {
       toast({
@@ -261,19 +285,30 @@ export const useMediaOperations = (currentPath: string, session: any) => {
     },
   });
 
-  // Toggle favorite mutation - updated to match the expected parameter type
+  // Toggle favorite mutation
   const toggleFavoriteMutation = useMutation({
-    mutationFn: async ({ filePath, isFavorited }: { filePath: string, isFavorited: boolean }) => {
+    mutationFn: async ({ 
+      filePath, 
+      isFavorited,
+      bucketId = 'media'
+    }: { 
+      filePath: string, 
+      isFavorited: boolean,
+      bucketId?: string 
+    }) => {
       if (!session?.user?.id) {
         throw new Error('You must be logged in');
       }
+      
+      // Make sure we record the bucket ID in the file path for favorites
+      const fullFilePath = filePath;
       
       if (isFavorited) {
         const { error } = await supabase
           .from('media_favorites')
           .delete()
           .eq('user_id', session.user.id)
-          .eq('file_path', filePath);
+          .eq('file_path', fullFilePath);
           
         if (error) throw error;
       } else {
@@ -281,13 +316,14 @@ export const useMediaOperations = (currentPath: string, session: any) => {
           .from('media_favorites')
           .insert({
             user_id: session.user.id,
-            file_path: filePath
+            file_path: fullFilePath,
+            bucket_id: bucketId
           });
           
         if (error) throw error;
       }
       
-      return { filePath, isFavorited: !isFavorited };
+      return { filePath: fullFilePath, isFavorited: !isFavorited };
     },
     onSuccess: (data) => {
       toast({
@@ -297,6 +333,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
           : 'File has been removed from your favorites',
       });
       queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
+      queryClient.invalidateQueries({ queryKey: ['favoriteFiles'] });
     },
     onError: (error: any) => {
       toast({

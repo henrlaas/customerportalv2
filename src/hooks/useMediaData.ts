@@ -21,10 +21,10 @@ export const useMediaData = (
       }
       
       try {
-        // Use different bucket based on active tab
+        // Determine which bucket to use based on active tab
         const bucketId = activeTab === 'companies' ? 'companies_media' : 'media';
         
-        // For companies tab, only fetch company folders at root level
+        // For companies tab at root level, fetch company folders
         if (activeTab === 'companies' && !currentPath) {
           // Fetch all companies to create virtual folders
           const { data: companies, error: companiesError } = await supabase
@@ -49,7 +49,7 @@ export const useMediaData = (
           for (const folder of folders) {
             const { data: contents, error: countError } = await supabase
               .storage
-              .from(bucketId)
+              .from('companies_media')
               .list(folder.id, {
                 limit: 100,
                 offset: 0,
@@ -63,7 +63,7 @@ export const useMediaData = (
           return { folders, files: [] };
         }
 
-        // For subfolders in companies tab or other tabs
+        // For subfolders in companies tab or files in all tab
         const { data: items, error } = await supabase
           .storage
           .from(bucketId)
@@ -158,7 +158,7 @@ export const useMediaData = (
 
         return { 
           folders: resolvedFolders, 
-          files: activeTab === 'favorites' ? files.filter(f => f.favorited) : files 
+          files 
         } as MediaData;
       } catch (error: any) {
         toast({

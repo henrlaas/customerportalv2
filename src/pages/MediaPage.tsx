@@ -99,12 +99,96 @@ const MediaPage: React.FC = () => {
     toggleFavoriteMutation,
   } = useMediaOperations(currentPath, session);
 
+  // Fetch media for the current tab (all or companies)
   const { data: mediaData, isLoading: isLoadingMedia } = useMediaData(
     currentPath,
     session,
     filters,
     activeTab
   );
+
+  // Special query for favorites that combines results from both buckets
+  const { data: favoritesData, isLoading: isLoadingFavorites } = useQuery({
+    queryKey: ['favoriteFiles', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) {
+        return { folders: [], files: [] };
+      }
+      
+      try {
+        // Get all favorites for current user
+        const { data: favorites, error: favoritesError } = await supabase
+          .from('media_favorites')
+          .select('*')
+          .eq('user_id', session.user.id);
+          
+        if (favoritesError) throw favoritesError;
+        
+        if (!favorites || favorites.length === 0) {
+          return { folders: [], files: [] };
+        }
+        
+        // Get metadata for all favorites
+        const { data: mediaMetadata, error: mediaError } = await supabase
+          .from('media_metadata')
+          .select('*');
+          
+        if (mediaError) throw mediaError;
+        
+        // Process favorites from media bucket
+        const mediaFiles: MediaFile[] = [];
+        
+        // Check each favorite to see which bucket it belongs to
+        for (const favorite of favorites) {
+          // Determine bucket and path
+          const isBucketCompanies = favorite.file_path.startsWith('companies_media/');
+          const bucketId = isBucketCompanies ? 'companies_media' : 'media';
+          
+          // Get file info
+          const { data: fileData, error: fileError } = await supabase
+            .storage
+            .from(bucketId)
+            .getPublicUrl(favorite.file_path);
+            
+          if (fileError || !fileData) continue;
+          
+          const filePathParts = favorite.file_path.split('/');
+          const fileName = filePathParts[filePathParts.length - 1];
+          
+          const metadata = mediaMetadata?.find(meta => 
+            meta.file_path === favorite.file_path
+          );
+          
+          const fileType = getFileTypeFromName(fileName);
+          
+          mediaFiles.push({
+            id: favorite.id,
+            name: fileName,
+            fileType: fileType,
+            url: fileData.publicUrl,
+            size: metadata?.file_size || 0,
+            created_at: favorite.created_at,
+            uploadedBy: metadata?.uploaded_by || 'Unknown',
+            favorited: true,
+            isFolder: false,
+            isImage: fileType.startsWith('image/'),
+            isVideo: fileType.startsWith('video/'),
+            isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
+          });
+        }
+        
+        return { folders: [], files: mediaFiles };
+      } catch (error: any) {
+        toast({
+          title: 'Error fetching favorites',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return { folders: [], files: [] };
+      }
+    },
+    enabled: !!session?.user?.id && activeTab === 'favorites',
+  });
 
   // Build breadcrumb from current path
   const breadcrumbs = currentPath 
@@ -194,11 +278,29 @@ const MediaPage: React.FC = () => {
     if (event) {
       event.stopPropagation();
     }
-    toggleFavoriteMutation.mutate({ filePath, isFavorited });
+    
+    // Determine which bucket this file belongs to
+    const bucketId = activeTab === 'companies' ? 'companies_media' : 'media';
+    
+    // For the favorites tab, the file path already includes the bucket info
+    const fullPath = activeTab === 'favorites' 
+      ? filePath 
+      : (currentPath ? `${currentPath}/${filePath.split('/').pop()}` : filePath);
+    
+    toggleFavoriteMutation.mutate({ 
+      filePath: fullPath, 
+      isFavorited: isFavorited,
+      bucketId: bucketId
+    });
   };
 
   // Filter and sort the media items
   const filteredMedia = React.useMemo(() => {
+    // For favorites tab, use the dedicated favorites data
+    if (activeTab === 'favorites') {
+      return favoritesData || { folders: [], files: [] };
+    }
+    
     let folders = mediaData?.folders || [];
     let files = mediaData?.files || [];
 
@@ -209,11 +311,6 @@ const MediaPage: React.FC = () => {
       const query = searchQuery.toLowerCase();
       folders = folders.filter(folder => folder.name.toLowerCase().includes(query));
       files = files.filter(file => file.name.toLowerCase().includes(query));
-    }
-
-    if (activeTab === 'favorites') {
-      folders = folders.filter(folder => folder.favorited);
-      files = files.filter(file => file.favorited);
     }
     
     const sortFiles = (a: MediaFile, b: MediaFile) => {
@@ -235,7 +332,7 @@ const MediaPage: React.FC = () => {
       folders: [...folders].sort(sortFiles),
       files: [...files].sort(sortFiles)
     };
-  }, [mediaData, searchQuery, sortOption, activeTab]);
+  }, [mediaData, favoritesData, searchQuery, sortOption, activeTab]);
 
   // Add function to check for anomalous entries
   // const handleCheckAnomalies = async () => {
@@ -347,7 +444,7 @@ const MediaPage: React.FC = () => {
       <MediaTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        isLoading={isLoadingMedia}
+        isLoading={activeTab === 'favorites' ? isLoadingFavorites : isLoadingMedia}
         viewMode={viewMode}
         currentPath={currentPath}
         filteredMedia={filteredMedia}
