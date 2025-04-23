@@ -1,9 +1,8 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export const useMediaOperations = (currentPath: string, session: any) => {
+export const useMediaOperations = (currentPath: string, session: any, activeTab: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -15,10 +14,8 @@ export const useMediaOperations = (currentPath: string, session: any) => {
       }
       
       try {
-        // Determine the correct bucket
-        const isCompaniesSection = window.location.pathname.includes('companies') || 
-                                 window.location.search.includes('tab=company');
-        const bucketId = isCompaniesSection ? 'companymedia' : 'media';
+        // Determine the correct bucket based on the activeTab parameter
+        const bucketId = activeTab === 'company' ? 'companymedia' : 'media';
         
         // Define the file path
         const filePath = currentPath 

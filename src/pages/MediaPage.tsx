@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useAuth } from '@/contexts/AuthContext';
@@ -64,7 +63,7 @@ const MediaPage: React.FC = () => {
     deleteFileMutation,
     renameFolderMutation,
     toggleFavoriteMutation,
-  } = useMediaOperations(currentPath, session);
+  } = useMediaOperations(currentPath, session, activeTab);
 
   // Fetch media for the current tab
   const { data: mediaData, isLoading: isLoadingMedia } = useMediaData(
