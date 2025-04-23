@@ -127,7 +127,7 @@ export const useMediaData = (
               : file.name;
               
             const metadata = mediaMetadata?.find(meta => 
-              meta.file_path === filePath
+              meta.file_path === filePath && meta.bucket_id === bucketId
             );
             
             const isFavorited = favorites?.some(fav => 
@@ -153,6 +153,7 @@ export const useMediaData = (
               isImage: fileType.startsWith('image/'),
               isVideo: fileType.startsWith('video/'),
               isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
+              bucketId: bucketId
             };
           }) || [];
 

@@ -1,3 +1,4 @@
+
 export interface MediaFile {
   id: string;
   name: string;
@@ -14,6 +15,7 @@ export interface MediaFile {
   isVideo?: boolean;
   isDocument?: boolean;
   fileCount?: number;
+  bucketId?: string;
 }
 
 export interface MediaData {
@@ -32,4 +34,3 @@ export interface FilterOptions {
   };
   favorites: boolean;
 }
-

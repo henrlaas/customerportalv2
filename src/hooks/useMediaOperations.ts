@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -88,7 +89,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         throw new Error('Folder name cannot be empty');
       }
       
-      // Determine the correct bucket based on URL
+      // Determine the correct bucket based on URL or path
       const isCompaniesSection = window.location.pathname.includes('companies') || 
                                window.location.search.includes('tab=companies');
       const bucketId = isCompaniesSection ? 'companies_media' : 'media';
@@ -132,9 +133,10 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         throw new Error('You must be logged in to delete files');
       }
       
-      // Determine the correct bucket based on URL
+      // Determine the correct bucket based on URL or path
       const isCompaniesSection = window.location.pathname.includes('companies') || 
-                               window.location.search.includes('tab=companies');
+                               window.location.search.includes('tab=companies') || 
+                               (currentPath && currentPath.includes('companies_media'));
       const bucketId = isCompaniesSection ? 'companies_media' : 'media';
       
       if (isFolder) {
@@ -218,9 +220,10 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         throw new Error('You must be logged in to rename folders');
       }
 
-      // Determine the correct bucket based on URL
+      // Determine the correct bucket based on URL or path
       const isCompaniesSection = window.location.pathname.includes('companies') || 
-                               window.location.search.includes('tab=companies');
+                               window.location.search.includes('tab=companies') || 
+                               (oldPath && oldPath.includes('companies_media'));
       const bucketId = isCompaniesSection ? 'companies_media' : 'media';
 
       const oldFolderPath = oldPath ? `${oldPath}/.folder` : '.folder';
