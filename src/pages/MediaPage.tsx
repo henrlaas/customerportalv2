@@ -411,7 +411,7 @@ const MediaPage: React.FC = () => {
               Rename
             </Button>
           </DialogFooter>
-        </Dialog>
+        </DialogContent>
       </DndContext>
     </div>
   );
