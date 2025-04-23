@@ -78,9 +78,13 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
   };
 
   return (
-    <Card className={`${item.isFolder ? 
-      "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" : 
-      "overflow-hidden relative"} w-full h-full flex flex-col`}>
+    <Card className={`
+      w-full h-full flex flex-col 
+      ${item.isFolder 
+        ? "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" 
+        : "overflow-hidden relative"
+      }`}
+    >
       <CardContent className="p-0 flex-1 flex flex-col">
         <div 
           className="flex-1 p-4 flex flex-col items-center justify-center"
