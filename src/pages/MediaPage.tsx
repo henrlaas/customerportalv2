@@ -319,8 +319,7 @@ const MediaPage: React.FC = () => {
   // };
 
   return (
-    
-    <div className="space-y-4 pb-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4 py-8">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Files</h1>
         <div className="flex gap-2">
