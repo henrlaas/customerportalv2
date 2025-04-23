@@ -53,6 +53,9 @@ export const MediaContent: React.FC<MediaContentProps> = ({
   // Determine if we're inside a company folder (not at root)
   const isInsideCompanyFolder = activeTab === 'company' && currentPath;
   
+  // Define canRename based on whether onRename function is provided
+  const canRename = !!onRename;
+  
   if (isLoading) {
     return <CenteredSpinner />;
   }
