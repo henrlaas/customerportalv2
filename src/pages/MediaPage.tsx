@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -117,6 +116,9 @@ const MediaPage: React.FC = () => {
     favorites: false,
   });
 
+  // Use a state to keep resolved user display names for render efficiency
+  const [userNamesCache, setUserNamesCache] = React.useState<{[userId: string]: string}>({});
+
   // Check authentication status
   useEffect(() => {
     if (!session) {
@@ -140,6 +142,20 @@ const MediaPage: React.FC = () => {
     } else {
       setCurrentPath(breadcrumbs.slice(0, index + 1).join('/'));
     }
+  };
+
+  // Helper for rendering uploader display name with cache
+  const getUploaderDisplayName = (userId: string): string => {
+    if (!userId) return "Unknown";
+    if (userNamesCache[userId]) return userNamesCache[userId];
+    // Fetch and cache
+    supabase.rpc('get_user_display_name', { user_id: userId }).then(({ data, error }) => {
+      if (!error && data && typeof data === "string") {
+        setUserNamesCache(prev => ({ ...prev, [userId]: data }));
+      }
+    });
+    // Return temporary fallback (can show spinner or first 8 chars)
+    return `User ${userId.substring(0, 8)}`;
   };
 
   // Fetch media files from Supabase storage
@@ -221,7 +237,7 @@ const MediaPage: React.FC = () => {
               url: url,
               size: file.metadata?.size || 0,
               created_at: file.created_at || new Date().toISOString(),
-              uploadedBy: metadata?.uploaded_by ? getUserDisplayName(metadata.uploaded_by) : 'Unknown',
+              uploadedBy: metadata?.uploaded_by || 'Unknown',
               favorited: isFavorited,
               isFolder: false,
               isImage: fileType.startsWith('image/'),
@@ -242,13 +258,6 @@ const MediaPage: React.FC = () => {
     },
     enabled: !!session?.user?.id, // Only run query if user is authenticated
   });
-
-  // Helper function to get display name temporarily - will be replaced by backend function
-  const getUserDisplayName = (userId: string): string => {
-    // This would typically call the function we created in the database
-    // For now just return a placeholder
-    return `User ${userId.substring(0, 8)}`;
-  };
   
   // Function to infer file type from name
   const getFileTypeFromName = (fileName: string): string => {
@@ -931,7 +940,7 @@ const MediaPage: React.FC = () => {
                                       {formatFileSize(file.size)}
                                     </p>
                                     <p className="text-xs text-muted-foreground mt-1">
-                                      Uploaded by {file.uploadedBy}
+                                      Uploaded by {getUploaderDisplayName(file.uploadedBy)}
                                     </p>
                                   </div>
                                 </div>
@@ -1022,7 +1031,7 @@ const MediaPage: React.FC = () => {
                                   <div className="flex items-center text-xs text-muted-foreground">
                                     <span>{formatFileSize(file.size)}</span>
                                     <span className="mx-2">•</span>
-                                    <span>Uploaded by {file.uploadedBy}</span>
+                                    <span>Uploaded by {getUploaderDisplayName(file.uploadedBy)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -1141,7 +1150,7 @@ const MediaPage: React.FC = () => {
                                     {formatFileSize(file.size)}
                                   </p>
                                   <p className="text-xs text-muted-foreground mt-1">
-                                    Uploaded by {file.uploadedBy}
+                                    Uploaded by {getUploaderDisplayName(file.uploadedBy)}
                                   </p>
                                 </div>
                               </div>
@@ -1223,7 +1232,7 @@ const MediaPage: React.FC = () => {
                                 <div className="flex items-center text-xs text-muted-foreground">
                                   <span>{formatFileSize(file.size)}</span>
                                   <span className="mx-2">•</span>
-                                  <span>Uploaded by {file.uploadedBy}</span>
+                                  <span>Uploaded by {getUploaderDisplayName(file.uploadedBy)}</span>
                                 </div>
                               </div>
                             </div>
