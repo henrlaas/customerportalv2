@@ -68,13 +68,21 @@ const MediaPage: React.FC = () => {
     toggleFavoriteMutation,
   } = useMediaOperations(currentPath, session, activeTab);
 
-  // Setup drag and drop
+  // Setup drag and drop with proper sensors configuration
   const { 
     handleDragEnd, 
     handleDragStart, 
     isDragging,
     activeDragItem
   } = useMediaDragAndDrop(currentPath, activeTab);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Adjust this value as needed - lower makes it easier to start dragging
+      },
+    })
+  );
 
   // Fetch media for the current tab
   const { data: mediaData, isLoading: isLoadingMedia } = useMediaData(
@@ -214,20 +222,12 @@ const MediaPage: React.FC = () => {
   // Allow renaming folders for internal tab or inside company folders
   const canRename = activeTab === 'internal' || (activeTab === 'company' && currentPath);
   
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
-
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4 py-8">
       <DndContext 
-        sensors={sensors} 
-        onDragEnd={handleDragEnd}
+        sensors={sensors}
         onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
       >
         <MediaHeader 
           onNewFolder={() => setIsFolderDialogOpen(true)}
@@ -271,8 +271,8 @@ const MediaPage: React.FC = () => {
         
         {/* Drag overlay for visual feedback */}
         <DragOverlay>
-          {activeDragItem && !activeDragItem.isFolder && (
-            <div className="opacity-80 transform scale-95 w-48">
+          {isDragging && activeDragItem && !activeDragItem.isFolder && (
+            <div className="opacity-80 transform scale-95 w-48 pointer-events-none">
               <MediaGridItem
                 item={activeDragItem}
                 onFavorite={() => {}}

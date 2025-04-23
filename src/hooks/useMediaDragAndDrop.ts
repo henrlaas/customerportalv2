@@ -23,16 +23,27 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     setIsDragging(false);
-    setActiveDragItem(null);
     
     const { active, over } = event;
     
-    if (!over || active.id === over.id) return;
+    // Exit if no over target or same element
+    if (!over || active.id === over.id) {
+      setActiveDragItem(null);
+      return;
+    }
     
+    // Get the file data from the active element
     const fileData = active.data.current as MediaFile;
+    // Get the target folder data from the over element
     const targetFolder = over.data.current as MediaFile;
     
-    if (!fileData || !targetFolder) return;
+    setActiveDragItem(null);
+    
+    // Exit if we don't have valid data
+    if (!fileData || !targetFolder) {
+      console.log("Missing data for drag operation", { fileData, targetFolder });
+      return;
+    }
 
     // Check if user is logged in
     if (!session?.user?.id) {
@@ -45,7 +56,10 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
     }
 
     // Skip if not dropping on a folder
-    if (!targetFolder.isFolder) return;
+    if (!targetFolder.isFolder) {
+      console.log("Target is not a folder", targetFolder);
+      return;
+    }
 
     // Don't allow dropping into company root folders from internal tab
     if (activeTab === 'internal' && targetFolder.isCompanyFolder) {
@@ -68,6 +82,8 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
         ? `${sourceFolder}/${fileData.name}`
         : fileData.name;
 
+      console.log("Moving file", { oldPath, newPath: `${targetPath}/${fileData.name}` });
+      
       await renameFolderMutation.mutateAsync({
         oldPath,
         newName: `${targetPath}/${fileData.name}`,

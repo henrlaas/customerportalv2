@@ -74,13 +74,15 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     }
   };
 
-  const {attributes, listeners, setNodeRef, isDragging} = useDraggable({
+  // Setup draggable for the file
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.id,
-    data: item,
+    data: item, // Make sure the item data is available in drag events
     disabled: item.isFolder || (item.isCompanyFolder && !currentPath)
   });
 
-  const style = {
+  // Apply dragging style
+  const dragStyle = {
     opacity: isDragging ? 0.4 : undefined,
     cursor: item.isFolder ? 'pointer' : 'grab',
   };
@@ -97,7 +99,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
           : "overflow-hidden relative"
         }
       `}
-      style={style}
+      style={dragStyle}
       onClick={item.isFolder ? handleFolderClick : undefined}
     >
       <CardContent className="p-0 flex-1 flex flex-col h-full">

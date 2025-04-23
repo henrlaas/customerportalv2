@@ -53,29 +53,21 @@ export const MediaContent: React.FC<MediaContentProps> = ({
   getUploaderDisplayName,
   activeDragItem,
 }) => {
-  // Define all hooks at the top level of the component
   // Determine if we're inside a company folder (not at root)
   const isInsideCompanyFolder = activeTab === 'company' && currentPath;
   
   // Define canRename based on whether onRename function is provided
   const canRename = !!onRename;
   
-  // Pre-create all droppable references for each folder to avoid conditional hook calls
-  // We'll use a dummy function here and replace with actual data in the render function
+  // Pre-create droppable refs for all folders to avoid conditional hook calls
   // This ensures hooks are called consistently on every render
-  const createDroppableProps = (id: string) => {
+  const droppableRefs = filteredMedia.folders.map(folder => {
     const { setNodeRef, isOver } = useDroppable({
-      id,
-      data: null, // Will be replaced with actual data in render
+      id: folder.id,
+      data: folder, // Important: Include the folder data here
     });
-    return { setNodeRef, isOver };
-  };
-
-  // Generate droppable props for each folder - this must happen outside conditional renders
-  const droppableProps = filteredMedia.folders.map(folder => ({
-    id: folder.id,
-    props: createDroppableProps(folder.id),
-  }));
+    return { id: folder.id, setNodeRef, isOver };
+  });
   
   // Render different content based on loading state and data availability
   if (isLoading) {
@@ -114,43 +106,6 @@ export const MediaContent: React.FC<MediaContentProps> = ({
     ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" 
     : "space-y-2";
 
-  const renderFolderItem = (folder: MediaFile, index: number) => {
-    // Use the pre-created droppable props
-    const { setNodeRef, isOver } = droppableProps[index].props;
-
-    // Add highlight effect when dragging over
-    const isBeingDraggedOver = isOver && activeDragItem && !activeDragItem.isFolder;
-    
-    return (
-      <div 
-        ref={setNodeRef} 
-        className={`w-full h-full ${isBeingDraggedOver ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-      >
-        {viewMode === 'grid' ? (
-          <MediaGridItem
-            item={folder}
-            onNavigate={onNavigate}
-            onFavorite={onFavorite}
-            onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
-            onRename={canRename && onRename ? onRename : undefined}
-            currentPath={currentPath}
-            getUploaderDisplayName={getUploaderDisplayName}
-          />
-        ) : (
-          <MediaListItem
-            item={folder}
-            onNavigate={onNavigate}
-            onFavorite={onFavorite}
-            onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
-            onRename={canRename && onRename ? onRename : undefined}
-            currentPath={currentPath}
-            getUploaderDisplayName={getUploaderDisplayName}
-          />
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-8">
       {filteredMedia.folders.length > 0 && (
@@ -158,18 +113,49 @@ export const MediaContent: React.FC<MediaContentProps> = ({
           <h2 className="text-lg font-medium mb-4">Folders</h2>
           <div className={gridContainerClass}>
             <AnimatePresence>
-              {filteredMedia.folders.map((folder, index) => (
-                <motion.div
-                  key={folder.id}
-                  variants={itemVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  layout
-                >
-                  {renderFolderItem(folder, index)}
-                </motion.div>
-              ))}
+              {filteredMedia.folders.map((folder, index) => {
+                // Find the corresponding droppable ref
+                const droppableRef = droppableRefs.find(ref => ref.id === folder.id);
+                const isBeingDraggedOver = droppableRef?.isOver && activeDragItem && !activeDragItem.isFolder;
+                
+                return (
+                  <motion.div
+                    key={folder.id}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    layout
+                  >
+                    <div 
+                      ref={droppableRef?.setNodeRef} 
+                      className={`w-full h-full ${isBeingDraggedOver ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                    >
+                      {viewMode === 'grid' ? (
+                        <MediaGridItem
+                          item={folder}
+                          onNavigate={onNavigate}
+                          onFavorite={onFavorite}
+                          onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
+                          onRename={canRename && onRename ? onRename : undefined}
+                          currentPath={currentPath}
+                          getUploaderDisplayName={getUploaderDisplayName}
+                        />
+                      ) : (
+                        <MediaListItem
+                          item={folder}
+                          onNavigate={onNavigate}
+                          onFavorite={onFavorite}
+                          onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
+                          onRename={canRename && onRename ? onRename : undefined}
+                          currentPath={currentPath}
+                          getUploaderDisplayName={getUploaderDisplayName}
+                        />
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         </div>
