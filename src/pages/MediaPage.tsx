@@ -599,6 +599,9 @@ const MediaPage: React.FC = () => {
       folders = mediaData.folders || [];
       files = mediaData.files || [];
 
+      // Remove .folder marker files in all cases!
+      files = files.filter((file) => file.name !== ".folder");
+
       // Apply search filter 
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
