@@ -54,9 +54,9 @@ import { useMediaOperations } from '@/hooks/useMediaOperations';
 import { useMediaData } from '@/hooks/useMediaData';
 import { ViewMode, SortOption, FilterOptions, MediaFile } from '@/types/media';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { cleanupMediaBucket } from '@/utils/mediaUtils';
+import { cleanupMediaBucket, getFileTypeFromName } from '@/utils/mediaUtils';
 import { MediaHeader } from '@/components/media/MediaHeader';
 import { MediaToolbar } from '@/components/media/MediaToolbar';
 import { MediaTabs } from '@/components/media/MediaTabs';
@@ -145,12 +145,12 @@ const MediaPage: React.FC = () => {
           const bucketId = isBucketCompanies ? 'companies_media' : 'media';
           
           // Get file info
-          const { data: fileData, error: fileError } = await supabase
+          const { data, error: fileError } = await supabase
             .storage
             .from(bucketId)
             .getPublicUrl(favorite.file_path);
             
-          if (fileError || !fileData) continue;
+          if (fileError || !data) continue;
           
           const filePathParts = favorite.file_path.split('/');
           const fileName = filePathParts[filePathParts.length - 1];
@@ -165,7 +165,7 @@ const MediaPage: React.FC = () => {
             id: favorite.id,
             name: fileName,
             fileType: fileType,
-            url: fileData.publicUrl,
+            url: data.publicUrl,
             size: metadata?.file_size || 0,
             created_at: favorite.created_at,
             uploadedBy: metadata?.uploaded_by || 'Unknown',
