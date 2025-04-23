@@ -43,6 +43,9 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
   const filePath = currentPath 
     ? `${currentPath}/${item.name}`
     : item.name;
+    
+  // Check if this is a company folder (in the root of companies tab)
+  const isCompanyFolder = currentPath === '' && filePath.startsWith('companies/');
 
   // Function to get user initials
   const getUserInitials = (displayName: string) => {
@@ -166,55 +169,58 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
           </>
         )}
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-white z-50">
-            {item.isFolder ? (
-              <>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRename?.(item.name);
-                  }}
-                >
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-red-500 focus:text-red-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(item.name, true);
-                  }}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                <DropdownMenuItem asChild>
-                  <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer">
-                    Download
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-red-500 focus:text-red-500"
-                  onClick={() => onDelete(item.name, false)}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Only show dropdown for files and non-company folders */}
+        {!isCompanyFolder && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-white z-50">
+              {item.isFolder ? (
+                <>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRename?.(item.name);
+                    }}
+                  >
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-red-500 focus:text-red-500"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(item.name, true);
+                    }}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <a href={item.url} download={item.name} target="_blank" rel="noopener noreferrer">
+                      Download
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-red-500 focus:text-red-500"
+                    onClick={() => onDelete(item.name, false)}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
   );
