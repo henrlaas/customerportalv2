@@ -71,22 +71,28 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
       return;
     }
 
-    // Construct the new path
-    const sourceFolder = currentPath;
-    const targetPath = currentPath 
-      ? `${currentPath}/${targetFolder.name}`
-      : targetFolder.name;
-
     try {
-      const oldPath = sourceFolder 
-        ? `${sourceFolder}/${fileData.name}`
+      // Construct the proper source file path
+      const sourceFilePath = currentPath 
+        ? `${currentPath}/${fileData.name}`
         : fileData.name;
-
-      console.log("Moving file", { oldPath, newPath: `${targetPath}/${fileData.name}` });
+      
+      // Construct the proper target folder path
+      const targetFolderPath = targetFolder.name;
+      
+      // Construct the new destination file path
+      const destinationFilePath = `${targetFolderPath}/${fileData.name}`;
+      
+      console.log("Moving file", { 
+        source: sourceFilePath, 
+        destination: destinationFilePath,
+        currentPath: currentPath,
+        targetFolder: targetFolder
+      });
       
       await renameFolderMutation.mutateAsync({
-        oldPath,
-        newName: `${targetPath}/${fileData.name}`,
+        oldPath: sourceFilePath,
+        newName: destinationFilePath,
       });
 
       toast({
@@ -97,6 +103,7 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
       // Invalidate queries to refresh the view
       queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
     } catch (error) {
+      console.error("Error moving file:", error);
       toast({
         title: 'Error moving file',
         description: error instanceof Error ? error.message : 'Failed to move file',

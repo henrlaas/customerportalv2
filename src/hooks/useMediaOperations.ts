@@ -239,7 +239,7 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
     },
   });
 
-  // Rename folder mutation - Updated to support both buckets
+  // Rename folder mutation - Updated to handle file movements correctly
   const renameFolderMutation = useMutation({
     mutationFn: async ({ oldPath, newName }: { oldPath: string, newName: string }) => {
       if (!session?.user?.id) {
@@ -254,6 +254,55 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
         throw new Error('Company root folders cannot be renamed');
       }
 
+      console.log(`Moving from ${oldPath} to ${newName} in bucket ${bucketId}`);
+
+      // If this is a file move operation (not a folder rename)
+      if (!oldPath.endsWith('/')) {
+        // Check if source file exists
+        const { data: existsData, error: existsError } = await supabase
+          .storage
+          .from(bucketId)
+          .list(currentPath || '', {
+            search: oldPath.split('/').pop()
+          });
+
+        if (existsError) {
+          console.error("Error checking file existence:", existsError);
+          throw existsError;
+        }
+
+        if (!existsData || existsData.length === 0) {
+          throw new Error(`Source file not found: ${oldPath}`);
+        }
+
+        // Move the file directly
+        const { error: moveError } = await supabase
+          .storage
+          .from(bucketId)
+          .move(oldPath, newName);
+
+        if (moveError) {
+          console.error("Error moving file:", moveError);
+          throw moveError;
+        }
+
+        // Update metadata
+        await supabase
+          .from('media_metadata')
+          .update({ file_path: newName })
+          .eq('file_path', oldPath)
+          .eq('bucket_id', bucketId);
+
+        // Update favorites
+        await supabase
+          .from('media_favorites')
+          .update({ file_path: newName })
+          .eq('file_path', oldPath);
+
+        return;
+      }
+
+      // Handle folder rename (original code for folder renaming)
       const oldFolderPath = `${oldPath}/.folder`;
       const newFolderPath = oldPath.includes('/')
         ? `${oldPath.substring(0, oldPath.lastIndexOf('/'))}/${newName}/.folder`
@@ -305,15 +354,16 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
     },
     onSuccess: () => {
       toast({
-        title: 'Folder renamed',
-        description: 'The folder has been renamed successfully',
+        title: 'Operation successful',
+        description: 'The file or folder has been moved successfully',
       });
       queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
     },
     onError: (error: any) => {
+      console.error("Error in rename/move operation:", error);
       toast({
-        title: 'Failed to rename folder',
-        description: error.message,
+        title: 'Operation failed',
+        description: error.message || 'Failed to move file or folder',
         variant: 'destructive',
       });
     },
