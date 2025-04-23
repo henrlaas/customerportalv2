@@ -124,7 +124,7 @@ export const useMediaData = (
                 url,
                 size: file.metadata?.size || 0,
                 created_at: file.created_at || new Date().toISOString(),
-                uploadedBy: metadata?.uploaded_by || 'Unknown',
+                uploadedBy: metadata?.uploaded_by || '',  // Make sure this is never null or undefined
                 favorited: isFavorited,
                 isFolder: false,
                 isImage: fileType.startsWith('image/'),
@@ -201,7 +201,7 @@ export const useMediaData = (
               url,
               size: file.metadata?.size || 0,
               created_at: file.created_at || new Date().toISOString(),
-              uploadedBy: metadata?.uploaded_by || 'Unknown',
+              uploadedBy: metadata?.uploaded_by || '',  // Make sure this is never null or undefined
               favorited: isFavorited,
               isFolder: false,
               isImage: fileType.startsWith('image/'),

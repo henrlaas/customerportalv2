@@ -111,12 +111,19 @@ const MediaPage: React.FC = () => {
   const getUploaderDisplayName = useCallback((userId: string): string => {
     if (!userId) return "Unknown";
     if (userNamesCache[userId]) return userNamesCache[userId];
+    
+    console.log("Fetching display name for user ID:", userId);
+    
     // Fetch and cache
     supabase.rpc('get_user_display_name', { user_id: userId }).then(({ data, error }) => {
       if (!error && data && typeof data === "string") {
+        console.log(`Got display name for ${userId}:`, data);
         setUserNamesCache(prev => ({ ...prev, [userId]: data }));
+      } else {
+        console.error("Error fetching user display name:", error);
       }
     });
+    
     return `User ${userId.substring(0, 8)}`;
   }, [userNamesCache]);
 

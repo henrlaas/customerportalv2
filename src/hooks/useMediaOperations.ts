@@ -310,13 +310,20 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
         console.log("Existing metadata:", existingMetadata);
         console.log("Preserve metadata:", preserveMetadata);
 
+        // Ensure uploadedBy value is always populated and valid
+        let uploaderId = preserveMetadata?.uploadedBy || 
+                        (existingMetadata ? existingMetadata.uploaded_by : session.user.id);
+
+        // If uploaderId is empty or null for some reason, use the current user ID
+        if (!uploaderId) {
+          console.warn("Missing uploader ID, defaulting to current user");
+          uploaderId = session.user.id;
+        }
+
         // Update metadata with the new file path, but preserve the original uploader
         const metadataUpdate = {
           file_path: newName,
-          // Use preserveMetadata if provided, otherwise keep existing data, or use the current user as fallback
-          uploaded_by: preserveMetadata?.uploadedBy || 
-                      (existingMetadata ? existingMetadata.uploaded_by : session.user.id),
-          // Preserve other important metadata if available
+          uploaded_by: uploaderId,
           original_name: preserveMetadata?.originalName || 
                          (existingMetadata ? existingMetadata.original_name : newName.split('/').pop()),
           file_size: preserveMetadata?.fileSize || 
@@ -324,6 +331,8 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
           mime_type: preserveMetadata?.mimeType || 
                      (existingMetadata ? existingMetadata.mime_type : null)
         };
+
+        console.log("Updating metadata with:", metadataUpdate);
 
         // Update metadata
         const { error: metadataError } = await supabase
@@ -336,17 +345,20 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
           console.error("Error updating metadata:", metadataError);
           
           // If the metadata update fails, try to insert a new record
-          if (!existingMetadata) {
-            await supabase
-              .from('media_metadata')
-              .insert({
-                file_path: newName,
-                uploaded_by: preserveMetadata?.uploadedBy || session.user.id,
-                original_name: preserveMetadata?.originalName || newName.split('/').pop(),
-                file_size: preserveMetadata?.fileSize || null,
-                mime_type: preserveMetadata?.mimeType || null,
-                bucket_id: bucketId
-              });
+          console.log("Trying to insert a new metadata record");
+          const { error: insertError } = await supabase
+            .from('media_metadata')
+            .insert({
+              file_path: newName,
+              uploaded_by: uploaderId,
+              original_name: preserveMetadata?.originalName || newName.split('/').pop(),
+              file_size: preserveMetadata?.fileSize || null,
+              mime_type: preserveMetadata?.mimeType || null,
+              bucket_id: bucketId
+            });
+            
+          if (insertError) {
+            console.error("Error inserting new metadata:", insertError);
           }
         }
 
