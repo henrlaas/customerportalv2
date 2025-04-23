@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { MediaFile } from '@/types/media';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +41,15 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
     ? `${currentPath}/${item.name}`
     : item.name;
 
+  // Function to get user initials
+  const getUserInitials = (displayName: string) => {
+    return displayName
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  };
+
   const getFileIcon = (file: MediaFile) => {
     if (file.isFolder) {
       return <FolderIcon className="h-5 w-5 text-blue-400" />;
@@ -78,12 +87,24 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
           <p className="font-medium truncate" title={item.name}>
             {item.name}
           </p>
-          <div className="flex items-center text-xs text-muted-foreground">
-            <span>{formatFileSize(item.size)}</span>
-            {!item.isFolder && (
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-muted-foreground">
+              {formatFileSize(item.size)}
+            </span>
+            {!item.isFolder && item.uploadedBy && (
               <>
-                <span className="mx-2">•</span>
-                <span>Uploaded by {getUploaderDisplayName(item.uploadedBy || '')}</span>
+                <span className="text-xs text-muted-foreground">•</span>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={item.uploaderAvatarUrl} />
+                    <AvatarFallback className="text-xs">
+                      {getUserInitials(getUploaderDisplayName(item.uploadedBy))}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-muted-foreground">
+                    {getUploaderDisplayName(item.uploadedBy)}
+                  </span>
+                </div>
               </>
             )}
           </div>

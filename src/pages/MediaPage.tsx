@@ -140,10 +140,13 @@ const MediaPage: React.FC = () => {
     if (acceptedFiles.length > 0) {
       setIsUploading(true);
       uploadFileMutation.mutate(acceptedFiles[0], {
-        onSettled: () => setIsUploading(false)
+        onSettled: () => {
+          setIsUploading(false);
+          setIsUploadDialogOpen(false);  // Close dialog after upload
+        }
       });
     }
-  }, [uploadFileMutation, setIsUploading]);
+  }, [uploadFileMutation]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,

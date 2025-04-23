@@ -3,6 +3,7 @@ import React from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,15 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     ? `${currentPath}/${item.name}`
     : item.name;
 
+  // Function to get user initials
+  const getUserInitials = (displayName: string) => {
+    return displayName
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  };
+
   const getFileIcon = (file: MediaFile) => {
     if (file.isFolder) {
       return <FolderIcon className="h-12 w-12 mb-2 text-blue-400" />;
@@ -61,14 +71,16 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
   };
 
   return (
-    <Card className={item.isFolder ? "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" : "overflow-hidden"}>
-      <CardContent className="p-0">
+    <Card className={`${item.isFolder ? 
+      "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" : 
+      "overflow-hidden"} w-full aspect-[4/5]`}>
+      <CardContent className="p-0 h-full flex flex-col">
         <div 
-          className="p-4 flex flex-col items-center"
+          className="flex-1 p-4 flex flex-col items-center justify-center"
           onClick={() => item.isFolder && onNavigate?.(item.name)}
         >
           {item.fileType.startsWith('image/') ? (
-            <div className="h-24 w-24 mb-2 flex items-center justify-center overflow-hidden">
+            <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
               <img 
                 src={item.url} 
                 alt={item.name} 
@@ -76,19 +88,32 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
               />
             </div>
           ) : (
-            getFileIcon(item)
+            <div className="flex-1 flex items-center justify-center">
+              {getFileIcon(item)}
+            </div>
           )}
-          <div className="w-full text-center mt-2">
-            <p className="font-medium truncate" title={item.name}>
+        </div>
+        
+        <div className="w-full p-4 border-t bg-muted/10">
+          <div className="w-full">
+            <p className="font-medium truncate mb-2" title={item.name}>
               {item.name}
             </p>
             <p className="text-xs text-muted-foreground">
               {formatFileSize(item.size)}
             </p>
-            {!item.isFolder && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Uploaded by {getUploaderDisplayName(item.uploadedBy || '')}
-              </p>
+            {!item.isFolder && item.uploadedBy && (
+              <div className="flex items-center gap-2 mt-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={item.uploaderAvatarUrl} />
+                  <AvatarFallback className="text-xs">
+                    {getUserInitials(getUploaderDisplayName(item.uploadedBy))}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-muted-foreground truncate">
+                  {getUploaderDisplayName(item.uploadedBy)}
+                </span>
+              </div>
             )}
           </div>
         </div>
