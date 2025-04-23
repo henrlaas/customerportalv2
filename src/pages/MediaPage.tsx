@@ -104,6 +104,16 @@ const MediaPage: React.FC = () => {
   // Handle file upload with dropzone
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
+      // For company media, ensure we're in a company folder
+      if (activeTab === 'company' && !currentPath) {
+        toast({
+          title: 'Upload failed',
+          description: 'Please navigate into a company folder before uploading files',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       setIsUploading(true);
       uploadFileMutation.mutate(acceptedFiles[0], {
         onSettled: () => {
@@ -112,12 +122,7 @@ const MediaPage: React.FC = () => {
         }
       });
     }
-  }, [uploadFileMutation]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
-    onDrop,
-    multiple: false
-  });
+  }, [uploadFileMutation, activeTab, currentPath, toast]);
 
   // Handle folder creation
   const handleCreateFolder = () => {
@@ -281,29 +286,44 @@ const MediaPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Upload File</DialogTitle>
             <DialogDescription>
-              Drag and drop a file or click to select one.
+              {activeTab === 'company' && !currentPath 
+                ? 'Please select a company folder first before uploading files'
+                : 'Drag and drop a file or click to select one.'}
             </DialogDescription>
           </DialogHeader>
           
-          <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors">
-            <input {...getInputProps()} />
-            {isDragActive ? (
-              <p className="text-primary font-medium">Drop the file here...</p>
-            ) : (
-              <div>
-                <UploadIcon className="h-10 w-10 mx-auto mb-4 text-gray-400" />
-                <p>Drag and drop a file here, or click to select a file</p>
-                <p className="text-xs text-gray-500 mt-2">
-                  All file types are supported
-                </p>
-              </div>
-            )}
-            {isUploading && (
-              <div className="mt-4 flex justify-center">
-                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-              </div>
-            )}
-          </div>
+          {activeTab === 'company' && !currentPath ? (
+            <div className="text-center py-4">
+              <p className="text-amber-500">You must navigate into a company folder before uploading files.</p>
+              <Button 
+                className="mt-4" 
+                variant="outline" 
+                onClick={() => setIsUploadDialogOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          ) : (
+            <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors">
+              <input {...getInputProps()} />
+              {isDragActive ? (
+                <p className="text-primary font-medium">Drop the file here...</p>
+              ) : (
+                <div>
+                  <UploadIcon className="h-10 w-10 mx-auto mb-4 text-gray-400" />
+                  <p>Drag and drop a file here, or click to select a file</p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    All file types are supported
+                  </p>
+                </div>
+              )}
+              {isUploading && (
+                <div className="mt-4 flex justify-center">
+                  <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                </div>
+              )}
+            </div>
+          )}
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>

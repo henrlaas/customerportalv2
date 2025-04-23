@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,10 +18,15 @@ export const useMediaOperations = (currentPath: string, session: any, activeTab:
         // Determine the correct bucket based on the activeTab parameter
         const bucketId = activeTab === 'company' ? 'companymedia' : 'media';
         
-        // Define the file path
-        const filePath = currentPath 
-          ? `${currentPath}/${file.name}`
-          : file.name;
+        // Define the file path - for company media, ensure we have the company name as the first path segment
+        let filePath;
+        if (bucketId === 'companymedia' && !currentPath) {
+          throw new Error('Company name is required for company media uploads');
+        } else {
+          filePath = currentPath 
+            ? `${currentPath}/${file.name}`
+            : file.name;
+        }
         
         // Upload to Supabase storage
         const { data: uploadData, error: uploadError } = await supabase
