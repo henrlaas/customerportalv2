@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -262,7 +261,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
     },
   });
 
-  // Toggle favorite mutation
+  // Toggle favorite mutation - updated to match the expected parameter type
   const toggleFavoriteMutation = useMutation({
     mutationFn: async ({ filePath, isFavorited }: { filePath: string, isFavorited: boolean }) => {
       if (!session?.user?.id) {

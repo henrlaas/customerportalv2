@@ -11,6 +11,7 @@ import {
   GridIcon,
   ListIcon,
   FileIcon,
+  HeartIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -51,6 +53,7 @@ import { MediaListItem } from '@/components/media/MediaListItem';
 import { useMediaOperations } from '@/hooks/useMediaOperations';
 import { useMediaData } from '@/hooks/useMediaData';
 import { ViewMode, SortOption, FilterOptions, MediaFile } from '@/types/media';
+import { supabase } from '@/integrations/supabase/client';
 
 const MediaPage: React.FC = () => {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -170,6 +173,14 @@ const MediaPage: React.FC = () => {
       </div>
     );
   }
+
+  // Create wrapper function to handle favorites properly
+  const handleFavoriteToggle = (filePath: string, isFavorited: boolean, event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+    }
+    toggleFavoriteMutation.mutate({ filePath, isFavorited });
+  };
 
   // Filter and sort the media items
   const filteredMedia = React.useMemo(() => {
@@ -472,7 +483,7 @@ const MediaPage: React.FC = () => {
                             <MediaGridItem
                               item={folder}
                               onNavigate={navigateToFolder}
-                              onFavorite={toggleFavoriteMutation.mutate}
+                              onFavorite={handleFavoriteToggle}
                               onDelete={(name) => setFolderToDelete(name)}
                               onRename={(name) => {
                                 setFolderToRename(name);
@@ -485,7 +496,7 @@ const MediaPage: React.FC = () => {
                             <MediaListItem
                               item={folder}
                               onNavigate={navigateToFolder}
-                              onFavorite={toggleFavoriteMutation.mutate}
+                              onFavorite={handleFavoriteToggle}
                               onDelete={(name) => setFolderToDelete(name)}
                               onRename={(name) => {
                                 setFolderToRename(name);
@@ -523,7 +534,7 @@ const MediaPage: React.FC = () => {
                           {viewMode === 'grid' ? (
                             <MediaGridItem
                               item={file}
-                              onFavorite={toggleFavoriteMutation.mutate}
+                              onFavorite={handleFavoriteToggle}
                               onDelete={(name) => deleteFileMutation.mutate({ 
                                 path: currentPath, 
                                 isFolder: false, 
@@ -535,7 +546,7 @@ const MediaPage: React.FC = () => {
                           ) : (
                             <MediaListItem
                               item={file}
-                              onFavorite={toggleFavoriteMutation.mutate}
+                              onFavorite={handleFavoriteToggle}
                               onDelete={(name) => deleteFileMutation.mutate({ 
                                 path: currentPath, 
                                 isFolder: false, 
@@ -605,7 +616,7 @@ const MediaPage: React.FC = () => {
                         >
                           <MediaGridItem
                             item={file}
-                            onFavorite={toggleFavoriteMutation.mutate}
+                            onFavorite={handleFavoriteToggle}
                             onDelete={(name) => deleteFileMutation.mutate({ path: currentPath, isFolder: false, name })}
                             currentPath={currentPath}
                             getUploaderDisplayName={getUploaderDisplayName}
@@ -622,7 +633,7 @@ const MediaPage: React.FC = () => {
                         >
                           <MediaListItem
                             item={file}
-                            onFavorite={toggleFavoriteMutation.mutate}
+                            onFavorite={handleFavoriteToggle}
                             onDelete={(name) => deleteFileMutation.mutate({ path: currentPath, isFolder: false, name })}
                             currentPath={currentPath}
                             getUploaderDisplayName={getUploaderDisplayName}
