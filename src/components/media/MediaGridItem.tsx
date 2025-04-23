@@ -67,7 +67,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
 
   const getFileIcon = (file: MediaFile) => {
     if (file.isFolder) {
-      return <FolderIcon className="h-12 w-12 mb-2 text-blue-400" />;
+      return <FolderIcon className="h-10 w-10 mb-2 text-blue-400" />;
     } else if (file.fileType.startsWith('image/')) {
       return <FileImageIcon className="h-12 w-12 mb-2 text-green-500" />;
     } else if (file.fileType.startsWith('video/')) {
@@ -77,9 +77,13 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     }
   };
 
+  // Use a smaller height for folders
+  const cardHeight = item.isFolder ? "h-[200px]" : "h-[260px]";
+  const iconContainerHeight = item.isFolder ? "h-24" : "h-36";
+
   return (
     <Card className={`
-      w-full h-[260px] flex flex-col 
+      w-full ${cardHeight} flex flex-col 
       ${item.isFolder 
         ? "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" 
         : "overflow-hidden relative"
@@ -87,7 +91,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     >
       <CardContent className="p-0 flex-1 flex flex-col h-full">
         <div 
-          className="h-36 p-4 flex items-center justify-center"
+          className={`${iconContainerHeight} p-4 flex items-center justify-center`}
           onClick={() => item.isFolder && onNavigate?.(item.name)}
         >
           {item.fileType.startsWith('image/') && !item.isFolder ? (
