@@ -54,6 +54,9 @@ import { useMediaOperations } from '@/hooks/useMediaOperations';
 import { useMediaData } from '@/hooks/useMediaData';
 import { ViewMode, SortOption, FilterOptions, MediaFile } from '@/types/media';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { cleanupMediaBucket } from '@/utils/mediaUtils';
 
 const MediaPage: React.FC = () => {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -71,6 +74,8 @@ const MediaPage: React.FC = () => {
   const [folderToRename, setFolderToRename] = useState<string | null>(null);
   const [newFolderNameForRename, setNewFolderNameForRename] = useState('');
   const [userNamesCache, setUserNamesCache] = React.useState<{[userId: string]: string}>({});
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   // Set up filter state
   const [filters, setFilters] = useState<FilterOptions>({
@@ -219,12 +224,38 @@ const MediaPage: React.FC = () => {
     };
   }, [mediaData, searchQuery, sortOption, activeTab]);
 
+  const handleCleanupBucket = async () => {
+    try {
+      await cleanupMediaBucket();
+      toast({
+        title: "Cleanup successful",
+        description: "All files and folders have been removed",
+      });
+      // Refresh the media list
+      queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
+    } catch (error: any) {
+      toast({
+        title: "Cleanup failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     
     <div className="space-y-4 pb-8">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Files</h1>
         <div className="flex gap-2">
+          {/* Add cleanup button */}
+          <Button
+            variant="destructive"
+            onClick={handleCleanupBucket}
+            className="mr-2"
+          >
+            Clean Bucket
+          </Button>
           <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-background border text-foreground px-4 py-2 rounded hover:bg-muted">
