@@ -5,14 +5,25 @@ import { useMediaOperations } from './useMediaOperations';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from './use-toast';
 import { MediaFile } from '@/types/media';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [activeDragItem, setActiveDragItem] = useState<MediaFile | null>(null);
   const { renameFolderMutation } = useMediaOperations(currentPath, null, activeTab);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { session } = useAuth(); // Get the session directly from AuthContext
+
+  const handleDragStart = (event: any) => {
+    const fileData = event.active.data.current as MediaFile;
+    setActiveDragItem(fileData);
+    setIsDragging(true);
+  };
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    setIsDragging(false);
+    setActiveDragItem(null);
     const { active, over } = event;
     
     if (!over || active.id === over.id) return;
@@ -21,6 +32,16 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
     const targetFolder = over.data.current as MediaFile;
     
     if (!fileData || !targetFolder || !targetFolder.isFolder) return;
+
+    // Check if user is logged in
+    if (!session?.user?.id) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to move files',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     // Don't allow dropping into company root folders from internal tab
     if (activeTab === 'internal' && targetFolder.isCompanyFolder) {
@@ -68,6 +89,8 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
   return {
     isDragging,
     setIsDragging,
+    activeDragItem,
+    handleDragStart,
     handleDragEnd,
   };
 };

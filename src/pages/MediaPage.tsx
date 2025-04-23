@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,6 +34,7 @@ import { MediaToolbar } from '@/components/media/MediaToolbar';
 import { MediaTabs } from '@/components/media/MediaTabs';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { useMediaDragAndDrop } from '@/hooks/useMediaDragAndDrop';
+import { MediaGridItem } from '@/components/media/MediaGridItem';
 
 const MediaPage: React.FC = () => {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -67,6 +67,14 @@ const MediaPage: React.FC = () => {
     renameFolderMutation,
     toggleFavoriteMutation,
   } = useMediaOperations(currentPath, session, activeTab);
+
+  // Setup drag and drop
+  const { 
+    handleDragEnd, 
+    handleDragStart, 
+    isDragging,
+    activeDragItem
+  } = useMediaDragAndDrop(currentPath, activeTab);
 
   // Fetch media for the current tab
   const { data: mediaData, isLoading: isLoadingMedia } = useMediaData(
@@ -205,8 +213,6 @@ const MediaPage: React.FC = () => {
   // Determine if we can add rename functionality
   // Allow renaming folders for internal tab or inside company folders
   const canRename = activeTab === 'internal' || (activeTab === 'company' && currentPath);
-
-  const { handleDragEnd } = useMediaDragAndDrop(currentPath, activeTab);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -218,7 +224,11 @@ const MediaPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4 py-8">
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext 
+        sensors={sensors} 
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
+      >
         <MediaHeader 
           onNewFolder={() => setIsFolderDialogOpen(true)}
           onUpload={() => setIsUploadDialogOpen(true)}
@@ -256,7 +266,23 @@ const MediaPage: React.FC = () => {
           onUpload={() => setIsUploadDialogOpen(true)}
           onNewFolder={() => setIsFolderDialogOpen(true)}
           getUploaderDisplayName={getUploaderDisplayName}
+          activeDragItem={activeDragItem}
         />
+        
+        {/* Drag overlay for visual feedback */}
+        <DragOverlay>
+          {activeDragItem && !activeDragItem.isFolder && (
+            <div className="opacity-80 transform scale-95 w-48">
+              <MediaGridItem
+                item={activeDragItem}
+                onFavorite={() => {}}
+                onDelete={() => {}}
+                currentPath={currentPath}
+                getUploaderDisplayName={getUploaderDisplayName}
+              />
+            </div>
+          )}
+        </DragOverlay>
         
         {/* Create Folder Dialog */}
         <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>

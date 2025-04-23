@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MediaFile } from '@/types/media';
@@ -24,6 +25,7 @@ interface MediaContentProps {
   onUpload: () => void;
   onNewFolder: () => void;
   getUploaderDisplayName: (userId: string) => string;
+  activeDragItem?: MediaFile | null;
 }
 
 const itemVariants = {
@@ -49,6 +51,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({
   onUpload,
   onNewFolder,
   getUploaderDisplayName,
+  activeDragItem,
 }) => {
   // Determine if we're inside a company folder (not at root)
   const isInsideCompanyFolder = activeTab === 'company' && currentPath;
@@ -93,13 +96,19 @@ export const MediaContent: React.FC<MediaContentProps> = ({
     : "space-y-2";
 
   const renderFolderItem = (folder: MediaFile) => {
-    const {setNodeRef} = useDroppable({
+    const {setNodeRef, isOver} = useDroppable({
       id: folder.id,
       data: folder,
     });
 
+    // Add highlight effect when dragging over
+    const isBeingDraggedOver = isOver && activeDragItem && !activeDragItem.isFolder;
+    
     return (
-      <div ref={setNodeRef} className="w-full h-full">
+      <div 
+        ref={setNodeRef} 
+        className={`w-full h-full ${isBeingDraggedOver ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+      >
         {viewMode === 'grid' ? (
           <MediaGridItem
             item={folder}

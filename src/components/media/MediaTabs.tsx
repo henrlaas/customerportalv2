@@ -21,26 +21,66 @@ interface MediaTabsProps {
   onUpload: () => void;
   onNewFolder: () => void;
   getUploaderDisplayName: (userId: string) => string;
+  activeDragItem?: MediaFile | null;
 }
 
 export const MediaTabs: React.FC<MediaTabsProps> = ({
   activeTab,
   onTabChange,
-  ...contentProps
+  isLoading,
+  viewMode,
+  currentPath,
+  filteredMedia,
+  onNavigate,
+  onFavorite,
+  onDelete,
+  onRename,
+  onUpload,
+  onNewFolder,
+  getUploaderDisplayName,
+  activeDragItem,
 }) => {
   return (
-    <Tabs defaultValue="internal" onValueChange={onTabChange} value={activeTab} className="w-full">
-      <TabsList className="w-full sm:w-auto">
-        <TabsTrigger value="internal" className="flex-1 sm:flex-initial">Internal Files</TabsTrigger>
-        <TabsTrigger value="company" className="flex-1 sm:flex-initial">Company Files</TabsTrigger>
+    <Tabs value={activeTab} onValueChange={onTabChange}>
+      <TabsList className="grid grid-cols-2 w-full max-w-md mb-6">
+        <TabsTrigger value="internal">Internal Media</TabsTrigger>
+        <TabsTrigger value="company">Company Media</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="internal" className="mt-4">
-        <MediaContent {...contentProps} activeTab="internal" />
+      <TabsContent value="internal" className="mt-2">
+        <MediaContent
+          isLoading={isLoading}
+          viewMode={viewMode}
+          currentPath={currentPath}
+          filteredMedia={filteredMedia}
+          activeTab="internal"
+          onNavigate={onNavigate}
+          onFavorite={onFavorite}
+          onDelete={onDelete}
+          onRename={onRename}
+          onUpload={onUpload}
+          onNewFolder={onNewFolder}
+          getUploaderDisplayName={getUploaderDisplayName}
+          activeDragItem={activeDragItem}
+        />
       </TabsContent>
-
-      <TabsContent value="company" className="mt-4">
-        <MediaContent {...contentProps} activeTab="company" />
+      
+      <TabsContent value="company" className="mt-2">
+        <MediaContent
+          isLoading={isLoading}
+          viewMode={viewMode}
+          currentPath={currentPath}
+          filteredMedia={filteredMedia}
+          activeTab="company"
+          onNavigate={onNavigate}
+          onFavorite={onFavorite}
+          onDelete={onDelete}
+          onRename={onRename}
+          onUpload={onUpload}
+          onNewFolder={onNewFolder}
+          getUploaderDisplayName={getUploaderDisplayName}
+          activeDragItem={activeDragItem}
+        />
       </TabsContent>
     </Tabs>
   );
