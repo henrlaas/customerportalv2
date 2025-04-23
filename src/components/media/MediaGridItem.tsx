@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -66,6 +67,12 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
       .toUpperCase();
   };
 
+  const handleFolderClick = () => {
+    if (item.isFolder && onNavigate) {
+      onNavigate(item.name);
+    }
+  };
+
   const getFileIcon = (file: MediaFile) => {
     if (file.isFolder) {
       return <FolderIcon className="h-10 w-10 text-blue-400" />;
@@ -85,6 +92,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
         ? "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" 
         : "overflow-hidden relative"
       }`}
+      onClick={item.isFolder ? handleFolderClick : undefined}
     >
       <CardContent className="p-0 flex-1 flex flex-col h-full">
         <div 
@@ -92,7 +100,6 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
             ${item.isFolder ? "h-24" : "h-36"} 
             p-4 flex items-center justify-center
           `}
-          onClick={() => item.isFolder && onNavigate?.(item.name)}
         >
           {item.fileType.startsWith('image/') && !item.isFolder ? (
             <div className="w-full h-full flex items-center justify-center overflow-hidden">
@@ -148,7 +155,10 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
               size="icon"
               variant="ghost"
               className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm border shadow-sm"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
             >
               <Menu className="h-4 w-4" />
             </Button>

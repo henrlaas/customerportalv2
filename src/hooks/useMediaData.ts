@@ -63,7 +63,7 @@ export const useMediaData = (
             return { folders, files: [] };
           }
 
-          // Inside a company folder, show only files
+          // Inside a company folder, need to separate folders from files
           const { data: items, error } = await supabase
             .storage
             .from('companymedia')
@@ -71,8 +71,21 @@ export const useMediaData = (
           
           if (error) throw error;
 
-          // Filter out .folder files
-          const filteredItems = items?.filter(item => !item.name.endsWith('.folder')) || [];
+          // Process items to separate folders and files
+          const folders = items
+            ?.filter(item => item.id === null && !item.name.endsWith('.folder'))
+            .map(folder => ({
+              id: folder.name,
+              name: folder.name,
+              fileType: 'folder',
+              url: '',
+              size: 0,
+              created_at: folder.created_at || new Date().toISOString(),
+              favorited: false,
+              isFolder: true,
+              fileCount: 0,
+              bucketId: 'companymedia'
+            })) || [];
 
           // Get metadata and process files
           const { data: mediaMetadata } = await supabase
@@ -86,7 +99,8 @@ export const useMediaData = (
             .select('*')
             .eq('user_id', session.user.id);
 
-          const files = filteredItems
+          const files = (items || [])
+            .filter(item => item.id !== null && !item.name.endsWith('.folder'))
             .map(file => {
               const filePath = `${currentPath}/${file.name}`;
               const metadata = mediaMetadata?.find(meta => 
@@ -120,7 +134,7 @@ export const useMediaData = (
               };
             });
 
-          return { folders: [], files };
+          return { folders, files };
         }
 
         // Handle internal files tab (media bucket)

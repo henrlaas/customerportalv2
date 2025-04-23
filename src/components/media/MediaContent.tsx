@@ -108,7 +108,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({
                       onNavigate={onNavigate}
                       onFavorite={onFavorite}
                       onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
-                      onRename={activeTab === 'internal' ? onRename : undefined}
+                      onRename={activeTab === 'internal' || (activeTab === 'company' && currentPath) ? onRename : undefined}
                       currentPath={currentPath}
                       getUploaderDisplayName={getUploaderDisplayName}
                     />
@@ -118,7 +118,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({
                       onNavigate={onNavigate}
                       onFavorite={onFavorite}
                       onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
-                      onRename={activeTab === 'internal' ? onRename : undefined}
+                      onRename={activeTab === 'internal' || (activeTab === 'company' && currentPath) ? onRename : undefined}
                       currentPath={currentPath}
                       getUploaderDisplayName={getUploaderDisplayName}
                     />
