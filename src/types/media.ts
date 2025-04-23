@@ -1,4 +1,3 @@
-
 export interface MediaFile {
   id: string;
   name: string;
@@ -7,6 +6,7 @@ export interface MediaFile {
   size: number;
   created_at: string;
   uploadedBy?: string;
+  uploaderAvatarUrl?: string;
   favorited: boolean;
   selected?: boolean;
   isFolder: boolean;
