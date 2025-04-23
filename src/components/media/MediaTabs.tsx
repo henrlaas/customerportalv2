@@ -16,7 +16,7 @@ interface MediaTabsProps {
   };
   onNavigate: (folderName: string) => void;
   onFavorite: (filePath: string, isFavorited: boolean, event?: React.MouseEvent) => void;
-  onDelete: (name: string, isFolder: boolean) => void;
+  onDelete: (name: string, isFolder: boolean, bucketId?: string) => void;
   onRename?: (name: string) => void;
   onUpload: () => void;
   onNewFolder: () => void;

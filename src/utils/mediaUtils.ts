@@ -1,4 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
 
 export const getFileTypeFromName = (fileName: string): string => {
   const extension = fileName.split('.').pop()?.toLowerCase() || '';
@@ -19,74 +18,4 @@ export const formatFileSize = (bytes: number): string => {
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
-
-export const cleanupMediaBucket = async () => {
-  // First list all contents
-  const { data: contents, error: listError } = await supabase
-    .storage
-    .from('media')
-    .list();
-
-  if (listError) {
-    throw listError;
-  }
-
-  // Go through each item
-  for (const item of contents || []) {
-    // If it's a folder (no id means it's a folder), list its contents first
-    if (!item.id) {
-      const { data: folderContents, error: folderListError } = await supabase
-        .storage
-        .from('media')
-        .list(item.name);
-
-      if (folderListError) {
-        throw folderListError;
-      }
-
-      // Delete all files in the folder
-      for (const folderItem of folderContents || []) {
-        const filePath = `${item.name}/${folderItem.name}`;
-        await supabase
-          .storage
-          .from('media')
-          .remove([filePath]);
-
-        // Also clean up metadata and favorites
-        await supabase
-          .from('media_metadata')
-          .delete()
-          .eq('file_path', filePath);
-
-        await supabase
-          .from('media_favorites')
-          .delete()
-          .eq('file_path', filePath);
-      }
-
-      // Delete the folder marker
-      await supabase
-        .storage
-        .from('media')
-        .remove([`${item.name}/.folder`]);
-    } else {
-      // Delete the file directly
-      await supabase
-        .storage
-        .from('media')
-        .remove([item.name]);
-
-      // Clean up metadata and favorites for the file
-      await supabase
-        .from('media_metadata')
-        .delete()
-        .eq('file_path', item.name);
-
-      await supabase
-        .from('media_favorites')
-        .delete()
-        .eq('file_path', item.name);
-    }
-  }
 };

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,7 +53,7 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     ? `${currentPath}/${item.name}`
     : item.name;
 
-  // Check if this is a company folder
+  // Check if this is a company folder (in the root of companies tab)
   const isCompanyFolder = item.isCompanyFolder;
 
   // Function to get user initials
@@ -74,19 +75,6 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     } else {
       return <FileTextIcon className="h-12 w-12 mb-2 text-gray-500" />;
     }
-  };
-
-  // Function to handle file download
-  const handleDownload = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    // Create a hidden anchor element to trigger download
-    const downloadLink = document.createElement('a');
-    downloadLink.href = item.url;
-    downloadLink.download = item.name;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
   };
 
   return (
@@ -140,8 +128,8 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
           </div>
         </div>
 
-        {/* Only show actions for non-company folders */}
-        {!isCompanyFolder && !item.isFolder && (
+        {/* Only show action menu for non-company folders OR regular files */}
+        {(!isCompanyFolder || !item.isFolder) && (
           <>
             <Button
               size="icon"
@@ -158,131 +146,106 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
               }`}
             >
               <div className="mr-2 p-1 flex flex-col gap-1 bg-background/90 rounded-l-lg backdrop-blur-sm border shadow-sm">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 rounded-full"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onFavorite(filePath, item.favorited, e);
-                        }}
-                      >
-                        <HeartIcon 
-                          className={`h-4 w-4 ${item.favorited ? 'fill-red-500 text-red-500' : ''}`} 
-                        />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {item.favorited ? 'Remove from favorites' : 'Add to favorites'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {!item.isFolder && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onFavorite(filePath, item.favorited, e);
+                          }}
+                        >
+                          <HeartIcon 
+                            className={`h-4 w-4 ${item.favorited ? 'fill-red-500 text-red-500' : ''}`} 
+                          />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {item.favorited ? 'Remove from favorites' : 'Add to favorites'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 rounded-full"
-                        onClick={handleDownload}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Download file
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {!item.isFolder && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = item.url;
+                            downloadLink.download = item.name;
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            document.body.removeChild(downloadLink);
+                          }}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Download file
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(item.name, false);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Delete file
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Only show menu for regular folders, not company folders */}
-        {item.isFolder && !isCompanyFolder && (
-          <>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm border shadow-sm"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
-
-            <div 
-              className={`absolute right-0 top-12 transition-all duration-300 ease-in-out transform ${
-                isMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
-              }`}
-            >
-              <div className="mr-2 p-1 flex flex-col gap-1 bg-background/90 rounded-l-lg backdrop-blur-sm border shadow-sm">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 rounded-full"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRename?.(item.name);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Rename folder
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(item.name, true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Delete folder
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {/* Only show rename for normal folders */}
+                {item.isFolder && !isCompanyFolder && onRename && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRename(item.name);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Rename folder
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                
+                {/* Only show delete for normal folders or any files */}
+                {(!isCompanyFolder || !item.isFolder) && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(item.name, item.isFolder);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {item.isFolder ? 'Delete folder' : 'Delete file'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
             </div>
           </>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MediaFile } from '@/types/media';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,7 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
     : item.name;
     
   // Check if this is a company folder (in the root of companies tab)
-  const isCompanyFolder = currentPath === '' && filePath.startsWith('companies/');
+  const isCompanyFolder = item.isCompanyFolder;
 
   // Function to get user initials
   const getUserInitials = (displayName: string) => {
@@ -211,7 +212,10 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-red-500 focus:text-red-500"
-                    onClick={() => onDelete(item.name, false)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(item.name, false);
+                    }}
                   >
                     Delete
                   </DropdownMenuItem>

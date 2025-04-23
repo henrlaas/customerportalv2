@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MediaFile } from '@/types/media';
 import { MediaGridItem } from './MediaGridItem';
 import { MediaListItem } from './MediaListItem';
-import { FileIcon, HeartIcon } from 'lucide-react';
+import { FileIcon, FolderIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 
@@ -19,7 +19,7 @@ interface MediaContentProps {
   activeTab: string;
   onNavigate: (folderName: string) => void;
   onFavorite: (filePath: string, isFavorited: boolean, event?: React.MouseEvent) => void;
-  onDelete: (name: string, isFolder: boolean) => void;
+  onDelete: (name: string, isFolder: boolean, bucketId?: string) => void;
   onRename?: (name: string) => void;
   onUpload: () => void;
   onNewFolder: () => void;
@@ -54,31 +54,27 @@ export const MediaContent: React.FC<MediaContentProps> = ({
     return <CenteredSpinner />;
   }
 
-  if (activeTab === 'favorites' && filteredMedia.files.length === 0) {
-    return (
-      <div className="text-center py-12 border rounded-lg bg-muted/30">
-        <HeartIcon className="h-16 w-16 mx-auto text-muted-foreground/30" />
-        <h3 className="text-lg font-medium mb-2">No favorites yet</h3>
-        <p className="text-muted-foreground mb-4">Click the heart icon on any file to add it to your favorites</p>
-      </div>
-    );
-  }
-
   if (!isLoading && filteredMedia.folders.length === 0 && filteredMedia.files.length === 0) {
     return (
       <div className="text-center py-12 border rounded-lg bg-muted/30">
         <div className="mx-auto w-16 h-16 mb-4 text-muted">
-          <FileIcon className="h-16 w-16 mx-auto text-muted-foreground/30" />
+          {activeTab === 'company' ? (
+            <FolderIcon className="h-16 w-16 mx-auto text-muted-foreground/30" />
+          ) : (
+            <FileIcon className="h-16 w-16 mx-auto text-muted-foreground/30" />
+          )}
         </div>
         <h3 className="text-lg font-medium mb-2">No files here yet</h3>
-        <p className="text-muted-foreground mb-6">Upload files or create folders to get started</p>
+        <p className="text-muted-foreground mb-6">Upload files {activeTab === 'internal' ? 'or create folders ' : ''}to get started</p>
         <div className="flex justify-center gap-4">
           <Button onClick={onUpload}>
             Upload Files
           </Button>
-          <Button variant="outline" onClick={onNewFolder}>
-            Create Folder
-          </Button>
+          {activeTab === 'internal' && (
+            <Button variant="outline" onClick={onNewFolder}>
+              Create Folder
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -109,8 +105,8 @@ export const MediaContent: React.FC<MediaContentProps> = ({
                       item={folder}
                       onNavigate={onNavigate}
                       onFavorite={onFavorite}
-                      onDelete={onDelete}
-                      onRename={onRename}
+                      onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
+                      onRename={activeTab === 'internal' ? onRename : undefined}
                       currentPath={currentPath}
                       getUploaderDisplayName={getUploaderDisplayName}
                     />
@@ -119,8 +115,8 @@ export const MediaContent: React.FC<MediaContentProps> = ({
                       item={folder}
                       onNavigate={onNavigate}
                       onFavorite={onFavorite}
-                      onDelete={onDelete}
-                      onRename={onRename}
+                      onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
+                      onRename={activeTab === 'internal' ? onRename : undefined}
                       currentPath={currentPath}
                       getUploaderDisplayName={getUploaderDisplayName}
                     />
@@ -150,14 +146,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({
                     <MediaGridItem
                       item={file}
                       onFavorite={onFavorite}
-                      onDelete={(name) => {
-                        // Don't allow deletion from favorites tab - it should just remove from favorites
-                        if (activeTab === 'favorites') {
-                          onFavorite(file.name, true);
-                        } else {
-                          onDelete(name, false);
-                        }
-                      }}
+                      onDelete={(name) => onDelete(name, false, file.bucketId)}
                       currentPath={currentPath}
                       getUploaderDisplayName={getUploaderDisplayName}
                     />
@@ -165,14 +154,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({
                     <MediaListItem
                       item={file}
                       onFavorite={onFavorite}
-                      onDelete={(name) => {
-                        // Don't allow deletion from favorites tab - it should just remove from favorites
-                        if (activeTab === 'favorites') {
-                          onFavorite(file.name, true);
-                        } else {
-                          onDelete(name, false);
-                        }
-                      }}
+                      onDelete={(name) => onDelete(name, false, file.bucketId)}
                       currentPath={currentPath}
                       getUploaderDisplayName={getUploaderDisplayName}
                     />

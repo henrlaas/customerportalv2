@@ -39,7 +39,7 @@ export const useMediaData = (
               favorited: false,
               isFolder: true,
               fileCount: 0,
-              bucketId: 'company_media',
+              bucketId: 'companymedia',
               isCompanyFolder: true,
               companyName: company.name
             }));
@@ -48,7 +48,7 @@ export const useMediaData = (
             for (const folder of folders) {
               const { data: contents, error: countError } = await supabase
                 .storage
-                .from('company_media')
+                .from('companymedia')
                 .list(folder.name, {
                   limit: 100,
                   offset: 0,
@@ -65,7 +65,7 @@ export const useMediaData = (
           // Inside a company folder, show only files
           const { data: items, error } = await supabase
             .storage
-            .from('company_media')
+            .from('companymedia')
             .list(currentPath);
           
           if (error) throw error;
@@ -74,7 +74,7 @@ export const useMediaData = (
           const { data: mediaMetadata } = await supabase
             .from('media_metadata')
             .select('*')
-            .eq('bucket_id', 'company_media');
+            .eq('bucket_id', 'companymedia');
           
           // Get favorites
           const { data: favorites } = await supabase
@@ -87,15 +87,15 @@ export const useMediaData = (
             .map(file => {
               const filePath = `${currentPath}/${file.name}`;
               const metadata = mediaMetadata?.find(meta => 
-                meta.file_path === filePath && meta.bucket_id === 'company_media'
+                meta.file_path === filePath && meta.bucket_id === 'companymedia'
               );
               
               const isFavorited = favorites?.some(fav => 
-                fav.file_path === filePath && fav.bucket_id === 'company_media'
+                fav.file_path === filePath
               ) || false;
               
               const url = supabase.storage
-                .from('company_media')
+                .from('companymedia')
                 .getPublicUrl(filePath).data.publicUrl;
               
               const fileType = getFileTypeFromName(file.name);
@@ -113,7 +113,7 @@ export const useMediaData = (
                 isImage: fileType.startsWith('image/'),
                 isVideo: fileType.startsWith('video/'),
                 isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
-                bucketId: 'company_media'
+                bucketId: 'companymedia'
               };
             }) || [];
 
@@ -129,7 +129,6 @@ export const useMediaData = (
         if (error) throw error;
 
         const folders = (items || [])
-          .filter(item => !item.name.includes('.folder'))
           .filter(item => item.id === null)
           .map(folder => ({
             id: folder.name,
@@ -156,7 +155,7 @@ export const useMediaData = (
           .eq('user_id', session.user.id);
 
         const files = (items || [])
-          .filter(item => item.id !== null && !item.name.includes('.folder'))
+          .filter(item => item.id !== null)
           .map(file => {
             const filePath = currentPath 
               ? `${currentPath}/${file.name}`

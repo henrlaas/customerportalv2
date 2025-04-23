@@ -1,8 +1,7 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { MediaFile } from '@/types/media';
 
 export const useMediaOperations = (currentPath: string, session: any) => {
   const { toast } = useToast();
@@ -19,7 +18,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         // Determine the correct bucket
         const isCompaniesSection = window.location.pathname.includes('companies') || 
                                  window.location.search.includes('tab=company');
-        const bucketId = isCompaniesSection ? 'company_media' : 'media';
+        const bucketId = isCompaniesSection ? 'companymedia' : 'media';
         
         // Define the file path
         const filePath = currentPath 
@@ -62,7 +61,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         throw error;
       }
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({
         title: 'File uploaded',
         description: 'Your file has been uploaded successfully',
@@ -78,7 +77,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
     },
   });
 
-  // Create folder mutation
+  // Create folder mutation (only for internal files)
   const createFolderMutation = useMutation({
     mutationFn: async (folderName: string) => {
       if (!session?.user?.id) {
@@ -89,10 +88,8 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         throw new Error('Folder name cannot be empty');
       }
       
-      // Determine the correct bucket based on URL or path
-      const isCompaniesSection = window.location.pathname.includes('companies') || 
-                               window.location.search.includes('tab=companies');
-      const bucketId = isCompaniesSection ? 'companies_media' : 'media';
+      // Only allow folder creation in media bucket
+      const bucketId = 'media';
       
       const folderPath = currentPath
         ? `${currentPath}/${folderName}/.folder` 
@@ -110,7 +107,7 @@ export const useMediaOperations = (currentPath: string, session: any) => {
       
       return { folderName, bucketId };
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({
         title: 'Folder created',
         description: 'Your folder has been created successfully',
@@ -126,20 +123,29 @@ export const useMediaOperations = (currentPath: string, session: any) => {
     },
   });
 
-  // Delete file/folder mutation
+  // Delete file mutation
   const deleteFileMutation = useMutation({
-    mutationFn: async ({ path, isFolder, name }: { path: string, isFolder: boolean, name: string }) => {
+    mutationFn: async ({ 
+      path, 
+      isFolder, 
+      name, 
+      bucketId = 'media'
+    }: { 
+      path: string, 
+      isFolder: boolean, 
+      name: string,
+      bucketId?: string  
+    }) => {
       if (!session?.user?.id) {
         throw new Error('You must be logged in to delete files');
       }
       
-      // Determine the correct bucket based on URL or path
-      const isCompaniesSection = window.location.pathname.includes('companies') || 
-                               window.location.search.includes('tab=companies') || 
-                               (currentPath && currentPath.includes('companies_media'));
-      const bucketId = isCompaniesSection ? 'companies_media' : 'media';
+      // If trying to delete a company folder, reject
+      if (isFolder && bucketId === 'companymedia') {
+        throw new Error('Company folders cannot be deleted');
+      }
       
-      if (isFolder) {
+      if (isFolder && bucketId === 'media') {
         const folderPath = path 
           ? `${path}/${name}`
           : name;
@@ -151,13 +157,15 @@ export const useMediaOperations = (currentPath: string, session: any) => {
           
         if (listError) throw listError;
         
+        // Delete all files in folder
         for (const item of folderContents || []) {
           const itemPath = `${folderPath}/${item.name}`;
           
           await supabase
             .from('media_metadata')
             .delete()
-            .eq('file_path', itemPath);
+            .eq('file_path', itemPath)
+            .eq('bucket_id', bucketId);
           
           await supabase
             .from('media_favorites')
@@ -170,11 +178,13 @@ export const useMediaOperations = (currentPath: string, session: any) => {
             .remove([itemPath]);
         }
         
+        // Delete folder marker
         await supabase
           .storage
           .from(bucketId)
           .remove([`${folderPath}/.folder`]);
       } else {
+        // Delete a regular file
         const filePath = path 
           ? `${path}/${name}`
           : name;
@@ -182,7 +192,8 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         await supabase
           .from('media_metadata')
           .delete()
-          .eq('file_path', filePath);
+          .eq('file_path', filePath)
+          .eq('bucket_id', bucketId);
         
         await supabase
           .from('media_favorites')
@@ -213,20 +224,17 @@ export const useMediaOperations = (currentPath: string, session: any) => {
     },
   });
 
-  // Rename folder mutation
+  // Rename folder mutation (only for internal files)
   const renameFolderMutation = useMutation({
     mutationFn: async ({ oldPath, newName }: { oldPath: string, newName: string }) => {
       if (!session?.user?.id) {
         throw new Error('You must be logged in to rename folders');
       }
+      
+      // Only allow renaming in media bucket
+      const bucketId = 'media';
 
-      // Determine the correct bucket based on URL or path
-      const isCompaniesSection = window.location.pathname.includes('companies') || 
-                               window.location.search.includes('tab=companies') || 
-                               (oldPath && oldPath.includes('companies_media'));
-      const bucketId = isCompaniesSection ? 'companies_media' : 'media';
-
-      const oldFolderPath = oldPath ? `${oldPath}/.folder` : '.folder';
+      const oldFolderPath = `${oldPath}/.folder`;
       const newFolderPath = oldPath.includes('/')
         ? `${oldPath.substring(0, oldPath.lastIndexOf('/'))}/${newName}/.folder`
         : `${newName}/.folder`;
@@ -238,12 +246,14 @@ export const useMediaOperations = (currentPath: string, session: any) => {
 
       if (listError) throw listError;
 
+      // Move each file to new location
       for (const file of files || []) {
         if (file.name === '.folder') continue;
 
         const oldFilePath = `${oldPath}/${file.name}`;
         const newFilePath = `${oldPath.substring(0, oldPath.lastIndexOf('/'))}/${newName}/${file.name}`;
 
+        // Move the file
         const { error: moveError } = await supabase
           .storage
           .from(bucketId)
@@ -251,17 +261,21 @@ export const useMediaOperations = (currentPath: string, session: any) => {
 
         if (moveError) throw moveError;
 
+        // Update metadata
         await supabase
           .from('media_metadata')
           .update({ file_path: newFilePath })
-          .eq('file_path', oldFilePath);
+          .eq('file_path', oldFilePath)
+          .eq('bucket_id', bucketId);
 
+        // Update favorites
         await supabase
           .from('media_favorites')
           .update({ file_path: newFilePath })
           .eq('file_path', oldFilePath);
       }
 
+      // Move the folder marker
       const { error: moveFolderError } = await supabase
         .storage
         .from(bucketId)
@@ -300,15 +314,12 @@ export const useMediaOperations = (currentPath: string, session: any) => {
         throw new Error('You must be logged in');
       }
       
-      // Make sure we record the bucket ID in the file path for favorites
-      const fullFilePath = filePath;
-      
       if (isFavorited) {
         const { error } = await supabase
           .from('media_favorites')
           .delete()
           .eq('user_id', session.user.id)
-          .eq('file_path', fullFilePath);
+          .eq('file_path', filePath);
           
         if (error) throw error;
       } else {
@@ -316,14 +327,14 @@ export const useMediaOperations = (currentPath: string, session: any) => {
           .from('media_favorites')
           .insert({
             user_id: session.user.id,
-            file_path: fullFilePath,
+            file_path: filePath,
             bucket_id: bucketId
           });
           
         if (error) throw error;
       }
       
-      return { filePath: fullFilePath, isFavorited: !isFavorited };
+      return { filePath, isFavorited: !isFavorited };
     },
     onSuccess: (data) => {
       toast({
@@ -333,7 +344,6 @@ export const useMediaOperations = (currentPath: string, session: any) => {
           : 'File has been removed from your favorites',
       });
       queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
-      queryClient.invalidateQueries({ queryKey: ['favoriteFiles'] });
     },
     onError: (error: any) => {
       toast({

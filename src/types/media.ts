@@ -1,3 +1,4 @@
+
 export interface MediaFile {
   id: string;
   name: string;
@@ -14,7 +15,7 @@ export interface MediaFile {
   isVideo?: boolean;
   isDocument?: boolean;
   fileCount?: number;
-  bucketId?: string;
+  bucketId: string;
   isCompanyFolder?: boolean;
   companyName?: string;
 }
