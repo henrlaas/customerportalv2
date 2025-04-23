@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -80,7 +81,7 @@ export const useMediaOperations = (currentPath: string, session: any, activeTab:
               file_size: file.size,
               mime_type: file.type,
               original_name: file.name,
-              upload_date: new Date()
+              upload_date: new Date().toISOString() // Convert Date to ISO string format
             })
             .eq('file_path', filePath)
             .eq('bucket_id', bucketId);
