@@ -23,10 +23,10 @@ export const useMediaData = (
       }
       
       try {
-        // Get favorites for the current user
+        // Get favorites for the current user - Make sure to select the bucket_id column
         const { data: favorites } = await supabase
           .from('media_favorites')
-          .select('*')
+          .select('id, user_id, file_path, created_at, bucket_id')
           .eq('user_id', session.user.id);
 
         // Handle company files tab
