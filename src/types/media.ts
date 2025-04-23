@@ -1,4 +1,3 @@
-
 export interface MediaFile {
   id: string;
   name: string;
@@ -35,4 +34,10 @@ export interface FilterOptions {
     end: Date | null;
   };
   favorites: boolean;
+}
+
+export interface DragItem {
+  id: string;
+  type: 'FILE' | 'FOLDER';
+  data: MediaFile;
 }

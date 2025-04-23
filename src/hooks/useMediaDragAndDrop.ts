@@ -1,0 +1,73 @@
+
+import { useState } from 'react';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { useMediaOperations } from './useMediaOperations';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from './use-toast';
+import { MediaFile } from '@/types/media';
+
+export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const { renameFolderMutation } = useMediaOperations(currentPath, null, activeTab);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+    
+    const fileData = active.data.current as MediaFile;
+    const targetFolder = over.data.current as MediaFile;
+    
+    if (!fileData || !targetFolder || !targetFolder.isFolder) return;
+
+    // Don't allow dropping into company root folders from internal tab
+    if (activeTab === 'internal' && targetFolder.isCompanyFolder) {
+      toast({
+        title: 'Operation not allowed',
+        description: 'Cannot move files from internal storage to company folders',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Construct the new path
+    const sourceFolder = currentPath;
+    const targetPath = currentPath 
+      ? `${currentPath}/${targetFolder.name}`
+      : targetFolder.name;
+
+    // Use the rename mutation to move the file
+    try {
+      const oldPath = sourceFolder 
+        ? `${sourceFolder}/${fileData.name}`
+        : fileData.name;
+
+      await renameFolderMutation.mutateAsync({
+        oldPath,
+        newName: `${targetPath}/${fileData.name}`,
+      });
+
+      toast({
+        title: 'File moved',
+        description: `Successfully moved ${fileData.name} to ${targetFolder.name}`,
+      });
+
+      // Invalidate queries to refresh the view
+      queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
+    } catch (error) {
+      toast({
+        title: 'Error moving file',
+        description: error instanceof Error ? error.message : 'Failed to move file',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  return {
+    isDragging,
+    setIsDragging,
+    handleDragEnd,
+  };
+};

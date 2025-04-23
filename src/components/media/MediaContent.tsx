@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MediaFile } from '@/types/media';
@@ -7,6 +6,7 @@ import { MediaListItem } from './MediaListItem';
 import { FileIcon, FolderIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
+import { useDroppable } from '@dnd-kit/core';
 
 interface MediaContentProps {
   isLoading: boolean;
@@ -89,6 +89,39 @@ export const MediaContent: React.FC<MediaContentProps> = ({
     ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" 
     : "space-y-2";
 
+  const renderFolderItem = (folder: MediaFile) => {
+    const {setNodeRef} = useDroppable({
+      id: folder.id,
+      data: folder,
+    });
+
+    return (
+      <div ref={setNodeRef} className="w-full h-full">
+        {viewMode === 'grid' ? (
+          <MediaGridItem
+            item={folder}
+            onNavigate={onNavigate}
+            onFavorite={onFavorite}
+            onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
+            onRename={canRename && onRename ? onRename : undefined}
+            currentPath={currentPath}
+            getUploaderDisplayName={getUploaderDisplayName}
+          />
+        ) : (
+          <MediaListItem
+            item={folder}
+            onNavigate={onNavigate}
+            onFavorite={onFavorite}
+            onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
+            onRename={canRename && onRename ? onRename : undefined}
+            currentPath={currentPath}
+            getUploaderDisplayName={getUploaderDisplayName}
+          />
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       {filteredMedia.folders.length > 0 && (
@@ -96,43 +129,18 @@ export const MediaContent: React.FC<MediaContentProps> = ({
           <h2 className="text-lg font-medium mb-4">Folders</h2>
           <div className={gridContainerClass}>
             <AnimatePresence>
-              {filteredMedia.folders.map((folder) => {
-                // Only show rename option if not company root folder
-                const canRename = !(folder.isCompanyFolder && !currentPath);
-                
-                return (
-                  <motion.div
-                    key={folder.id}
-                    variants={itemVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    layout
-                  >
-                    {viewMode === 'grid' ? (
-                      <MediaGridItem
-                        item={folder}
-                        onNavigate={onNavigate}
-                        onFavorite={onFavorite}
-                        onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
-                        onRename={canRename && onRename ? onRename : undefined}
-                        currentPath={currentPath}
-                        getUploaderDisplayName={getUploaderDisplayName}
-                      />
-                    ) : (
-                      <MediaListItem
-                        item={folder}
-                        onNavigate={onNavigate}
-                        onFavorite={onFavorite}
-                        onDelete={(name, isFolder) => onDelete(name, isFolder, folder.bucketId)}
-                        onRename={canRename && onRename ? onRename : undefined}
-                        currentPath={currentPath}
-                        getUploaderDisplayName={getUploaderDisplayName}
-                      />
-                    )}
-                  </motion.div>
-                );
-              })}
+              {filteredMedia.folders.map((folder) => (
+                <motion.div
+                  key={folder.id}
+                  variants={itemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  layout
+                >
+                  {renderFolderItem(folder)}
+                </motion.div>
+              ))}
             </AnimatePresence>
           </div>
         </div>

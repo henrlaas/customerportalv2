@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MediaFile } from '@/types/media';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,6 +27,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
+import { useDraggable } from '@dnd-kit/core';
 
 interface MediaGridItemProps {
   item: MediaFile;
@@ -74,13 +74,30 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     }
   };
 
+  const {attributes, listeners, setNodeRef, isDragging} = useDraggable({
+    id: item.id,
+    data: item,
+    disabled: item.isFolder || (item.isCompanyFolder && !currentPath)
+  });
+
+  const style = {
+    opacity: isDragging ? 0.4 : undefined,
+    cursor: item.isFolder ? 'pointer' : 'grab',
+  };
+
   return (
-    <Card className={`
-      w-full ${item.isFolder ? "h-[200px]" : "h-[260px]"} flex flex-col 
-      ${item.isFolder 
-        ? "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" 
-        : "overflow-hidden relative"
-      }`}
+    <Card 
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={`
+        w-full ${item.isFolder ? "h-[200px]" : "h-[260px]"} flex flex-col 
+        ${item.isFolder 
+          ? "cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group" 
+          : "overflow-hidden relative"
+        }
+      `}
+      style={style}
       onClick={item.isFolder ? handleFolderClick : undefined}
     >
       <CardContent className="p-0 flex-1 flex flex-col h-full">
