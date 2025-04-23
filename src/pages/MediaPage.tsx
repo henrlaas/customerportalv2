@@ -54,6 +54,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Define media file type
 interface MediaFile {
@@ -108,6 +118,9 @@ const MediaPage: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const { user, session } = useAuth();
+  const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
+  const [folderToRename, setFolderToRename] = useState<string | null>(null);
+  const [newFolderNameForRename, setNewFolderNameForRename] = useState('');
   
   // Set up filter state
   const [filters, setFilters] = useState<FilterOptions>({
@@ -408,6 +421,78 @@ const MediaPage: React.FC = () => {
     },
   });
 
+  // Add rename folder mutation
+  const renameFolderMutation = useMutation({
+    mutationFn: async ({ oldPath, newName }: { oldPath: string, newName: string }) => {
+      if (!session?.user?.id) {
+        throw new Error('You must be logged in to rename folders');
+      }
+
+      const oldFolderPath = oldPath ? `${oldPath}/.folder` : '.folder';
+      const newFolderPath = oldPath.includes('/')
+        ? `${oldPath.substring(0, oldPath.lastIndexOf('/'))}/${newName}/.folder`
+        : `${newName}/.folder`;
+
+      // List all files in the old folder
+      const { data: files, error: listError } = await supabase
+        .storage
+        .from('media')
+        .list(oldPath);
+
+      if (listError) throw listError;
+
+      // Move each file to the new location
+      for (const file of files || []) {
+        if (file.name === '.folder') continue; // Skip the marker file
+
+        const oldFilePath = `${oldPath}/${file.name}`;
+        const newFilePath = `${oldPath.substring(0, oldPath.lastIndexOf('/'))}/${newName}/${file.name}`;
+
+        const { error: moveError } = await supabase
+          .storage
+          .from('media')
+          .move(oldFilePath, newFilePath);
+
+        if (moveError) throw moveError;
+
+        // Update metadata and favorites with new path
+        await supabase
+          .from('media_metadata')
+          .update({ file_path: newFilePath })
+          .eq('file_path', oldFilePath);
+
+        await supabase
+          .from('media_favorites')
+          .update({ file_path: newFilePath })
+          .eq('file_path', oldFilePath);
+      }
+
+      // Move the .folder marker file
+      const { error: moveFolderError } = await supabase
+        .storage
+        .from('media')
+        .move(oldFolderPath, newFolderPath);
+
+      if (moveFolderError) throw moveFolderError;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Folder renamed',
+        description: 'The folder has been renamed successfully',
+      });
+      setFolderToRename(null);
+      setNewFolderNameForRename('');
+      queryClient.invalidateQueries({ queryKey: ['mediaFiles', currentPath] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed to rename folder',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Delete file mutation
   const deleteFileMutation = useMutation({
     mutationFn: async ({ path, isFolder, name }: { path: string, isFolder: boolean, name: string }) => {
@@ -417,8 +502,8 @@ const MediaPage: React.FC = () => {
       
       if (isFolder) {
         // For folders, we need to list and delete all contents
-        const folderPath = currentPath 
-          ? `${currentPath}/${name}`
+        const folderPath = path 
+          ? `${path}/${name}`
           : name;
           
         // List all files in the folder
@@ -457,11 +542,12 @@ const MediaPage: React.FC = () => {
           .storage
           .from('media')
           .remove([`${folderPath}/.folder`]);
-          
+
+        setFolderToDelete(null);
       } else {
         // For files, simple delete
-        const filePath = currentPath 
-          ? `${currentPath}/${name}`
+        const filePath = path 
+          ? `${path}/${name}`
           : name;
           
         // Delete metadata
@@ -829,6 +915,77 @@ const MediaPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Alert Dialog for folder deletion */}
+      <AlertDialog open={!!folderToDelete} onOpenChange={(open) => !open && setFolderToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Folder</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this folder? This will permanently delete the folder and all files inside it.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (folderToDelete) {
+                  deleteFileMutation.mutate({
+                    path: currentPath,
+                    isFolder: true,
+                    name: folderToDelete
+                  });
+                }
+              }}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog for folder renaming */}
+      <Dialog open={!!folderToRename} onOpenChange={(open) => !open && setFolderToRename(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Folder</DialogTitle>
+            <DialogDescription>
+              Enter a new name for the folder.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Input
+            placeholder="New folder name"
+            value={newFolderNameForRename}
+            onChange={(e) => setNewFolderNameForRename(e.target.value)}
+            className="mt-2"
+          />
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFolderToRename(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (folderToRename && newFolderNameForRename) {
+                  const oldPath = currentPath 
+                    ? `${currentPath}/${folderToRename}`
+                    : folderToRename;
+                  renameFolderMutation.mutate({
+                    oldPath,
+                    newName: newFolderNameForRename
+                  });
+                }
+              }}
+              disabled={!newFolderNameForRename.trim()}
+            >
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Tabs for All Files and Favorites */}
       <Tabs defaultValue="all" onValueChange={setActiveTab} value={activeTab}>
         <TabsList>
@@ -861,13 +1018,50 @@ const MediaPage: React.FC = () => {
                             layout
                           >
                             <Card 
-                              className="cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30"
-                              onClick={() => navigateToFolder(folder.name)}
+                              className="cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/30 relative group"
                             >
-                              <CardContent className="p-4 flex flex-col items-center text-center">
+                              <CardContent 
+                                className="p-4 flex flex-col items-center text-center"
+                                onClick={() => navigateToFolder(folder.name)}
+                              >
                                 <FolderIcon className="h-16 w-16 text-blue-400 mb-2" />
                                 <p className="font-medium truncate w-full">{folder.name}</p>
                               </CardContent>
+                              
+                              <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7 rounded-full bg-black/20 hover:bg-black/30 text-white"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <ChevronDown className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setFolderToRename(folder.name);
+                                        setNewFolderNameForRename(folder.name);
+                                      }}
+                                    >
+                                      Rename
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-red-500 focus:text-red-500"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setFolderToDelete(folder.name);
+                                      }}
+                                    >
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </Card>
                           </motion.div>
                         ) : (
@@ -880,11 +1074,48 @@ const MediaPage: React.FC = () => {
                             layout
                           >
                             <div 
-                              className="flex items-center p-3 rounded-md hover:bg-muted/50 cursor-pointer"
+                              className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 group"
                               onClick={() => navigateToFolder(folder.name)}
                             >
-                              <FolderIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0" />
-                              <span className="font-medium">{folder.name}</span>
+                              <div className="flex items-center flex-1 min-w-0">
+                                <FolderIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0" />
+                                <span className="font-medium">{folder.name}</span>
+                              </div>
+                              
+                              <div className="ml-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <ChevronDown className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setFolderToRename(folder.name);
+                                        setNewFolderNameForRename(folder.name);
+                                      }}
+                                    >
+                                      Rename
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-red-500 focus:text-red-500"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setFolderToDelete(folder.name);
+                                      }}
+                                    >
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </div>
                           </motion.div>
                         )
