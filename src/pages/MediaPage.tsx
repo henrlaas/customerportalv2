@@ -144,13 +144,13 @@ const MediaPage: React.FC = () => {
           const isBucketCompanies = favorite.file_path.startsWith('companies_media/');
           const bucketId = isBucketCompanies ? 'companies_media' : 'media';
           
-          // Get file info
-          const { data, error: fileError } = await supabase
+          // Get file info - NOTE: getPublicUrl doesn't return an error property
+          const { data } = supabase
             .storage
             .from(bucketId)
             .getPublicUrl(favorite.file_path);
             
-          if (fileError || !data) continue;
+          if (!data) continue;
           
           const filePathParts = favorite.file_path.split('/');
           const fileName = filePathParts[filePathParts.length - 1];
