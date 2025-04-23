@@ -85,7 +85,7 @@ export const useMediaOperations = (currentPath: string, session: any, activeTab:
     },
   });
 
-  // Create folder mutation (only for internal files)
+  // Create folder mutation - Updated to support both internal and company folders
   const createFolderMutation = useMutation({
     mutationFn: async (folderName: string) => {
       if (!session?.user?.id) {
@@ -96,8 +96,13 @@ export const useMediaOperations = (currentPath: string, session: any, activeTab:
         throw new Error('Folder name cannot be empty');
       }
       
-      // Only allow folder creation in media bucket
-      const bucketId = 'media';
+      // Determine the correct bucket based on the activeTab parameter
+      const bucketId = activeTab === 'company' ? 'companymedia' : 'media';
+      
+      // For company media, ensure we have a current path (must be inside a company folder)
+      if (bucketId === 'companymedia' && !currentPath) {
+        throw new Error('You must navigate into a company folder before creating new folders');
+      }
       
       const folderPath = currentPath
         ? `${currentPath}/${folderName}/.folder` 
@@ -232,15 +237,15 @@ export const useMediaOperations = (currentPath: string, session: any, activeTab:
     },
   });
 
-  // Rename folder mutation (only for internal files)
+  // Rename folder mutation - Updated to support both buckets
   const renameFolderMutation = useMutation({
     mutationFn: async ({ oldPath, newName }: { oldPath: string, newName: string }) => {
       if (!session?.user?.id) {
         throw new Error('You must be logged in to rename folders');
       }
       
-      // Only allow renaming in media bucket
-      const bucketId = 'media';
+      // Determine the correct bucket based on the activeTab parameter
+      const bucketId = activeTab === 'company' ? 'companymedia' : 'media';
 
       const oldFolderPath = `${oldPath}/.folder`;
       const newFolderPath = oldPath.includes('/')
