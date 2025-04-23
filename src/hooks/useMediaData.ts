@@ -21,66 +21,14 @@ export const useMediaData = (
       }
       
       try {
-        // For companies tab, we only work with the companies/ path
-        if (activeTab === 'companies') {
-          const basePath = currentPath ? `companies/${currentPath}` : 'companies';
-          const { data: items, error } = await supabase
-            .storage
-            .from('media')
-            .list(basePath, {
-              limit: 100,
-              offset: 0,
-              sortBy: { column: 'name', order: 'asc' }
-            });
-          
-          if (error) throw error;
+        // Use different bucket based on active tab
+        const bucketId = activeTab === 'companies' ? 'companies_media' : 'media';
+        const basePath = currentPath || '';
 
-          const folders = (items || [])
-            .filter(item => !item.name.endsWith('.folder'))
-            .filter(item => item.id === null)
-            .map(folder => ({
-              id: folder.name,
-              name: folder.name,
-              fileType: 'folder',
-              url: '',
-              size: 0,
-              created_at: folder.created_at || new Date().toISOString(),
-              favorited: false,
-              isFolder: true,
-              fileCount: 0
-            }));
-
-          const files = (items || [])
-            .filter(item => item.id !== null)
-            .map(file => {
-              const filePath = `${basePath}/${file.name}`;
-              const url = supabase.storage.from('media').getPublicUrl(filePath).data.publicUrl;
-              const fileType = file.metadata?.mimetype || getFileTypeFromName(file.name);
-              
-              return {
-                id: file.id || '',
-                name: file.name,
-                fileType,
-                url,
-                size: file.metadata?.size || 0,
-                created_at: file.created_at || new Date().toISOString(),
-                uploadedBy: file.owner || 'Unknown',
-                favorited: false,
-                isFolder: false,
-                isImage: fileType.startsWith('image/'),
-                isVideo: fileType.startsWith('video/'),
-                isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
-              };
-            });
-
-          return { folders, files };
-        }
-
-        // For other tabs (all, favorites), exclude the companies/ path completely
         const { data: items, error } = await supabase
           .storage
-          .from('media')
-          .list(currentPath, {
+          .from(bucketId)
+          .list(basePath, {
             limit: 100,
             offset: 0,
             sortBy: { column: 'name', order: 'asc' }
@@ -88,15 +36,13 @@ export const useMediaData = (
         
         if (error) throw error;
 
-        // Filter out all companies/ folders and files for non-companies tabs
         const folders = (items || [])
           .filter(item => !item.name.endsWith('.folder'))
           .filter(item => item.id === null)
-          .filter(item => !item.name.startsWith('companies'))
           .map(async folder => {
             const { data: folderContents, error: folderError } = await supabase
               .storage
-              .from('media')
+              .from(bucketId)
               .list(`${currentPath ? `${currentPath}/` : ''}${folder.name}`, {
                 limit: 100,
                 offset: 0,
@@ -149,7 +95,7 @@ export const useMediaData = (
               fav.file_path === filePath
             ) || false;
             
-            const url = supabase.storage.from('media').getPublicUrl(
+            const url = supabase.storage.from(bucketId).getPublicUrl(
               filePath
             ).data.publicUrl;
             
