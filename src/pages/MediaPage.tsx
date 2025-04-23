@@ -56,7 +56,7 @@ import { ViewMode, SortOption, FilterOptions, MediaFile } from '@/types/media';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { cleanupMediaBucket, detectAnomalousEntries, removeAnomalousEntry } from '@/utils/mediaUtils';
+import { cleanupMediaBucket } from '@/utils/mediaUtils';
 
 const MediaPage: React.FC = () => {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
