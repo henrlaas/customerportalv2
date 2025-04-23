@@ -87,12 +87,21 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
         source: sourceFilePath, 
         destination: destinationFilePath,
         currentPath: currentPath,
-        targetFolder: targetFolder
+        targetFolder: targetFolder,
+        fileData: fileData,
+        uploadedBy: fileData.uploadedBy // Make sure we preserve this value
       });
       
       await renameFolderMutation.mutateAsync({
         oldPath: sourceFilePath,
         newName: destinationFilePath,
+        // Pass the metadata we need to preserve
+        preserveMetadata: {
+          uploadedBy: fileData.uploadedBy,
+          originalName: fileData.name,
+          fileSize: fileData.size,
+          mimeType: fileData.fileType
+        }
       });
 
       toast({

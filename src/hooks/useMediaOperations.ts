@@ -239,9 +239,22 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
     },
   });
 
-  // Rename folder mutation - Updated to handle file movements correctly
+  // Rename folder mutation - Updated to handle file movements correctly and preserve metadata
   const renameFolderMutation = useMutation({
-    mutationFn: async ({ oldPath, newName }: { oldPath: string, newName: string }) => {
+    mutationFn: async ({ 
+      oldPath, 
+      newName,
+      preserveMetadata
+    }: { 
+      oldPath: string, 
+      newName: string,
+      preserveMetadata?: {
+        uploadedBy?: string;
+        originalName?: string;
+        fileSize?: number;
+        mimeType?: string;
+      }
+    }) => {
       if (!session?.user?.id) {
         throw new Error('You must be logged in to rename folders');
       }
@@ -286,12 +299,56 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
           throw moveError;
         }
 
-        // Update metadata
-        await supabase
+        // Get the existing metadata record to preserve important fields
+        const { data: existingMetadata } = await supabase
           .from('media_metadata')
-          .update({ file_path: newName })
+          .select('*')
+          .eq('file_path', oldPath)
+          .eq('bucket_id', bucketId)
+          .single();
+
+        console.log("Existing metadata:", existingMetadata);
+        console.log("Preserve metadata:", preserveMetadata);
+
+        // Update metadata with the new file path, but preserve the original uploader
+        const metadataUpdate = {
+          file_path: newName,
+          // Use preserveMetadata if provided, otherwise keep existing data, or use the current user as fallback
+          uploaded_by: preserveMetadata?.uploadedBy || 
+                      (existingMetadata ? existingMetadata.uploaded_by : session.user.id),
+          // Preserve other important metadata if available
+          original_name: preserveMetadata?.originalName || 
+                         (existingMetadata ? existingMetadata.original_name : newName.split('/').pop()),
+          file_size: preserveMetadata?.fileSize || 
+                     (existingMetadata ? existingMetadata.file_size : null),
+          mime_type: preserveMetadata?.mimeType || 
+                     (existingMetadata ? existingMetadata.mime_type : null)
+        };
+
+        // Update metadata
+        const { error: metadataError } = await supabase
+          .from('media_metadata')
+          .update(metadataUpdate)
           .eq('file_path', oldPath)
           .eq('bucket_id', bucketId);
+        
+        if (metadataError) {
+          console.error("Error updating metadata:", metadataError);
+          
+          // If the metadata update fails, try to insert a new record
+          if (!existingMetadata) {
+            await supabase
+              .from('media_metadata')
+              .insert({
+                file_path: newName,
+                uploaded_by: preserveMetadata?.uploadedBy || session.user.id,
+                original_name: preserveMetadata?.originalName || newName.split('/').pop(),
+                file_size: preserveMetadata?.fileSize || null,
+                mime_type: preserveMetadata?.mimeType || null,
+                bucket_id: bucketId
+              });
+          }
+        }
 
         // Update favorites
         await supabase
@@ -330,10 +387,22 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
 
         if (moveError) throw moveError;
 
+        // Get existing metadata to preserve uploaded_by information
+        const { data: fileMetadata } = await supabase
+          .from('media_metadata')
+          .select('*')
+          .eq('file_path', oldFilePath)
+          .eq('bucket_id', bucketId)
+          .single();
+          
         // Update metadata
         await supabase
           .from('media_metadata')
-          .update({ file_path: newFilePath })
+          .update({ 
+            file_path: newFilePath,
+            // Keep the original uploaded_by if available
+            uploaded_by: fileMetadata ? fileMetadata.uploaded_by : session.user.id
+          })
           .eq('file_path', oldFilePath)
           .eq('bucket_id', bucketId);
 
