@@ -123,7 +123,8 @@ const MediaPage: React.FC = () => {
           }
         });
       }
-    }
+    },
+    maxFiles: 1
   });
 
   // Handle folder creation
