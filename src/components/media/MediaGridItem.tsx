@@ -52,8 +52,8 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
     ? `${currentPath}/${item.name}`
     : item.name;
 
-  // Check if this is a company folder (in the root of companies tab)
-  const isCompanyFolder = currentPath === '' && item.isFolder;
+  // Check if this is a company folder
+  const isCompanyFolder = item.isCompanyFolder;
 
   // Function to get user initials
   const getUserInitials = (displayName: string) => {
@@ -140,7 +140,8 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
           </div>
         </div>
 
-        {!item.isFolder && (
+        {/* Only show actions for non-company folders */}
+        {!isCompanyFolder && !item.isFolder && (
           <>
             <Button
               size="icon"

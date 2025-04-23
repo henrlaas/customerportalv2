@@ -6,23 +6,27 @@ import { FolderIcon, UploadIcon } from 'lucide-react';
 interface MediaHeaderProps {
   onNewFolder: () => void;
   onUpload: () => void;
+  canCreateFolder?: boolean;
 }
 
 export const MediaHeader: React.FC<MediaHeaderProps> = ({
   onNewFolder,
   onUpload,
+  canCreateFolder = true,
 }) => {
   return (
     <div className="flex justify-between items-center">
       <h1 className="text-2xl font-bold">Files</h1>
       <div className="flex gap-2">
-        <Button 
-          className="bg-background border text-foreground px-4 py-2 rounded hover:bg-muted"
-          onClick={onNewFolder}
-        >
-          <FolderIcon className="h-4 w-4 mr-2" />
-          New Folder
-        </Button>
+        {canCreateFolder && (
+          <Button 
+            className="bg-background border text-foreground px-4 py-2 rounded hover:bg-muted"
+            onClick={onNewFolder}
+          >
+            <FolderIcon className="h-4 w-4 mr-2" />
+            New Folder
+          </Button>
+        )}
         <Button 
           className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
           onClick={onUpload}

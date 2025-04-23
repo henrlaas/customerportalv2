@@ -71,7 +71,7 @@ const MediaPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('internal');
   const { user, session } = useAuth();
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
   const [folderToRename, setFolderToRename] = useState<string | null>(null);
@@ -424,11 +424,16 @@ const MediaPage: React.FC = () => {
   //   }
   // };
 
+  // Disable folder creation and rename for company files tab
+  const canCreateFolder = activeTab === 'internal';
+  const canRenameFolder = activeTab === 'internal';
+
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4 py-8">
       <MediaHeader 
         onNewFolder={() => setIsFolderDialogOpen(true)}
         onUpload={() => setIsUploadDialogOpen(true)}
+        canCreateFolder={canCreateFolder}
       />
       
       <MediaToolbar
@@ -444,17 +449,17 @@ const MediaPage: React.FC = () => {
       <MediaTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        isLoading={activeTab === 'favorites' ? isLoadingFavorites : isLoadingMedia}
+        isLoading={isLoadingMedia}
         viewMode={viewMode}
         currentPath={currentPath}
         filteredMedia={filteredMedia}
         onNavigate={navigateToFolder}
         onFavorite={handleFavoriteToggle}
         onDelete={(name, isFolder) => isFolder ? setFolderToDelete(name) : deleteFileMutation.mutate({ path: currentPath, isFolder: false, name })}
-        onRename={(name) => {
+        onRename={canRenameFolder ? (name) => {
           setFolderToRename(name);
           setNewFolderNameForRename(name);
-        }}
+        } : undefined}
         onUpload={() => setIsUploadDialogOpen(true)}
         onNewFolder={() => setIsFolderDialogOpen(true)}
         getUploaderDisplayName={getUploaderDisplayName}

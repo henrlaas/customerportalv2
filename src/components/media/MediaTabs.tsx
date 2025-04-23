@@ -21,33 +21,26 @@ interface MediaTabsProps {
   onUpload: () => void;
   onNewFolder: () => void;
   getUploaderDisplayName: (userId: string) => string;
-  favorites?: MediaFile[];
 }
 
 export const MediaTabs: React.FC<MediaTabsProps> = ({
   activeTab,
   onTabChange,
-  favorites,
   ...contentProps
 }) => {
   return (
-    <Tabs defaultValue="all" onValueChange={onTabChange} value={activeTab} className="w-full">
+    <Tabs defaultValue="internal" onValueChange={onTabChange} value={activeTab} className="w-full">
       <TabsList className="w-full sm:w-auto">
-        <TabsTrigger value="all" className="flex-1 sm:flex-initial">All Files</TabsTrigger>
-        <TabsTrigger value="companies" className="flex-1 sm:flex-initial">Companies</TabsTrigger>
-        <TabsTrigger value="favorites" className="flex-1 sm:flex-initial">Favorites</TabsTrigger>
+        <TabsTrigger value="internal" className="flex-1 sm:flex-initial">Internal Files</TabsTrigger>
+        <TabsTrigger value="company" className="flex-1 sm:flex-initial">Company Files</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="all" className="mt-4">
-        <MediaContent {...contentProps} activeTab="all" />
+      <TabsContent value="internal" className="mt-4">
+        <MediaContent {...contentProps} activeTab="internal" />
       </TabsContent>
 
-      <TabsContent value="companies" className="mt-4">
-        <MediaContent {...contentProps} activeTab="companies" />
-      </TabsContent>
-      
-      <TabsContent value="favorites" className="mt-4">
-        <MediaContent {...contentProps} activeTab="favorites" />
+      <TabsContent value="company" className="mt-4">
+        <MediaContent {...contentProps} activeTab="company" />
       </TabsContent>
     </Tabs>
   );

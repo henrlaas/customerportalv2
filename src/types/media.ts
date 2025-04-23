@@ -16,6 +16,8 @@ export interface MediaFile {
   isDocument?: boolean;
   fileCount?: number;
   bucketId?: string;
+  isCompanyFolder?: boolean;
+  companyName?: string;
 }
 
 export interface MediaData {
