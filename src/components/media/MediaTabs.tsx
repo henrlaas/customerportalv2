@@ -32,11 +32,16 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
     <Tabs defaultValue="all" onValueChange={onTabChange} value={activeTab} className="w-full">
       <TabsList className="w-full sm:w-auto">
         <TabsTrigger value="all" className="flex-1 sm:flex-initial">All Files</TabsTrigger>
+        <TabsTrigger value="companies" className="flex-1 sm:flex-initial">Companies</TabsTrigger>
         <TabsTrigger value="favorites" className="flex-1 sm:flex-initial">Favorites</TabsTrigger>
       </TabsList>
       
       <TabsContent value="all" className="mt-4">
         <MediaContent {...contentProps} activeTab="all" />
+      </TabsContent>
+
+      <TabsContent value="companies" className="mt-4">
+        <MediaContent {...contentProps} activeTab="companies" />
       </TabsContent>
       
       <TabsContent value="favorites" className="mt-4">
