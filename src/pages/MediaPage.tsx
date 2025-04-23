@@ -199,6 +199,9 @@ const MediaPage: React.FC = () => {
     let folders = mediaData?.folders || [];
     let files = mediaData?.files || [];
 
+    // Filter out .folder files
+    files = files.filter(file => file.name !== '.folder');
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       folders = folders.filter(folder => folder.name.toLowerCase().includes(query));
