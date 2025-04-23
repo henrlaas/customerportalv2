@@ -60,7 +60,6 @@ import { cleanupMediaBucket } from '@/utils/mediaUtils';
 import { MediaHeader } from '@/components/media/MediaHeader';
 import { MediaToolbar } from '@/components/media/MediaToolbar';
 import { MediaTabs } from '@/components/media/MediaTabs';
-import { UploadIcon } from 'lucide-react';
 
 const MediaPage: React.FC = () => {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
