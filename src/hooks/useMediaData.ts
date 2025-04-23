@@ -21,100 +21,83 @@ export const useMediaData = (
       }
       
       try {
-        // For companies tab, fetch company folders if we're at root
-        if (activeTab === 'companies' && !currentPath) {
-          const { data: companies, error: companiesError } = await supabase
-            .from('companies')
-            .select('*')
-            .order('name');
-            
-          if (companiesError) throw companiesError;
+        // For companies tab, we only work with the companies/ path
+        if (activeTab === 'companies') {
+          const basePath = currentPath ? `companies/${currentPath}` : 'companies';
+          const { data: items, error } = await supabase
+            .storage
+            .from('media')
+            .list(basePath, {
+              limit: 100,
+              offset: 0,
+              sortBy: { column: 'name', order: 'asc' }
+            });
           
-          // Convert companies to folder format
-          const companyFolders = companies.map(company => ({
-            id: company.id,
-            name: company.name,
-            fileType: 'folder',
-            url: '',
-            size: 0,
-            created_at: company.created_at,
-            favorited: false,
-            isFolder: true,
-            fileCount: 0
-          }));
-          
-          return { folders: companyFolders, files: [] };
+          if (error) throw error;
+
+          const folders = (items || [])
+            .filter(item => !item.name.endsWith('.folder'))
+            .filter(item => item.id === null)
+            .map(folder => ({
+              id: folder.name,
+              name: folder.name,
+              fileType: 'folder',
+              url: '',
+              size: 0,
+              created_at: folder.created_at || new Date().toISOString(),
+              favorited: false,
+              isFolder: true,
+              fileCount: 0
+            }));
+
+          const files = (items || [])
+            .filter(item => item.id !== null)
+            .map(file => {
+              const filePath = `${basePath}/${file.name}`;
+              const url = supabase.storage.from('media').getPublicUrl(filePath).data.publicUrl;
+              const fileType = file.metadata?.mimetype || getFileTypeFromName(file.name);
+              
+              return {
+                id: file.id || '',
+                name: file.name,
+                fileType,
+                url,
+                size: file.metadata?.size || 0,
+                created_at: file.created_at || new Date().toISOString(),
+                uploadedBy: file.owner || 'Unknown',
+                favorited: false,
+                isFolder: false,
+                isImage: fileType.startsWith('image/'),
+                isVideo: fileType.startsWith('video/'),
+                isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
+              };
+            });
+
+          return { folders, files };
         }
 
-        // Get the correct path based on the context
-        let listPath = currentPath;
-        if (activeTab === 'companies' && currentPath) {
-          // If we're in companies tab, prefix with 'companies/'
-          const parts = currentPath.split('/');
-          if (parts.length === 1) {
-            // We're at company root level
-            listPath = `companies/${parts[0]}`;
-          } else {
-            // We're in a subfolder
-            listPath = `companies/${currentPath}`;
-          }
-        }
-
-        // First get folders
-        const { data: folders, error: folderError } = await supabase
+        // For other tabs (all, favorites), exclude the companies/ path completely
+        const { data: items, error } = await supabase
           .storage
           .from('media')
-          .list(listPath, {
+          .list(currentPath, {
             limit: 100,
             offset: 0,
             sortBy: { column: 'name', order: 'asc' }
           });
         
-        if (folderError) throw folderError;
+        if (error) throw error;
 
-        // Filter out items based on the active tab
-        const filteredFolders = folders?.filter(item => {
-          // Exclude .folder files
-          if (item.name === '.folder') return false;
-          
-          if (item.id === null) { // It's a folder
-            if (activeTab === 'all') {
-              // In "All Files" tab, exclude any folders at root level that start with "companies/"
-              if (!currentPath) {
-                return !item.name.startsWith('companies');
-              }
-              
-              // Also exclude subfolders within company folders
-              return !listPath.startsWith('companies/');
-            }
-            return true; // Include all folders in other tabs
-          }
-          return false; // Exclude files from folder list
-        }) || [];
-
-        // Then get files from media_metadata for additional metadata
-        const { data: mediaMetadata, error: mediaError } = await supabase
-          .from('media_metadata')
-          .select('*');
-          
-        if (mediaError) throw mediaError;
-        
-        // Get favorites for the current user
-        const { data: favorites, error: favoritesError } = await supabase
-          .from('media_favorites')
-          .select('*')
-          .eq('user_id', session.user.id);
-          
-        if (favoritesError) throw favoritesError;
-        
-        // Process folders first
-        const folderItems = filteredFolders
+        // Filter out all companies/ folders and files for non-companies tabs
+        const folders = (items || [])
+          .filter(item => !item.name.endsWith('.folder'))
+          .filter(item => item.id === null)
+          .filter(item => !item.name.startsWith('companies'))
           .map(async folder => {
-            // Get the count of files in this folder
             const { data: folderContents, error: folderError } = await supabase
               .storage
               .from('media')
-              .list(`${listPath ? `${listPath}/` : ''}${folder.name}`, {
+              .list(`${currentPath ? `${currentPath}/` : ''}${folder.name}`, {
                 limit: 100,
                 offset: 0,
               });
@@ -132,16 +115,30 @@ export const useMediaData = (
               isFolder: true,
               fileCount,
             };
-          }) || [];
+          });
 
-        const resolvedFolderItems = await Promise.all(folderItems);
+        const resolvedFolders = await Promise.all(folders);
+
+        // Get metadata and process files
+        const { data: mediaMetadata, error: mediaError } = await supabase
+          .from('media_metadata')
+          .select('*');
           
-        // Process files with their metadata
-        const fileItems = folders
+        if (mediaError) throw mediaError;
+        
+        // Get favorites for the current user
+        const { data: favorites, error: favoritesError } = await supabase
+          .from('media_favorites')
+          .select('*')
+          .eq('user_id', session.user.id);
+          
+        if (favoritesError) throw favoritesError;
+
+        const files = items
           ?.filter(item => item.id !== null)
           .map(file => {
-            const filePath = listPath 
-              ? `${listPath}/${file.name}`
+            const filePath = currentPath 
+              ? `${currentPath}/${file.name}`
               : file.name;
               
             const metadata = mediaMetadata?.find(meta => 
@@ -173,8 +170,11 @@ export const useMediaData = (
               isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
             };
           }) || [];
-        
-        return { folders: resolvedFolderItems, files: fileItems } as MediaData;
+
+        return { 
+          folders: resolvedFolders, 
+          files: activeTab === 'favorites' ? files.filter(f => f.favorited) : files 
+        } as MediaData;
       } catch (error: any) {
         toast({
           title: 'Error fetching media',
