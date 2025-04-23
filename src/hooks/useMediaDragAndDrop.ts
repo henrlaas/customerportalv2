@@ -24,6 +24,7 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
   const handleDragEnd = async (event: DragEndEvent) => {
     setIsDragging(false);
     setActiveDragItem(null);
+    
     const { active, over } = event;
     
     if (!over || active.id === over.id) return;
@@ -59,7 +60,6 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
       ? `${currentPath}/${targetFolder.name}`
       : targetFolder.name;
 
-    // Use the rename mutation to move the file
     try {
       const oldPath = sourceFolder 
         ? `${sourceFolder}/${fileData.name}`

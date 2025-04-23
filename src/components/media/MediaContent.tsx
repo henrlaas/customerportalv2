@@ -53,17 +53,19 @@ export const MediaContent: React.FC<MediaContentProps> = ({
   getUploaderDisplayName,
   activeDragItem,
 }) => {
+  // Define all hooks at the top level of the component
   // Determine if we're inside a company folder (not at root)
   const isInsideCompanyFolder = activeTab === 'company' && currentPath;
   
   // Define canRename based on whether onRename function is provided
   const canRename = !!onRename;
   
+  // Render different content based on loading state and data availability
   if (isLoading) {
     return <CenteredSpinner />;
   }
 
-  if (!isLoading && filteredMedia.folders.length === 0 && filteredMedia.files.length === 0) {
+  if (!filteredMedia.folders.length && !filteredMedia.files.length) {
     return (
       <div className="text-center py-12 border rounded-lg bg-muted/30">
         <div className="mx-auto w-16 h-16 mb-4 text-muted">
