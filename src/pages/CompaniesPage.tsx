@@ -64,8 +64,8 @@ const CompaniesPage = () => {
   };
   
   return (
-    <div className="w-full max-w-full px-4 sm:px-6 py-6 overflow-x-hidden">
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+    <div className="w-full max-w-full px-4 sm:px-6 py-6 space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Companies</h1>
         {canModify && (
           <Button onClick={() => setIsCreating(true)}>
@@ -76,54 +76,49 @@ const CompaniesPage = () => {
       </div>
       
       {/* Search and filters */}
-      <Card className="mb-6 w-full">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <CardTitle className="text-lg">
-              Companies ({filteredCompanies.length})
-            </CardTitle>
-            <CompanyFilters 
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              clientTypeFilter={clientTypeFilter}
-              setClientTypeFilter={setClientTypeFilter}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              showSubsidiaries={showSubsidiaries}
-              setShowSubsidiaries={setShowSubsidiaries}
-            />
+      <div className="bg-background p-4 rounded-lg">
+        <CompanyFilters 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          clientTypeFilter={clientTypeFilter}
+          setClientTypeFilter={setClientTypeFilter}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          showSubsidiaries={showSubsidiaries}
+          setShowSubsidiaries={setShowSubsidiaries}
+        />
+      </div>
+
+      {/* Companies list */}
+      <div className="w-full">
+        {isLoading ? (
+          <CenteredSpinner />
+        ) : filteredCompanies.length === 0 ? (
+          <div className="text-center p-8 bg-muted/10 rounded-lg">
+            <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-lg font-medium text-gray-600 mb-2">No companies found</p>
+            <p className="text-gray-500 mb-4">Try adjusting your search or filters</p>
+            {canModify && (
+              <Button variant="outline" onClick={() => setIsCreating(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Your First Company
+              </Button>
+            )}
           </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <CenteredSpinner />
-          ) : filteredCompanies.length === 0 ? (
-            <div className="text-center p-8 bg-muted/10 rounded-lg">
-              <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-lg font-medium text-gray-600 mb-2">No companies found</p>
-              <p className="text-gray-500 mb-4">Try adjusting your search or filters</p>
-              {canModify && (
-                <Button variant="outline" onClick={() => setIsCreating(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Company
-                </Button>
-              )}
-            </div>
-          ) : viewMode === 'list' ? (
-            <div className="overflow-x-auto w-full">
-              <CompanyListView 
-                companies={filteredCompanies} 
-                onCompanyClick={handleCompanyClick} 
-              />
-            </div>
-          ) : (
-            <CompanyCardView 
+        ) : viewMode === 'list' ? (
+          <div className="w-full">
+            <CompanyListView 
               companies={filteredCompanies} 
               onCompanyClick={handleCompanyClick} 
             />
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        ) : (
+          <CompanyCardView 
+            companies={filteredCompanies} 
+            onCompanyClick={handleCompanyClick} 
+          />
+        )}
+      </div>
       
       {/* Multi-Stage Company Creation Dialog */}
       <MultiStageCompanyDialog
