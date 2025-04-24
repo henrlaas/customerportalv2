@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Company, CompanyContact } from '@/types/company';
 
@@ -166,6 +167,8 @@ const companyMutationService = {
         console.error('Error creating company:', error);
         throw error;
       }
+      
+      // No more folder creation here - will be created on demand when files are uploaded
       
       return data as Company;
     } catch (error: any) {
