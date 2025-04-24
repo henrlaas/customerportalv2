@@ -10,8 +10,9 @@ export const employeeService = {
 
     if (error) throw error;
 
-    // Cast the returned data to the correct type
-    return (data as EmployeeWithProfile[]) || [];
+    // Cast the returned data to the correct type with explicit type assertion
+    // First cast to unknown, then to EmployeeWithProfile[] to avoid direct type conversion errors
+    return (data as unknown as EmployeeWithProfile[]) || [];
   },
 
   async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
