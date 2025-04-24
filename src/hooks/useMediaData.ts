@@ -109,6 +109,7 @@ export const useMediaData = (
                 meta.file_path === filePath && meta.bucket_id === 'companymedia'
               );
               
+              // Check if file is favorited
               const isFavorited = favorites?.some(fav => 
                 fav.file_path === filePath && fav.bucket_id === 'companymedia'
               ) || false;
@@ -186,6 +187,7 @@ export const useMediaData = (
               meta.file_path === filePath && meta.bucket_id === 'media'
             );
             
+            // Check if file is favorited using the favorites data we retrieved earlier
             const isFavorited = favorites?.some(fav => 
               fav.file_path === filePath && fav.bucket_id === 'media'
             ) || false;

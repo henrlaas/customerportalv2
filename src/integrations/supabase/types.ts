@@ -675,18 +675,21 @@ export type Database = {
       }
       media_favorites: {
         Row: {
+          bucket_id: string
           created_at: string
           file_path: string
           id: string
           user_id: string
         }
         Insert: {
+          bucket_id?: string
           created_at?: string
           file_path: string
           id?: string
           user_id: string
         }
         Update: {
+          bucket_id?: string
           created_at?: string
           file_path?: string
           id?: string
