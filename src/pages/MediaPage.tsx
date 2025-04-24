@@ -243,18 +243,6 @@ const MediaPage: React.FC = () => {
           currentPath={currentPath}
         />
         
-        <MediaToolbar
-          currentPath={currentPath}
-          searchQuery={searchQuery}
-          viewMode={viewMode}
-          filters={filters}
-          onSearchChange={setSearchQuery}
-          onSortChange={setSortOption}
-          onFiltersChange={setFilters}
-          onViewModeChange={setViewMode}
-          onNavigateToBreadcrumb={navigateToBreadcrumb}
-        />
-
         <MediaTabs
           activeTab={activeTab}
           onTabChange={(tab) => {
@@ -276,8 +264,20 @@ const MediaPage: React.FC = () => {
           onNewFolder={() => setIsFolderDialogOpen(true)}
           getUploaderDisplayName={getUploaderDisplayName}
           activeDragItem={activeDragItem}
+          onNavigateToBreadcrumb={navigateToBreadcrumb}
         />
         
+        <MediaToolbar
+          currentPath={currentPath}
+          searchQuery={searchQuery}
+          viewMode={viewMode}
+          filters={filters}
+          onSearchChange={setSearchQuery}
+          onSortChange={setSortOption}
+          onFiltersChange={setFilters}
+          onViewModeChange={setViewMode}
+        />
+
         {/* Drag overlay for visual feedback */}
         <DragOverlay>
           {isDragging && activeDragItem && !activeDragItem.isFolder && (

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ListIcon, GridIcon, ChevronRightIcon, Heart } from 'lucide-react';
+import { ListIcon, GridIcon, Heart } from 'lucide-react';
 import { ViewMode, SortOption, FilterOptions } from '@/types/media';
 import {
   Select,
@@ -21,11 +21,9 @@ interface MediaToolbarProps {
   onSortChange: (value: SortOption) => void;
   onFiltersChange: (filters: FilterOptions) => void;
   onViewModeChange: (mode: ViewMode) => void;
-  onNavigateToBreadcrumb: (index: number) => void;
 }
 
 export const MediaToolbar: React.FC<MediaToolbarProps> = ({
-  currentPath,
   searchQuery,
   viewMode,
   filters,
@@ -33,29 +31,17 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({
   onSortChange,
   onFiltersChange,
   onViewModeChange,
-  onNavigateToBreadcrumb,
 }) => {
-  const breadcrumbs = currentPath 
-    ? ['Root', ...currentPath.split('/')] 
-    : ['Root'];
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-4">
         <div className="flex-1">
-          <div className="flex items-center gap-2">
-            {breadcrumbs.map((crumb, index) => (
-              <React.Fragment key={index}>
-                {index > 0 && <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />}
-                <button
-                  onClick={() => onNavigateToBreadcrumb(index - 1)}
-                  className="text-sm hover:text-primary transition-colors"
-                >
-                  {crumb}
-                </button>
-              </React.Fragment>
-            ))}
-          </div>
+          <Input
+            placeholder="Search files..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="max-w-sm"
+          />
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -109,16 +95,7 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({
           </Select>
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Search files..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-      </div>
     </div>
   );
 };
+
