@@ -590,6 +590,51 @@ export type Database = {
           },
         ]
       }
+      employees: {
+        Row: {
+          account_number: string
+          address: string
+          country: string
+          created_at: string
+          employed_percentage: number
+          employee_type: string
+          hourly_salary: number
+          id: string
+          paycheck_solution: string
+          social_security_number: string
+          updated_at: string
+          zipcode: string
+        }
+        Insert: {
+          account_number: string
+          address: string
+          country: string
+          created_at?: string
+          employed_percentage: number
+          employee_type: string
+          hourly_salary: number
+          id: string
+          paycheck_solution: string
+          social_security_number: string
+          updated_at?: string
+          zipcode: string
+        }
+        Update: {
+          account_number?: string
+          address?: string
+          country?: string
+          created_at?: string
+          employed_percentage?: number
+          employee_type?: string
+          hourly_salary?: number
+          id?: string
+          paycheck_solution?: string
+          social_security_number?: string
+          updated_at?: string
+          zipcode?: string
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
@@ -1057,6 +1102,10 @@ export type Database = {
       get_accessible_companies: {
         Args: { user_uuid: string }
         Returns: string[]
+      }
+      get_employees_with_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: Json[]
       }
       get_user_display_name: {
         Args: { user_id: string }
