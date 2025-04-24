@@ -95,7 +95,7 @@ export const useMediaDragAndDrop = (currentPath: string, activeTab: string) => {
       await renameFolderMutation.mutateAsync({
         oldPath: sourceFilePath,
         newName: destinationFilePath,
-        // Pass the complete metadata we need to preserve
+        // Make sure to pass ALL metadata that needs to be preserved
         preserveMetadata: {
           uploadedBy: fileData.uploadedBy || '',
           originalName: fileData.name,

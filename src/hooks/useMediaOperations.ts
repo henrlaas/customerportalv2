@@ -334,18 +334,18 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
 
         console.log("Updating metadata with:", metadataUpdate);
 
-        // Update metadata
-        const { error: metadataError } = await supabase
+        // First try to update an existing metadata entry (if it exists)
+        const { error: metadataError, data: metadataResult } = await supabase
           .from('media_metadata')
           .update(metadataUpdate)
           .eq('file_path', oldPath)
           .eq('bucket_id', bucketId);
         
-        if (metadataError) {
-          console.error("Error updating metadata:", metadataError);
-          
-          // If the metadata update fails, try to insert a new record
-          console.log("Trying to insert a new metadata record");
+        console.log("Metadata update result:", metadataResult);
+        
+        // If no records were updated (metadata might not exist), insert a new record
+        if (metadataError || !metadataResult) {
+          console.log("No existing metadata found or update failed, creating new metadata record");
           const { error: insertError } = await supabase
             .from('media_metadata')
             .insert({

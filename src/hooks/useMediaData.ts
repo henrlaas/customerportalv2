@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -203,7 +202,7 @@ export const useMediaData = (
           }
         }
 
-        // Get metadata for files
+        // Get metadata for files - make sure we get ALL metadata for the current path
         const { data: mediaMetadata } = await supabase
           .from('media_metadata')
           .select('*')
