@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
 import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
 import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
-import { UserManagement } from "@/components/UserManagement";
 import {
   Settings,
   DollarSign,
@@ -129,10 +129,6 @@ const WorkspaceManagementPage = () => {
             <Settings className="h-4 w-4 mr-2" />
             All Settings
           </TabsTrigger>
-          <TabsTrigger value="users">
-            <Users className="h-4 w-4 mr-2" />
-            Users
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="hourly-rates" className="space-y-4">
@@ -199,20 +195,6 @@ const WorkspaceManagementPage = () => {
           <div className="mt-4">
             <AddSettingForm onAdd={handleAddSetting} />
           </div>
-        </TabsContent>
-
-        <TabsContent value="users" className="space-y-4">
-          <div className="grid gap-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              User Management
-            </h2>
-            <p className="text-muted-foreground">
-              Manage users, roles, and permissions for your workspace.
-            </p>
-            <Separator />
-          </div>
-          <UserManagement />
         </TabsContent>
       </Tabs>
     </div>

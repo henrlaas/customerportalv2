@@ -74,6 +74,12 @@ export function getSidebarItems() {
       roles: ['admin', 'employee'],
     },
     {
+      title: t('User Management'),
+      href: '/user-management',
+      icon: Users,
+      roles: ['admin'],
+    },
+    {
       title: t('Workspace Management'),
       href: '/workspace-management',
       icon: Sliders,
