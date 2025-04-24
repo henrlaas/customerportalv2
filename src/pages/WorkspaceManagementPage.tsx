@@ -1,13 +1,13 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
 import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
 import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
+import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
 import {
   Settings,
   DollarSign,
-  Clock,
   Users
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -116,7 +116,7 @@ const WorkspaceManagementPage = () => {
       </div>
       
       <p className="text-muted-foreground mb-8">
-        Configure global settings for your workspace. These settings affect functionality across the platform.
+        Configure global settings for your workspace and manage users.
       </p>
 
       <Tabs defaultValue="hourly-rates" className="space-y-4">
@@ -124,6 +124,10 @@ const WorkspaceManagementPage = () => {
           <TabsTrigger value="hourly-rates">
             <DollarSign className="h-4 w-4 mr-2" />
             Hourly Rates
+          </TabsTrigger>
+          <TabsTrigger value="users">
+            <Users className="h-4 w-4 mr-2" />
+            Users
           </TabsTrigger>
           <TabsTrigger value="all-settings">
             <Settings className="h-4 w-4 mr-2" />
@@ -162,6 +166,10 @@ const WorkspaceManagementPage = () => {
           <div className="mt-4">
             <AddSettingForm onAdd={handleAddSetting} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UserManagementTab />
         </TabsContent>
 
         <TabsContent value="all-settings" className="space-y-4">
