@@ -152,7 +152,7 @@ export const DealForm: React.FC<DealFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="none">No Company</SelectItem>
+                  <SelectItem value="no-company">No Company</SelectItem>
                   {companies.map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       {company.name}

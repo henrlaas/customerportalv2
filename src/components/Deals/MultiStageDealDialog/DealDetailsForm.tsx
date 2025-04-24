@@ -211,7 +211,7 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {eligibleProfiles.map((profile: any) => (
                     <SelectItem key={profile.id} value={profile.id}>
                       {profile.first_name} {profile.last_name}
