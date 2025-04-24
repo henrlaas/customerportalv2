@@ -30,7 +30,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { MediaHeader } from '@/components/media/MediaHeader';
-import { MediaToolbar } from '@/components/media/MediaToolbar';
 import { MediaTabs } from '@/components/media/MediaTabs';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { useMediaDragAndDrop } from '@/hooks/useMediaDragAndDrop';
@@ -241,6 +240,13 @@ const MediaPage: React.FC = () => {
           onUpload={() => setIsUploadDialogOpen(true)}
           activeTab={activeTab}
           currentPath={currentPath}
+          searchQuery={searchQuery}
+          viewMode={viewMode}
+          filters={filters}
+          onSearchChange={setSearchQuery}
+          onSortChange={setSortOption}
+          onFiltersChange={setFilters}
+          onViewModeChange={setViewMode}
         />
         
         <MediaTabs
@@ -265,17 +271,6 @@ const MediaPage: React.FC = () => {
           getUploaderDisplayName={getUploaderDisplayName}
           activeDragItem={activeDragItem}
           onNavigateToBreadcrumb={navigateToBreadcrumb}
-        />
-        
-        <MediaToolbar
-          currentPath={currentPath}
-          searchQuery={searchQuery}
-          viewMode={viewMode}
-          filters={filters}
-          onSearchChange={setSearchQuery}
-          onSortChange={setSortOption}
-          onFiltersChange={setFilters}
-          onViewModeChange={setViewMode}
         />
 
         {/* Drag overlay for visual feedback */}
