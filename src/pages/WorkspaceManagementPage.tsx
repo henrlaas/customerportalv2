@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
@@ -13,6 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { EmployeeManagementTab } from "@/components/WorkspaceManagement/EmployeeManagementTab";
 
 // Helper to filter settings by category
 const filterSettingsByCategory = (settings: WorkspaceSetting[], category: string) => {
@@ -129,6 +129,10 @@ const WorkspaceManagementPage = () => {
             <Users className="h-4 w-4 mr-2" />
             Users
           </TabsTrigger>
+          <TabsTrigger value="employees">
+            <Users className="h-4 w-4 mr-2" />
+            Employees
+          </TabsTrigger>
           <TabsTrigger value="all-settings">
             <Settings className="h-4 w-4 mr-2" />
             All Settings
@@ -170,6 +174,10 @@ const WorkspaceManagementPage = () => {
 
         <TabsContent value="users">
           <UserManagementTab />
+        </TabsContent>
+
+        <TabsContent value="employees">
+          <EmployeeManagementTab />
         </TabsContent>
 
         <TabsContent value="all-settings" className="space-y-4">
