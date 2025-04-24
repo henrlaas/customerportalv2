@@ -19,6 +19,7 @@ export const companyMutationService = {
     
     console.log('Creating company with data:', companyData);
     
+    // Start a transaction by using a single supabase call
     const { data, error } = await supabase
       .from('companies')
       .insert(companyData)
@@ -29,6 +30,9 @@ export const companyMutationService = {
       console.error('Error creating company:', error);
       throw error;
     }
+    
+    // We don't need to create company media folders anymore as they'll be created on demand
+    // when files are uploaded to the company media
     
     return formatCompanyResponse(data) as Company;
   },
