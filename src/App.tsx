@@ -14,7 +14,6 @@ import TaskDetailPage from '@/pages/TaskDetailPage';
 import CompaniesPage from '@/pages/CompaniesPage';
 import CompanyDetailsPage from '@/pages/CompanyDetailsPage';
 import TimeTrackingPage from '@/pages/TimeTrackingPage';
-import UserManagementPage from '@/pages/UserManagementPage';
 import CampaignsPage from '@/pages/CampaignsPage';
 import { CampaignDetailsPage } from '@/pages/CampaignDetailsPage';
 import ClientDashboardPage from '@/pages/ClientDashboardPage';
@@ -100,7 +99,6 @@ function App() {
                   <Route path="/companies" element={<CompaniesPage />} />
                   <Route path="/companies/:companyId" element={<CompanyDetailsPage />} />
                   <Route path="/time-tracking" element={<TimeTrackingPage />} />
-                  <Route path="/user-management" element={<UserManagementPage />} />
                   <Route path="/campaigns" element={<CampaignsPage />} />
                   <Route path="/campaigns/:campaignId" element={<CampaignDetailsPage />} />
                   <Route path="/adsets/:adsetId" element={<AdSetDetailsPage />} />
