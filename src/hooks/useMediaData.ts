@@ -92,6 +92,23 @@ export const useMediaData = (
               fileCount: 0,
               bucketId: 'companymedia'
             })) || [];
+            
+          // Get file counts for each folder
+          for (const folder of folders) {
+            const folderPath = currentPath ? `${currentPath}/${folder.name}` : folder.name;
+            const { data: folderContents, error: folderError } = await supabase
+              .storage
+              .from('companymedia')
+              .list(folderPath, {
+                limit: 100,
+                offset: 0,
+              });
+              
+            if (!folderError && folderContents) {
+              // Exclude .folder files from count
+              folder.fileCount = folderContents.filter(item => !item.name.endsWith('.folder')).length;
+            }
+          }
 
           // Get metadata and process files
           const { data: mediaMetadata } = await supabase
@@ -168,6 +185,23 @@ export const useMediaData = (
             fileCount: 0,
             bucketId: 'media'
           }));
+          
+        // Get file counts for each folder
+        for (const folder of folders) {
+          const folderPath = currentPath ? `${currentPath}/${folder.name}` : folder.name;
+          const { data: folderContents, error: folderError } = await supabase
+            .storage
+            .from('media')
+            .list(folderPath, {
+              limit: 100,
+              offset: 0,
+            });
+            
+          if (!folderError && folderContents) {
+            // Exclude .folder files from count
+            folder.fileCount = folderContents.filter(item => !item.name.endsWith('.folder')).length;
+          }
+        }
 
         // Get metadata for files
         const { data: mediaMetadata } = await supabase
