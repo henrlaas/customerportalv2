@@ -31,8 +31,7 @@ export const companyMutationService = {
       throw error;
     }
     
-    // We don't need to create company media folders anymore as they'll be created on demand
-    // when files are uploaded to the company media
+    // Note: Company media folders will be created on demand when files are uploaded
     
     return formatCompanyResponse(data) as Company;
   },
