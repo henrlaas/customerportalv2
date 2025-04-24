@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { userService } from '@/services/userService';
 import { employeeService } from '@/services/employeeService';
+import { useInviteUser } from '@/hooks/useInviteUser';
 
 interface PaymentInfoStepProps {
   formData: {
@@ -32,6 +32,13 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Use the useInviteUser hook
+  const inviteUserMutation = useInviteUser({
+    onSuccess: () => {
+      // Success handler (if needed)
+    }
+  });
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -65,10 +72,10 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
         phoneNumber: formData.phone_number || undefined
       };
       
-      const { user, error } = await userService.inviteUser(userData);
+      const result = await inviteUserMutation.mutateAsync(userData);
       
-      if (error || !user) {
-        throw new Error(error || 'Failed to create user');
+      if (!result || !result.user) {
+        throw new Error('Failed to create user');
       }
 
       // Then create the employee record
@@ -84,7 +91,7 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
         paycheck_solution: formData.paycheck_solution
       };
       
-      await employeeService.createEmployee(employeeData, user.id);
+      await employeeService.createEmployee(employeeData, result.user.id);
       
       toast({
         title: "Employee Added",

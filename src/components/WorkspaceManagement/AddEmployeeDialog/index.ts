@@ -1,2 +1,2 @@
 
-export * from './AddEmployeeDialog';
+export { AddEmployeeDialog } from './AddEmployeeDialog';

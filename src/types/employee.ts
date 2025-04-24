@@ -10,8 +10,8 @@ export interface Employee {
   social_security_number: string;
   account_number: string;
   paycheck_solution: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface EmployeeWithProfile {

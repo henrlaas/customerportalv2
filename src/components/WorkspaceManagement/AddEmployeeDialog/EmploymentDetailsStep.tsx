@@ -14,7 +14,7 @@ interface EmploymentDetailsStepProps {
     hourly_salary: number;
     employed_percentage: number;
   };
-  onUpdate: (data: Partial<typeof formData>) => void;
+  onUpdate: (data: Partial<EmploymentDetailsStepProps['formData']>) => void;
   onNext: () => void;
   onBack: () => void;
 }

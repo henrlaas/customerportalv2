@@ -12,7 +12,7 @@ interface BasicInfoStepProps {
     last_name: string;
     phone_number: string;
   };
-  onUpdate: (data: Partial<typeof formData>) => void;
+  onUpdate: (data: Partial<BasicInfoStepProps['formData']>) => void;
   onNext: () => void;
 }
 
