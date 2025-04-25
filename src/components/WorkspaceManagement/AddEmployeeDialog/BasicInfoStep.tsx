@@ -1,19 +1,15 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-// Define a clear interface for the formData prop
 interface BasicInfoStepProps {
   formData: {
     email: string;
     first_name: string;
     last_name: string;
     phone_number: string;
-    address: string;
-    zipcode: string;
-    country: string;
-    city: string;
   };
   onUpdate: (data: Partial<BasicInfoStepProps['formData']>) => void;
   onNext: () => void;
@@ -43,22 +39,6 @@ export function BasicInfoStep({
       newErrors.email = 'Email is required';
     } else if (!isEdit && !formData.email.match(/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/)) {
       newErrors.email = 'Please enter a valid email address';
-    }
-    
-    if (!formData.address) {
-      newErrors.address = 'Address is required';
-    }
-    
-    if (!formData.city) {
-      newErrors.city = 'City is required';
-    }
-    
-    if (!formData.zipcode) {
-      newErrors.zipcode = 'Zip code is required';
-    }
-    
-    if (!formData.country) {
-      newErrors.country = 'Country is required';
     }
     
     setErrors(newErrors);
@@ -109,7 +89,7 @@ export function BasicInfoStep({
             value={formData.email}
             onChange={(e) => onUpdate({ email: e.target.value })}
             className={errors.email ? 'border-red-500' : ''}
-            disabled={isEdit} // Disable email field in edit mode
+            disabled={isEdit}
           />
           {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
         </div>
@@ -121,52 +101,6 @@ export function BasicInfoStep({
             value={formData.phone_number}
             onChange={(e) => onUpdate({ phone_number: e.target.value })}
           />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="address">Address *</Label>
-          <Input
-            id="address"
-            value={formData.address}
-            onChange={(e) => onUpdate({ address: e.target.value })}
-            className={errors.address ? 'border-red-500' : ''}
-          />
-          {errors.address && <p className="text-sm text-red-500">{errors.address}</p>}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="city">City *</Label>
-            <Input
-              id="city"
-              value={formData.city}
-              onChange={(e) => onUpdate({ city: e.target.value })}
-              className={errors.city ? 'border-red-500' : ''}
-            />
-            {errors.city && <p className="text-sm text-red-500">{errors.city}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="zipcode">Zip Code *</Label>
-            <Input
-              id="zipcode"
-              value={formData.zipcode}
-              onChange={(e) => onUpdate({ zipcode: e.target.value })}
-              className={errors.zipcode ? 'border-red-500' : ''}
-            />
-            {errors.zipcode && <p className="text-sm text-red-500">{errors.zipcode}</p>}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="country">Country *</Label>
-          <Input
-            id="country"
-            value={formData.country}
-            onChange={(e) => onUpdate({ country: e.target.value })}
-            className={errors.country ? 'border-red-500' : ''}
-          />
-          {errors.country && <p className="text-sm text-red-500">{errors.country}</p>}
         </div>
       </div>
 

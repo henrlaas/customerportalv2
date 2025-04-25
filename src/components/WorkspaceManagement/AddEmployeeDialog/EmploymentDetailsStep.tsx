@@ -10,11 +10,11 @@ interface EmploymentDetailsStepProps {
     address: string;
     zipcode: string;
     country: string;
-    city: string; // Added city
+    city: string;
     employee_type: 'Employee' | 'Freelancer';
     hourly_salary: number;
     employed_percentage: number;
-    paycheck_solution?: string; // Optional for Freelancers
+    paycheck_solution?: string;
   };
   onUpdate: (data: Partial<EmploymentDetailsStepProps['formData']>) => void;
   onNext: () => void;
@@ -35,14 +35,14 @@ export function EmploymentDetailsStep({
     if (!formData.address) newErrors.address = 'Address is required';
     if (!formData.zipcode) newErrors.zipcode = 'Zip code is required';
     if (!formData.country) newErrors.country = 'Country is required';
-    if (!formData.city) newErrors.city = 'City is required'; // Added city validation
+    if (!formData.city) newErrors.city = 'City is required';
     if (!formData.employee_type) newErrors.employee_type = 'Employee type is required';
     if (!formData.hourly_salary) newErrors.hourly_salary = 'Hourly salary is required';
     if (!formData.employed_percentage) newErrors.employed_percentage = 'Employment percentage is required';
-    else if (formData.employed_percentage <= 0 || formData.employed_percentage > 100)
+    else if (formData.employed_percentage <= 0 || formData.employed_percentage > 100) {
       newErrors.employed_percentage = 'Employment percentage must be between 1 and 100';
+    }
     
-    // Only require paycheck solution if Freelancer is selected
     if (formData.employee_type === 'Freelancer' && !formData.paycheck_solution) {
       newErrors.paycheck_solution = 'Paycheck solution is required for Freelancers';
     }
@@ -63,48 +63,50 @@ export function EmploymentDetailsStep({
       <div className="space-y-4">
         <h2 className="text-lg font-medium">Employment Details</h2>
         
+        <div className="space-y-2">
+          <Label htmlFor="address">Address *</Label>
+          <Input 
+            id="address"
+            value={formData.address}
+            onChange={(e) => onUpdate({ address: e.target.value })}
+            className={errors.address ? 'border-red-500' : ''}
+          />
+          {errors.address && <p className="text-sm text-red-500">{errors.address}</p>}
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="address">Address *</Label>
-            <Input 
-              id="address"
-              value={formData.address}
-              onChange={(e) => onUpdate({ address: e.target.value })}
-            />
-            {errors.address && <p className="text-sm text-red-500">{errors.address}</p>}
-          </div>
-          
           <div className="space-y-2">
             <Label htmlFor="city">City *</Label>
             <Input 
               id="city"
               value={formData.city}
               onChange={(e) => onUpdate({ city: e.target.value })}
+              className={errors.city ? 'border-red-500' : ''}
             />
             {errors.city && <p className="text-sm text-red-500">{errors.city}</p>}
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="zipcode">Zip Code *</Label>
             <Input 
               id="zipcode"
               value={formData.zipcode}
               onChange={(e) => onUpdate({ zipcode: e.target.value })}
+              className={errors.zipcode ? 'border-red-500' : ''}
             />
             {errors.zipcode && <p className="text-sm text-red-500">{errors.zipcode}</p>}
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="country">Country *</Label>
-            <Input 
-              id="country"
-              value={formData.country}
-              onChange={(e) => onUpdate({ country: e.target.value })}
-            />
-            {errors.country && <p className="text-sm text-red-500">{errors.country}</p>}
-          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="country">Country *</Label>
+          <Input 
+            id="country"
+            value={formData.country}
+            onChange={(e) => onUpdate({ country: e.target.value })}
+            className={errors.country ? 'border-red-500' : ''}
+          />
+          {errors.country && <p className="text-sm text-red-500">{errors.country}</p>}
         </div>
 
         <div className="space-y-2">
@@ -135,6 +137,7 @@ export function EmploymentDetailsStep({
               value={formData.paycheck_solution || ''}
               onChange={(e) => onUpdate({ paycheck_solution: e.target.value })}
               placeholder="Enter paycheck solution details"
+              className={errors.paycheck_solution ? 'border-red-500' : ''}
             />
             {errors.paycheck_solution && <p className="text-sm text-red-500">{errors.paycheck_solution}</p>}
           </div>
@@ -149,6 +152,7 @@ export function EmploymentDetailsStep({
               min="0"
               value={formData.hourly_salary || ''}
               onChange={(e) => onUpdate({ hourly_salary: parseFloat(e.target.value) || 0 })}
+              className={errors.hourly_salary ? 'border-red-500' : ''}
             />
             {errors.hourly_salary && <p className="text-sm text-red-500">{errors.hourly_salary}</p>}
           </div>
@@ -162,6 +166,7 @@ export function EmploymentDetailsStep({
               max="100"
               value={formData.employed_percentage || ''}
               onChange={(e) => onUpdate({ employed_percentage: parseInt(e.target.value) || 0 })}
+              className={errors.employed_percentage ? 'border-red-500' : ''}
             />
             {errors.employed_percentage && <p className="text-sm text-red-500">{errors.employed_percentage}</p>}
           </div>
