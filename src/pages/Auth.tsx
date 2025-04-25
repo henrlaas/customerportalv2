@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/components/ui/button';
+import { LoaderCircle } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -139,10 +139,17 @@ const Auth = () => {
 
             <Button 
               type="submit" 
-              className="w-full text-[18px] font-[500] rounded-[15px] px-8 py-[14px] bg-evergreen text-minty hover:bg-evergreen/90 transition-colors duration-200 ease-in-out"
+              className={`w-full text-[18px] font-[500] rounded-[15px] px-8 py-[14px] bg-[#0D352A] text-[#85FAA1] hover:bg-[#0D352A]/90 transition-all duration-300 ease-in-out relative ${isProcessing ? 'animate-pulse' : ''}`}
               disabled={isProcessing}
             >
-              {isProcessing ? 'Logging in...' : t('Log In')}
+              <span className={`flex items-center justify-center gap-2 ${isProcessing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
+                {t('Log In')}
+              </span>
+              {isProcessing && (
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <LoaderCircle className="animate-spin" size={24} />
+                </span>
+              )}
             </Button>
           </form>
         </Form>
