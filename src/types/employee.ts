@@ -4,7 +4,8 @@ export interface Employee {
   address: string;
   zipcode: string;
   country: string;
-  employee_type: string;
+  city: string; // Added city field
+  employee_type: 'Employee' | 'Freelancer'; // Restricted to specific types
   hourly_salary: number;
   employed_percentage: number;
   social_security_number: string;
@@ -23,7 +24,8 @@ export interface EmployeeWithProfile {
   address: string;
   zipcode: string;
   country: string;
-  employee_type: string;
+  city: string; // Added city field
+  employee_type: 'Employee' | 'Freelancer'; // Restricted to specific types
   hourly_salary: number;
   employed_percentage: number;
   social_security_number: string;

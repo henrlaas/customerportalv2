@@ -4,9 +4,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { employeeService } from '@/services/employeeService';
 import { useInviteUser } from '@/hooks/useInviteUser';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentInfoStepProps {
   formData: {
@@ -17,12 +17,13 @@ interface PaymentInfoStepProps {
     address: string;
     zipcode: string;
     country: string;
-    employee_type: string;
+    city: string;
+    employee_type: 'Employee' | 'Freelancer';
     hourly_salary: number;
     employed_percentage: number;
     social_security_number: string;
     account_number: string;
-    paycheck_solution: string;
+    paycheck_solution?: string;
   };
   onBack: () => void;
   onClose: () => void;
@@ -33,12 +34,7 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Use the useInviteUser hook
-  const inviteUserMutation = useInviteUser({
-    onSuccess: () => {
-      // Success handler (if needed)
-    }
-  });
+  const inviteUserMutation = useInviteUser();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -49,8 +45,8 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
     if (!formData.account_number) 
       newErrors.account_number = 'Account number is required';
     
-    if (!formData.paycheck_solution) 
-      newErrors.paycheck_solution = 'Paycheck solution is required';
+    if (formData.employee_type === 'Freelancer' && !formData.paycheck_solution)
+      newErrors.paycheck_solution = 'Paycheck solution is required for Freelancers';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -62,14 +58,15 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
     
     setIsSubmitting(true);
     try {
-      // First create the user
+      // First, invite user and create auth user
       const userData = {
         email: formData.email,
         firstName: formData.first_name,
         lastName: formData.last_name,
         role: 'employee',
         language: 'en',
-        phoneNumber: formData.phone_number || undefined
+        phoneNumber: formData.phone_number || undefined,
+        team: 'Employees' // Set a default team for employees
       };
       
       const result = await inviteUserMutation.mutateAsync(userData);
@@ -78,20 +75,28 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
         throw new Error('Failed to create user');
       }
 
-      // Then create the employee record
+      // Create employee record
       const employeeData = {
+        id: result.user.id,
         address: formData.address,
         zipcode: formData.zipcode,
         country: formData.country,
+        city: formData.city,
         employee_type: formData.employee_type,
         hourly_salary: formData.hourly_salary,
         employed_percentage: formData.employed_percentage,
         social_security_number: formData.social_security_number,
         account_number: formData.account_number,
-        paycheck_solution: formData.paycheck_solution
+        paycheck_solution: formData.paycheck_solution || ''
       };
       
       await employeeService.createEmployee(employeeData, result.user.id);
+      
+      // Optionally update user profile with role
+      await supabase
+        .from('profiles')
+        .update({ role: 'employee' })
+        .eq('id', result.user.id);
       
       toast({
         title: "Employee Added",

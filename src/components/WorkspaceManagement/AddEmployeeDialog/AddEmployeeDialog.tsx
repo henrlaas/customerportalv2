@@ -21,7 +21,8 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
     address: '',
     zipcode: '',
     country: '',
-    employee_type: '',
+    city: '', // Added city field
+    employee_type: 'Employee' as 'Employee' | 'Freelancer',
     hourly_salary: 0,
     employed_percentage: 100,
     social_security_number: '',

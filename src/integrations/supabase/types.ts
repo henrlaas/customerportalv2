@@ -594,6 +594,7 @@ export type Database = {
         Row: {
           account_number: string
           address: string
+          city: string
           country: string
           created_at: string
           employed_percentage: number
@@ -608,6 +609,7 @@ export type Database = {
         Insert: {
           account_number: string
           address: string
+          city: string
           country: string
           created_at?: string
           employed_percentage: number
@@ -622,6 +624,7 @@ export type Database = {
         Update: {
           account_number?: string
           address?: string
+          city?: string
           country?: string
           created_at?: string
           employed_percentage?: number
