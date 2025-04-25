@@ -102,7 +102,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
         {campaign.budget && (
           <div className="mt-2 flex items-center text-sm">
             <Tag className="h-4 w-4 mr-1 text-gray-500" />
-            Budget: ${campaign.budget}
+            Budget: {campaign.budget}
           </div>
         )}
         {campaign.is_ongoing ? (
