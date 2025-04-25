@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -138,7 +139,7 @@ const Auth = () => {
 
             <Button 
               type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full text-[18px] font-[500] rounded-[15px] px-8 py-[14px] bg-evergreen text-minty hover:bg-evergreen/90 transition-colors duration-200 ease-in-out"
               disabled={isProcessing}
             >
               {isProcessing ? 'Logging in...' : t('Log In')}
