@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -66,6 +65,13 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleInputChange = (field: string, value: string) => {
+    setLocalFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -118,7 +124,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           phoneNumber: formData.phone_number || undefined,
           role: 'employee',
           language: 'en',
-          team: 'Employees' // Set a default team for employees
+          team: 'Employees'
         };
         
         const result = await inviteUserMutation.mutateAsync(userData);
@@ -157,7 +163,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         
         toast({
           title: "Employee Added",
-          description: `${formData.first_name} ${formData.last_name} has been added successfully.`,
+          description: `${formData.first_name} ${formData.last_name} has been added successfully. An invitation email has been sent.`,
         });
       }
       
@@ -171,13 +177,6 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setLocalFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
   };
 
   return (
