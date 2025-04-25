@@ -40,19 +40,24 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [localFormData, setLocalFormData] = useState({
+    social_security_number: formData.social_security_number,
+    account_number: formData.account_number,
+    paycheck_solution: formData.paycheck_solution || ''
+  });
 
   const inviteUserMutation = useInviteUser();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.social_security_number) 
+    if (!localFormData.social_security_number) 
       newErrors.social_security_number = 'Social security number is required';
     
-    if (!formData.account_number) 
+    if (!localFormData.account_number) 
       newErrors.account_number = 'Account number is required';
     
-    if (formData.employee_type === 'Freelancer' && !formData.paycheck_solution)
+    if (formData.employee_type === 'Freelancer' && !localFormData.paycheck_solution)
       newErrors.paycheck_solution = 'Paycheck solution is required for Freelancers';
     
     setErrors(newErrors);
@@ -62,6 +67,11 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
+    
+    // Update the parent formData with our local values before submission
+    formData.social_security_number = localFormData.social_security_number;
+    formData.account_number = localFormData.account_number;
+    formData.paycheck_solution = localFormData.paycheck_solution;
     
     setIsSubmitting(true);
     try {
@@ -122,6 +132,13 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
     }
   };
 
+  const handleInputChange = (field: string, value: string) => {
+    setLocalFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
@@ -131,8 +148,8 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
           <Label htmlFor="social_security_number">Social Security Number *</Label>
           <Input 
             id="social_security_number"
-            value={formData.social_security_number}
-            onChange={(e) => formData.social_security_number = e.target.value}
+            value={localFormData.social_security_number}
+            onChange={(e) => handleInputChange('social_security_number', e.target.value)}
           />
           {errors.social_security_number && <p className="text-sm text-red-500">{errors.social_security_number}</p>}
         </div>
@@ -141,8 +158,8 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
           <Label htmlFor="account_number">Bank Account Number *</Label>
           <Input 
             id="account_number"
-            value={formData.account_number}
-            onChange={(e) => formData.account_number = e.target.value}
+            value={localFormData.account_number}
+            onChange={(e) => handleInputChange('account_number', e.target.value)}
           />
           {errors.account_number && <p className="text-sm text-red-500">{errors.account_number}</p>}
         </div>
@@ -152,8 +169,8 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
             <Label htmlFor="paycheck_solution">Paycheck Solution *</Label>
             <Input
               id="paycheck_solution"
-              value={formData.paycheck_solution || ''}
-              onChange={(e) => formData.paycheck_solution = e.target.value}
+              value={localFormData.paycheck_solution}
+              onChange={(e) => handleInputChange('paycheck_solution', e.target.value)}
               placeholder="Enter paycheck solution details"
             />
             {errors.paycheck_solution && <p className="text-sm text-red-500">{errors.paycheck_solution}</p>}
