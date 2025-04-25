@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -274,67 +275,87 @@ const SetPassword = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <Logo className="mb-8" />
-          
-          <h2 className="text-2xl font-bold mb-2">
-            {inviteType === 'recovery' ? 'Reset Your Password' : 'Set Your Password'}
-          </h2>
-          <p className="text-gray-500 mb-6">
-            {userEmail ? `Create a ${inviteType === 'recovery' ? 'new' : ''} password for ${userEmail}` : 'Create a password to access your account'}
-          </p>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSetPassword)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-700">New Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" className="border-gray-300 focus:ring-blue-500" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-700">Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" className="border-gray-300 focus:ring-blue-500" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button 
-                type="submit" 
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                disabled={isProcessing}
-              >
-                {isProcessing ? 'Setting Password...' : inviteType === 'recovery' ? 'Reset Password' : 'Set Password'}
-              </Button>
-            </form>
-          </Form>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+        <div className="flex justify-center mb-8">
+          <Logo />
         </div>
-      </div>
-      
-      <div className="hidden lg:block lg:w-1/2 bg-gradient-to-br from-blue-500 to-blue-600">
-        <div className="h-full flex items-center justify-center text-white p-12">
-          <div className="max-w-lg">
-            <h2 className="text-3xl font-bold mb-4">Marketing Agency Customer Portal</h2>
-            <p className="text-lg opacity-80">Manage your marketing campaigns, tasks, and contracts all in one place.</p>
+        
+        {isProcessing && !userEmail ? (
+          <div className="text-center">
+            <div className="mb-4 animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+            <h2 className="text-xl font-semibold mb-2">
+              Processing your {inviteType === 'recovery' ? 'password reset' : 'invitation'}
+            </h2>
+            <p className="text-gray-600">Please wait a moment...</p>
           </div>
-        </div>
+        ) : (
+          <>
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              {inviteType === 'recovery' ? 'Reset Your Password' : 'Set Your Password'}
+            </h2>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSetPassword)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          className="rounded-md border-gray-300" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-sm text-gray-500">Must be at least 6 characters</p>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          className="rounded-md border-gray-300" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-sm text-gray-500">Both passwords must match</p>
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex gap-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => navigate('/auth')}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? 'Setting Password...' : inviteType === 'recovery' ? 'Reset Password' : 'Set Password'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </>
+        )}
       </div>
     </div>
   );
