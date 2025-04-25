@@ -26,4 +26,42 @@ export const employeeService = {
     if (error) throw error;
     return data as Employee;
   },
+
+  async updateEmployee(employeeId: string, employeeData: Partial<Employee>): Promise<Employee> {
+    // Update the employee record in the database
+    const { data, error } = await supabase
+      .from('employees')
+      .update(employeeData)
+      .eq('id', employeeId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Employee;
+  },
+
+  async deleteEmployee(employeeId: string): Promise<void> {
+    try {
+      // Call the Supabase Edge Function to delete the user account
+      const response = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'delete',
+          userId: employeeId,
+        },
+      });
+      
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to delete employee');
+      }
+      
+      // Note: We don't need to delete the employee record from 'employees' table
+      // or the profile from 'profiles' table as they both have foreign key constraints
+      // that will automatically delete them when the user account is deleted (ON DELETE CASCADE)
+      
+      return;
+    } catch (error) {
+      console.error('Error in deleteEmployee:', error);
+      throw error;
+    }
+  },
 };

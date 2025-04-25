@@ -34,9 +34,11 @@ interface PaymentInfoStepProps {
   };
   onBack: () => void;
   onClose: () => void;
+  isEdit?: boolean;
+  employeeId?: string;
 }
 
-export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepProps) {
+export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, employeeId }: PaymentInfoStepProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -75,61 +77,95 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
     
     setIsSubmitting(true);
     try {
-      // First, invite user and create auth user
-      const userData = {
-        email: formData.email,
-        firstName: formData.first_name,
-        lastName: formData.last_name,
-        phoneNumber: formData.phone_number || undefined,
-        role: 'employee',
-        language: 'en',
-        team: 'Employees' // Set a default team for employees
-      };
-      
-      const result = await inviteUserMutation.mutateAsync(userData);
-      
-      if (!result || !result.user) {
-        throw new Error('Failed to create user');
-      }
+      if (isEdit && employeeId) {
+        // Update existing employee
+        const employeeData = {
+          address: formData.address,
+          zipcode: formData.zipcode,
+          country: formData.country,
+          city: formData.city,
+          employee_type: formData.employee_type,
+          hourly_salary: formData.hourly_salary,
+          employed_percentage: formData.employed_percentage,
+          social_security_number: formData.social_security_number,
+          account_number: formData.account_number,
+          paycheck_solution: formData.paycheck_solution || ''
+        };
+        
+        await employeeService.updateEmployee(employeeId, employeeData);
+        
+        // Update profile information
+        await supabase
+          .from('profiles')
+          .update({ 
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            phone_number: formData.phone_number || null
+          })
+          .eq('id', employeeId);
+        
+        toast({
+          title: "Employee Updated",
+          description: `${formData.first_name} ${formData.last_name} has been updated successfully.`,
+        });
+      } else {
+        // Create new employee
+        // First, invite user and create auth user
+        const userData = {
+          email: formData.email,
+          firstName: formData.first_name,
+          lastName: formData.last_name,
+          phoneNumber: formData.phone_number || undefined,
+          role: 'employee',
+          language: 'en',
+          team: 'Employees' // Set a default team for employees
+        };
+        
+        const result = await inviteUserMutation.mutateAsync(userData);
+        
+        if (!result || !result.user) {
+          throw new Error('Failed to create user');
+        }
 
-      // Create employee record
-      const employeeData = {
-        id: result.user.id,
-        address: formData.address,
-        zipcode: formData.zipcode,
-        country: formData.country,
-        city: formData.city,
-        employee_type: formData.employee_type,
-        hourly_salary: formData.hourly_salary,
-        employed_percentage: formData.employed_percentage,
-        social_security_number: formData.social_security_number,
-        account_number: formData.account_number,
-        paycheck_solution: formData.paycheck_solution || ''
-      };
-      
-      await employeeService.createEmployee(employeeData, result.user.id);
-      
-      // Directly update the profiles table with first name, last name and phone number
-      await supabase
-        .from('profiles')
-        .update({ 
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          phone_number: formData.phone_number || null,
-          role: 'employee'
-        })
-        .eq('id', result.user.id);
-      
-      toast({
-        title: "Employee Added",
-        description: `${formData.first_name} ${formData.last_name} has been added successfully.`,
-      });
+        // Create employee record
+        const employeeData = {
+          id: result.user.id,
+          address: formData.address,
+          zipcode: formData.zipcode,
+          country: formData.country,
+          city: formData.city,
+          employee_type: formData.employee_type,
+          hourly_salary: formData.hourly_salary,
+          employed_percentage: formData.employed_percentage,
+          social_security_number: formData.social_security_number,
+          account_number: formData.account_number,
+          paycheck_solution: formData.paycheck_solution || ''
+        };
+        
+        await employeeService.createEmployee(employeeData, result.user.id);
+        
+        // Directly update the profiles table with first name, last name and phone number
+        await supabase
+          .from('profiles')
+          .update({ 
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            phone_number: formData.phone_number || null,
+            role: 'employee'
+          })
+          .eq('id', result.user.id);
+        
+        toast({
+          title: "Employee Added",
+          description: `${formData.first_name} ${formData.last_name} has been added successfully.`,
+        });
+      }
       
       onClose();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to add employee",
+        description: error.message || (isEdit ? "Failed to update employee" : "Failed to add employee"),
         variant: "destructive",
       });
     } finally {
@@ -188,7 +224,9 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
           Back
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Adding Employee...' : 'Add Employee'}
+          {isSubmitting 
+            ? (isEdit ? 'Updating Employee...' : 'Adding Employee...') 
+            : (isEdit ? 'Update Employee' : 'Add Employee')}
         </Button>
       </div>
     </form>
