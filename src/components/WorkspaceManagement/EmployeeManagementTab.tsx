@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
@@ -31,12 +32,16 @@ export function EmployeeManagementTab() {
     queryFn: employeeService.listEmployees,
   });
 
-  const handleEditEmployee = (employee: EmployeeWithProfile) => {
+  const handleEditEmployee = (employee: EmployeeWithProfile, e: React.MouseEvent) => {
+    // Prevent the row click event from firing
+    e.stopPropagation();
     setSelectedEmployee(employee);
     setShowEditDialog(true);
   };
 
-  const handleDeleteEmployee = (employee: EmployeeWithProfile) => {
+  const handleDeleteEmployee = (employee: EmployeeWithProfile, e: React.MouseEvent) => {
+    // Prevent the row click event from firing
+    e.stopPropagation();
     setSelectedEmployee(employee);
     setShowDeleteDialog(true);
   };
@@ -85,11 +90,11 @@ export function EmployeeManagementTab() {
                 <TableCell>{employee.hourly_salary} NOK</TableCell>
                 <TableCell>{employee.employed_percentage}%</TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      onClick={() => handleEditEmployee(employee)}
+                      onClick={(e) => handleEditEmployee(employee, e)}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -97,7 +102,7 @@ export function EmployeeManagementTab() {
                       variant="ghost" 
                       size="icon" 
                       className="text-red-500 hover:text-red-600" 
-                      onClick={() => handleDeleteEmployee(employee)}
+                      onClick={(e) => handleDeleteEmployee(employee, e)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
