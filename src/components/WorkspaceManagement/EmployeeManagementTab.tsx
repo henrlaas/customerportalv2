@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
@@ -17,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ViewEmployeeDialog } from './EmployeeDetails/ViewEmployeeDialog';
 
 export function EmployeeManagementTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -24,6 +24,7 @@ export function EmployeeManagementTab() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithProfile | null>(null);
   const { toast } = useToast();
+  const [showViewDialog, setShowViewDialog] = useState(false);
 
   const { data: employees = [], isLoading, refetch } = useQuery({
     queryKey: ['employees'],
@@ -69,7 +70,14 @@ export function EmployeeManagementTab() {
           </TableHeader>
           <TableBody>
             {employees.map((employee) => (
-              <TableRow key={employee.id}>
+              <TableRow 
+                key={employee.id}
+                className="cursor-pointer hover:bg-accent"
+                onClick={() => {
+                  setSelectedEmployee(employee);
+                  setShowViewDialog(true);
+                }}
+              >
                 <TableCell>{`${employee.first_name || ''} ${employee.last_name || ''}`}</TableCell>
                 <TableCell>{employee.email}</TableCell>
                 <TableCell>{employee.phone_number || '-'}</TableCell>
@@ -127,6 +135,15 @@ export function EmployeeManagementTab() {
               setShowDeleteDialog(false);
               setSelectedEmployee(null);
               refetch();
+            }}
+            employee={selectedEmployee}
+          />
+
+          <ViewEmployeeDialog
+            open={showViewDialog}
+            onClose={() => {
+              setShowViewDialog(false);
+              setSelectedEmployee(null);
             }}
             employee={selectedEmployee}
           />
