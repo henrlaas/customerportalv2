@@ -80,9 +80,9 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
         email: formData.email,
         firstName: formData.first_name,
         lastName: formData.last_name,
+        phoneNumber: formData.phone_number || undefined,
         role: 'employee',
         language: 'en',
-        phoneNumber: formData.phone_number || undefined,
         team: 'Employees' // Set a default team for employees
       };
       
@@ -109,10 +109,15 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
       
       await employeeService.createEmployee(employeeData, result.user.id);
       
-      // Optionally update user profile with role
+      // Directly update the profiles table with first name, last name and phone number
       await supabase
         .from('profiles')
-        .update({ role: 'employee' })
+        .update({ 
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone_number: formData.phone_number || null,
+          role: 'employee'
+        })
         .eq('id', result.user.id);
       
       toast({
