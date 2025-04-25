@@ -4,6 +4,13 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { employeeService } from '@/services/employeeService';
 import { useInviteUser } from '@/hooks/useInviteUser';
 import { supabase } from '@/integrations/supabase/client';
@@ -140,23 +147,18 @@ export function PaymentInfoStep({ formData, onBack, onClose }: PaymentInfoStepPr
           {errors.account_number && <p className="text-sm text-red-500">{errors.account_number}</p>}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="paycheck_solution">Paycheck Solution *</Label>
-          <Select
-            value={formData.paycheck_solution}
-            onValueChange={(value) => formData.paycheck_solution = value}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select paycheck solution" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="bi_weekly">Bi-Weekly</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.paycheck_solution && <p className="text-sm text-red-500">{errors.paycheck_solution}</p>}
-        </div>
+        {formData.employee_type === 'Freelancer' && (
+          <div className="space-y-2">
+            <Label htmlFor="paycheck_solution">Paycheck Solution *</Label>
+            <Input
+              id="paycheck_solution"
+              value={formData.paycheck_solution || ''}
+              onChange={(e) => formData.paycheck_solution = e.target.value}
+              placeholder="Enter paycheck solution details"
+            />
+            {errors.paycheck_solution && <p className="text-sm text-red-500">{errors.paycheck_solution}</p>}
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between">
