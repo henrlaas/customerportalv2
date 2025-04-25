@@ -15,7 +15,7 @@ interface BasicInfoStepProps {
     country: string;
     city: string;
   };
-  onUpdate: (data: Partial<typeof formData>) => void;
+  onUpdate: (data: Partial<BasicInfoStepProps['formData']>) => void;
   onNext: () => void;
   isEdit?: boolean;
 }
