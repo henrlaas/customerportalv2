@@ -155,7 +155,7 @@ const Auth = () => {
         </Form>
 
         <p className="mt-6 text-center text-sm text-gray-500">
-          {t('Contact your administrator if you need access to the system')}
+          {t('Contact your advisor if you have not received access to Workspace.')}
         </p>
       </div>
     </div>
