@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+// Define a clear interface for the formData prop
 interface BasicInfoStepProps {
   formData: {
     email: string;
@@ -20,7 +20,12 @@ interface BasicInfoStepProps {
   isEdit?: boolean;
 }
 
-export function BasicInfoStep({ formData, onUpdate, onNext, isEdit = false }: BasicInfoStepProps) {
+export function BasicInfoStep({ 
+  formData, 
+  onUpdate, 
+  onNext, 
+  isEdit = false 
+}: BasicInfoStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
