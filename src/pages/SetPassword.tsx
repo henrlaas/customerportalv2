@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -17,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/Layout/Logo';
+import { LoaderCircle } from 'lucide-react';
 
 // Define form schema for password setup
 const passwordSetupSchema = z.object({
@@ -346,10 +346,17 @@ const SetPassword = () => {
                   </Button>
                   <Button 
                     type="submit" 
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    className={`flex-1 text-[18px] font-[500] rounded-[15px] px-8 py-[14px] bg-[#0D352A] text-[#85FAA1] hover:bg-[#0D352A]/90 transition-all duration-300 ease-in-out relative ${isProcessing ? 'animate-pulse' : ''}`}
                     disabled={isProcessing}
                   >
-                    {isProcessing ? 'Setting Password...' : inviteType === 'recovery' ? 'Reset Password' : 'Set Password'}
+                    <span className={`flex items-center justify-center gap-2 ${isProcessing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
+                      {inviteType === 'recovery' ? 'Reset Password' : 'Set Password'}
+                    </span>
+                    {isProcessing && (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <LoaderCircle className="animate-spin" size={24} />
+                      </span>
+                    )}
                   </Button>
                 </div>
               </form>
