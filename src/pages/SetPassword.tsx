@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -339,7 +340,7 @@ const SetPassword = () => {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    className="flex-1"
+                    className="flex-1 text-[18px] font-[500] rounded-[15px] px-8 py-[14px] border-[#0D352A] text-[#0D352A] hover:bg-[#0D352A]/10 transition-all duration-300 ease-in-out"
                     onClick={() => navigate('/auth')}
                   >
                     Cancel
