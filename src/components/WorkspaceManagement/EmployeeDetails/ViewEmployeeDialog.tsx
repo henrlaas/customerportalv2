@@ -68,7 +68,7 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">City</p>
-                <p className="font-medium">{employee.city}</p>
+                <p className="font-medium">{employee.city || '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Zip Code</p>
@@ -96,7 +96,7 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
               {employee.employee_type === 'Freelancer' && (
                 <div>
                   <p className="text-sm text-muted-foreground">Paycheck Solution</p>
-                  <p className="font-medium">{employee.paycheck_solution}</p>
+                  <p className="font-medium">{employee.paycheck_solution || '-'}</p>
                 </div>
               )}
             </div>
