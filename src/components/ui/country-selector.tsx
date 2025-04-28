@@ -42,21 +42,23 @@ export function CountrySelector({
 }: CountrySelectorProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedCountry, setSelectedCountry] = React.useState<Country | null>(null);
+  const countries = React.useMemo(() => Array.isArray(COUNTRIES) ? COUNTRIES : [], []);
 
   // Find the selected country or default to Norway
   React.useEffect(() => {
     if (value) {
-      const country = COUNTRIES.find((c) => c.name === value);
+      const country = countries.find((c) => c.name === value);
       setSelectedCountry(country || null);
     } else {
       // Set default to Norway
       const norway = getNorwayCountry();
-      setSelectedCountry(norway);
-      onValueChange(norway.name);
+      if (norway) {
+        setSelectedCountry(norway);
+        onValueChange(norway.name);
+      }
     }
-  }, [value, onValueChange]);
+  }, [value, onValueChange, countries]);
 
-  // Render a display component for the country
   const renderCountryDisplay = () => {
     if (!selectedCountry) {
       return <span className="text-muted-foreground">{placeholder}</span>;
@@ -107,7 +109,7 @@ export function CountrySelector({
             <CommandInput placeholder="Search country..." />
             <CommandEmpty>No country found.</CommandEmpty>
             <CommandGroup>
-              {Array.isArray(COUNTRIES) && COUNTRIES.map((country) => (
+              {countries.map((country) => (
                 <CommandItem
                   key={country.code}
                   value={country.name}
