@@ -123,7 +123,7 @@ export function CountrySelector({
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-full p-0 z-50" align="start">
           <div className="flex flex-col max-h-[300px]">
             {/* Search input */}
             <div className="flex items-center border-b px-3">
@@ -144,8 +144,9 @@ export function CountrySelector({
                   {filteredCountries.map((country) => (
                     <button
                       key={country.code}
+                      type="button"
                       className={cn(
-                        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none w-full text-left hover:bg-accent hover:text-accent-foreground",
+                        "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none w-full text-left hover:bg-accent hover:text-accent-foreground",
                         selectedCountry?.name === country.name && "bg-accent text-accent-foreground"
                       )}
                       onClick={() => {
