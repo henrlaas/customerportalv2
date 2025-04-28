@@ -5,7 +5,7 @@ import { employeeService } from '@/services/employeeService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, Pencil, Trash2, Search, Filter } from 'lucide-react';
+import { UserPlus, Pencil, Trash2, Search, Filter, KeyRound } from 'lucide-react';
 import { AddEmployeeDialog } from './AddEmployeeDialog';
 import { EditEmployeeDialog } from './AddEmployeeDialog/EditEmployeeDialog';
 import { DeleteEmployeeDialog } from './AddEmployeeDialog/DeleteEmployeeDialog';
@@ -22,7 +22,7 @@ import {
 import { ViewEmployeeDialog } from './EmployeeDetails/ViewEmployeeDialog';
 import { useEmployeeFilters } from '@/hooks/useEmployeeFilters';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import { userService } from '@/services/userService';
 
 export function EmployeeManagementTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -31,6 +31,7 @@ export function EmployeeManagementTab() {
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithProfile | null>(null);
   const { toast } = useToast();
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const [isPendingReset, setIsPendingReset] = useState(false);
 
   const { data: employees = [], isLoading, refetch } = useQuery({
     queryKey: ['employees'],
@@ -77,6 +78,31 @@ export function EmployeeManagementTab() {
     console.log('Opening view dialog for employee with city:', employee.city);
     setSelectedEmployee(employee);
     setShowViewDialog(true);
+  };
+
+  const handleResetPassword = async (employee: EmployeeWithProfile, e: React.MouseEvent) => {
+    // Prevent the row click event from firing
+    e.stopPropagation();
+    
+    if (isPendingReset) return;
+    
+    try {
+      setIsPendingReset(true);
+      await userService.resetPassword(employee.email);
+      toast({
+        title: 'Password Reset Email Sent',
+        description: `A password reset email has been sent to ${employee.email}`,
+      });
+    } catch (error) {
+      console.error('Error sending password reset:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send password reset email',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPendingReset(false);
+    }
   };
 
   // Get user initials from first_name and last_name
@@ -189,14 +215,27 @@ export function EmployeeManagementTab() {
                         variant="ghost" 
                         size="icon" 
                         onClick={(e) => handleEditEmployee(employee, e)}
+                        title="Edit Employee"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={(e) => handleResetPassword(employee, e)}
+                        disabled={isPendingReset}
+                        title="Reset Password"
+                      >
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
+                      
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         className="text-red-500 hover:text-red-600" 
                         onClick={(e) => handleDeleteEmployee(employee, e)}
+                        title="Delete Employee"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
