@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { employeeService } from '@/services/employeeService';
-import { userService } from '@/services/userService';
-import { supabase } from '@/integrations/supabase/client';
+import { useInviteUser } from '@/hooks/useInviteUser';
 
 interface PaymentInfoStepProps {
   formData: {
@@ -40,6 +39,20 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     account_number: formData.account_number,
     paycheck_solution: formData.paycheck_solution || ''
   });
+  
+  const inviteUserMutation = useInviteUser({
+    onSuccess: (data) => {
+      handleCreateEmployee(data.user.id);
+    },
+    onError: (error) => {
+      setIsSubmitting(false);
+      toast({
+        title: "Error",
+        description: `Failed to invite user: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -63,15 +76,52 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
       [field]: value
     }));
   };
+  
+  const handleCreateEmployee = async (userId: string) => {
+    try {
+      // Update the parent formData with our local values before submission
+      formData.social_security_number = localFormData.social_security_number;
+      formData.account_number = localFormData.account_number;
+      formData.paycheck_solution = localFormData.paycheck_solution;
+      
+      // Create employee record
+      const employeeData = {
+        id: userId,
+        address: formData.address,
+        zipcode: formData.zipcode,
+        country: formData.country,
+        city: formData.city,
+        employee_type: formData.employee_type,
+        hourly_salary: formData.hourly_salary,
+        employed_percentage: formData.employed_percentage,
+        social_security_number: formData.social_security_number,
+        account_number: formData.account_number,
+        paycheck_solution: formData.paycheck_solution || ''
+      };
+      
+      await employeeService.createEmployee(employeeData, userId);
+      
+      toast({
+        title: "Employee Added",
+        description: `${formData.first_name} ${formData.last_name} has been added successfully. An invitation email has been sent.`,
+      });
+      
+      setIsSubmitting(false);
+      onClose();
+    } catch (error: any) {
+      console.error('Error creating employee record:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create employee record",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
-    // Update the parent formData with our local values before submission
-    formData.social_security_number = localFormData.social_security_number;
-    formData.account_number = localFormData.account_number;
-    formData.paycheck_solution = localFormData.paycheck_solution;
     
     setIsSubmitting(true);
     try {
@@ -92,88 +142,38 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         
         await employeeService.updateEmployee(employeeId, employeeData);
         
-        // Update profile information
-        await supabase
-          .from('profiles')
-          .update({ 
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            phone_number: formData.phone_number || null
-          })
-          .eq('id', employeeId);
-        
         toast({
           title: "Employee Updated",
           description: `${formData.first_name} ${formData.last_name} has been updated successfully.`,
         });
+        setIsSubmitting(false);
+        onClose();
       } else {
-        // Create new employee using direct edge function invocation
-        try {
-          console.log('Creating new employee with user data:', {
-            email: formData.email,
-            firstName: formData.first_name,
-            lastName: formData.last_name,
-            phoneNumber: formData.phone_number
-          });
-          
-          // Get the current URL for redirect
-          const siteUrl = window.location.origin;
-          const redirectUrl = `${siteUrl}/set-password`;
-          
-          // Use the auth.admin.createUser and admin.generateLink to ensure email is sent
-          const { data, error } = await supabase.functions.invoke('user-management', {
-            body: {
-              action: 'invite',
-              email: formData.email,
-              firstName: formData.first_name,
-              lastName: formData.last_name,
-              phoneNumber: formData.phone_number || undefined,
-              role: 'employee',
-              language: 'en',
-              redirect: redirectUrl,
-              team: 'Employees',
-              sendEmail: true // Explicitly request to send invitation email
-            },
-          });
-
-          if (error) {
-            throw new Error(error.message || 'Failed to invite user');
-          }
-          
-          if (!data || !data.user) {
-            throw new Error('No user data returned from invitation');
-          }
-          
-          console.log('User invited successfully:', data);
-          
-          // Create employee record
-          const employeeData = {
-            id: data.user.id,
-            address: formData.address,
-            zipcode: formData.zipcode,
-            country: formData.country,
-            city: formData.city,
-            employee_type: formData.employee_type,
-            hourly_salary: formData.hourly_salary,
-            employed_percentage: formData.employed_percentage,
-            social_security_number: formData.social_security_number,
-            account_number: formData.account_number,
-            paycheck_solution: formData.paycheck_solution || ''
-          };
-          
-          await employeeService.createEmployee(employeeData, data.user.id);
-          
-          toast({
-            title: "Employee Added",
-            description: `${formData.first_name} ${formData.last_name} has been added successfully. An invitation email has been sent.`,
-          });
-        } catch (inviteError: any) {
-          console.error('Error inviting user or creating employee:', inviteError);
-          throw inviteError;
-        }
+        // Create new employee using inviteUserMutation
+        console.log('Creating new employee with user data:', {
+          email: formData.email,
+          firstName: formData.first_name,
+          lastName: formData.last_name,
+          phoneNumber: formData.phone_number
+        });
+        
+        // Get the current URL for redirect
+        const siteUrl = window.location.origin;
+        const redirectUrl = `${siteUrl}/set-password`;
+        
+        // Use the inviteUser hook instead of direct edge function call
+        inviteUserMutation.mutate({
+          email: formData.email,
+          firstName: formData.first_name,
+          lastName: formData.last_name,
+          phoneNumber: formData.phone_number || undefined,
+          role: 'employee',
+          language: 'en',
+          redirect: redirectUrl,
+          team: 'Employees',
+          sendEmail: true // Explicitly request to send invitation email
+        });
       }
-      
-      onClose();
     } catch (error: any) {
       console.error('Form submission error:', error);
       toast({
@@ -181,7 +181,6 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         description: error.message || (isEdit ? "Failed to update employee" : "Failed to add employee"),
         variant: "destructive",
       });
-    } finally {
       setIsSubmitting(false);
     }
   };

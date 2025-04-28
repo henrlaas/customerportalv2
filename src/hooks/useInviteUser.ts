@@ -16,7 +16,7 @@ type InviteUserParams = {
 };
 
 type UseInviteUserProps = {
-  onSuccess?: () => void;
+  onSuccess?: (data: any) => void;
   onError?: (error: Error) => void;
 };
 
@@ -35,7 +35,10 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
         lastName: params.lastName,
         phoneNumber: params.phoneNumber,
         role: params.role || 'client',
-        team: params.team
+        language: params.language || 'en',
+        redirect: redirectUrl,
+        team: params.team,
+        sendEmail: params.sendEmail !== false // Default to true if not specified
       }));
 
       const { data, error } = await supabase.functions.invoke('user-management', {
@@ -58,14 +61,21 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
         throw new Error(error.message);
       }
 
+      if (!data) {
+        throw new Error('No data returned from invite function');
+      }
+
       return data;
     },
     onSuccess: (data) => {
+      const isNewUser = data.isNewUser !== false;
       toast({
-        title: 'User invited',
-        description: 'An invitation has been sent to the user.',
+        title: isNewUser ? 'User invited' : 'User updated',
+        description: isNewUser ? 
+          'An invitation has been sent to the user.' : 
+          'The user has been updated and a reset email has been sent.',
       });
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(data);
     },
     onError: (error: Error) => {
       toast({

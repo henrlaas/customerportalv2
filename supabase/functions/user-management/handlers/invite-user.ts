@@ -42,93 +42,186 @@ export const handleInviteUser = async (
   }
 
   try {
-    console.log(`Inviting user: ${email} with role: ${role}, firstName: ${firstName}, lastName: ${lastName}, phoneNumber: ${phoneNumber}, team: ${team}, sendEmail: ${sendEmail}`);
+    console.log(`Checking if user exists: ${email}`);
     
-    // Generate a random password for the new user
-    const randomPassword = Math.random().toString(36).slice(-10);
-    
-    // Create the user in Supabase Auth
-    const { data: userData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: randomPassword,
-      email_confirm: true, // Auto-confirm the email
-      user_metadata: {
-        first_name: firstName,
-        last_name: lastName,
-        phone_number: phoneNumber,
-        role,
-        language,
-        team
+    // Check if the user already exists
+    const { data: existingUsers, error: searchError } = await supabaseAdmin.auth.admin.listUsers({
+      filter: {
+        email: email
       }
     });
-
-    if (createUserError) {
-      console.error(`Error creating user: ${createUserError.message}`);
-      return new Response(
-        JSON.stringify({ error: createUserError.message }),
+    
+    if (searchError) {
+      console.error(`Error searching for user: ${searchError.message}`);
+      throw searchError;
+    }
+    
+    let userData;
+    let isNewUser = false;
+    
+    // Handle existing user case
+    if (existingUsers && existingUsers.users.length > 0) {
+      const existingUser = existingUsers.users[0];
+      console.log(`User already exists with ID: ${existingUser.id}`);
+      
+      // Update user metadata
+      const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        existingUser.id,
         {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          user_metadata: {
+            first_name: firstName,
+            last_name: lastName,
+            phone_number: phoneNumber,
+            role,
+            language,
+            team
+          }
         }
       );
+      
+      if (updateError) {
+        console.error(`Error updating user: ${updateError.message}`);
+        throw updateError;
+      }
+      
+      userData = { user: updatedUser };
+      
+      // Update the profile
+      await updateUserProfile(supabaseAdmin, existingUser.id, {
+        firstName,
+        lastName,
+        phoneNumber,
+        language,
+        team
+      });
+      
+      // If sendEmail is true, handle the password reset for existing user
+      if (sendEmail) {
+        console.log("Sending password reset email to existing user...");
+        let resetPasswordError = null;
+        if (redirect) {
+          const { error } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'recovery',
+            email,
+            options: {
+              redirectTo: redirect,
+            }
+          });
+          resetPasswordError = error;
+        } else {
+          const { error } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'recovery',
+            email
+          });
+          resetPasswordError = error;
+        }
+        
+        if (resetPasswordError) {
+          console.error(`Error sending password reset email: ${resetPasswordError.message}`);
+          // Continue despite error as the user profile was updated
+        } else {
+          console.log("Password reset email sent successfully");
+        }
+      }
     }
-
-    // If user was created successfully, update their profile
-    if (userData.user && userData.user.id) {
-      console.log(`Updating profile for user: ${userData.user.id}`);
-      try {
-        await updateUserProfile(supabaseAdmin, userData.user.id, {
-          firstName,
-          lastName,
-          phoneNumber,
+    // Create new user case
+    else {
+      isNewUser = true;
+      console.log(`Creating new user: ${email} with role: ${role}, firstName: ${firstName}, lastName: ${lastName}, phoneNumber: ${phoneNumber}, team: ${team}, sendEmail: ${sendEmail}`);
+      
+      // Generate a random password for the new user
+      const randomPassword = Math.random().toString(36).slice(-10);
+      
+      // Create the user in Supabase Auth
+      const { data: newUserData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: randomPassword,
+        email_confirm: true, // Auto-confirm the email
+        user_metadata: {
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: phoneNumber,
+          role,
           language,
           team
-        });
-        console.log("Profile updated successfully");
-      } catch (profileError) {
-        console.error("Error updating profile:", profileError);
-        // Continue with the invitation process even if profile update fails
-      }
-    }
+        }
+      });
 
-    // Send a password reset email so the user can set their own password
-    if (sendEmail) {
-      console.log("Sending invitation email...");
-      let resetPasswordError = null;
-      if (redirect) {
-        const { error } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'recovery',
-          email,
-          options: {
-            redirectTo: redirect,
+      if (createUserError) {
+        console.error(`Error creating user: ${createUserError.message}`);
+        return new Response(
+          JSON.stringify({ error: createUserError.message }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
           }
-        });
-        resetPasswordError = error;
-      } else {
-        const { error } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'recovery',
-          email
-        });
-        resetPasswordError = error;
+        );
       }
 
-      if (resetPasswordError) {
-        console.error(`Error sending invitation email: ${resetPasswordError.message}`);
-        // We don't return an error here since the user was created successfully
-      } else {
-        console.log("Invitation email sent successfully");
+      userData = newUserData;
+
+      // If user was created successfully, update their profile
+      if (newUserData.user && newUserData.user.id) {
+        console.log(`Updating profile for user: ${newUserData.user.id}`);
+        try {
+          await updateUserProfile(supabaseAdmin, newUserData.user.id, {
+            firstName,
+            lastName,
+            phoneNumber,
+            language,
+            team
+          });
+          console.log("Profile updated successfully");
+        } catch (profileError) {
+          console.error("Error updating profile:", profileError);
+          // Continue with the invitation process even if profile update fails
+        }
       }
-    } else {
-      console.log("Skipping invitation email as requested");
+
+      // Send a password reset email so the user can set their own password
+      if (sendEmail) {
+        console.log("Sending invitation email...");
+        let resetPasswordError = null;
+        if (redirect) {
+          const { error } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'recovery',
+            email,
+            options: {
+              redirectTo: redirect,
+            }
+          });
+          resetPasswordError = error;
+        } else {
+          const { error } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'recovery',
+            email
+          });
+          resetPasswordError = error;
+        }
+
+        if (resetPasswordError) {
+          console.error(`Error sending invitation email: ${resetPasswordError.message}`);
+          // We don't return an error here since the user was created successfully
+        } else {
+          console.log("Invitation email sent successfully");
+        }
+      } else {
+        console.log("Skipping invitation email as requested");
+      }
     }
 
     console.log("Invitation process completed successfully");
     return new Response(
       JSON.stringify({
         user: userData.user,
+        isNewUser: isNewUser,
         message: sendEmail ? 
-          "User invited successfully. An invitation email has been sent." : 
-          "User created successfully. No invitation email was sent."
+          isNewUser ? 
+            "User invited successfully. An invitation email has been sent." : 
+            "Existing user updated. A password reset email has been sent." 
+          : isNewUser ?
+            "User created successfully. No invitation email was sent." :
+            "User updated successfully. No email was sent."
       }),
       {
         status: 200,
