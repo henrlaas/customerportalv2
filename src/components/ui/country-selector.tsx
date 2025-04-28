@@ -10,6 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { COUNTRIES, Country, DEFAULT_COUNTRY_NAME, getNorwayCountry } from "@/constants/countries";
 
 export interface CountrySelectorProps {
@@ -123,8 +124,13 @@ export function CountrySelector({
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0 z-50" align="start">
-          <div className="flex flex-col max-h-[300px]">
+        <PopoverContent 
+          className="w-full p-0" 
+          align="start"
+          sideOffset={4}
+          style={{ zIndex: 50 }}
+        >
+          <div className="flex flex-col">
             {/* Search input */}
             <div className="flex items-center border-b px-3">
               <input
@@ -135,18 +141,19 @@ export function CountrySelector({
               />
             </div>
             
-            {/* Country list */}
-            <div className="overflow-y-auto max-h-[250px]">
+            {/* Country list with ScrollArea */}
+            <ScrollArea className="h-[250px] overflow-y-auto">
               {filteredCountries.length === 0 ? (
                 <div className="py-6 text-center text-sm">No country found.</div>
               ) : (
-                <div className="overflow-hidden p-1 text-foreground">
+                <div className="p-1">
                   {filteredCountries.map((country) => (
                     <button
                       key={country.code}
                       type="button"
                       className={cn(
-                        "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none w-full text-left hover:bg-accent hover:text-accent-foreground",
+                        "relative flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none text-left",
+                        "hover:bg-accent hover:text-accent-foreground cursor-pointer",
                         selectedCountry?.name === country.name && "bg-accent text-accent-foreground"
                       )}
                       onClick={() => {
@@ -156,18 +163,18 @@ export function CountrySelector({
                         setSearchValue("");
                       }}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex w-full items-center gap-2">
                         <span className="text-lg">{country.flag}</span>
-                        <span>{country.name}</span>
+                        <span className="flex-1">{country.name}</span>
+                        {selectedCountry?.name === country.name && (
+                          <Check className="h-4 w-4 ml-auto" />
+                        )}
                       </div>
-                      {selectedCountry?.name === country.name && (
-                        <Check className="ml-auto h-4 w-4" />
-                      )}
                     </button>
                   ))}
                 </div>
               )}
-            </div>
+            </ScrollArea>
           </div>
         </PopoverContent>
       </Popover>
