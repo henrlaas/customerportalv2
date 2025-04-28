@@ -118,29 +118,21 @@ const WorkspaceManagementPage = () => {
         Configure global settings for your workspace and manage users.
       </p>
 
-      <Tabs defaultValue="users" className="space-y-4">
+      <Tabs defaultValue="all-settings" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="users">
-            <Users className="h-4 w-4 mr-2" />
-            Users
+          <TabsTrigger value="all-settings">
+            <Settings className="h-4 w-4 mr-2" />
+            All Settings
           </TabsTrigger>
           <TabsTrigger value="employees">
             <Users className="h-4 w-4 mr-2" />
             Employees
           </TabsTrigger>
-          <TabsTrigger value="all-settings">
-            <Settings className="h-4 w-4 mr-2" />
-            All Settings
+          <TabsTrigger value="users">
+            <Users className="h-4 w-4 mr-2" />
+            Users
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="users">
-          <UserManagementTab />
-        </TabsContent>
-
-        <TabsContent value="employees">
-          <EmployeeManagementTab />
-        </TabsContent>
 
         <TabsContent value="all-settings" className="space-y-4">
           <div className="grid gap-4">
@@ -173,6 +165,14 @@ const WorkspaceManagementPage = () => {
           <div className="mt-4">
             <AddSettingForm onAdd={handleAddSetting} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="employees">
+          <EmployeeManagementTab />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UserManagementTab />
         </TabsContent>
       </Tabs>
     </div>
