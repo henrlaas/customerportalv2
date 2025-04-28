@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,8 +56,8 @@ export function CountrySelector({
     }
   }, [value, onValueChange]);
 
-  // Simple component to display a country (prevents code duplication)
-  const CountryDisplay = () => {
+  // Render a display component for the country
+  const renderCountryDisplay = () => {
     if (!selectedCountry) {
       return <span className="text-muted-foreground">{placeholder}</span>;
     }
@@ -78,7 +78,7 @@ export function CountrySelector({
         error && "border-destructive",
         className
       )}>
-        <CountryDisplay />
+        {renderCountryDisplay()}
         {error && <p className="text-sm text-destructive mt-1">{error}</p>}
       </div>
     );
@@ -98,7 +98,7 @@ export function CountrySelector({
               error && "border-destructive",
             )}
           >
-            <CountryDisplay />
+            {renderCountryDisplay()}
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -107,7 +107,7 @@ export function CountrySelector({
             <CommandInput placeholder="Search country..." />
             <CommandEmpty>No country found.</CommandEmpty>
             <CommandGroup>
-              {COUNTRIES.map((country) => (
+              {Array.isArray(COUNTRIES) && COUNTRIES.map((country) => (
                 <CommandItem
                   key={country.code}
                   value={country.name}
