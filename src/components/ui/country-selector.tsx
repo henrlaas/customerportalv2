@@ -51,8 +51,8 @@ export function CountrySelector({
 
   // Set default country on mount or when value changes
   React.useEffect(() => {
-    // If value is provided, try to find the matching country
-    if (value) {
+    // If value is provided and we have countries, try to find the matching country
+    if (value && countries.length > 0) {
       const country = countries.find((c) => c.name === value);
       if (country) {
         setSelectedCountry(country);
@@ -119,7 +119,7 @@ export function CountrySelector({
             <CommandInput placeholder="Search country..." />
             <CommandEmpty>No country found.</CommandEmpty>
             {/* Only render the CommandGroup if countries is a valid array with content */}
-            {countries.length > 0 ? (
+            {countries && countries.length > 0 ? (
               <CommandGroup>
                 {countries.map((country) => (
                   <CommandItem
