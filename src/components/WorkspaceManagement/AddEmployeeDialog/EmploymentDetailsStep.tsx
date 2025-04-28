@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CountrySelector } from '@/components/ui/country-selector';
 
 interface EmploymentDetailsStepProps {
   formData: {
@@ -100,13 +101,11 @@ export function EmploymentDetailsStep({
 
         <div className="space-y-2">
           <Label htmlFor="country">Country *</Label>
-          <Input 
-            id="country"
+          <CountrySelector
             value={formData.country}
-            onChange={(e) => onUpdate({ country: e.target.value })}
-            className={errors.country ? 'border-red-500' : ''}
+            onValueChange={(value) => onUpdate({ country: value })}
+            error={errors.country}
           />
-          {errors.country && <p className="text-sm text-red-500">{errors.country}</p>}
         </div>
 
         <div className="space-y-2">

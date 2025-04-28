@@ -26,6 +26,8 @@ import {
 } from '@/components/ui/dialog';
 import type { Company } from '@/types/company';
 import { Globe, Building } from 'lucide-react';
+import { CountrySelector } from '@/components/ui/country-selector';
+import { DEFAULT_COUNTRY_NAME } from '@/constants/countries';
 
 // Form schema - simplified for subsidiaries
 const companyFormSchema = z.object({
@@ -98,7 +100,7 @@ export const CreateCompanyDialog = ({
         street_address: parentCompany?.street_address,
         city: parentCompany?.city,
         postal_code: parentCompany?.postal_code,
-        country: parentCompany?.country,
+        country: parentCompany?.country || DEFAULT_COUNTRY_NAME,
         invoice_email: parentCompany?.invoice_email,
         advisor_id: parentCompany?.advisor_id,
         // For subsidiaries, we'll default to the same client types as the parent
