@@ -90,6 +90,7 @@ export const handleInviteUser = async (
     }
 
     // Send a password reset email so the user can set their own password
+    console.log("Sending password reset email...");
     let resetPasswordError = null;
     if (redirect) {
       const { error } = await supabaseAdmin.auth.admin.generateLink({
@@ -113,6 +114,7 @@ export const handleInviteUser = async (
       // We don't return an error here since the user was created successfully
     }
 
+    console.log("Invitation process completed successfully");
     return new Response(
       JSON.stringify({
         user: userData.user,
