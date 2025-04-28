@@ -43,35 +43,38 @@ export function CountrySelector({
   const [open, setOpen] = React.useState(false);
   const [selectedCountry, setSelectedCountry] = React.useState<Country | null>(null);
   
-  // Create a safe copy of the countries array
+  // Create a safe copy of the countries array with null safety
   const countries = React.useMemo(() => {
-    // Make sure COUNTRIES is an array and create a copy to avoid mutation
     return Array.isArray(COUNTRIES) ? [...COUNTRIES] : [];
   }, []);
 
   // Set default country on mount or when value changes
   React.useEffect(() => {
-    // If value is provided and we have countries, try to find the matching country
-    if (value && countries.length > 0) {
-      const country = countries.find((c) => c.name === value);
-      if (country) {
-        setSelectedCountry(country);
-        return;
+    try {
+      // If value is provided and countries is valid, try to find the matching country
+      if (value && Array.isArray(countries) && countries.length > 0) {
+        const country = countries.find((c) => c.name === value);
+        if (country) {
+          setSelectedCountry(country);
+          return;
+        }
       }
-    }
-    
-    // Default to Norway if no value or value not found
-    const norway = getNorwayCountry();
-    if (norway) {
-      setSelectedCountry(norway);
-      // Only update the value if it's different to avoid loops
-      if (value !== norway.name) {
-        onValueChange(norway.name);
+      
+      // Default to Norway if no value or value not found
+      const norway = getNorwayCountry();
+      if (norway) {
+        setSelectedCountry(norway);
+        // Only update the value if it's different to avoid loops
+        if (value !== norway.name) {
+          onValueChange(norway.name);
+        }
       }
+    } catch (error) {
+      console.error("Error setting default country:", error);
     }
   }, [value, countries, onValueChange]);
 
-  // Render the country display (with null safety) - removed flag
+  // Render the country display (with null safety)
   const renderCountryDisplay = () => {
     if (!selectedCountry) {
       return <span className="text-muted-foreground">{placeholder}</span>;
@@ -119,7 +122,7 @@ export function CountrySelector({
             <CommandInput placeholder="Search country..." />
             <CommandEmpty>No country found.</CommandEmpty>
             {/* Only render the CommandGroup if countries is a valid array with content */}
-            {countries && countries.length > 0 ? (
+            {Array.isArray(countries) && countries.length > 0 ? (
               <CommandGroup>
                 {countries.map((country) => (
                   <CommandItem
