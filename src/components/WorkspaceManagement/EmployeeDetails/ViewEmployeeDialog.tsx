@@ -2,7 +2,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmployeeWithProfile } from "@/types/employee";
 import { Separator } from "@/components/ui/separator";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ViewEmployeeDialogProps {
   employee: EmployeeWithProfile | null;
@@ -11,6 +13,13 @@ interface ViewEmployeeDialogProps {
 }
 
 export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDialogProps) {
+  const [showSSN, setShowSSN] = useState(false);
+  
+  // Reset the visibility state when dialog opens/closes or employee changes
+  useEffect(() => {
+    setShowSSN(false);
+  }, [open, employee]);
+  
   // Add enhanced debugging to check the employee data when it changes
   useEffect(() => {
     if (employee) {
@@ -29,6 +38,17 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
       });
     }
   }, [employee]);
+
+  // Function to mask the social security number
+  const maskSSN = (ssn: string) => {
+    if (!ssn) return '-';
+    
+    // Return only the last 4 characters visible, mask the rest
+    const length = ssn.length;
+    if (length <= 4) return ssn; // If very short, just return it
+    
+    return '*'.repeat(length - 4) + ssn.substring(length - 4);
+  };
 
   if (!employee) return null;
 
@@ -107,7 +127,20 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Social Security Number</p>
-                <p className="font-medium">{employee.social_security_number || '-'}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">
+                    {showSSN ? employee.social_security_number || '-' : maskSSN(employee.social_security_number || '')}
+                  </p>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6" 
+                    onClick={() => setShowSSN(!showSSN)}
+                    title={showSSN ? "Hide social security number" : "Show social security number"}
+                  >
+                    {showSSN ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Account Number</p>
