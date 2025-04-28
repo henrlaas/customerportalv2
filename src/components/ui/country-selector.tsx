@@ -83,7 +83,10 @@ export function CountrySelector({
       return <span className="text-muted-foreground">{placeholder}</span>;
     }
     return (
-      <span className="flex-1 truncate">{selectedCountry.name}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-lg">{selectedCountry.flag}</span>
+        <span className="flex-1 truncate">{selectedCountry.name}</span>
+      </div>
     );
   };
 
@@ -152,7 +155,10 @@ export function CountrySelector({
                         setSearchValue("");
                       }}
                     >
-                      <span>{country.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{country.flag}</span>
+                        <span>{country.name}</span>
+                      </div>
                       {selectedCountry?.name === country.name && (
                         <Check className="ml-auto h-4 w-4" />
                       )}
