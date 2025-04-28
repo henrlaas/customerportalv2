@@ -15,6 +15,9 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
   useEffect(() => {
     if (employee) {
       console.log("Employee data in dialog:", employee);
+      // Log all available keys for debugging
+      console.log("Available employee keys:", Object.keys(employee).join(", "));
+      console.log("City value type:", employee.city ? typeof employee.city : "undefined");
       console.log("City value:", employee.city);
     }
   }, [employee]);

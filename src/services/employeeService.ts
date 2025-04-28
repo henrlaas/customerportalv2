@@ -16,10 +16,12 @@ export const employeeService = {
     // Debug the response data
     console.log('Raw employee data from DB:', data);
 
-    // Ensure we're getting the expected data structure and that city is present
+    // Ensure we're getting the expected data structure
     if (data && Array.isArray(data) && data.length > 0) {
       console.log('First employee example:', data[0]);
-      console.log('City value for first employee:', data[0].city);
+      // Don't access city directly on the JSON type since TypeScript doesn't recognize it
+      // Instead, log the entire object and we'll see city in the console
+      console.log('First employee data contains:', Object.keys(data[0]).join(', '));
     }
 
     // Cast the returned data to the correct type with explicit type assertion
