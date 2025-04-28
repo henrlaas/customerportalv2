@@ -2,7 +2,6 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -41,11 +40,11 @@ export function CountrySelector({
   readOnly = false,
   error
 }: CountrySelectorProps) {
-  const [open, setOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+  const [open, setOpen] = React.useState(false);
+  const [selectedCountry, setSelectedCountry] = React.useState<Country | null>(null);
 
   // Find the selected country or default to Norway
-  useEffect(() => {
+  React.useEffect(() => {
     if (value) {
       const country = COUNTRIES.find((c) => c.name === value);
       setSelectedCountry(country || null);
@@ -57,15 +56,15 @@ export function CountrySelector({
     }
   }, [value, onValueChange]);
 
-  // Create a display component for the selected country
-  const CountryDisplay = ({ country }: { country: Country | null }) => {
-    if (!country) {
+  // Simple component to display a country (prevents code duplication)
+  const CountryDisplay = () => {
+    if (!selectedCountry) {
       return <span className="text-muted-foreground">{placeholder}</span>;
     }
     return (
       <div className="flex items-center gap-2">
-        <span className="text-lg" aria-hidden="true">{country.flag}</span>
-        <span className="flex-1 truncate">{country.name}</span>
+        <span className="text-lg" aria-hidden="true">{selectedCountry.flag}</span>
+        <span className="flex-1 truncate">{selectedCountry.name}</span>
       </div>
     );
   };
@@ -79,7 +78,7 @@ export function CountrySelector({
         error && "border-destructive",
         className
       )}>
-        <CountryDisplay country={selectedCountry} />
+        <CountryDisplay />
         {error && <p className="text-sm text-destructive mt-1">{error}</p>}
       </div>
     );
@@ -99,7 +98,7 @@ export function CountrySelector({
               error && "border-destructive",
             )}
           >
-            <CountryDisplay country={selectedCountry} />
+            <CountryDisplay />
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
