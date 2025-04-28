@@ -118,7 +118,6 @@ export function CountrySelector({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
-          {/* This is where the error likely occurs: we need to ensure we provide valid data */}
           <Command>
             <CommandInput placeholder="Search country..." />
             <CommandEmpty>No country found.</CommandEmpty>
@@ -135,12 +134,7 @@ export function CountrySelector({
                       setOpen(false);
                     }}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg" aria-hidden="true">
-                        {country.flag}
-                      </span>
-                      <span>{country.name}</span>
-                    </div>
+                    <span>{country.name}</span>
                     <Check
                       className={cn(
                         "ml-auto h-4 w-4",
