@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronDown, Flag } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +42,11 @@ export function CountrySelector({
 }: CountrySelectorProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedCountry, setSelectedCountry] = React.useState<Country | null>(null);
-  const countries = React.useMemo(() => Array.isArray(COUNTRIES) ? COUNTRIES : [], []);
+  
+  // Ensure countries is always a valid array
+  const countries = React.useMemo(() => {
+    return Array.isArray(COUNTRIES) ? COUNTRIES : [];
+  }, []);
 
   // Find the selected country or default to Norway
   React.useEffect(() => {
@@ -109,7 +113,7 @@ export function CountrySelector({
             <CommandInput placeholder="Search country..." />
             <CommandEmpty>No country found.</CommandEmpty>
             <CommandGroup>
-              {countries.map((country) => (
+              {countries.length > 0 && countries.map((country) => (
                 <CommandItem
                   key={country.code}
                   value={country.name}
