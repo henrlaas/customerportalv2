@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -96,11 +96,7 @@ export function CountrySelector({
               error && "border-destructive",
             )}
           >
-            {selectedCountry ? (
-              <SelectedCountryDisplay country={selectedCountry} />
-            ) : (
-              placeholder
-            )}
+            <SelectedCountryDisplay country={selectedCountry} />
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
