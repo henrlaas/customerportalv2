@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
 import { Button } from '@/components/ui/button';
-import { UserPlus, Pencil, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserPlus, Pencil, Trash2, Search, Filter } from 'lucide-react';
 import { AddEmployeeDialog } from './AddEmployeeDialog';
 import { EditEmployeeDialog } from './AddEmployeeDialog/EditEmployeeDialog';
 import { DeleteEmployeeDialog } from './AddEmployeeDialog/DeleteEmployeeDialog';
@@ -18,6 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ViewEmployeeDialog } from './EmployeeDetails/ViewEmployeeDialog';
+import { useEmployeeFilters } from '@/hooks/useEmployeeFilters';
 
 export function EmployeeManagementTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -31,6 +34,16 @@ export function EmployeeManagementTab() {
     queryKey: ['employees'],
     queryFn: employeeService.listEmployees,
   });
+
+  // Use our custom filter hook
+  const {
+    searchTerm,
+    setSearchTerm,
+    typeFilter,
+    setTypeFilter,
+    employeeTypes,
+    filteredEmployees
+  } = useEmployeeFilters(employees);
 
   // Debug the employee data when it changes
   useEffect(() => {
@@ -78,6 +91,37 @@ export function EmployeeManagementTab() {
         </Button>
       </div>
 
+      {/* Search and filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-grow">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, email or phone"
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="w-full sm:w-[200px] flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select
+            value={typeFilter}
+            onValueChange={setTypeFilter}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              {employeeTypes.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -92,39 +136,47 @@ export function EmployeeManagementTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {employees.map((employee) => (
-              <TableRow 
-                key={employee.id}
-                className="cursor-pointer hover:bg-accent"
-                onClick={() => handleViewEmployee(employee)}
-              >
-                <TableCell>{`${employee.first_name || ''} ${employee.last_name || ''}`}</TableCell>
-                <TableCell>{employee.email}</TableCell>
-                <TableCell>{employee.phone_number || '-'}</TableCell>
-                <TableCell>{employee.employee_type}</TableCell>
-                <TableCell>{employee.hourly_salary} NOK</TableCell>
-                <TableCell>{employee.employed_percentage}%</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={(e) => handleEditEmployee(employee, e)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-red-500 hover:text-red-600" 
-                      onClick={(e) => handleDeleteEmployee(employee, e)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+            {filteredEmployees.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                  No employees found matching your search criteria
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredEmployees.map((employee) => (
+                <TableRow 
+                  key={employee.id}
+                  className="cursor-pointer hover:bg-accent"
+                  onClick={() => handleViewEmployee(employee)}
+                >
+                  <TableCell>{`${employee.first_name || ''} ${employee.last_name || ''}`}</TableCell>
+                  <TableCell>{employee.email}</TableCell>
+                  <TableCell>{employee.phone_number || '-'}</TableCell>
+                  <TableCell>{employee.employee_type}</TableCell>
+                  <TableCell>{employee.hourly_salary} NOK</TableCell>
+                  <TableCell>{employee.employed_percentage}%</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={(e) => handleEditEmployee(employee, e)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-red-500 hover:text-red-600" 
+                        onClick={(e) => handleDeleteEmployee(employee, e)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
