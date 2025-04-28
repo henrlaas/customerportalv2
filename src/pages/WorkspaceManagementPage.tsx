@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
@@ -6,7 +7,6 @@ import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm"
 import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
 import {
   Settings,
-  DollarSign,
   Users
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -90,7 +90,6 @@ const WorkspaceManagementPage = () => {
   };
 
   // Get settings by category
-  const hourlyRateSettings = filterSettingsByCategory(settings, 'hourly_rate');
   const allSettings = settings;
 
   if (isLoading) {
@@ -119,12 +118,8 @@ const WorkspaceManagementPage = () => {
         Configure global settings for your workspace and manage users.
       </p>
 
-      <Tabs defaultValue="hourly-rates" className="space-y-4">
+      <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="hourly-rates">
-            <DollarSign className="h-4 w-4 mr-2" />
-            Hourly Rates
-          </TabsTrigger>
           <TabsTrigger value="users">
             <Users className="h-4 w-4 mr-2" />
             Users
@@ -138,39 +133,6 @@ const WorkspaceManagementPage = () => {
             All Settings
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="hourly-rates" className="space-y-4">
-          <div className="grid gap-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Hourly Rates Configuration
-            </h2>
-            <p className="text-muted-foreground">
-              Set default hourly rates for different roles in your organization. These rates will be used for financial calculations (NOK).
-            </p>
-            <Separator />
-          </div>
-
-          {hourlyRateSettings.length === 0 ? (
-            <div className="text-center p-4 bg-muted rounded-lg">
-              No hourly rate settings found.
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {hourlyRateSettings.map((setting) => (
-                <SettingItem
-                  key={setting.id}
-                  setting={setting}
-                  onSave={handleUpdateSetting}
-                />
-              ))}
-            </div>
-          )}
-          
-          <div className="mt-4">
-            <AddSettingForm onAdd={handleAddSetting} />
-          </div>
-        </TabsContent>
 
         <TabsContent value="users">
           <UserManagementTab />
