@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
@@ -21,6 +22,7 @@ import {
 import { ViewEmployeeDialog } from './EmployeeDetails/ViewEmployeeDialog';
 import { useEmployeeFilters } from '@/hooks/useEmployeeFilters';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 export function EmployeeManagementTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -140,7 +142,7 @@ export function EmployeeManagementTab() {
 
       <div className="rounded-md border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
