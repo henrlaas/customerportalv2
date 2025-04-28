@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
 import { Button } from '@/components/ui/button';
@@ -32,9 +32,21 @@ export function EmployeeManagementTab() {
     queryFn: employeeService.listEmployees,
   });
 
+  // Debug the employee data when it changes
+  useEffect(() => {
+    if (employees.length > 0) {
+      console.log('Employee data in management tab:', employees);
+      // Check if city is present for each employee
+      employees.forEach((employee, index) => {
+        console.log(`Employee ${index + 1} city:`, employee.city);
+      });
+    }
+  }, [employees]);
+
   const handleEditEmployee = (employee: EmployeeWithProfile, e: React.MouseEvent) => {
     // Prevent the row click event from firing
     e.stopPropagation();
+    console.log('Opening edit dialog for employee:', employee);
     setSelectedEmployee(employee);
     setShowEditDialog(true);
   };
@@ -44,6 +56,12 @@ export function EmployeeManagementTab() {
     e.stopPropagation();
     setSelectedEmployee(employee);
     setShowDeleteDialog(true);
+  };
+
+  const handleViewEmployee = (employee: EmployeeWithProfile) => {
+    console.log('Opening view dialog for employee with city:', employee.city);
+    setSelectedEmployee(employee);
+    setShowViewDialog(true);
   };
 
   if (isLoading) {
@@ -67,6 +85,7 @@ export function EmployeeManagementTab() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
+              <TableHead>City</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Hourly Rate</TableHead>
               <TableHead>Employment %</TableHead>
@@ -78,14 +97,12 @@ export function EmployeeManagementTab() {
               <TableRow 
                 key={employee.id}
                 className="cursor-pointer hover:bg-accent"
-                onClick={() => {
-                  setSelectedEmployee(employee);
-                  setShowViewDialog(true);
-                }}
+                onClick={() => handleViewEmployee(employee)}
               >
                 <TableCell>{`${employee.first_name || ''} ${employee.last_name || ''}`}</TableCell>
                 <TableCell>{employee.email}</TableCell>
                 <TableCell>{employee.phone_number || '-'}</TableCell>
+                <TableCell>{employee.city || '-'}</TableCell>
                 <TableCell>{employee.employee_type}</TableCell>
                 <TableCell>{employee.hourly_salary} NOK</TableCell>
                 <TableCell>{employee.employed_percentage}%</TableCell>

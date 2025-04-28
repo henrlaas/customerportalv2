@@ -2,6 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmployeeWithProfile } from "@/types/employee";
 import { Separator } from "@/components/ui/separator";
+import { useEffect } from "react";
 
 interface ViewEmployeeDialogProps {
   employee: EmployeeWithProfile | null;
@@ -10,6 +11,14 @@ interface ViewEmployeeDialogProps {
 }
 
 export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDialogProps) {
+  // Add debugging to check the employee data when it changes
+  useEffect(() => {
+    if (employee) {
+      console.log("Employee data in dialog:", employee);
+      console.log("City value:", employee.city);
+    }
+  }, [employee]);
+
   if (!employee) return null;
 
   return (
@@ -26,7 +35,7 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Full Name</p>
-                <p className="font-medium">{`${employee.first_name} ${employee.last_name}`}</p>
+                <p className="font-medium">{`${employee.first_name || ''} ${employee.last_name || ''}`}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Email</p>
@@ -64,7 +73,7 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Street Address</p>
-                <p className="font-medium">{employee.address}</p>
+                <p className="font-medium">{employee.address || '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">City</p>
@@ -72,11 +81,11 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Zip Code</p>
-                <p className="font-medium">{employee.zipcode}</p>
+                <p className="font-medium">{employee.zipcode || '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Country</p>
-                <p className="font-medium">{employee.country}</p>
+                <p className="font-medium">{employee.country || '-'}</p>
               </div>
             </div>
           </div>
@@ -87,11 +96,11 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Social Security Number</p>
-                <p className="font-medium">{employee.social_security_number}</p>
+                <p className="font-medium">{employee.social_security_number || '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Account Number</p>
-                <p className="font-medium">{employee.account_number}</p>
+                <p className="font-medium">{employee.account_number || '-'}</p>
               </div>
               {employee.employee_type === 'Freelancer' && (
                 <div>

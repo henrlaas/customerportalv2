@@ -8,7 +8,19 @@ export const employeeService = {
     const { data, error } = await supabase
       .rpc('get_employees_with_profiles');
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching employees:', error);
+      throw error;
+    }
+
+    // Debug the response data
+    console.log('Raw employee data from DB:', data);
+
+    // Ensure we're getting the expected data structure and that city is present
+    if (data && Array.isArray(data) && data.length > 0) {
+      console.log('First employee example:', data[0]);
+      console.log('City value for first employee:', data[0].city);
+    }
 
     // Cast the returned data to the correct type with explicit type assertion
     // First cast to unknown, then to EmployeeWithProfile[] to avoid direct type conversion errors
