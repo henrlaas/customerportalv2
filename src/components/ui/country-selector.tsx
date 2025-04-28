@@ -106,6 +106,17 @@ export function CountrySelector({
     );
   }
 
+  // Handle country selection with explicit event handling
+  const handleCountrySelect = (country: Country, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onValueChange(country.name);
+    setSelectedCountry(country);
+    setOpen(false);
+    setSearchValue("");
+    console.log("Country selected:", country.name);
+  };
+
   return (
     <div className={cn("relative", className)}>
       <Popover open={open && !disabled} onOpenChange={setOpen}>
@@ -125,10 +136,9 @@ export function CountrySelector({
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-full p-0" 
+          className="w-full p-0 z-[100]" 
           align="start"
           sideOffset={4}
-          style={{ zIndex: 50 }}
         >
           <div className="flex flex-col">
             {/* Search input */}
@@ -141,40 +151,45 @@ export function CountrySelector({
               />
             </div>
             
-            {/* Country list with ScrollArea */}
-            <ScrollArea className="h-[250px] overflow-y-auto">
-              {filteredCountries.length === 0 ? (
-                <div className="py-6 text-center text-sm">No country found.</div>
-              ) : (
-                <div className="p-1">
-                  {filteredCountries.map((country) => (
-                    <button
-                      key={country.code}
-                      type="button"
-                      className={cn(
-                        "relative flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none text-left",
-                        "hover:bg-accent hover:text-accent-foreground cursor-pointer",
-                        selectedCountry?.name === country.name && "bg-accent text-accent-foreground"
-                      )}
-                      onClick={() => {
-                        onValueChange(country.name);
-                        setSelectedCountry(country);
-                        setOpen(false);
-                        setSearchValue("");
-                      }}
-                    >
-                      <div className="flex w-full items-center gap-2">
-                        <span className="text-lg">{country.flag}</span>
-                        <span className="flex-1">{country.name}</span>
-                        {selectedCountry?.name === country.name && (
-                          <Check className="h-4 w-4 ml-auto" />
+            {/* Country list with improved ScrollArea */}
+            <div className="relative">
+              <ScrollArea className="h-[250px]">
+                {filteredCountries.length === 0 ? (
+                  <div className="py-6 text-center text-sm">No country found.</div>
+                ) : (
+                  <div className="p-1">
+                    {filteredCountries.map((country) => (
+                      <button
+                        key={country.code}
+                        type="button"
+                        className={cn(
+                          "relative flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          "cursor-pointer select-none focus:bg-accent focus:text-accent-foreground",
+                          "focus-visible:outline focus-visible:outline-offset-2",
+                          selectedCountry?.name === country.name && "bg-accent text-accent-foreground"
                         )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
+                        onClick={(e) => handleCountrySelect(country, e)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleCountrySelect(country, e as unknown as React.MouseEvent);
+                          }
+                        }}
+                      >
+                        <div className="flex w-full items-center gap-2 pointer-events-none">
+                          <span className="text-lg">{country.flag}</span>
+                          <span className="flex-1">{country.name}</span>
+                          {selectedCountry?.name === country.name && (
+                            <Check className="h-4 w-4 ml-auto" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
           </div>
         </PopoverContent>
       </Popover>
