@@ -12,6 +12,7 @@ export interface User {
     team?: string;
     language?: string;
     phone_number?: string;
+    avatar_url?: string;  // Added this property
   };
   created_at: string;
 }
