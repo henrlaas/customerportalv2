@@ -6,12 +6,10 @@ export function useEmployeeFilters(employees: EmployeeWithProfile[] = []) {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("All Types");
 
-  // Get unique employee types for filters
+  // Define specific employee types for filters
   const employeeTypes: string[] = useMemo(() => {
-    return ["All Types", ...Array.from(new Set(employees
-      .map(employee => employee.employee_type || '')
-      .filter(Boolean)))];
-  }, [employees]);
+    return ["All Types", "Employee", "Freelancer"];
+  }, []);
   
   // Filter employees based on search term and filters
   const filteredEmployees = useMemo(() => {
