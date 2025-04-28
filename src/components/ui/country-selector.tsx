@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { useState, useEffect, useMemo } from "react";
-import { Check, ChevronDown, Flag, Search } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,7 +108,7 @@ export function CountrySelector({
           <Command>
             <CommandInput placeholder="Search country..." />
             <CommandEmpty>No country found.</CommandEmpty>
-            <CommandGroup className="max-h-[300px] overflow-y-auto">
+            <CommandGroup>
               {COUNTRIES.map((country) => (
                 <CommandItem
                   key={country.code}
