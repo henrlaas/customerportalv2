@@ -144,6 +144,17 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           }
           
           console.log('User invited successfully:', data);
+
+          // Explicitly update the profiles table to ensure profile data is saved
+          await supabase
+            .from('profiles')
+            .update({
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+              phone_number: formData.phone_number || null,
+              team: 'Employees'
+            })
+            .eq('id', data.user.id);
           
           // Create employee record
           const employeeData = {

@@ -11,7 +11,7 @@ type InviteUserParams = {
   role?: string;
   language?: string;
   redirect?: string;
-  team?: string; // Add team as an optional parameter
+  team?: string; 
 };
 
 type UseInviteUserProps = {
@@ -28,9 +28,11 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
       const siteUrl = window.location.origin;
       const redirectUrl = params.redirect || `${siteUrl}/set-password`;
 
+      console.log('Inviting user with params:', JSON.stringify(params));
+
       const { data, error } = await supabase.functions.invoke('user-management', {
         body: {
-          action: 'invite', // Changed from 'invite-user' to 'invite' to match handler expectation
+          action: 'invite',
           email: params.email,
           firstName: params.firstName,
           lastName: params.lastName,
@@ -38,7 +40,7 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
           role: params.role || 'client',
           language: params.language || 'en',
           redirect: redirectUrl,
-          team: params.team, // Forward team parameter to the edge function
+          team: params.team,
         },
       });
 

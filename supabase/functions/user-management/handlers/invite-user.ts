@@ -40,7 +40,7 @@ export const handleInviteUser = async (
   }
 
   try {
-    console.log(`Inviting user: ${email} with role: ${role}, firstName: ${firstName}, lastName: ${lastName}`);
+    console.log(`Inviting user: ${email} with role: ${role}, firstName: ${firstName}, lastName: ${lastName}, phoneNumber: ${phoneNumber}, team: ${team}`);
     
     // Generate a random password for the new user
     const randomPassword = Math.random().toString(36).slice(-10);

@@ -27,25 +27,26 @@ export const updateUserProfile = async (
       throw fetchError;
     }
     
-    // Prepare update data object
+    // Prepare update data object with non-null values
     const updateData: Record<string, any> = {
       id: userId, // Ensure ID is set for upsert
-      first_name: userData.firstName,
-      last_name: userData.lastName,
-      phone_number: userData.phoneNumber,
-      language: userData.language || 'en',
       updated_at: new Date().toISOString()
     };
     
-    // Add team if provided
-    if (userData.team) {
-      updateData.team = userData.team;
-    }
+    // Only add fields that are provided and not undefined
+    if (userData.firstName !== undefined) updateData.first_name = userData.firstName;
+    if (userData.lastName !== undefined) updateData.last_name = userData.lastName;
+    if (userData.phoneNumber !== undefined) updateData.phone_number = userData.phoneNumber;
+    if (userData.language !== undefined) updateData.language = userData.language || 'en';
+    if (userData.team !== undefined) updateData.team = userData.team;
     
     // If profile doesn't exist, add created_at
     if (!existingProfile) {
       updateData.created_at = new Date().toISOString();
     }
+
+    // Log the data we're about to upsert
+    console.log("Profile data to upsert:", updateData);
 
     // Use upsert to handle both insert and update cases
     const { error } = await supabaseAdmin
