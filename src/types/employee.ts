@@ -11,6 +11,7 @@ export interface Employee {
   social_security_number: string;
   account_number: string;
   paycheck_solution: string;
+  avatar_url?: string; // Optional avatar URL
   created_at?: string;
   updated_at?: string;
 }
@@ -31,4 +32,5 @@ export interface EmployeeWithProfile {
   social_security_number: string;
   account_number: string;
   paycheck_solution: string;
+  avatar_url?: string; // Optional avatar URL
 }

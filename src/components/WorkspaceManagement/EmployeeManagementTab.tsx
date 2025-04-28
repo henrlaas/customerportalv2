@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
@@ -21,6 +20,7 @@ import {
 } from '@/components/ui/table';
 import { ViewEmployeeDialog } from './EmployeeDetails/ViewEmployeeDialog';
 import { useEmployeeFilters } from '@/hooks/useEmployeeFilters';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function EmployeeManagementTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -75,6 +75,22 @@ export function EmployeeManagementTab() {
     console.log('Opening view dialog for employee with city:', employee.city);
     setSelectedEmployee(employee);
     setShowViewDialog(true);
+  };
+
+  // Get user initials from first_name and last_name
+  const getUserInitials = (employee: EmployeeWithProfile) => {
+    const firstName = employee.first_name || '';
+    const lastName = employee.last_name || '';
+    
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    } else if (firstName) {
+      return firstName.charAt(0).toUpperCase();
+    } else if (employee.email) {
+      return employee.email.charAt(0).toUpperCase();
+    } else {
+      return "?";
+    }
   };
 
   if (isLoading) {
@@ -149,7 +165,17 @@ export function EmployeeManagementTab() {
                   className="cursor-pointer hover:bg-accent"
                   onClick={() => handleViewEmployee(employee)}
                 >
-                  <TableCell>{`${employee.first_name || ''} ${employee.last_name || ''}`}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={employee.avatar_url} alt={`${employee.first_name} ${employee.last_name}`} />
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {getUserInitials(employee)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{`${employee.first_name || ''} ${employee.last_name || ''}`}</span>
+                    </div>
+                  </TableCell>
                   <TableCell>{employee.email}</TableCell>
                   <TableCell>{employee.phone_number || '-'}</TableCell>
                   <TableCell>{employee.employee_type}</TableCell>
