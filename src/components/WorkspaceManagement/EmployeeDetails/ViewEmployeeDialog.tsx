@@ -11,7 +11,7 @@ interface ViewEmployeeDialogProps {
 }
 
 export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDialogProps) {
-  // Add debugging to check the employee data when it changes
+  // Add enhanced debugging to check the employee data when it changes
   useEffect(() => {
     if (employee) {
       console.log("Employee data in dialog:", employee);
@@ -19,6 +19,14 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
       console.log("Available employee keys:", Object.keys(employee).join(", "));
       console.log("City value type:", employee.city ? typeof employee.city : "undefined");
       console.log("City value:", employee.city);
+      
+      // Advanced debugging: check if city is nested in another property
+      const employeeObj = employee as any;
+      Object.keys(employeeObj).forEach(key => {
+        if (typeof employeeObj[key] === 'object' && employeeObj[key] !== null) {
+          console.log(`Checking nested object in ${key}:`, employeeObj[key]);
+        }
+      });
     }
   }, [employee]);
 

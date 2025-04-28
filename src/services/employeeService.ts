@@ -19,14 +19,36 @@ export const employeeService = {
     // Ensure we're getting the expected data structure
     if (data && Array.isArray(data) && data.length > 0) {
       console.log('First employee example:', data[0]);
-      // Don't access city directly on the JSON type since TypeScript doesn't recognize it
-      // Instead, log the entire object and we'll see city in the console
+      // Log the entire object and keys for debugging
       console.log('First employee data contains:', Object.keys(data[0]).join(', '));
     }
 
-    // Cast the returned data to the correct type with explicit type assertion
-    // First cast to unknown, then to EmployeeWithProfile[] to avoid direct type conversion errors
-    return (data as unknown as EmployeeWithProfile[]) || [];
+    // Parse the JSON structure correctly to ensure all fields are accessible
+    const parsedEmployees = data ? data.map((item: any) => {
+      // Log specific JSON parsing for debugging
+      console.log('Processing employee item with city:', item.city);
+      
+      // Return a properly structured employee object ensuring all fields are included
+      return {
+        id: item.id,
+        first_name: item.first_name,
+        last_name: item.last_name,
+        email: item.email,
+        phone_number: item.phone_number,
+        address: item.address,
+        zipcode: item.zipcode,
+        country: item.country,
+        city: item.city, // Explicitly include the city field
+        employee_type: item.employee_type,
+        hourly_salary: item.hourly_salary,
+        employed_percentage: item.employed_percentage,
+        social_security_number: item.social_security_number,
+        account_number: item.account_number,
+        paycheck_solution: item.paycheck_solution
+      } as EmployeeWithProfile;
+    }) : [];
+
+    return parsedEmployees;
   },
 
   async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
