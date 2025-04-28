@@ -43,26 +43,34 @@ export function CountrySelector({
   const [open, setOpen] = React.useState(false);
   const [selectedCountry, setSelectedCountry] = React.useState<Country | null>(null);
   
-  // Ensure countries is always a valid array
+  // Safety check to ensure COUNTRIES is always a valid array
   const countries = React.useMemo(() => {
-    return Array.isArray(COUNTRIES) ? COUNTRIES : [];
+    return Array.isArray(COUNTRIES) ? [...COUNTRIES] : [];
   }, []);
 
-  // Find the selected country or default to Norway
+  // Set default country on mount and when value changes
   React.useEffect(() => {
+    // If value is provided, try to find the matching country
     if (value) {
       const country = countries.find((c) => c.name === value);
-      setSelectedCountry(country || null);
-    } else {
-      // Set default to Norway
-      const norway = getNorwayCountry();
-      if (norway) {
-        setSelectedCountry(norway);
+      if (country) {
+        setSelectedCountry(country);
+        return;
+      }
+    }
+    
+    // Default to Norway if no value or value not found
+    const norway = getNorwayCountry();
+    if (norway) {
+      setSelectedCountry(norway);
+      // Only update the value if it's different to avoid loops
+      if (value !== norway.name) {
         onValueChange(norway.name);
       }
     }
-  }, [value, onValueChange, countries]);
+  }, [value, countries, onValueChange]);
 
+  // Safely render the country display
   const renderCountryDisplay = () => {
     if (!selectedCountry) {
       return <span className="text-muted-foreground">{placeholder}</span>;
@@ -75,7 +83,7 @@ export function CountrySelector({
     );
   };
 
-  // If readOnly, just return a simple display
+  // If readOnly, just show a non-interactive display
   if (readOnly) {
     return (
       <div className={cn(
@@ -113,7 +121,7 @@ export function CountrySelector({
             <CommandInput placeholder="Search country..." />
             <CommandEmpty>No country found.</CommandEmpty>
             <CommandGroup>
-              {countries.length > 0 && countries.map((country) => (
+              {countries.map((country) => (
                 <CommandItem
                   key={country.code}
                   value={country.name}
