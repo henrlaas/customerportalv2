@@ -1,3 +1,4 @@
+
 import { User } from "@/services/userService";
 import {
   Table,
@@ -9,12 +10,13 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Edit, KeyRound, Trash2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface UserTableProps {
   filteredUsers: User[];
   currentUserId?: string;
   isLoading: boolean;
-  error: unknown; // Changed from Error | null to unknown for better type flexibility
+  error: unknown;
   onDeleteUser: (user: User) => void;
   onEditUser: (user: User) => void;
   onResetPassword: (email: string) => void;
@@ -83,7 +85,7 @@ export function UserTable({
 
   return (
     <Table>
-      <TableHeader>
+      <TableHeader className="bg-muted">
         <TableRow>
           <TableHead>Name</TableHead>
           <TableHead>Email</TableHead>
@@ -96,18 +98,21 @@ export function UserTable({
       <TableBody>
         {filteredUsers.length > 0 ? (
           filteredUsers.map((user) => (
-            <TableRow key={user.id} className="hover:bg-gray-50">
+            <TableRow key={user.id} className="hover:bg-accent">
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <div className="bg-gray-200 w-8 h-8 rounded-full flex items-center justify-center text-gray-600 font-medium">
-                    {getUserInitials(user)}
-                  </div>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.user_metadata?.avatar_url} alt={`${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {getUserInitials(user)}
+                    </AvatarFallback>
+                  </Avatar>
                   <span className="font-medium">
                     {user.user_metadata?.first_name || ''} {user.user_metadata?.last_name || ''}
                   </span>
                 </div>
               </TableCell>
-              <TableCell className="text-gray-600">{user.email}</TableCell>
+              <TableCell>{user.email}</TableCell>
               <TableCell>
                 {user.user_metadata?.role && (
                   <span className={`inline-block px-2 py-1 rounded-full text-xs ${getRoleBadgeColor(user.user_metadata.role)}`}>
@@ -115,10 +120,10 @@ export function UserTable({
                   </span>
                 )}
               </TableCell>
-              <TableCell className="text-gray-600">{user.user_metadata?.team || '-'}</TableCell>
-              <TableCell className="text-gray-600">{formatDate(user.created_at)}</TableCell>
+              <TableCell>{user.user_metadata?.team || '-'}</TableCell>
+              <TableCell>{formatDate(user.created_at)}</TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
+                <div className="flex justify-end gap-2">
                   <Button 
                     variant="ghost" 
                     size="icon" 

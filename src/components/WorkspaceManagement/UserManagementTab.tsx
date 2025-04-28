@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserPlus } from "lucide-react";
+import { UserPlus, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { UserFilters } from "@/components/UserManagement/UserFilters";
@@ -12,6 +12,7 @@ import { InviteUserDialog } from "@/components/UserManagement/InviteUserDialog";
 import { EditUserDialog } from "@/components/UserManagement/EditUserDialog";
 import { useUserFilters } from "@/hooks/useUserFilters";
 import { userService, User } from "@/services/userService";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export function UserManagementTab() {
   const { isAdmin, user: currentUser } = useAuth();
@@ -115,17 +116,24 @@ export function UserManagementTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center flex-wrap gap-4">
-        <Button 
-          className="bg-blue-500 hover:bg-blue-600"
-          onClick={() => setShowInviteDialog(true)}
-        >
-          <UserPlus className="mr-2 h-5 w-5" />
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">User Management</h2>
+        <Button onClick={() => setShowInviteDialog(true)}>
+          <UserPlus className="mr-2 h-4 w-4" />
           Add User
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg w-full">
+      <Alert className="bg-[#FEF7CD] border-yellow-300 text-[#1A1F2C]">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Important Notice</AlertTitle>
+        <AlertDescription>
+          This User Management section should only be used for special cases. By default, please use the Employee Management section for managing personnel.
+        </AlertDescription>
+      </Alert>
+
+      {/* Search and filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
         <UserFilters 
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -136,39 +144,50 @@ export function UserManagementTab() {
           roles={roles}
           teams={teams}
         />
+      </div>
 
-        <div className="w-full overflow-x-auto">
-          <UserTable 
-            filteredUsers={filteredUsers}
-            currentUserId={currentUser?.id}
-            isLoading={isLoading}
-            error={error}
-            onDeleteUser={handleDeleteUser}
-            onEditUser={handleEditUser}
-            onResetPassword={handleResetPassword}
-            isPendingDelete={deleteUserMutation.isPending}
-            isPendingReset={resetPasswordMutation.isPending}
-          />
-        </div>
+      <div className="rounded-md border">
+        <UserTable 
+          filteredUsers={filteredUsers}
+          currentUserId={currentUser?.id}
+          isLoading={isLoading}
+          error={error}
+          onDeleteUser={handleDeleteUser}
+          onEditUser={handleEditUser}
+          onResetPassword={handleResetPassword}
+          isPendingDelete={deleteUserMutation.isPending}
+          isPendingReset={resetPasswordMutation.isPending}
+        />
       </div>
 
       <InviteUserDialog 
         isOpen={showInviteDialog} 
-        onClose={() => setShowInviteDialog(false)} 
+        onClose={() => {
+          setShowInviteDialog(false);
+          queryClient.invalidateQueries({ queryKey: ['users'] });
+        }} 
       />
 
-      <EditUserDialog 
-        isOpen={showEditDialog} 
-        onClose={() => setShowEditDialog(false)}
-        user={selectedUser}
-      />
-
-      <DeleteUserDialog 
-        isOpen={showDeleteConfirmDialog}
-        onClose={() => setShowDeleteConfirmDialog(false)}
-        onConfirm={handleDeleteConfirm}
-        isPending={deleteUserMutation.isPending}
-      />
+      {selectedUser && (
+        <>
+          <EditUserDialog 
+            isOpen={showEditDialog} 
+            onClose={() => {
+              setShowEditDialog(false);
+              setSelectedUser(null);
+              queryClient.invalidateQueries({ queryKey: ['users'] });
+            }}
+            user={selectedUser}
+          />
+          
+          <DeleteUserDialog 
+            isOpen={showDeleteConfirmDialog}
+            onClose={() => setShowDeleteConfirmDialog(false)}
+            onConfirm={handleDeleteConfirm}
+            isPending={deleteUserMutation.isPending}
+          />
+        </>
+      )}
     </div>
   );
 }
