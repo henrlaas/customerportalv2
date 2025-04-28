@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -119,7 +120,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           const siteUrl = window.location.origin;
           const redirectUrl = `${siteUrl}/set-password`;
           
-          // Direct call to user-management edge function with the invite action
+          // Use the auth.admin.createUser and admin.generateLink to ensure email is sent
           const { data, error } = await supabase.functions.invoke('user-management', {
             body: {
               action: 'invite',
@@ -131,6 +132,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
               language: 'en',
               redirect: redirectUrl,
               team: 'Employees',
+              sendEmail: true // Explicitly request to send invitation email
             },
           });
 

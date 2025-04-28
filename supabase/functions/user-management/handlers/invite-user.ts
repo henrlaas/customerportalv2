@@ -13,6 +13,7 @@ export const handleInviteUser = async (
     language?: string;
     redirect?: string;
     team?: string;
+    sendEmail?: boolean;
   },
   origin: string,
   supabaseAdmin: SupabaseClient,
@@ -26,7 +27,8 @@ export const handleInviteUser = async (
     role = "client", 
     language = "en",
     redirect,
-    team
+    team,
+    sendEmail = true
   } = body;
 
   if (!email) {
@@ -40,7 +42,7 @@ export const handleInviteUser = async (
   }
 
   try {
-    console.log(`Inviting user: ${email} with role: ${role}, firstName: ${firstName}, lastName: ${lastName}, phoneNumber: ${phoneNumber}, team: ${team}`);
+    console.log(`Inviting user: ${email} with role: ${role}, firstName: ${firstName}, lastName: ${lastName}, phoneNumber: ${phoneNumber}, team: ${team}, sendEmail: ${sendEmail}`);
     
     // Generate a random password for the new user
     const randomPassword = Math.random().toString(36).slice(-10);
@@ -90,35 +92,43 @@ export const handleInviteUser = async (
     }
 
     // Send a password reset email so the user can set their own password
-    console.log("Sending password reset email...");
-    let resetPasswordError = null;
-    if (redirect) {
-      const { error } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'recovery',
-        email,
-        options: {
-          redirectTo: redirect,
-        }
-      });
-      resetPasswordError = error;
-    } else {
-      const { error } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'recovery',
-        email
-      });
-      resetPasswordError = error;
-    }
+    if (sendEmail) {
+      console.log("Sending invitation email...");
+      let resetPasswordError = null;
+      if (redirect) {
+        const { error } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'recovery',
+          email,
+          options: {
+            redirectTo: redirect,
+          }
+        });
+        resetPasswordError = error;
+      } else {
+        const { error } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'recovery',
+          email
+        });
+        resetPasswordError = error;
+      }
 
-    if (resetPasswordError) {
-      console.error(`Error sending password reset email: ${resetPasswordError.message}`);
-      // We don't return an error here since the user was created successfully
+      if (resetPasswordError) {
+        console.error(`Error sending invitation email: ${resetPasswordError.message}`);
+        // We don't return an error here since the user was created successfully
+      } else {
+        console.log("Invitation email sent successfully");
+      }
+    } else {
+      console.log("Skipping invitation email as requested");
     }
 
     console.log("Invitation process completed successfully");
     return new Response(
       JSON.stringify({
         user: userData.user,
-        message: "User invited successfully. A password reset email has been sent."
+        message: sendEmail ? 
+          "User invited successfully. An invitation email has been sent." : 
+          "User created successfully. No invitation email was sent."
       }),
       {
         status: 200,
