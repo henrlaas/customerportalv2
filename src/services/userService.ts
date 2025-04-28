@@ -103,5 +103,37 @@ export const userService = {
       console.error('Error in resetPassword:', error);
       throw error;
     }
+  },
+  
+  inviteUser: async (email: string, userData: any): Promise<any> => {
+    try {
+      // Get the current URL for redirect
+      const siteUrl = window.location.origin;
+      const redirectUrl = `${siteUrl}/set-password`;
+      
+      const response = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'invite',
+          email: email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phoneNumber: userData.phoneNumber,
+          role: userData.role || 'employee',
+          language: userData.language || 'en',
+          redirect: redirectUrl,
+          team: userData.team || 'Employees',
+        },
+      });
+      
+      if (response.error) {
+        console.error('Error inviting user:', response.error);
+        throw new Error(response.error.message || 'Error inviting user');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error in inviteUser:', error);
+      throw error;
+    }
   }
 };

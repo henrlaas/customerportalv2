@@ -1,17 +1,11 @@
+
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { employeeService } from '@/services/employeeService';
-import { useInviteUser } from '@/hooks/useInviteUser';
+import { userService } from '@/services/userService';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentInfoStepProps {
@@ -46,8 +40,6 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     account_number: formData.account_number,
     paycheck_solution: formData.paycheck_solution || ''
   });
-
-  const inviteUserMutation = useInviteUser();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -116,9 +108,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         });
       } else {
         // Create new employee
-        // First, invite user and create auth user
+        // First, invite user and create auth user using userService.inviteUser
         const userData = {
-          email: formData.email,
           firstName: formData.first_name,
           lastName: formData.last_name,
           phoneNumber: formData.phone_number || undefined,
@@ -127,7 +118,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           team: 'Employees'
         };
         
-        const result = await inviteUserMutation.mutateAsync(userData);
+        // Use the userService.inviteUser method directly
+        const result = await userService.inviteUser(formData.email, userData);
         
         if (!result || !result.user) {
           throw new Error('Failed to create user');
