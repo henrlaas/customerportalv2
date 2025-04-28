@@ -14,6 +14,7 @@ BEGIN
       'address', e.address,
       'zipcode', e.zipcode,
       'country', e.country,
+      'city', e.city,
       'employee_type', e.employee_type,
       'hourly_salary', e.hourly_salary,
       'employed_percentage', e.employed_percentage,
