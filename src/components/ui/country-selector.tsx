@@ -71,20 +71,17 @@ export function CountrySelector({
     }
   }, [value, countries, onValueChange]);
 
-  // Render the country display (with null safety)
+  // Render the country display (with null safety) - removed flag
   const renderCountryDisplay = () => {
     if (!selectedCountry) {
       return <span className="text-muted-foreground">{placeholder}</span>;
     }
     return (
-      <div className="flex items-center gap-2">
-        <span className="text-lg" aria-hidden="true">{selectedCountry.flag}</span>
-        <span className="flex-1 truncate">{selectedCountry.name}</span>
-      </div>
+      <span className="flex-1 truncate">{selectedCountry.name}</span>
     );
   };
 
-  // For readonly display, just show a simple view
+  // For readonly display, just show a simple view without flag
   if (readOnly) {
     return (
       <div className={cn(
