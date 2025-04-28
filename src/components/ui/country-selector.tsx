@@ -57,11 +57,13 @@ export function CountrySelector({
     }
   }, [value, onValueChange]);
 
-  // Create a presentational component for the selected country
-  const SelectedCountryDisplay = ({ country, className }: { country: Country | null, className?: string }) => {
-    if (!country) return <span className={className}>{placeholder}</span>;
+  // Create a display component for the selected country
+  const CountryDisplay = ({ country }: { country: Country | null }) => {
+    if (!country) {
+      return <span className="text-muted-foreground">{placeholder}</span>;
+    }
     return (
-      <div className={cn("flex items-center gap-2", className)}>
+      <div className="flex items-center gap-2">
         <span className="text-lg" aria-hidden="true">{country.flag}</span>
         <span className="flex-1 truncate">{country.name}</span>
       </div>
@@ -77,7 +79,8 @@ export function CountrySelector({
         error && "border-destructive",
         className
       )}>
-        <SelectedCountryDisplay country={selectedCountry} />
+        <CountryDisplay country={selectedCountry} />
+        {error && <p className="text-sm text-destructive mt-1">{error}</p>}
       </div>
     );
   }
@@ -96,7 +99,7 @@ export function CountrySelector({
               error && "border-destructive",
             )}
           >
-            <SelectedCountryDisplay country={selectedCountry} />
+            <CountryDisplay country={selectedCountry} />
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
