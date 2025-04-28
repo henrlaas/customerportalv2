@@ -43,12 +43,13 @@ export function CountrySelector({
   const [open, setOpen] = React.useState(false);
   const [selectedCountry, setSelectedCountry] = React.useState<Country | null>(null);
   
-  // Safety check to ensure COUNTRIES is always a valid array
+  // Create a safe copy of the countries array
   const countries = React.useMemo(() => {
+    // Make sure COUNTRIES is an array and create a copy to avoid mutation
     return Array.isArray(COUNTRIES) ? [...COUNTRIES] : [];
   }, []);
 
-  // Set default country on mount and when value changes
+  // Set default country on mount or when value changes
   React.useEffect(() => {
     // If value is provided, try to find the matching country
     if (value) {
@@ -70,7 +71,7 @@ export function CountrySelector({
     }
   }, [value, countries, onValueChange]);
 
-  // Safely render the country display
+  // Render the country display (with null safety)
   const renderCountryDisplay = () => {
     if (!selectedCountry) {
       return <span className="text-muted-foreground">{placeholder}</span>;
@@ -83,7 +84,7 @@ export function CountrySelector({
     );
   };
 
-  // If readOnly, just show a non-interactive display
+  // For readonly display, just show a simple view
   if (readOnly) {
     return (
       <div className={cn(
@@ -117,37 +118,43 @@ export function CountrySelector({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
+          {/* This is where the error likely occurs: we need to ensure we provide valid data */}
           <Command>
             <CommandInput placeholder="Search country..." />
             <CommandEmpty>No country found.</CommandEmpty>
-            <CommandGroup>
-              {countries.map((country) => (
-                <CommandItem
-                  key={country.code}
-                  value={country.name}
-                  onSelect={() => {
-                    onValueChange(country.name);
-                    setSelectedCountry(country);
-                    setOpen(false);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg" aria-hidden="true">
-                      {country.flag}
-                    </span>
-                    <span>{country.name}</span>
-                  </div>
-                  <Check
-                    className={cn(
-                      "ml-auto h-4 w-4",
-                      selectedCountry?.name === country.name
-                        ? "opacity-100"
-                        : "opacity-0"
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {/* Only render the CommandGroup if countries is a valid array with content */}
+            {countries.length > 0 ? (
+              <CommandGroup>
+                {countries.map((country) => (
+                  <CommandItem
+                    key={country.code}
+                    value={country.name}
+                    onSelect={() => {
+                      onValueChange(country.name);
+                      setSelectedCountry(country);
+                      setOpen(false);
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg" aria-hidden="true">
+                        {country.flag}
+                      </span>
+                      <span>{country.name}</span>
+                    </div>
+                    <Check
+                      className={cn(
+                        "ml-auto h-4 w-4",
+                        selectedCountry?.name === country.name
+                          ? "opacity-100"
+                          : "opacity-0"
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : (
+              <div className="py-6 text-center text-sm">No countries available.</div>
+            )}
           </Command>
         </PopoverContent>
       </Popover>
