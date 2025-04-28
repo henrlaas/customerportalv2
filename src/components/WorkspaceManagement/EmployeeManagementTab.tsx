@@ -85,7 +85,6 @@ export function EmployeeManagementTab() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
-              <TableHead>City</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Hourly Rate</TableHead>
               <TableHead>Employment %</TableHead>
@@ -102,7 +101,6 @@ export function EmployeeManagementTab() {
                 <TableCell>{`${employee.first_name || ''} ${employee.last_name || ''}`}</TableCell>
                 <TableCell>{employee.email}</TableCell>
                 <TableCell>{employee.phone_number || '-'}</TableCell>
-                <TableCell>{employee.city || '-'}</TableCell>
                 <TableCell>{employee.employee_type}</TableCell>
                 <TableCell>{employee.hourly_salary} NOK</TableCell>
                 <TableCell>{employee.employed_percentage}%</TableCell>
