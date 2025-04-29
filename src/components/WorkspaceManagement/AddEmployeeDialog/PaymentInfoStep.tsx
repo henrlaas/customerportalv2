@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -128,26 +129,39 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         paycheck_solution: updatedFormData.paycheck_solution || ''
       });
       
-      // Create or update employee record with userId explicitly passed
-      const employeeData = {
-        address: updatedFormData.address,
-        zipcode: updatedFormData.zipcode,
-        country: updatedFormData.country,
-        city: updatedFormData.city,
-        employee_type: updatedFormData.employee_type,
-        hourly_salary: updatedFormData.hourly_salary,
-        employed_percentage: updatedFormData.employed_percentage,
-        social_security_number: updatedFormData.social_security_number,
-        account_number: updatedFormData.account_number,
-        paycheck_solution: updatedFormData.paycheck_solution || '',
-        id: userId // Add ID explicitly for update scenario
-      };
-      
-      await employeeService.createOrUpdateEmployee(employeeData, userId);
+      if (isEdit && employeeId) {
+        // Update existing employee record
+        await employeeService.updateEmployee(employeeId, {
+          address: updatedFormData.address,
+          zipcode: updatedFormData.zipcode,
+          country: updatedFormData.country,
+          city: updatedFormData.city,
+          employee_type: updatedFormData.employee_type,
+          hourly_salary: updatedFormData.hourly_salary,
+          employed_percentage: updatedFormData.employed_percentage,
+          social_security_number: updatedFormData.social_security_number,
+          account_number: updatedFormData.account_number,
+          paycheck_solution: updatedFormData.paycheck_solution || '',
+        });
+      } else {
+        // Create new employee record - using createEmployee instead of createOrUpdateEmployee
+        await employeeService.createEmployee({
+          address: updatedFormData.address,
+          zipcode: updatedFormData.zipcode,
+          country: updatedFormData.country,
+          city: updatedFormData.city,
+          employee_type: updatedFormData.employee_type,
+          hourly_salary: updatedFormData.hourly_salary,
+          employed_percentage: updatedFormData.employed_percentage,
+          social_security_number: updatedFormData.social_security_number,
+          account_number: updatedFormData.account_number,
+          paycheck_solution: updatedFormData.paycheck_solution || '',
+        }, userId);
+      }
       
       toast({
-        title: "Employee Added",
-        description: `${updatedFormData.first_name} ${updatedFormData.last_name} has been added successfully. An invitation email has been sent.`,
+        title: isEdit ? "Employee Updated" : "Employee Added",
+        description: `${updatedFormData.first_name} ${updatedFormData.last_name} has been ${isEdit ? "updated" : "added"} successfully. ${!isEdit ? "An invitation email has been sent." : ""}`,
       });
       
       setIsSubmitting(false);
