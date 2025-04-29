@@ -1,11 +1,9 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import FeaturebaseWidget from '@/components/Featurebase/FeaturebaseWidget';
 
 // Types for our dashboard data
 interface DashboardCounts {
@@ -191,9 +189,6 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-      
-      {/* Include the Featurebase Widget only on the dashboard page */}
-      <FeaturebaseWidget />
     </>
   );
 };
