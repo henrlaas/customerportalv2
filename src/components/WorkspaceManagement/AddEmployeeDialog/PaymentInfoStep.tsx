@@ -42,7 +42,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
   
   const inviteUserMutation = useInviteUser({
     onSuccess: (data) => {
-      // Fix: Extract the user ID properly from the response
+      // Extract the user ID properly from the response
       if (data && data.user && data.user.id) {
         console.log("User invitation successful, creating employee record with user ID:", data.user.id);
         handleCreateEmployee(data.user.id);
@@ -100,7 +100,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
       };
       
       console.log("Creating employee record with data:", {
-        id: userId,
+        userId, // Log the userId explicitly
         address: updatedFormData.address,
         zipcode: updatedFormData.zipcode,
         country: updatedFormData.country,
@@ -113,7 +113,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         paycheck_solution: updatedFormData.paycheck_solution || ''
       });
       
-      // Create employee record
+      // Create employee record with userId explicitly passed
       const employeeData = {
         address: updatedFormData.address,
         zipcode: updatedFormData.zipcode,

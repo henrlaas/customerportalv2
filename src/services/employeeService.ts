@@ -52,14 +52,21 @@ export const employeeService = {
   },
 
   async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
-    // Insert into the employees table with the proper type definitions
+    console.log("Creating employee with ID:", userId, "and data:", employeeData);
+    
+    // Insert into the employees table with the proper type definitions and explicitly set the id
     const { data, error } = await supabase
       .from('employees')
       .insert([{ ...employeeData, id: userId }])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error creating employee:", error);
+      throw error;
+    }
+    
+    console.log("Employee created successfully:", data);
     return data as Employee;
   },
 

@@ -174,6 +174,9 @@ export const handleInviteUser = async (
       }
 
       userData = newUserData;
+      
+      // Log the created user data to debug
+      console.log("Created new user with data:", JSON.stringify(newUserData));
 
       // If user was created successfully, update their profile
       if (newUserData.user && newUserData.user.id) {
@@ -226,18 +229,23 @@ export const handleInviteUser = async (
     }
 
     console.log("Invitation process completed successfully");
+    // Ensure user ID is properly returned in the response
+    const responseData = {
+      user: userData.user,
+      isNewUser,
+      message: sendEmail ? 
+        isNewUser ? 
+          "User invited successfully. An invitation email has been sent." : 
+          "Existing user updated. A password reset email has been sent." 
+        : isNewUser ?
+          "User created successfully. No invitation email was sent." :
+          "User updated successfully. No email was sent."
+    };
+    
+    console.log("Returning response with user data:", JSON.stringify(responseData));
+    
     return new Response(
-      JSON.stringify({
-        user: userData.user,
-        isNewUser: isNewUser,
-        message: sendEmail ? 
-          isNewUser ? 
-            "User invited successfully. An invitation email has been sent." : 
-            "Existing user updated. A password reset email has been sent." 
-          : isNewUser ?
-            "User created successfully. No invitation email was sent." :
-            "User updated successfully. No email was sent."
-      }),
+      JSON.stringify(responseData),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
