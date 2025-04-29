@@ -76,6 +76,12 @@ interface TaskWithId {
 // Define a more specific type for Supabase result which could be an array or object
 type SupabaseResult = TaskWithId | TaskWithId[] | null;
 
+// Define a type for the insert result from insertWithUser
+type InsertResult = {
+  data: TaskWithId | TaskWithId[] | null;
+  error: any;
+};
+
 export const TaskForm: React.FC<TaskFormProps> = ({
   onSuccess,
   taskId,
@@ -176,7 +182,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         }
       } else {
         // Fix for the type error - explicitly handle the response type
-        const { data: result, error } = await insertWithUser('tasks', taskData);
+        const { data: result, error }: InsertResult = await insertWithUser('tasks', taskData);
         if (error) throw error;
         
         // Handle potential null result
@@ -187,10 +193,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         // Safely handle the result with proper type checking
         if (Array.isArray(result)) {
           // If result is an array, get the first item's id
-          if (result.length > 0 && result[0] && typeof result[0] === 'object' && 'id' in result[0]) {
+          if (result.length > 0 && result[0] && 'id' in result[0]) {
             createdTaskId = result[0].id;
           }
-        } else if (result && typeof result === 'object' && 'id' in result) {
+        } else if (result && 'id' in result) {
           // If result is a direct object with id
           createdTaskId = result.id;
         }
