@@ -4,7 +4,10 @@ import { useEffect } from 'react';
 
 declare global {
   interface Window {
-    Featurebase: (...args: any[]) => void;
+    Featurebase: {
+      (...args: any[]): void;
+      q?: any[];
+    }
   }
 }
 
@@ -28,7 +31,7 @@ const FeaturebaseWidget = () => {
       if (!window.Featurebase) {
         window.Featurebase = function() {
           (window.Featurebase.q = window.Featurebase.q || []).push(arguments);
-        };
+        } as any;
         loadFeaturebaseScript();
       }
 
