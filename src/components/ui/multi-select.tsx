@@ -181,24 +181,38 @@ export interface MultiSelectItemProps {
 
 export const MultiSelectItem = React.forwardRef<HTMLDivElement, MultiSelectItemProps>(
   ({ value, children, className, disabled, onSelect, ...props }, ref) => {
+    // Create a handler for click events 
     const handleClick = () => {
       if (onSelect) {
         onSelect(value);
       }
     }
 
+    // The main issue is here: we need to properly handle both keyboard and mouse selection
     return (
       <CommandItem
         ref={ref}
         value={value}
-        onSelect={handleClick}
-        {...props}
+        // This needs to call our handler directly with the value, not pass the event
+        onSelect={() => {
+          if (onSelect) {
+            onSelect(value);
+          }
+        }}
+        onClick={(e) => {
+          // Prevent default behavior
+          e.preventDefault();
+          e.stopPropagation();
+          // Explicitly call our handler
+          handleClick();
+        }}
         className={cn(
           "cursor-pointer",
           disabled && "cursor-not-allowed opacity-50",
           className
         )}
         disabled={disabled}
+        {...props}
       >
         {children}
       </CommandItem>
