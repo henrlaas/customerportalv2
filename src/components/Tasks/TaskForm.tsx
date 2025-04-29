@@ -91,27 +91,37 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Fetch current assignees if editing
   const [currentAssignees, setCurrentAssignees] = React.useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = React.useState<string>('');
   
   useEffect(() => {
     const fetchAssignees = async () => {
       if (!isEditing || !taskId) return;
       
       try {
+        console.log('Fetching assignees for task:', taskId);
         // Fetch assignees from task_assignees table
         const { data, error } = await supabase
           .from('task_assignees')
           .select('user_id')
           .eq('task_id', taskId);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching task assignees:', error);
+          throw error;
+        }
         
         if (data && data.length > 0) {
           const assigneeIds = data.map(a => a.user_id);
+          console.log('Found assignees:', assigneeIds);
           setCurrentAssignees(assigneeIds);
         } 
         // For backward compatibility, check the legacy assigned_to field
         else if (initialData?.assigned_to) {
+          console.log('Using legacy assigned_to:', initialData.assigned_to);
           setCurrentAssignees([initialData.assigned_to]);
+        } else {
+          console.log('No assignees found for task');
+          setCurrentAssignees([]);
         }
       } catch (error) {
         console.error('Error fetching task assignees:', error);
@@ -140,6 +150,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   // Update form values when currentAssignees changes
   useEffect(() => {
     if (currentAssignees.length > 0) {
+      console.log('Setting assignees in form:', currentAssignees);
       form.setValue('assignees', currentAssignees);
     }
   }, [currentAssignees, form]);
@@ -147,6 +158,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   // Create task mutation
   const createTaskMutation = useMutation({
     mutationFn: async (data: z.infer<typeof taskSchema>) => {
+      console.log('Submitting task with data:', data);
       // Prepare the data for insertion
       const taskData = {
         title: data.title,
@@ -165,6 +177,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       
       // Create or update the task
       if (isEditing && taskId) {
+        console.log('Updating existing task:', taskId);
         const { data: result, error } = await supabase
           .from('tasks')
           .update(taskData)
@@ -172,16 +185,23 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating task:', error);
+          throw error;
+        }
         if (result) {
           createdTaskId = result.id;
         } else {
           throw new Error("Failed to update task: No result returned");
         }
       } else {
+        console.log('Creating new task');
         // Fix for the type error - explicitly handle the response type
         const { data: result, error }: InsertResult = await insertWithUser('tasks', taskData);
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating task:', error);
+          throw error;
+        }
         
         // Handle potential null result
         if (!result) {
@@ -206,14 +226,20 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       
       // Handle assignees
       if (createdTaskId && data.assignees && data.assignees.length > 0) {
+        console.log('Handling assignees for task:', createdTaskId, data.assignees);
+        
         // If editing, remove existing assignees first
         if (isEditing) {
+          console.log('Removing existing assignees');
           const { error: deleteError } = await supabase
             .from('task_assignees')
             .delete()
             .eq('task_id', createdTaskId);
             
-          if (deleteError) throw deleteError;
+          if (deleteError) {
+            console.error('Error deleting existing assignees:', deleteError);
+            throw deleteError;
+          }
         }
         
         // Add new assignees - process each assignee in the array
@@ -224,11 +250,15 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         
         // Only proceed if we have assignees to insert
         if (assigneeInserts.length > 0) {
+          console.log('Inserting new assignees:', assigneeInserts);
           const { error: insertError } = await supabase
             .from('task_assignees')
             .insert(assigneeInserts);
             
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error('Error inserting assignees:', insertError);
+            throw insertError;
+          }
         }
       }
       
@@ -252,11 +282,20 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Submit handler
   const onSubmit = (data: z.infer<typeof taskSchema>) => {
+    console.log('Form submitted with values:', data);
     createTaskMutation.mutate(data);
   };
 
   // Watch the related type to show/hide campaign selector
   const relatedType = form.watch('related_type');
+
+  // Filter profiles based on search query
+  const filteredProfiles = searchQuery 
+    ? profiles.filter(profile => {
+        const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.toLowerCase();
+        return fullName.includes(searchQuery.toLowerCase());
+      })
+    : profiles;
 
   // Helper function to format names
   const formatName = (contact: Contact) => {
@@ -380,11 +419,28 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                     onValueChange={field.onChange}
                     placeholder="Select assignees"
                   >
-                    {profiles.map((profile) => (
-                      <MultiSelectItem key={profile.id} value={profile.id}>
-                        {formatName(profile)}
-                      </MultiSelectItem>
-                    ))}
+                    <MultiSelectTrigger className="w-full">
+                      <MultiSelectValue placeholder="Select assignees" />
+                    </MultiSelectTrigger>
+                    <MultiSelectContent>
+                      <Input
+                        placeholder="Search assignees..."
+                        className="mb-2 mt-1 mx-1"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                      {filteredProfiles.length === 0 ? (
+                        <div className="p-2 text-center text-sm text-muted-foreground">
+                          No results found
+                        </div>
+                      ) : (
+                        filteredProfiles.map((profile) => (
+                          <MultiSelectItem key={profile.id} value={profile.id}>
+                            {formatName(profile)}
+                          </MultiSelectItem>
+                        ))
+                      )}
+                    </MultiSelectContent>
                   </MultiSelect>
                 </FormControl>
                 <FormMessage />
