@@ -67,6 +67,12 @@ const taskSchema = z.object({
   related_type: z.enum(['none', 'campaign', 'project']).default('none'),
 });
 
+// Define a type for task with ID for type safety
+interface TaskWithId {
+  id: string;
+  [key: string]: any;
+}
+
 export const TaskForm: React.FC<TaskFormProps> = ({
   onSuccess,
   taskId,
@@ -166,7 +172,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           throw new Error("Failed to update task: No result returned");
         }
       } else {
-        // Fix for the type error - explicitly define and handle the response type
+        // Fix for the type error - explicitly handle the response type
         const { data: result, error } = await insertWithUser('tasks', taskData);
         if (error) throw error;
         
@@ -174,9 +180,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         if (!result) {
           throw new Error("Failed to create task: No result returned");
         }
-        
-        // Define a type for checking array results
-        type TaskWithId = { id: string; [key: string]: any };
         
         // Safely handle the result with proper type checking
         if (Array.isArray(result)) {
