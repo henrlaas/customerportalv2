@@ -72,9 +72,9 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
       const isNewUser = data.isNewUser !== false;
       toast({
         title: isNewUser ? 'User invited' : 'User updated',
-        description: isNewUser ? 
+        description: data.message || (isNewUser ? 
           'An invitation has been sent to the user.' : 
-          'The user has been updated and a reset email has been sent.',
+          'The user has been updated and a reset email has been sent.'),
       });
       if (onSuccess) onSuccess(data);
     },

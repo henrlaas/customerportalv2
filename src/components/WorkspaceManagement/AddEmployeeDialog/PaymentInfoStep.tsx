@@ -42,8 +42,19 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
   
   const inviteUserMutation = useInviteUser({
     onSuccess: (data) => {
-      console.log("User invitation successful, creating employee record with user ID:", data.user.id);
-      handleCreateEmployee(data.user.id);
+      // Fix: Extract the user ID properly from the response
+      if (data && data.user && data.user.id) {
+        console.log("User invitation successful, creating employee record with user ID:", data.user.id);
+        handleCreateEmployee(data.user.id);
+      } else {
+        console.error("Failed to get user ID from invitation response:", data);
+        setIsSubmitting(false);
+        toast({
+          title: "Error",
+          description: "Failed to create employee: Invalid user ID in response",
+          variant: "destructive",
+        });
+      }
     },
     onError: (error) => {
       setIsSubmitting(false);
@@ -104,7 +115,6 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
       
       // Create employee record
       const employeeData = {
-        id: userId,
         address: updatedFormData.address,
         zipcode: updatedFormData.zipcode,
         country: updatedFormData.country,
