@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { X } from "lucide-react"
 
@@ -140,7 +139,10 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
             ref={inputRef}
             value={inputValue}
             onValueChange={setInputValue}
-            onBlur={() => setOpen(false)}
+            onBlur={() => {
+              // Delay closing to allow item clicks to register
+              setTimeout(() => setOpen(false), 200);
+            }}
             onFocus={() => setOpen(true)}
             placeholder={selected.length === 0 ? placeholder : undefined}
             className="flex-1 outline-none placeholder:text-muted-foreground min-w-[120px] bg-transparent"
@@ -153,9 +155,15 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                 <CommandEmpty>No results found.</CommandEmpty>
                 <CommandGroup>
                   {React.Children.map(children, (child) => {
-                    if (React.isValidElement<MultiSelectItemProps>(child) && child.type === MultiSelectItem) {
-                      // Only pass the handleSelect function to MultiSelectItem components
-                      return React.cloneElement(child, {
+                    if (React.isValidElement(child) && 'value' in child.props) {
+                      // Filter items based on input if there's search text
+                      if (inputValue && 
+                          child.props.children && 
+                          !String(child.props.children).toLowerCase().includes(inputValue.toLowerCase())) {
+                        return null;
+                      }
+                      
+                      return React.cloneElement(child as React.ReactElement<MultiSelectItemProps>, {
                         onSelect: handleSelect,
                       });
                     }
@@ -182,36 +190,25 @@ export interface MultiSelectItemProps {
 
 export const MultiSelectItem = React.forwardRef<HTMLDivElement, MultiSelectItemProps>(
   ({ value, children, className, disabled, onSelect, ...props }, ref) => {
-    // Handle selection via both keyboard and click events
+    // This function is called by CommandItem's onSelect
     const handleSelect = (currentValue: string) => {
       console.log("MultiSelectItem onSelect called with:", currentValue);
-      if (!disabled && onSelect && currentValue === value) {
-        onSelect(value);
-      }
-    };
-
-    // Explicit click handler to ensure selection works
-    const handleClick = (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log("MultiSelectItem click handler called for:", value);
       if (!disabled && onSelect) {
         onSelect(value);
       }
-    };
+    }
 
     return (
       <CommandItem
         ref={ref}
         value={value}
+        disabled={disabled}
         onSelect={handleSelect}
-        onClick={handleClick}
         className={cn(
           "cursor-pointer",
           disabled && "cursor-not-allowed opacity-50",
           className
         )}
-        disabled={disabled}
         {...props}
       >
         {children}
