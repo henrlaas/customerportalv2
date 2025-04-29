@@ -168,7 +168,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       } else {
         const { data: result, error } = await insertWithUser('tasks', taskData);
         if (error) throw error;
-        createdTaskId = result?.[0]?.id;
+        
+        // Safely handle potentially null result
+        if (result && result.length > 0) {
+          createdTaskId = result[0]?.id;
+        }
         
         if (!createdTaskId) {
           throw new Error("Failed to create task: No ID returned");
