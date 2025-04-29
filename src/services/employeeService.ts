@@ -51,6 +51,43 @@ export const employeeService = {
     return parsedEmployees;
   },
 
+  async employeeExists(userId: string): Promise<boolean> {
+    console.log("Checking if employee exists with ID:", userId);
+    
+    const { data, error } = await supabase
+      .from('employees')
+      .select('id')
+      .eq('id', userId)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') { // PGRST116 means "no rows returned", which is not an error for us
+      console.error("Error checking if employee exists:", error);
+      throw error;
+    }
+    
+    return !!data;
+  },
+
+  async createOrUpdateEmployee(employeeData: Omit<Employee, 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
+    console.log("Creating or updating employee with ID:", userId);
+    
+    try {
+      // First check if employee exists
+      const exists = await this.employeeExists(userId);
+      
+      if (exists) {
+        console.log("Employee exists, updating record for ID:", userId);
+        return this.updateEmployee(userId, employeeData);
+      } else {
+        console.log("Employee doesn't exist, creating new record with ID:", userId);
+        return this.createEmployee(employeeData, userId);
+      }
+    } catch (error) {
+      console.error("Error in createOrUpdateEmployee:", error);
+      throw error;
+    }
+  },
+
   async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
     console.log("Creating employee with ID:", userId, "and data:", employeeData);
     
@@ -71,6 +108,8 @@ export const employeeService = {
   },
 
   async updateEmployee(employeeId: string, employeeData: Partial<Employee>): Promise<Employee> {
+    console.log("Updating employee with ID:", employeeId);
+    
     // Update the employee record in the database
     const { data, error } = await supabase
       .from('employees')
@@ -79,7 +118,12 @@ export const employeeService = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error updating employee:", error);
+      throw error;
+    }
+    
+    console.log("Employee updated successfully:", data);
     return data as Employee;
   },
 

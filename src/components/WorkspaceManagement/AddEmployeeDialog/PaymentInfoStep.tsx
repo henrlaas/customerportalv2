@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -54,6 +53,9 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           // Nested user object (structure seen in logs)
           userId = data.user.user.id;
         }
+      } else if (data && data.userId) {
+        // Use the userId field directly if available
+        userId = data.userId;
       }
       
       if (userId) {
@@ -126,7 +128,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         paycheck_solution: updatedFormData.paycheck_solution || ''
       });
       
-      // Create employee record with userId explicitly passed
+      // Create or update employee record with userId explicitly passed
       const employeeData = {
         address: updatedFormData.address,
         zipcode: updatedFormData.zipcode,
@@ -137,10 +139,11 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         employed_percentage: updatedFormData.employed_percentage,
         social_security_number: updatedFormData.social_security_number,
         account_number: updatedFormData.account_number,
-        paycheck_solution: updatedFormData.paycheck_solution || ''
+        paycheck_solution: updatedFormData.paycheck_solution || '',
+        id: userId // Add ID explicitly for update scenario
       };
       
-      await employeeService.createEmployee(employeeData, userId);
+      await employeeService.createOrUpdateEmployee(employeeData, userId);
       
       toast({
         title: "Employee Added",
