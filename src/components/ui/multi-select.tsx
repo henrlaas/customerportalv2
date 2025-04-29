@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { X } from "lucide-react"
 
@@ -44,6 +45,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
     // Handle item selection
     const handleSelect = React.useCallback(
       (itemValue: string) => {
+        console.log("Selection triggered for:", itemValue)
         setInputValue("")
 
         if (selected.includes(itemValue)) {
@@ -180,18 +182,30 @@ export interface MultiSelectItemProps {
 
 export const MultiSelectItem = React.forwardRef<HTMLDivElement, MultiSelectItemProps>(
   ({ value, children, className, disabled, onSelect, ...props }, ref) => {
-    const handleSelection = React.useCallback(() => {
+    // Handle selection via both keyboard and click events
+    const handleSelect = (currentValue: string) => {
+      console.log("MultiSelectItem onSelect called with:", currentValue);
+      if (!disabled && onSelect && currentValue === value) {
+        onSelect(value);
+      }
+    };
+
+    // Explicit click handler to ensure selection works
+    const handleClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("MultiSelectItem click handler called for:", value);
       if (!disabled && onSelect) {
         onSelect(value);
       }
-    }, [disabled, onSelect, value]);
+    };
 
     return (
       <CommandItem
         ref={ref}
         value={value}
-        onSelect={handleSelection}
-        onClick={() => handleSelection()}
+        onSelect={handleSelect}
+        onClick={handleClick}
         className={cn(
           "cursor-pointer",
           disabled && "cursor-not-allowed opacity-50",

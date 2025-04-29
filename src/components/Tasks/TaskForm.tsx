@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -434,7 +433,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                     placeholder="Select assignees"
                   >
                     {filteredProfiles.map((profile) => (
-                      <MultiSelectItem key={profile.id} value={profile.id}>
+                      <MultiSelectItem 
+                        key={profile.id} 
+                        value={profile.id}
+                      >
                         {formatName(profile)}
                       </MultiSelectItem>
                     ))}
