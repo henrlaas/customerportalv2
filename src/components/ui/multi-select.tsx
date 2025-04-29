@@ -149,8 +149,8 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                 <CommandEmpty>No results found.</CommandEmpty>
                 <CommandGroup>
                   {React.Children.map(children, (child) => {
-                    if (React.isValidElement(child)) {
-                      // Pass handleSelect function to each child item
+                    if (React.isValidElement<MultiSelectItemProps>(child) && child.type === MultiSelectItem) {
+                      // Only pass the handleSelect function to MultiSelectItem components
                       return React.cloneElement(child, {
                         onSelect: handleSelect,
                       });
