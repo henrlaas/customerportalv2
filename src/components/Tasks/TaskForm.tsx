@@ -147,10 +147,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         related_type: data.related_type === 'none' ? null : data.related_type,
       };
       
-      let taskId = isEditing ? taskId : null;
+      // Initialize a variable to store task ID
+      let createdTaskId: string | null = null;
       
       // Create or update the task
-      if (isEditing) {
+      if (isEditing && taskId) {
         const { data: result, error } = await supabase
           .from('tasks')
           .update(taskData)
@@ -159,28 +160,36 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           .single();
         
         if (error) throw error;
-        taskId = result.id;
+        if (result) {
+          createdTaskId = result.id;
+        } else {
+          throw new Error("Failed to update task: No result returned");
+        }
       } else {
         const { data: result, error } = await insertWithUser('tasks', taskData);
         if (error) throw error;
-        taskId = result[0].id;
+        createdTaskId = result?.[0]?.id;
+        
+        if (!createdTaskId) {
+          throw new Error("Failed to create task: No ID returned");
+        }
       }
       
       // Handle assignees
-      if (taskId && data.assignees && data.assignees.length > 0) {
+      if (createdTaskId && data.assignees && data.assignees.length > 0) {
         // If editing, remove existing assignees first
         if (isEditing) {
           const { error: deleteError } = await supabase
             .from('task_assignees')
             .delete()
-            .eq('task_id', taskId);
+            .eq('task_id', createdTaskId);
             
           if (deleteError) throw deleteError;
         }
         
         // Add new assignees
         const assigneeInserts = data.assignees.map(userId => ({
-          task_id: taskId as string,
+          task_id: createdTaskId as string,
           user_id: userId,
         }));
         
@@ -191,7 +200,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         if (insertError) throw insertError;
       }
       
-      return taskId;
+      return createdTaskId;
     },
     onSuccess: () => {
       toast({

@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { X } from "lucide-react"
 import { Command as CommandPrimitive } from "cmdk"
@@ -78,6 +79,22 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
       [inputValue, selected, handleValueChange]
     )
 
+    // Helper function to find the child component with matching value
+    const findChildByValue = (value: string) => {
+      return React.Children.toArray(children).find(
+        (child) => 
+          React.isValidElement(child) && 
+          'value' in child.props && 
+          child.props.value === value
+      )
+    }
+
+    // Helper function to get the display text for a value
+    const getDisplayText = (value: string) => {
+      const child = findChildByValue(value)
+      return React.isValidElement(child) ? child.props.children : value
+    }
+
     return (
       <Command
         ref={ref}
@@ -95,13 +112,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
             <>
               {selected.map((item) => (
                 <Badge key={item} variant="secondary" className="rounded-sm px-1 font-normal">
-                  {/* Find the child with matching value and get its content */}
-                  {React.Children.toArray(children).find(
-                    (child) => 
-                      React.isValidElement(child) && 
-                      'value' in child.props && 
-                      child.props.value === item
-                  )?.props.children || item}
+                  {getDisplayText(item)}
                   <button
                     type="button"
                     className="ml-1 rounded-sm opacity-50 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
