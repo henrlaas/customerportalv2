@@ -73,9 +73,6 @@ interface TaskWithId {
   [key: string]: any;
 }
 
-// Define a more specific type for Supabase result which could be an array or object
-type SupabaseResult = TaskWithId | TaskWithId[] | null;
-
 // Define a type for the insert result from insertWithUser
 type InsertResult = {
   data: TaskWithId | TaskWithId[] | null;
@@ -109,7 +106,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         if (error) throw error;
         
         if (data && data.length > 0) {
-          setCurrentAssignees(data.map(a => a.user_id));
+          const assigneeIds = data.map(a => a.user_id);
+          setCurrentAssignees(assigneeIds);
         } 
         // For backward compatibility, check the legacy assigned_to field
         else if (initialData?.assigned_to) {
