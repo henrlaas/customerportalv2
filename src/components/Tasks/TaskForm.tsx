@@ -302,6 +302,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     return `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown User';
   };
 
+  // Helper function to get profile by ID
+  const getProfileById = (id: string): Contact | undefined => {
+    return profiles.find(profile => profile.id === id);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -417,9 +422,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   <MultiSelect
                     value={field.value || []}
                     onValueChange={field.onChange}
-                    placeholder="Select assignees"
+                    className="w-full"
                   >
-                    <MultiSelectTrigger className="w-full">
+                    <MultiSelectTrigger>
                       <MultiSelectValue placeholder="Select assignees" />
                     </MultiSelectTrigger>
                     <MultiSelectContent>

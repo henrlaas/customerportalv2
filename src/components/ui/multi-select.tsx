@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { X } from "lucide-react"
 import { Command as CommandPrimitive } from "cmdk"
@@ -15,11 +14,11 @@ import {
 import { cn } from "@/lib/utils"
 
 export interface MultiSelectProps {
-  placeholder?: string
-  value?: string[]
-  onValueChange?: (value: string[]) => void
-  children?: React.ReactNode
-  className?: string
+  placeholder?: string;
+  value?: string[];
+  onValueChange?: (value: string[]) => void;
+  children?: React.ReactNode;
+  className?: string;
 }
 
 export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
@@ -103,6 +102,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
         ref={ref}
         onKeyDown={handleKeyDown}
         className={cn("overflow-visible bg-transparent", className)}
+        onSelect={handleSelect}
       >
         <div
           className="group border border-input px-3 py-2 text-sm rounded-md focus-within:ring-1 focus-within:ring-ring flex flex-wrap gap-1"
@@ -161,10 +161,10 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
 MultiSelect.displayName = "MultiSelect"
 
 export interface MultiSelectItemProps {
-  value: string
-  children?: React.ReactNode
-  className?: string
-  disabled?: boolean
+  value: string;
+  children?: React.ReactNode;
+  className?: string;
+  disabled?: boolean;
 }
 
 export const MultiSelectItem = React.forwardRef<HTMLDivElement, MultiSelectItemProps>(
@@ -173,26 +173,14 @@ export const MultiSelectItem = React.forwardRef<HTMLDivElement, MultiSelectItemP
       <CommandItem
         ref={ref}
         value={value}
-        onSelect={() => {}}
+        onSelect={value}
         {...props}
         className={cn(
           "cursor-pointer",
           disabled && "cursor-not-allowed opacity-50",
           className
         )}
-        onMouseDown={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          if (!disabled) {
-            const commandEl = e.currentTarget.closest('[cmdk-root=""]') as HTMLElement & {
-              value: string[]
-              onSelect: (value: string) => void
-            }
-            if (commandEl) {
-              commandEl.onSelect?.(value)
-            }
-          }
-        }}
+        disabled={disabled}
       >
         {children}
       </CommandItem>
@@ -200,16 +188,6 @@ export const MultiSelectItem = React.forwardRef<HTMLDivElement, MultiSelectItemP
   }
 )
 MultiSelectItem.displayName = "MultiSelectItem"
-
-// Add the onSelect handler to CommandPrimitive
-class CommandWithHandlers extends React.Component<
-  React.ComponentProps<typeof CommandPrimitive> & { onSelect?: (value: string) => void }
-> {
-  render() {
-    const { onSelect, ...props } = this.props
-    return <CommandPrimitive {...props} />
-  }
-}
 
 export const MultiSelectTrigger = React.forwardRef<
   HTMLButtonElement,
@@ -228,9 +206,11 @@ MultiSelectTrigger.displayName = "MultiSelectTrigger"
 
 export const MultiSelectValue = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("text-sm", className)} {...props} />
+  React.HTMLAttributes<HTMLDivElement> & { placeholder?: string }
+>(({ className, placeholder, ...props }, ref) => (
+  <div ref={ref} className={cn("text-sm", className)} {...props}>
+    {placeholder}
+  </div>
 ))
 MultiSelectValue.displayName = "MultiSelectValue"
 
