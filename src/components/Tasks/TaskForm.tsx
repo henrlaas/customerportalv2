@@ -175,15 +175,18 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           throw new Error("Failed to create task: No result returned");
         }
         
+        // Define a type for checking array results
+        type TaskWithId = { id: string; [key: string]: any };
+        
         // Safely handle the result with proper type checking
         if (Array.isArray(result)) {
           // If result is an array, get the first item's id
-          if (result.length > 0 && result[0] && 'id' in result[0]) {
-            createdTaskId = result[0].id as string;
+          if (result.length > 0 && typeof result[0] === 'object' && result[0] !== null && 'id' in result[0]) {
+            createdTaskId = (result[0] as TaskWithId).id;
           }
         } else if (typeof result === 'object' && result !== null && 'id' in result) {
           // If result is a direct object with id
-          createdTaskId = result.id as string;
+          createdTaskId = (result as TaskWithId).id;
         }
         
         if (!createdTaskId) {
