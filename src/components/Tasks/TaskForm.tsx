@@ -132,7 +132,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       priority: initialData?.priority || 'medium',
       status: initialData?.status || 'todo',
       due_date: initialData?.due_date || '',
-      assignees: currentAssignees,
+      assignees: [],
       campaign_id: initialData?.campaign_id || '',
       client_visible: initialData?.client_visible || false,
       related_type: initialData?.related_type || 'none',
@@ -218,17 +218,20 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           if (deleteError) throw deleteError;
         }
         
-        // Add new assignees
+        // Add new assignees - process each assignee in the array
         const assigneeInserts = data.assignees.map(userId => ({
           task_id: createdTaskId as string,
           user_id: userId,
         }));
         
-        const { error: insertError } = await supabase
-          .from('task_assignees')
-          .insert(assigneeInserts);
-          
-        if (insertError) throw insertError;
+        // Only proceed if we have assignees to insert
+        if (assigneeInserts.length > 0) {
+          const { error: insertError } = await supabase
+            .from('task_assignees')
+            .insert(assigneeInserts);
+            
+          if (insertError) throw insertError;
+        }
       }
       
       return createdTaskId;
