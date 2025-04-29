@@ -1,3 +1,4 @@
+
 import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
@@ -31,16 +32,6 @@ import { AdSetDetailsPage } from './pages/AdSetDetailsPage';
 import { useToast } from '@/components/ui/use-toast';
 import { useEffect } from 'react';
 import AdDetailsPage from '@/pages/AdDetailsPage';
-
-// Create a component to handle Featurebase script initialization
-function FeaturebaseScript() {
-  return (
-    <script
-      src="https://do.featurebase.app/js/sdk.js"
-      id="featurebase-sdk"
-    ></script>
-  );
-}
 
 // Create a component to handle bucket initialization
 function StorageInitializer() {
@@ -91,7 +82,6 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <StorageInitializer />
-            <FeaturebaseScript />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/sign-in" element={<Auth />} />
