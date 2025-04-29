@@ -169,9 +169,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         const { data: result, error } = await insertWithUser('tasks', taskData);
         if (error) throw error;
         
-        // Safely handle potentially null result
-        if (result && result.length > 0) {
-          createdTaskId = result[0]?.id;
+        // Type assertion to handle the result
+        type InsertResult = { id: string }[];
+        
+        // Safely handle potentially null result with type assertion
+        if (result && Array.isArray(result) && result.length > 0) {
+          createdTaskId = (result as InsertResult)[0]?.id;
         }
         
         if (!createdTaskId) {
