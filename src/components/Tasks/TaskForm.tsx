@@ -73,6 +73,9 @@ interface TaskWithId {
   [key: string]: any;
 }
 
+// Define a type for Supabase result which could be an array or object
+type SupabaseResult = TaskWithId | TaskWithId[] | null;
+
 export const TaskForm: React.FC<TaskFormProps> = ({
   onSuccess,
   taskId,
