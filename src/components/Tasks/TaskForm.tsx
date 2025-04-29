@@ -73,7 +73,7 @@ interface TaskWithId {
   [key: string]: any;
 }
 
-// Define a type for Supabase result which could be an array or object
+// Define a more specific type for Supabase result which could be an array or object
 type SupabaseResult = TaskWithId | TaskWithId[] | null;
 
 export const TaskForm: React.FC<TaskFormProps> = ({
@@ -187,10 +187,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         // Safely handle the result with proper type checking
         if (Array.isArray(result)) {
           // If result is an array, get the first item's id
-          if (result.length > 0 && 'id' in result[0]) {
+          if (result.length > 0 && result[0] && typeof result[0] === 'object' && 'id' in result[0]) {
             createdTaskId = result[0].id;
           }
-        } else if (typeof result === 'object' && result !== null && 'id' in result) {
+        } else if (result && typeof result === 'object' && 'id' in result) {
           // If result is a direct object with id
           createdTaskId = result.id;
         }
