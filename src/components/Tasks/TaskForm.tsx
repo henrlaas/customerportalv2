@@ -187,12 +187,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         // Safely handle the result with proper type checking
         if (Array.isArray(result)) {
           // If result is an array, get the first item's id
-          if (result.length > 0 && typeof result[0] === 'object' && result[0] !== null && 'id' in result[0]) {
-            createdTaskId = (result[0] as TaskWithId).id;
+          if (result.length > 0 && 'id' in result[0]) {
+            createdTaskId = result[0].id;
           }
         } else if (typeof result === 'object' && result !== null && 'id' in result) {
           // If result is a direct object with id
-          createdTaskId = (result as TaskWithId).id;
+          createdTaskId = result.id;
         }
         
         if (!createdTaskId) {
