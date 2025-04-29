@@ -1,6 +1,7 @@
 
 import { useEffect } from "react";
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from "@/components/ui/button";
 
 const FeaturebaseWidgets = () => {
   const { profile } = useAuth();
@@ -44,15 +45,27 @@ const FeaturebaseWidgets = () => {
     });
   }, [userName, userEmail]);
 
+  // Function to manually open the changelog popup
+  const openChangelogPopup = () => {
+    const win = window as any;
+    if (typeof win.Featurebase === "function") {
+      win.Featurebase('manually_open_changelog_popup');
+      console.log('Opening changelog popup');
+    } else {
+      console.error('Featurebase not initialized');
+    }
+  };
+
   return (
     <div className="fixed bottom-4 right-4 z-50 space-y-2">
-      <button 
-        className="bg-primary text-white px-4 py-2 rounded-md flex items-center space-x-2"
-        data-featurebase-changelog
+      <Button 
+        variant="primary"
+        className="flex items-center space-x-2"
+        onClick={openChangelogPopup}
       >
         <span>What's new</span>
         <span id="fb-update-badge"></span>
-      </button>
+      </Button>
       
       {/* Feedback widget will use its floating button due to placement: "left" */}
     </div>
