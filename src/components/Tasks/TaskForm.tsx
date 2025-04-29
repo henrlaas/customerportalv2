@@ -27,10 +27,7 @@ import {
 } from '@/components/ui/select';
 import {
   MultiSelect,
-  MultiSelectContent,
   MultiSelectItem,
-  MultiSelectTrigger,
-  MultiSelectValue,
 } from '@/components/ui/multi-select';
 
 // Define types
@@ -260,6 +257,20 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             throw insertError;
           }
         }
+      } else if (createdTaskId && (!data.assignees || data.assignees.length === 0)) {
+        // If no assignees selected, remove any existing ones
+        if (isEditing) {
+          console.log('Removing all assignees as none are selected');
+          const { error: deleteError } = await supabase
+            .from('task_assignees')
+            .delete()
+            .eq('task_id', createdTaskId);
+            
+          if (deleteError) {
+            console.error('Error deleting existing assignees:', deleteError);
+            throw deleteError;
+          }
+        }
       }
       
       return createdTaskId;
@@ -300,11 +311,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   // Helper function to format names
   const formatName = (contact: Contact) => {
     return `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown User';
-  };
-
-  // Helper function to get profile by ID
-  const getProfileById = (id: string): Contact | undefined => {
-    return profiles.find(profile => profile.id === id);
   };
 
   return (
@@ -421,31 +427,17 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 <FormControl>
                   <MultiSelect
                     value={field.value || []}
-                    onValueChange={field.onChange}
-                    className="w-full"
+                    onValueChange={(newValue) => {
+                      console.log("MultiSelect value changed:", newValue);
+                      field.onChange(newValue);
+                    }}
+                    placeholder="Select assignees"
                   >
-                    <MultiSelectTrigger>
-                      <MultiSelectValue placeholder="Select assignees" />
-                    </MultiSelectTrigger>
-                    <MultiSelectContent>
-                      <Input
-                        placeholder="Search assignees..."
-                        className="mb-2 mt-1 mx-1"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                      {filteredProfiles.length === 0 ? (
-                        <div className="p-2 text-center text-sm text-muted-foreground">
-                          No results found
-                        </div>
-                      ) : (
-                        filteredProfiles.map((profile) => (
-                          <MultiSelectItem key={profile.id} value={profile.id}>
-                            {formatName(profile)}
-                          </MultiSelectItem>
-                        ))
-                      )}
-                    </MultiSelectContent>
+                    {filteredProfiles.map((profile) => (
+                      <MultiSelectItem key={profile.id} value={profile.id}>
+                        {formatName(profile)}
+                      </MultiSelectItem>
+                    ))}
                   </MultiSelect>
                 </FormControl>
                 <FormMessage />

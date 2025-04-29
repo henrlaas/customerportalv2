@@ -1,7 +1,6 @@
 
 import * as React from "react"
 import { X } from "lucide-react"
-import { Command as CommandPrimitive } from "cmdk"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -123,7 +122,11 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                       e.preventDefault()
                       e.stopPropagation()
                     }}
-                    onClick={() => handleRemove(item)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRemove(item);
+                    }}
                   >
                     <X className="h-3 w-3" />
                     <span className="sr-only">Remove</span>
@@ -178,15 +181,17 @@ export interface MultiSelectItemProps {
 
 export const MultiSelectItem = React.forwardRef<HTMLDivElement, MultiSelectItemProps>(
   ({ value, children, className, disabled, onSelect, ...props }, ref) => {
-    const handleSelect = React.useCallback(() => {
-      onSelect?.(value);
-    }, [onSelect, value]);
+    const handleClick = () => {
+      if (onSelect) {
+        onSelect(value);
+      }
+    }
 
     return (
       <CommandItem
         ref={ref}
         value={value}
-        onSelect={handleSelect}
+        onSelect={handleClick}
         {...props}
         className={cn(
           "cursor-pointer",
