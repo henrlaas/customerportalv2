@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { X } from "lucide-react"
 import { Command as CommandPrimitive } from "cmdk"
@@ -102,7 +103,6 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
         ref={ref}
         onKeyDown={handleKeyDown}
         className={cn("overflow-visible bg-transparent", className)}
-        onSelect={handleSelect}
       >
         <div
           className="group border border-input px-3 py-2 text-sm rounded-md focus-within:ring-1 focus-within:ring-ring flex flex-wrap gap-1"
@@ -148,7 +148,15 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
               <CommandList>
                 <CommandEmpty>No results found.</CommandEmpty>
                 <CommandGroup>
-                  {children}
+                  {React.Children.map(children, (child) => {
+                    if (React.isValidElement(child)) {
+                      // Pass handleSelect function to each child item
+                      return React.cloneElement(child, {
+                        onSelect: handleSelect,
+                      });
+                    }
+                    return child;
+                  })}
                 </CommandGroup>
               </CommandList>
             </div>
@@ -165,15 +173,20 @@ export interface MultiSelectItemProps {
   children?: React.ReactNode;
   className?: string;
   disabled?: boolean;
+  onSelect?: (value: string) => void;
 }
 
 export const MultiSelectItem = React.forwardRef<HTMLDivElement, MultiSelectItemProps>(
-  ({ value, children, className, disabled, ...props }, ref) => {
+  ({ value, children, className, disabled, onSelect, ...props }, ref) => {
+    const handleSelect = React.useCallback(() => {
+      onSelect?.(value);
+    }, [onSelect, value]);
+
     return (
       <CommandItem
         ref={ref}
         value={value}
-        onSelect={value}
+        onSelect={handleSelect}
         {...props}
         className={cn(
           "cursor-pointer",
