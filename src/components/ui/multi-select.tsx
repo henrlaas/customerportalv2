@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { X } from "lucide-react"
 
@@ -97,6 +98,22 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
       return value;
     }
 
+    // Filter children based on search input
+    const filteredChildren = React.useMemo(() => {
+      if (!inputValue.trim()) return children;
+      
+      return React.Children.map(children, child => {
+        if (React.isValidElement(child) && 'value' in child.props && child.props.children) {
+          const childText = String(child.props.children).toLowerCase();
+          if (childText.includes(inputValue.toLowerCase())) {
+            return child;
+          }
+          return null;
+        }
+        return child;
+      });
+    }, [children, inputValue]);
+
     return (
       <Command
         ref={ref}
@@ -154,15 +171,8 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
               <CommandList>
                 <CommandEmpty>No results found.</CommandEmpty>
                 <CommandGroup>
-                  {React.Children.map(children, (child) => {
+                  {React.Children.map(filteredChildren, (child) => {
                     if (React.isValidElement(child) && 'value' in child.props) {
-                      // Filter items based on input if there's search text
-                      if (inputValue && 
-                          child.props.children && 
-                          !String(child.props.children).toLowerCase().includes(inputValue.toLowerCase())) {
-                        return null;
-                      }
-                      
                       return React.cloneElement(child as React.ReactElement<MultiSelectItemProps>, {
                         onSelect: handleSelect,
                       });

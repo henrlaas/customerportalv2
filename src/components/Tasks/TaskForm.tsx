@@ -87,7 +87,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Fetch current assignees if editing
   const [currentAssignees, setCurrentAssignees] = React.useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = React.useState<string>('');
   
   useEffect(() => {
     const fetchAssignees = async () => {
@@ -299,14 +298,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   // Watch the related type to show/hide campaign selector
   const relatedType = form.watch('related_type');
 
-  // Filter profiles based on search query
-  const filteredProfiles = searchQuery 
-    ? profiles.filter(profile => {
-        const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.toLowerCase();
-        return fullName.includes(searchQuery.toLowerCase());
-      })
-    : profiles;
-
   // Helper function to format names
   const formatName = (contact: Contact) => {
     return `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown User';
@@ -432,7 +423,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                     }}
                     placeholder="Select assignees"
                   >
-                    {filteredProfiles.map((profile) => (
+                    {profiles.map((profile) => (
                       <MultiSelectItem 
                         key={profile.id} 
                         value={profile.id}
