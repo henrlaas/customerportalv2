@@ -97,13 +97,18 @@ export const handleInviteUser = async (
       userData = { user: updatedUser };
       
       // Update the profile
-      await updateUserProfile(supabaseAdmin, existingUser.id, {
-        firstName,
-        lastName,
-        phoneNumber,
-        language,
-        team
-      });
+      try {
+        await updateUserProfile(supabaseAdmin, existingUser.id, {
+          firstName,
+          lastName,
+          phoneNumber,
+          language,
+          team
+        });
+      } catch (profileError) {
+        console.error('Error updating profile:', profileError);
+        // Continue despite error as the user was updated
+      }
       
       // If sendEmail is true, handle the password reset for existing user
       if (sendEmail) {
