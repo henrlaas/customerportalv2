@@ -47,9 +47,12 @@ export const updateUserProfile = async (
       phone_number: phoneNumber,
       language,
       team,
-      // Only set role if it doesn't already exist (don't overwrite existing roles)
-      ...(team === 'Employees' ? { role: 'employee' } : {})
+      // Only set role if it doesn't exist in the existing profile (don't overwrite existing roles)
+      ...(profileExists ? {} : (team === 'Employees' ? { role: 'employee' } : {}))
     };
+
+    // Log the payload we're about to use
+    console.log(`Profile payload for ${userId}:`, JSON.stringify(profilePayload));
 
     if (profileExists) {
       // Update existing profile
@@ -81,7 +84,7 @@ export const updateUserProfile = async (
     }
 
     console.log(`Profile for user ${userId} updated successfully`, result);
-    return true;
+    return result;
   } catch (error) {
     console.error('Exception in updateUserProfile:', error);
     throw error;

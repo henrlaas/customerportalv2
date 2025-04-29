@@ -43,6 +43,16 @@ export const handleInviteUser = async (
 
   try {
     console.log(`Checking if user exists: ${email}`);
+    console.log(`Invite data:`, JSON.stringify({
+      firstName, 
+      lastName, 
+      phoneNumber, 
+      role,
+      language,
+      team,
+      redirect,
+      sendEmail
+    }));
     
     // Check if the user already exists
     const { data: existingUsers, error: searchError } = await supabaseAdmin.auth.admin.listUsers({
@@ -164,14 +174,14 @@ export const handleInviteUser = async (
       if (newUserData.user && newUserData.user.id) {
         console.log(`Updating profile for user: ${newUserData.user.id}`);
         try {
-          await updateUserProfile(supabaseAdmin, newUserData.user.id, {
+          const profileResult = await updateUserProfile(supabaseAdmin, newUserData.user.id, {
             firstName,
             lastName,
             phoneNumber,
             language,
             team
           });
-          console.log("Profile updated successfully");
+          console.log("Profile created/updated successfully:", profileResult);
         } catch (profileError) {
           console.error("Error updating profile:", profileError);
           // Continue with the invitation process even if profile update fails

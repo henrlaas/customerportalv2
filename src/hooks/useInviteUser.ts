@@ -65,6 +65,7 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
         throw new Error('No data returned from invite function');
       }
 
+      console.log('Invitation response:', data);
       return data;
     },
     onSuccess: (data) => {

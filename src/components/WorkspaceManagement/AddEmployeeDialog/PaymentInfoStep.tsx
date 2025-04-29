@@ -42,6 +42,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
   
   const inviteUserMutation = useInviteUser({
     onSuccess: (data) => {
+      console.log("User invitation successful, creating employee record with user ID:", data.user.id);
       handleCreateEmployee(data.user.id);
     },
     onError: (error) => {
@@ -80,30 +81,47 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
   const handleCreateEmployee = async (userId: string) => {
     try {
       // Update the parent formData with our local values before submission
-      formData.social_security_number = localFormData.social_security_number;
-      formData.account_number = localFormData.account_number;
-      formData.paycheck_solution = localFormData.paycheck_solution;
+      const updatedFormData = {
+        ...formData,
+        social_security_number: localFormData.social_security_number,
+        account_number: localFormData.account_number,
+        paycheck_solution: localFormData.paycheck_solution
+      };
+      
+      console.log("Creating employee record with data:", {
+        id: userId,
+        address: updatedFormData.address,
+        zipcode: updatedFormData.zipcode,
+        country: updatedFormData.country,
+        city: updatedFormData.city,
+        employee_type: updatedFormData.employee_type,
+        hourly_salary: updatedFormData.hourly_salary,
+        employed_percentage: updatedFormData.employed_percentage,
+        social_security_number: updatedFormData.social_security_number,
+        account_number: updatedFormData.account_number,
+        paycheck_solution: updatedFormData.paycheck_solution || ''
+      });
       
       // Create employee record
       const employeeData = {
         id: userId,
-        address: formData.address,
-        zipcode: formData.zipcode,
-        country: formData.country,
-        city: formData.city,
-        employee_type: formData.employee_type,
-        hourly_salary: formData.hourly_salary,
-        employed_percentage: formData.employed_percentage,
-        social_security_number: formData.social_security_number,
-        account_number: formData.account_number,
-        paycheck_solution: formData.paycheck_solution || ''
+        address: updatedFormData.address,
+        zipcode: updatedFormData.zipcode,
+        country: updatedFormData.country,
+        city: updatedFormData.city,
+        employee_type: updatedFormData.employee_type,
+        hourly_salary: updatedFormData.hourly_salary,
+        employed_percentage: updatedFormData.employed_percentage,
+        social_security_number: updatedFormData.social_security_number,
+        account_number: updatedFormData.account_number,
+        paycheck_solution: updatedFormData.paycheck_solution || ''
       };
       
       await employeeService.createEmployee(employeeData, userId);
       
       toast({
         title: "Employee Added",
-        description: `${formData.first_name} ${formData.last_name} has been added successfully. An invitation email has been sent.`,
+        description: `${updatedFormData.first_name} ${updatedFormData.last_name} has been added successfully. An invitation email has been sent.`,
       });
       
       setIsSubmitting(false);
@@ -135,9 +153,9 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           employee_type: formData.employee_type,
           hourly_salary: formData.hourly_salary,
           employed_percentage: formData.employed_percentage,
-          social_security_number: formData.social_security_number,
-          account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || ''
+          social_security_number: localFormData.social_security_number,
+          account_number: localFormData.account_number,
+          paycheck_solution: localFormData.paycheck_solution || ''
         };
         
         await employeeService.updateEmployee(employeeId, employeeData);
