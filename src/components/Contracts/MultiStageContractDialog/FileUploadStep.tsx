@@ -10,7 +10,7 @@ interface FileUploadStepProps {
   contractData: {
     file_url: string;
   };
-  updateContractData: (data: Partial<typeof contractData>) => void;
+  updateContractData: (data: Partial<{ file_url: string }>) => void;
 }
 
 export const FileUploadStep: React.FC<FileUploadStepProps> = ({ contractData, updateContractData }) => {
@@ -98,7 +98,6 @@ export const FileUploadStep: React.FC<FileUploadStepProps> = ({ contractData, up
         <FileUploader
           onUpload={handleFileUpload}
           onUploaded={handleFileUploaded}
-          isUploading={isUploading}
           acceptedFileTypes={{
             'application/pdf': ['.pdf'],
             'application/msword': ['.doc'],

@@ -8,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCompanyNames } from '@/hooks/useCompanyNames';
 
 interface Company {
   id: string;
@@ -19,7 +18,7 @@ interface CompanySelectionStepProps {
   contractData: {
     company_id: string;
   };
-  updateContractData: (data: Partial<typeof contractData>) => void;
+  updateContractData: (data: Partial<{ company_id: string }>) => void;
   companies: Company[];
 }
 

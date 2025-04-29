@@ -18,7 +18,13 @@ interface BasicInfoStepProps {
     start_date: string;
     end_date: string;
   };
-  updateContractData: (data: Partial<typeof contractData>) => void;
+  updateContractData: (data: Partial<{ 
+    title: string;
+    value: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+  }>) => void;
 }
 
 export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ contractData, updateContractData }) => {

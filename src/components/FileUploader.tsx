@@ -10,11 +10,13 @@ interface FileUploaderProps {
   onUploaded?: (url: string) => void;
   accept?: Record<string, string[]>;
   maxSize?: number;
+  isUploading?: boolean;
 }
 
 export const FileUploader: React.FC<FileUploaderProps> = ({ 
   onUpload, 
   onUploaded,
+  isUploading: externalUploading,
   accept = {
     'application/pdf': ['.pdf'],
     'application/msword': ['.doc'],
@@ -29,6 +31,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  
+  // Use external uploading state if provided, otherwise use internal state
+  const isActuallyUploading = externalUploading !== undefined ? externalUploading : uploading;
 
   const handleUpload = useCallback(async () => {
     if (!file) return;
@@ -128,7 +133,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 <Upload className="h-5 w-5 text-gray-500" />
               )}
               <span className="font-medium text-sm">{file.name}</span>
-              {!uploading && (
+              {!isActuallyUploading && (
                 <Button type="button" variant="ghost" size="icon" onClick={(e) => {
                   e.stopPropagation();
                   reset();
@@ -156,10 +161,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           <Button
             type="button"
             onClick={handleUpload}
-            disabled={uploading}
+            disabled={isActuallyUploading}
             className="w-full"
           >
-            {uploading ? 'Uploading...' : 'Upload'}
+            {isActuallyUploading ? 'Uploading...' : 'Upload'}
           </Button>
         </>
       )}
