@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser } from '@/integrations/supabase/client';
@@ -36,11 +37,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X } from 'lucide-react';
+import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X, UserRound } from 'lucide-react';
 import { TaskForm } from '@/components/Tasks/TaskForm';
 import { TaskFilters } from '@/components/Tasks/TaskFilters';
-import { Skeleton } from '@/components/ui/skeleton'; // <-- Added import
+import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 
 // Define the Task type to match our database schema
@@ -65,6 +67,7 @@ type Contact = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  avatar_url?: string | null;
 };
 
 // Define the Campaign type for related campaigns
@@ -84,6 +87,7 @@ export const TasksPage = () => {
     priority: 'all',
     search: '',
     assignee: 'all',
+    creator: 'all',
     campaign: 'all',
   });
   const [showFilters, setShowFilters] = useState(false);
@@ -110,6 +114,9 @@ export const TasksPage = () => {
       if (filters.assignee && filters.assignee !== 'all') {
         query = query.eq('assigned_to', filters.assignee);
       }
+      if (filters.creator && filters.creator !== 'all') {
+        query = query.eq('created_by', filters.creator);
+      }
       if (filters.campaign && filters.campaign !== 'all') {
         query = query.eq('campaign_id', filters.campaign);
       }
@@ -135,7 +142,7 @@ export const TasksPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name')
+        .select('id, first_name, last_name, avatar_url')
         .order('first_name');
       
       if (error) {
@@ -185,18 +192,63 @@ export const TasksPage = () => {
       priority: 'all',
       search: '',
       assignee: 'all',
+      creator: 'all',
       campaign: 'all',
     });
   };
   
-  // Function to get assignee name
-  const getAssigneeName = (assigneeId: string | null) => {
-    if (!assigneeId) return 'Unassigned';
+  // Helper function to get initials from name
+  const getInitials = (firstName: string | null, lastName: string | null) => {
+    if (!firstName && !lastName) return 'U';
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`;
+  };
+  
+  // Function to get assignee or creator info
+  const getUserInfo = (userId: string | null, renderAvatar: boolean = true) => {
+    if (!userId) return renderAvatar ? (
+      <div className="flex items-center gap-2">
+        <Avatar className="h-6 w-6">
+          <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
+            <UserRound size={14} />
+          </AvatarFallback>
+        </Avatar>
+        <span>Unassigned</span>
+      </div>
+    ) : 'Unassigned';
     
-    const assignee = profiles.find(p => p.id === assigneeId);
-    return assignee 
-      ? `${assignee.first_name || ''} ${assignee.last_name || ''}`.trim() || 'Unknown User'
-      : 'Unknown User';
+    const user = profiles.find(p => p.id === userId);
+    
+    if (!user) return renderAvatar ? (
+      <div className="flex items-center gap-2">
+        <Avatar className="h-6 w-6">
+          <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
+            <UserRound size={14} />
+          </AvatarFallback>
+        </Avatar>
+        <span>Unknown User</span>
+      </div>
+    ) : 'Unknown User';
+    
+    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
+    
+    if (renderAvatar) {
+      return (
+        <div className="flex items-center gap-2">
+          <Avatar className="h-6 w-6">
+            {user.avatar_url ? (
+              <AvatarImage src={user.avatar_url} alt={fullName} />
+            ) : (
+              <AvatarFallback className="bg-purple-100 text-purple-800 text-xs">
+                {getInitials(user.first_name, user.last_name)}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <span>{fullName}</span>
+        </div>
+      );
+    }
+    
+    return fullName;
   };
   
   // Function to get campaign name
@@ -330,6 +382,7 @@ export const TasksPage = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Assignee</TableHead>
+                  <TableHead>Creator</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Related To</TableHead>
                   <TableHead>Client Visible</TableHead>
@@ -345,7 +398,8 @@ export const TasksPage = () => {
                     <TableCell className="font-medium">{task.title}</TableCell>
                     <TableCell>{getStatusBadge(task.status)}</TableCell>
                     <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                    <TableCell>{getAssigneeName(task.assigned_to)}</TableCell>
+                    <TableCell>{getUserInfo(task.assigned_to)}</TableCell>
+                    <TableCell>{getUserInfo(task.created_by)}</TableCell>
                     <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
                     <TableCell>
                       {task.campaign_id ? (

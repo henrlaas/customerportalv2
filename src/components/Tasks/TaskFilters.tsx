@@ -7,11 +7,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { UserRound } from 'lucide-react';
 
 type Contact = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  avatar_url?: string | null;
 };
 
 type Campaign = {
@@ -24,6 +27,7 @@ type FiltersType = {
   priority: string;
   search: string;
   assignee: string;
+  creator: string;
   campaign: string;
 };
 
@@ -44,8 +48,55 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  // Helper function to get initials from name
+  const getInitials = (firstName: string | null, lastName: string | null) => {
+    if (!firstName && !lastName) return 'U';
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`;
+  };
+
+  // Helper function to get full name
+  const getFullName = (profile: Contact) => {
+    return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User';
+  };
+
+  // Custom content for the SelectTrigger for profiles
+  const renderUserSelectTrigger = (selectedId: string, label: string) => {
+    if (selectedId === 'all') {
+      return (
+        <div className="flex items-center gap-2">
+          <span>All {label}s</span>
+        </div>
+      );
+    }
+
+    const selectedUser = profiles.find(profile => profile.id === selectedId);
+    
+    if (!selectedUser) {
+      return (
+        <div className="flex items-center gap-2">
+          <span>Select {label}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <Avatar className="h-6 w-6">
+          {selectedUser.avatar_url ? (
+            <AvatarImage src={selectedUser.avatar_url} alt={getFullName(selectedUser)} />
+          ) : (
+            <AvatarFallback className="bg-purple-100 text-purple-800 text-xs">
+              {getInitials(selectedUser.first_name, selectedUser.last_name)}
+            </AvatarFallback>
+          )}
+        </Avatar>
+        <span>{getFullName(selectedUser)}</span>
+      </div>
+    );
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
       <div className="space-y-1">
         <label className="text-sm font-medium text-gray-700">Status</label>
         <Select 
@@ -89,13 +140,55 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
           onValueChange={(value) => handleFilterChange('assignee', value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="All assignees" />
+            {renderUserSelectTrigger(filters.assignee, 'assignee')}
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All assignees</SelectItem>
             {profiles.map((profile) => (
-              <SelectItem key={profile.id} value={profile.id}>
-                {`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'}
+              <SelectItem key={profile.id} value={profile.id} className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
+                    {profile.avatar_url ? (
+                      <AvatarImage src={profile.avatar_url} alt={getFullName(profile)} />
+                    ) : (
+                      <AvatarFallback className="bg-purple-100 text-purple-800 text-xs">
+                        {getInitials(profile.first_name, profile.last_name)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <span>{getFullName(profile)}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-gray-700">Creator</label>
+        <Select 
+          value={filters.creator} 
+          onValueChange={(value) => handleFilterChange('creator', value)}
+        >
+          <SelectTrigger>
+            {renderUserSelectTrigger(filters.creator, 'creator')}
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All creators</SelectItem>
+            {profiles.map((profile) => (
+              <SelectItem key={profile.id} value={profile.id} className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
+                    {profile.avatar_url ? (
+                      <AvatarImage src={profile.avatar_url} alt={getFullName(profile)} />
+                    ) : (
+                      <AvatarFallback className="bg-purple-100 text-purple-800 text-xs">
+                        {getInitials(profile.first_name, profile.last_name)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <span>{getFullName(profile)}</span>
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
