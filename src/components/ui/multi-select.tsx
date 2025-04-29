@@ -92,7 +92,10 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
     // Helper function to get the display text for a value
     const getDisplayText = (value: string) => {
       const child = findChildByValue(value)
-      return React.isValidElement(child) ? child.props.children : value
+      if (React.isValidElement(child)) {
+        return child.props.children;
+      }
+      return value;
     }
 
     return (

@@ -166,15 +166,24 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           throw new Error("Failed to update task: No result returned");
         }
       } else {
+        // Fix for the type error - explicitly define and handle the response type
         const { data: result, error } = await insertWithUser('tasks', taskData);
         if (error) throw error;
         
-        // Type assertion to handle the result
-        type InsertResult = { id: string }[];
+        // Handle potential null result
+        if (!result) {
+          throw new Error("Failed to create task: No result returned");
+        }
         
-        // Safely handle potentially null result with type assertion
-        if (result && Array.isArray(result) && result.length > 0) {
-          createdTaskId = (result as InsertResult)[0]?.id;
+        // Safely handle the result with proper type checking
+        if (Array.isArray(result)) {
+          // If result is an array, get the first item's id
+          if (result.length > 0 && result[0] && 'id' in result[0]) {
+            createdTaskId = result[0].id as string;
+          }
+        } else if (typeof result === 'object' && result !== null && 'id' in result) {
+          // If result is a direct object with id
+          createdTaskId = result.id as string;
         }
         
         if (!createdTaskId) {
