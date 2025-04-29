@@ -823,6 +823,35 @@ export type Database = {
         }
         Relationships: []
       }
+      task_assignees: {
+        Row: {
+          created_at: string | null
+          id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_assignees_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_attachments: {
         Row: {
           created_at: string | null

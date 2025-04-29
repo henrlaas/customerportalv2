@@ -16,20 +16,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import {
   Card,
@@ -39,10 +30,10 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X, UserRound } from 'lucide-react';
+import { Plus, Search, Filter, X, UserRound } from 'lucide-react';
 import { TaskForm } from '@/components/Tasks/TaskForm';
 import { TaskFilters } from '@/components/Tasks/TaskFilters';
-import { Skeleton } from '@/components/ui/skeleton';
+import { TaskAssignees } from '@/components/Tasks/TaskAssignees';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 
 // Define the Task type to match our database schema
@@ -54,12 +45,13 @@ type Task = {
   priority: 'low' | 'medium' | 'high';
   due_date: string | null;
   campaign_id: string | null;
-  assigned_to: string | null;
+  assigned_to: string | null; // Legacy field
   created_by: string | null;
   created_at: string;
   updated_at: string;
   client_visible: boolean | null;
   related_type: string | null;
+  assignees?: Contact[]; // New field for multiple assignees
 };
 
 // Define the Contact type for assignees
@@ -111,9 +103,6 @@ export const TasksPage = () => {
       if (filters.search) {
         query = query.ilike('title', `%${filters.search}%`);
       }
-      if (filters.assignee && filters.assignee !== 'all') {
-        query = query.eq('assigned_to', filters.assignee);
-      }
       if (filters.creator && filters.creator !== 'all') {
         query = query.eq('created_by', filters.creator);
       }
@@ -132,7 +121,62 @@ export const TasksPage = () => {
         return [];
       }
       
-      return data as Task[];
+      // Fetch task assignees for all tasks
+      const tasksWithAssignees = await Promise.all(data.map(async (task) => {
+        // Get the assignees for each task
+        const { data: assigneeData, error: assigneeError } = await supabase
+          .from('task_assignees')
+          .select('user_id')
+          .eq('task_id', task.id);
+          
+        if (assigneeError) {
+          console.error('Error fetching task assignees:', assigneeError);
+          return { ...task, assignees: [] };
+        }
+        
+        // If we're filtering by assignee, check if the task has this assignee
+        if (filters.assignee !== 'all') {
+          const hasAssignee = assigneeData.some(a => a.user_id === filters.assignee);
+          if (!hasAssignee) return null; // Skip this task as it doesn't match the filter
+        }
+        
+        // Get user profiles for all assignees
+        if (assigneeData.length > 0) {
+          const userIds = assigneeData.map(a => a.user_id);
+          const { data: userProfiles, error: userError } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, avatar_url')
+            .in('id', userIds);
+            
+          if (userError) {
+            console.error('Error fetching user profiles:', userError);
+            return { ...task, assignees: [] };
+          }
+          
+          return { ...task, assignees: userProfiles };
+        }
+        
+        // For backward compatibility, check if there's a single assignee in the old field
+        if (task.assigned_to) {
+          const { data: userProfile, error: userError } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, avatar_url')
+            .eq('id', task.assigned_to)
+            .single();
+            
+          if (userError) {
+            console.error('Error fetching legacy assignee:', userError);
+            return { ...task, assignees: [] };
+          }
+          
+          return { ...task, assignees: [userProfile] };
+        }
+        
+        return { ...task, assignees: [] };
+      }));
+      
+      // Filter out null tasks (those that didn't match the assignee filter)
+      return tasksWithAssignees.filter(task => task !== null) as Task[];
     },
   });
 
@@ -203,52 +247,43 @@ export const TasksPage = () => {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`;
   };
   
-  // Function to get assignee or creator info
-  const getUserInfo = (userId: string | null, renderAvatar: boolean = true) => {
-    if (!userId) return renderAvatar ? (
-      <div className="flex items-center gap-2">
+  // Function to get creator info
+  const getCreatorInfo = (userId: string | null) => {
+    if (!userId) return (
+      <div className="flex items-center">
         <Avatar className="h-6 w-6">
           <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
             <UserRound size={14} />
           </AvatarFallback>
         </Avatar>
-        <span>Unassigned</span>
       </div>
-    ) : 'Unassigned';
+    );
     
     const user = profiles.find(p => p.id === userId);
     
-    if (!user) return renderAvatar ? (
-      <div className="flex items-center gap-2">
+    if (!user) return (
+      <div className="flex items-center">
         <Avatar className="h-6 w-6">
           <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
             <UserRound size={14} />
           </AvatarFallback>
         </Avatar>
-        <span>Unknown User</span>
       </div>
-    ) : 'Unknown User';
+    );
     
-    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
-    
-    if (renderAvatar) {
-      return (
-        <div className="flex items-center gap-2">
-          <Avatar className="h-6 w-6">
-            {user.avatar_url ? (
-              <AvatarImage src={user.avatar_url} alt={fullName} />
-            ) : (
-              <AvatarFallback className="bg-purple-100 text-purple-800 text-xs">
-                {getInitials(user.first_name, user.last_name)}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <span>{fullName}</span>
-        </div>
-      );
-    }
-    
-    return fullName;
+    return (
+      <div className="flex items-center">
+        <Avatar className="h-6 w-6">
+          {user.avatar_url ? (
+            <AvatarImage src={user.avatar_url} alt="" />
+          ) : (
+            <AvatarFallback className="bg-purple-100 text-purple-800 text-xs">
+              {getInitials(user.first_name, user.last_name)}
+            </AvatarFallback>
+          )}
+        </Avatar>
+      </div>
+    );
   };
   
   // Function to get campaign name
@@ -381,7 +416,7 @@ export const TasksPage = () => {
                   <TableHead>Title</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Priority</TableHead>
-                  <TableHead>Assignee</TableHead>
+                  <TableHead>Assignees</TableHead>
                   <TableHead>Creator</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Related To</TableHead>
@@ -398,8 +433,10 @@ export const TasksPage = () => {
                     <TableCell className="font-medium">{task.title}</TableCell>
                     <TableCell>{getStatusBadge(task.status)}</TableCell>
                     <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                    <TableCell>{getUserInfo(task.assigned_to)}</TableCell>
-                    <TableCell>{getUserInfo(task.created_by)}</TableCell>
+                    <TableCell>
+                      <TaskAssignees assignees={task.assignees || []} />
+                    </TableCell>
+                    <TableCell>{getCreatorInfo(task.created_by)}</TableCell>
                     <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
                     <TableCell>
                       {task.campaign_id ? (

@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,12 +25,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from '@/components/ui/multi-select';
 
 // Define types
 type Contact = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  avatar_url?: string | null;
 };
 
 type Campaign = {
@@ -52,7 +61,7 @@ const taskSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']),
   status: z.enum(['todo', 'in_progress', 'completed']),
   due_date: z.string().optional(),
-  assigned_to: z.string().optional(),
+  assignees: z.array(z.string()).optional(),
   campaign_id: z.string().optional(),
   client_visible: z.boolean().default(false),
   related_type: z.enum(['none', 'campaign', 'project']).default('none'),
@@ -68,6 +77,37 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const { toast } = useToast();
   const isEditing = !!taskId;
 
+  // Fetch current assignees if editing
+  const [currentAssignees, setCurrentAssignees] = React.useState<string[]>([]);
+  
+  useEffect(() => {
+    const fetchAssignees = async () => {
+      if (!isEditing || !taskId) return;
+      
+      try {
+        // Fetch assignees from task_assignees table
+        const { data, error } = await supabase
+          .from('task_assignees')
+          .select('user_id')
+          .eq('task_id', taskId);
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          setCurrentAssignees(data.map(a => a.user_id));
+        } 
+        // For backward compatibility, check the legacy assigned_to field
+        else if (initialData?.assigned_to) {
+          setCurrentAssignees([initialData.assigned_to]);
+        }
+      } catch (error) {
+        console.error('Error fetching task assignees:', error);
+      }
+    };
+    
+    fetchAssignees();
+  }, [isEditing, taskId, initialData]);
+  
   // Set up the form
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
@@ -77,12 +117,19 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       priority: initialData?.priority || 'medium',
       status: initialData?.status || 'todo',
       due_date: initialData?.due_date || '',
-      assigned_to: initialData?.assigned_to || '',
+      assignees: currentAssignees,
       campaign_id: initialData?.campaign_id || '',
       client_visible: initialData?.client_visible || false,
       related_type: initialData?.related_type || 'none',
     },
   });
+
+  // Update form values when currentAssignees changes
+  useEffect(() => {
+    if (currentAssignees.length > 0) {
+      form.setValue('assignees', currentAssignees);
+    }
+  }, [currentAssignees, form]);
 
   // Create task mutation
   const createTaskMutation = useMutation({
@@ -94,11 +141,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         priority: data.priority,
         status: data.status,
         due_date: data.due_date || null,
-        assigned_to: data.assigned_to || null,
+        assigned_to: data.assignees && data.assignees.length > 0 ? data.assignees[0] : null, // For backward compatibility
         campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
         client_visible: data.client_visible,
         related_type: data.related_type === 'none' ? null : data.related_type,
       };
+      
+      let taskId = isEditing ? taskId : null;
       
       // Create or update the task
       if (isEditing) {
@@ -110,12 +159,39 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           .single();
         
         if (error) throw error;
-        return result;
+        taskId = result.id;
       } else {
         const { data: result, error } = await insertWithUser('tasks', taskData);
         if (error) throw error;
-        return result;
+        taskId = result[0].id;
       }
+      
+      // Handle assignees
+      if (taskId && data.assignees && data.assignees.length > 0) {
+        // If editing, remove existing assignees first
+        if (isEditing) {
+          const { error: deleteError } = await supabase
+            .from('task_assignees')
+            .delete()
+            .eq('task_id', taskId);
+            
+          if (deleteError) throw deleteError;
+        }
+        
+        // Add new assignees
+        const assigneeInserts = data.assignees.map(userId => ({
+          task_id: taskId as string,
+          user_id: userId,
+        }));
+        
+        const { error: insertError } = await supabase
+          .from('task_assignees')
+          .insert(assigneeInserts);
+          
+        if (insertError) throw insertError;
+      }
+      
+      return taskId;
     },
     onSuccess: () => {
       toast({
@@ -140,6 +216,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Watch the related type to show/hide campaign selector
   const relatedType = form.watch('related_type');
+
+  // Helper function to format names
+  const formatName = (contact: Contact) => {
+    return `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown User';
+  };
 
   return (
     <Form {...form}>
@@ -248,28 +329,23 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
           <FormField
             control={form.control}
-            name="assigned_to"
+            name="assignees"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Assign To</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select assignee" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {profiles.map((contact) => (
-                      <SelectItem key={contact.id} value={contact.id}>
-                        {`${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown User'}
-                      </SelectItem>
+                <FormLabel>Assignees</FormLabel>
+                <FormControl>
+                  <MultiSelect
+                    value={field.value || []}
+                    onValueChange={field.onChange}
+                    placeholder="Select assignees"
+                  >
+                    {profiles.map((profile) => (
+                      <MultiSelectItem key={profile.id} value={profile.id}>
+                        {formatName(profile)}
+                      </MultiSelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MultiSelect>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

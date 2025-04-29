@@ -59,12 +59,12 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
     return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User';
   };
 
-  // Custom content for the SelectTrigger for profiles
+  // Custom content for the SelectTrigger for profiles - now only showing avatars
   const renderUserSelectTrigger = (selectedId: string, label: string) => {
     if (selectedId === 'all') {
       return (
         <div className="flex items-center gap-2">
-          <span>All {label}s</span>
+          <span>All {label}</span>
         </div>
       );
     }
@@ -80,7 +80,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
     }
 
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center">
         <Avatar className="h-6 w-6">
           {selectedUser.avatar_url ? (
             <AvatarImage src={selectedUser.avatar_url} alt={getFullName(selectedUser)} />
@@ -90,7 +90,6 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
             </AvatarFallback>
           )}
         </Avatar>
-        <span>{getFullName(selectedUser)}</span>
       </div>
     );
   };
@@ -134,13 +133,13 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
       </div>
       
       <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Assignee</label>
+        <label className="text-sm font-medium text-gray-700">Assignees</label>
         <Select 
           value={filters.assignee} 
           onValueChange={(value) => handleFilterChange('assignee', value)}
         >
           <SelectTrigger>
-            {renderUserSelectTrigger(filters.assignee, 'assignee')}
+            {renderUserSelectTrigger(filters.assignee, 'assignees')}
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All assignees</SelectItem>

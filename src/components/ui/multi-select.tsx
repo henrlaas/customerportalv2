@@ -1,0 +1,236 @@
+import * as React from "react"
+import { X } from "lucide-react"
+import { Command as CommandPrimitive } from "cmdk"
+
+import { Badge } from "@/components/ui/badge"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import { cn } from "@/lib/utils"
+
+export interface MultiSelectProps {
+  placeholder?: string
+  value?: string[]
+  onValueChange?: (value: string[]) => void
+  children?: React.ReactNode
+  className?: string
+}
+
+export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
+  ({ placeholder, value = [], onValueChange, className, children }, ref) => {
+    const inputRef = React.useRef<HTMLInputElement>(null)
+    const [open, setOpen] = React.useState(false)
+    const [selected, setSelected] = React.useState<string[]>(value)
+    const [inputValue, setInputValue] = React.useState("")
+
+    // Sync internal state with external value
+    React.useEffect(() => {
+      setSelected(value)
+    }, [value])
+
+    // Sync external value with internal state
+    const handleValueChange = React.useCallback(
+      (newValue: string[]) => {
+        setSelected(newValue)
+        onValueChange?.(newValue)
+      },
+      [onValueChange]
+    )
+
+    // Handle item selection
+    const handleSelect = React.useCallback(
+      (itemValue: string) => {
+        setInputValue("")
+
+        if (selected.includes(itemValue)) {
+          // If already selected, remove it
+          handleValueChange(selected.filter((item) => item !== itemValue))
+        } else {
+          // Otherwise, add it
+          handleValueChange([...selected, itemValue])
+        }
+      },
+      [selected, handleValueChange]
+    )
+
+    // Remove item when badge X is clicked
+    const handleRemove = React.useCallback(
+      (itemValue: string) => {
+        handleValueChange(selected.filter((item) => item !== itemValue))
+      },
+      [selected, handleValueChange]
+    )
+
+    // Handle keyboard navigation
+    const handleKeyDown = React.useCallback(
+      (e: React.KeyboardEvent<HTMLDivElement>) => {
+        const input = inputRef.current
+        if (e.key === "Backspace" && input && inputValue === "" && selected.length > 0) {
+          // Remove the last item on backspace when input is empty
+          handleValueChange(selected.slice(0, -1))
+        }
+      },
+      [inputValue, selected, handleValueChange]
+    )
+
+    return (
+      <Command
+        ref={ref}
+        onKeyDown={handleKeyDown}
+        className={cn("overflow-visible bg-transparent", className)}
+      >
+        <div
+          className="group border border-input px-3 py-2 text-sm rounded-md focus-within:ring-1 focus-within:ring-ring flex flex-wrap gap-1"
+          onClick={() => {
+            setOpen(true)
+            inputRef.current?.focus()
+          }}
+        >
+          {selected.length > 0 && (
+            <>
+              {selected.map((item) => (
+                <Badge key={item} variant="secondary" className="rounded-sm px-1 font-normal">
+                  {/* Find the child with matching value and get its content */}
+                  {React.Children.toArray(children).find(
+                    (child) => 
+                      React.isValidElement(child) && 
+                      'value' in child.props && 
+                      child.props.value === item
+                  )?.props.children || item}
+                  <button
+                    type="button"
+                    className="ml-1 rounded-sm opacity-50 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                    }}
+                    onClick={() => handleRemove(item)}
+                  >
+                    <X className="h-3 w-3" />
+                    <span className="sr-only">Remove</span>
+                  </button>
+                </Badge>
+              ))}
+            </>
+          )}
+          <CommandInput
+            ref={inputRef}
+            value={inputValue}
+            onValueChange={setInputValue}
+            onBlur={() => setOpen(false)}
+            onFocus={() => setOpen(true)}
+            placeholder={selected.length === 0 ? placeholder : undefined}
+            className="flex-1 outline-none placeholder:text-muted-foreground min-w-[120px] bg-transparent"
+          />
+        </div>
+        <div className="relative">
+          {open && (
+            <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+              <CommandList>
+                <CommandEmpty>No results found.</CommandEmpty>
+                <CommandGroup>
+                  {children}
+                </CommandGroup>
+              </CommandList>
+            </div>
+          )}
+        </div>
+      </Command>
+    )
+  }
+)
+MultiSelect.displayName = "MultiSelect"
+
+export interface MultiSelectItemProps {
+  value: string
+  children?: React.ReactNode
+  className?: string
+  disabled?: boolean
+}
+
+export const MultiSelectItem = React.forwardRef<HTMLDivElement, MultiSelectItemProps>(
+  ({ value, children, className, disabled, ...props }, ref) => {
+    return (
+      <CommandItem
+        ref={ref}
+        value={value}
+        onSelect={() => {}}
+        {...props}
+        className={cn(
+          "cursor-pointer",
+          disabled && "cursor-not-allowed opacity-50",
+          className
+        )}
+        onMouseDown={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (!disabled) {
+            const commandEl = e.currentTarget.closest('[cmdk-root=""]') as HTMLElement & {
+              value: string[]
+              onSelect: (value: string) => void
+            }
+            if (commandEl) {
+              commandEl.onSelect?.(value)
+            }
+          }
+        }}
+      >
+        {children}
+      </CommandItem>
+    )
+  }
+)
+MultiSelectItem.displayName = "MultiSelectItem"
+
+// Add the onSelect handler to CommandPrimitive
+class CommandWithHandlers extends React.Component<
+  React.ComponentProps<typeof CommandPrimitive> & { onSelect?: (value: string) => void }
+> {
+  render() {
+    const { onSelect, ...props } = this.props
+    return <CommandPrimitive {...props} />
+  }
+}
+
+export const MultiSelectTrigger = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ className, ...props }, ref) => (
+  <button
+    ref={ref}
+    className={cn(
+      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+      className
+    )}
+    {...props}
+  />
+))
+MultiSelectTrigger.displayName = "MultiSelectTrigger"
+
+export const MultiSelectValue = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("text-sm", className)} {...props} />
+))
+MultiSelectValue.displayName = "MultiSelectValue"
+
+export const MultiSelectContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
+      className
+    )}
+    {...props}
+  />
+))
+MultiSelectContent.displayName = "MultiSelectContent"
