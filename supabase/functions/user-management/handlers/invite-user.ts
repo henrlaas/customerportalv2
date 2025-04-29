@@ -94,7 +94,7 @@ export const handleInviteUser = async (
         throw updateError;
       }
       
-      userData = { user: updatedUser };
+      userData = updatedUser;
       
       // Update the profile
       try {
@@ -229,9 +229,12 @@ export const handleInviteUser = async (
     }
 
     console.log("Invitation process completed successfully");
-    // Ensure user ID is properly returned in the response
+    
+    // Structure the response data to ensure consistent access to user ID
+    // This is critical for the front-end to correctly extract the user ID
     const responseData = {
-      user: userData.user,
+      user: userData.user ? userData.user : userData,
+      userId: userData.user ? userData.user.id : (userData.id || null),
       isNewUser,
       message: sendEmail ? 
         isNewUser ? 

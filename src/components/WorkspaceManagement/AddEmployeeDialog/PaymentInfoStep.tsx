@@ -42,10 +42,23 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
   
   const inviteUserMutation = useInviteUser({
     onSuccess: (data) => {
-      // Extract the user ID properly from the response
-      if (data && data.user && data.user.id) {
-        console.log("User invitation successful, creating employee record with user ID:", data.user.id);
-        handleCreateEmployee(data.user.id);
+      // Extract the user ID from the nested response structure
+      let userId;
+      
+      // The response structure can be different based on whether it's a new or existing user
+      if (data && data.user) {
+        if (data.user.id) {
+          // Direct user ID (simpler structure)
+          userId = data.user.id;
+        } else if (data.user.user && data.user.user.id) {
+          // Nested user object (structure seen in logs)
+          userId = data.user.user.id;
+        }
+      }
+      
+      if (userId) {
+        console.log("User invitation successful, creating employee record with user ID:", userId);
+        handleCreateEmployee(userId);
       } else {
         console.error("Failed to get user ID from invitation response:", data);
         setIsSubmitting(false);

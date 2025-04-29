@@ -69,6 +69,9 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
       return data;
     },
     onSuccess: (data) => {
+      // Log the entire response for debugging
+      console.log('Invitation mutation succeeded with response:', JSON.stringify(data));
+      
       const isNewUser = data.isNewUser !== false;
       toast({
         title: isNewUser ? 'User invited' : 'User updated',
@@ -79,6 +82,7 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
       if (onSuccess) onSuccess(data);
     },
     onError: (error: Error) => {
+      console.error('Invitation mutation failed:', error);
       toast({
         title: 'Error',
         description: `Failed to invite user: ${error.message}`,
