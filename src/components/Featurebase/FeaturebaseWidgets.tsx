@@ -59,7 +59,7 @@ const FeaturebaseWidgets = () => {
   return (
     <div className="fixed bottom-4 right-4 z-50 space-y-2">
       <Button 
-        variant="primary"
+        variant="default"
         className="flex items-center space-x-2"
         onClick={openChangelogPopup}
       >
