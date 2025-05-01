@@ -1,8 +1,48 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createAdminClient } from "../user-management/utils/supabase.ts";
-import { corsHeaders } from "../user-management/utils/cors.ts";
-import { updateUserProfile } from "../user-management/utils/profile-helpers.ts";
+
+// Create our own utility functions instead of trying to import from user-management
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Create a Supabase admin client for server operations
+const createAdminClient = () => {
+  const { createClient } = require("https://esm.sh/@supabase/supabase-js@2.21.0");
+  
+  return createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  );
+};
+
+// Helper function to update user profile
+const updateUserProfile = async (supabaseAdmin, userId, profileData) => {
+  const { error } = await supabaseAdmin
+    .from('profiles')
+    .upsert({
+      id: userId,
+      first_name: profileData.firstName,
+      last_name: profileData.lastName,
+      phone_number: profileData.phoneNumber,
+      language: profileData.language || 'en',
+      team: profileData.team || 'Employees',
+    });
+    
+  if (error) {
+    console.error("Error updating profile:", error);
+    throw error;
+  }
+  
+  return { success: true };
+};
 
 interface EmployeeCreateData {
   email: string;
