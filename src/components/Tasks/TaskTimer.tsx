@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,20 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Clock, Play, Pause, Save } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { TimeEntry } from '@/types/timeTracking';
+import { formatDuration } from '@/utils/timeUtils';
 
 interface TaskTimerProps {
   taskId: string;
 }
-
-type TimeEntry = {
-  id: string;
-  user_id: string;
-  task_id: string;
-  description: string | null;
-  start_time: string;
-  end_time: string | null;
-  created_at: string;
-};
 
 export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   const { toast } = useToast();
@@ -29,7 +22,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   
   const [isRunning, setIsRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
-  const [activeEntry, setActiveEntry] = useState<any>(null);
+  const [activeEntry, setActiveEntry] = useState<TimeEntry | null>(null);
   const [description, setDescription] = useState('');
   
   // Fetch time entries for this task
@@ -63,6 +56,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
         .select('*')
         .is('end_time', null)
         .eq('task_id', taskId)
+        .eq('is_running', true)
         .maybeSingle();
         
       if (error) {
@@ -73,6 +67,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
       if (activeData) {
         setIsRunning(true);
         setActiveEntry(activeData);
+        setDescription(activeData.description || '');
         
         // Calculate elapsed time
         const startTime = new Date(activeData.start_time).getTime();
@@ -105,6 +100,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
         .from('time_entries')
         .select('id')
         .is('end_time', null)
+        .eq('is_running', true)
         .limit(1)
         .maybeSingle();
         
@@ -128,7 +124,8 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
         .insert({
           task_id: taskId,
           start_time: new Date().toISOString(),
-          user_id: userId
+          user_id: userId,
+          is_running: true
         })
         .select()
         .single();
@@ -163,6 +160,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
         .update({
           end_time: new Date().toISOString(),
           description: description || null,
+          is_running: false
         })
         .eq('id', activeEntry.id)
         .select()
@@ -192,19 +190,6 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     },
   });
   
-  // Format seconds to HH:MM:SS
-  const formatTime = (totalSeconds: number) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    
-    return [
-      hours.toString().padStart(2, '0'),
-      minutes.toString().padStart(2, '0'),
-      seconds.toString().padStart(2, '0')
-    ].join(':');
-  };
-  
   // Calculate total time spent
   const calculateTotalTimeSpent = () => {
     if (!timeEntries.length) return 0;
@@ -228,6 +213,17 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
+
+  // Get duration between start and end times
+  const getEntryDuration = (entry: TimeEntry) => {
+    if (!entry.end_time) return formatDuration(seconds);
+    
+    const startTime = new Date(entry.start_time).getTime();
+    const endTime = new Date(entry.end_time).getTime();
+    const durationInSeconds = Math.floor((endTime - startTime) / 1000);
+    
+    return formatDuration(durationInSeconds);
+  };
   
   return (
     <div className="space-y-4">
@@ -235,7 +231,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
       <div className="flex justify-center items-center border rounded-md p-4 bg-muted/30">
         <div className="text-center">
           <div className="text-3xl font-mono font-bold mb-2">
-            {formatTime(seconds)}
+            {formatDuration(seconds)}
           </div>
           
           <div className="flex justify-center gap-2">
@@ -289,21 +285,19 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
           <div className="flex justify-between items-center mb-2">
             <Badge variant="outline" className="bg-muted">
               <Clock className="h-3 w-3 mr-1" />
-              Total: {formatTime(calculateTotalTimeSpent())}
+              Total: {formatDuration(calculateTotalTimeSpent())}
             </Badge>
           </div>
           
           {timeEntries.length > 0 ? (
-            <div className="space-y-2">
-              {timeEntries.slice(0, 5).map((entry) => (
-                <div key={entry.id} className="text-sm border rounded-md p-2">
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+              {timeEntries.map((entry) => (
+                <div key={entry.id} className="text-sm border rounded-md p-3 hover:bg-muted/50 transition-colors">
                   <div className="flex justify-between items-center">
                     <div>
                       {entry.end_time ? (
-                        <span>
-                          {formatTime(Math.floor(
-                            (new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / 1000
-                          ))}
+                        <span className="font-medium">
+                          {getEntryDuration(entry)}
                         </span>
                       ) : (
                         <Badge variant="outline" className="bg-green-100 text-green-800">

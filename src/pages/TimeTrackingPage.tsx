@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -9,6 +9,7 @@ import { TimeTrackerHeader } from '@/components/TimeTracking/TimeTrackerHeader';
 import { TimeEntrySearch } from '@/components/TimeTracking/TimeEntrySearch';
 import { TimeEntryList } from '@/components/TimeTracking/TimeEntryList';
 import { TimeEntryForm } from '@/components/TimeTracking/TimeEntryForm';
+import { formatDuration } from '@/utils/timeUtils';
 
 const TimeTrackingPage = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -20,6 +21,7 @@ const TimeTrackingPage = () => {
   
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   
   // Fetch time entries
   const { data: timeEntries = [], isLoading } = useQuery({
@@ -42,8 +44,8 @@ const TimeTrackingPage = () => {
         return [];
       }
       
-      // Check if there's any active time entry (without end_time)
-      const active = data.find(entry => !entry.end_time);
+      // Check if there's any active time entry (without end_time and is_running is true)
+      const active = data.find(entry => !entry.end_time && entry.is_running);
       if (active) {
         setIsTracking(true);
         setActiveEntry(active);
@@ -73,6 +75,99 @@ const TimeTrackingPage = () => {
       }
       
       return data as Task[];
+    },
+  });
+
+  // Start timer mutation
+  const startTimerMutation = useMutation({
+    mutationFn: async (taskId: string | null) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      // Check if there's an active timer already
+      const { data: existingTimer, error: checkError } = await supabase
+        .from('time_entries')
+        .select('*')
+        .is('end_time', null)
+        .eq('is_running', true)
+        .maybeSingle();
+      
+      if (checkError) throw checkError;
+      
+      if (existingTimer) {
+        throw new Error('You already have an active timer');
+      }
+      
+      // Create new time entry
+      const { data, error } = await supabase
+        .from('time_entries')
+        .insert({
+          task_id: taskId,
+          start_time: new Date().toISOString(),
+          user_id: user.id,
+          is_running: true
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      return data;
+    },
+    onSuccess: (data) => {
+      setIsTracking(true);
+      setActiveEntry(data);
+      setElapsedTime(0);
+      queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
+      toast({
+        title: 'Timer started',
+        description: 'Your timer has been started successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error starting timer',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+  
+  // Stop timer mutation
+  const stopTimerMutation = useMutation({
+    mutationFn: async (description: string | null = null) => {
+      if (!activeEntry) throw new Error('No active timer to stop');
+      
+      const { data, error } = await supabase
+        .from('time_entries')
+        .update({
+          end_time: new Date().toISOString(),
+          description: description || activeEntry.description,
+          is_running: false
+        })
+        .eq('id', activeEntry.id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      return data;
+    },
+    onSuccess: () => {
+      setIsTracking(false);
+      setActiveEntry(null);
+      setElapsedTime(0);
+      queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
+      toast({
+        title: 'Timer stopped',
+        description: 'Your time has been logged successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error stopping timer',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
   
@@ -115,6 +210,9 @@ const TimeTrackingPage = () => {
         activeEntry={activeEntry}
         setIsTracking={setIsTracking}
         setActiveEntry={setActiveEntry}
+        onStart={(taskId) => startTimerMutation.mutate(taskId)}
+        onStop={(description) => stopTimerMutation.mutate(description)}
+        tasks={tasks}
       />
       
       <TimeEntrySearch

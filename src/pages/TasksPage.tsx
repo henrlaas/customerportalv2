@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser } from '@/integrations/supabase/client';
@@ -35,6 +34,7 @@ import { TaskForm } from '@/components/Tasks/TaskForm';
 import { TaskFilters } from '@/components/Tasks/TaskFilters';
 import { TaskAssignees } from '@/components/Tasks/TaskAssignees';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
+import { TaskSidePanel } from '@/components/Tasks/TaskSidePanel';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -83,6 +83,10 @@ export const TasksPage = () => {
     campaign: 'all',
   });
   const [showFilters, setShowFilters] = useState(false);
+  
+  // State for the side panel
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   
   // Fetch tasks with filtering
   const { data: tasks = [], isLoading: isLoadingTasks } = useQuery({
@@ -224,9 +228,17 @@ export const TasksPage = () => {
     },
   });
   
-  // Function to handle task click to navigate to details page
+  // Function to handle task click to show side panel instead of navigating
   const handleTaskClick = (taskId: string) => {
-    navigate(`/tasks/${taskId}`);
+    setSelectedTaskId(taskId);
+    setIsSidePanelOpen(true);
+  };
+  
+  // Function to close the side panel
+  const handleCloseSidePanel = () => {
+    setIsSidePanelOpen(false);
+    // Clear the selected task after panel animation completes
+    setTimeout(() => setSelectedTaskId(null), 300);
   };
   
   // Function to reset all filters
@@ -463,6 +475,14 @@ export const TasksPage = () => {
           </div>
         </div>
       )}
+      
+      {/* Task Side Panel */}
+      <TaskSidePanel
+        taskId={selectedTaskId}
+        open={isSidePanelOpen}
+        onClose={handleCloseSidePanel}
+        profiles={profiles}
+      />
     </div>
   );
 };

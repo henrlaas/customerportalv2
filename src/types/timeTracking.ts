@@ -9,6 +9,7 @@ export type TimeEntry = {
   task_id: string | null;
   created_at: string;
   updated_at: string;
+  is_running?: boolean;
 };
 
 // Task type for selecting related tasks
