@@ -1,1 +1,2 @@
-// This file is now empty as employee functionality has been removed
+
+// This file is intentionally empty as employee functionality has been removed
