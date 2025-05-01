@@ -98,7 +98,8 @@ export const FileUploadStep: React.FC<FileUploadStepProps> = ({ contractData, up
         <FileUploader
           onUpload={handleFileUpload}
           onUploaded={handleFileUploaded}
-          acceptedFileTypes={{
+          isUploading={isUploading}
+          accept={{
             'application/pdf': ['.pdf'],
             'application/msword': ['.doc'],
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
