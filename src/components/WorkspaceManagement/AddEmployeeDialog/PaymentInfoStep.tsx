@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { employeeService } from '@/services/employeeService';
-import { userService } from '@/services/userService';
 
 interface PaymentInfoStepProps {
   formData: {
@@ -69,36 +68,27 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     
     setIsSubmitting(true);
     try {
-      // First, check if a user with this email already exists and get their ID
-      const userResults = await userService.listUsers();
-      const existingUser = userResults.find(user => user.email === formData.email);
-      let userId = existingUser?.id;
-      
-      if (!userId) {
-        toast({
-          title: "User Not Found",
-          description: `No user found with email ${formData.email}. Please add the user first before creating an employee record.`,
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      console.log('Found existing user with ID:', userId);
-      
-      // Create new employee record
-      await employeeService.createEmployee({
-        address: formData.address,
-        zipcode: formData.zipcode,
-        country: formData.country,
-        city: formData.city,
-        employee_type: formData.employee_type,
-        hourly_salary: formData.hourly_salary,
-        employed_percentage: formData.employed_percentage,
-        social_security_number: localFormData.social_security_number,
-        account_number: localFormData.account_number,
-        paycheck_solution: localFormData.paycheck_solution || ''
-      }, userId);
+      // Create a new user in the auth system and link it to an employee record
+      await employeeService.createUserAndEmployee(
+        {
+          email: formData.email,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone_number: formData.phone_number
+        },
+        {
+          address: formData.address,
+          zipcode: formData.zipcode,
+          country: formData.country,
+          city: formData.city,
+          employee_type: formData.employee_type,
+          hourly_salary: formData.hourly_salary,
+          employed_percentage: formData.employed_percentage,
+          social_security_number: localFormData.social_security_number,
+          account_number: localFormData.account_number,
+          paycheck_solution: localFormData.paycheck_solution || ''
+        }
+      );
       
       toast({
         title: "Employee Added",

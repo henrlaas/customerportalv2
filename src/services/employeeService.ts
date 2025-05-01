@@ -51,27 +51,46 @@ export const employeeService = {
     return parsedEmployees;
   },
 
-  async getUserIdByEmail(email: string): Promise<string | null> {
-    console.log("Looking up user ID for email:", email);
+  async createUserAndEmployee(userData: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone_number?: string;
+  }, employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>): Promise<Employee> {
+    console.log("Creating new user with email:", userData.email);
     
-    // First, we need to find the user by their email
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
-    
-    if (error) {
-      console.error("Error finding user by email:", error);
-      return null;
+    try {
+      // Call the user-management edge function to create a new user
+      const response = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'invite',
+          email: userData.email,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          phoneNumber: userData.phone_number || '',
+          role: 'employee',
+          language: 'en',
+          redirect: `${window.location.origin}/set-password`,
+          team: 'Employees',
+        },
+      });
+      
+      if (response.error) {
+        console.error('Error creating user:', response.error);
+        throw new Error(response.error.message || 'Failed to create user');
+      }
+      
+      console.log("User created successfully:", response.data);
+      
+      // Get the new user's ID
+      const userId = response.data.user.id;
+      
+      // Create the employee record with the new user's ID
+      return await this.createEmployee(employeeData, userId);
+    } catch (error: any) {
+      console.error('Error in createUserAndEmployee:', error);
+      throw error;
     }
-    
-    if (!data) {
-      console.log("No user found with email:", email);
-      return null;
-    }
-    
-    return data.id;
   },
 
   async employeeExists(userId: string): Promise<boolean> {
