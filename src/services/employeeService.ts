@@ -51,6 +51,29 @@ export const employeeService = {
     return parsedEmployees;
   },
 
+  async getUserIdByEmail(email: string): Promise<string | null> {
+    console.log("Looking up user ID for email:", email);
+    
+    // First, we need to find the user by their email
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Error finding user by email:", error);
+      return null;
+    }
+    
+    if (!data) {
+      console.log("No user found with email:", email);
+      return null;
+    }
+    
+    return data.id;
+  },
+
   async employeeExists(userId: string): Promise<boolean> {
     console.log("Checking if employee exists with ID:", userId);
     
