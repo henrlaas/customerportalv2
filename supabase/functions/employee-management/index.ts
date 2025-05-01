@@ -1,7 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 
-// Create our own utility functions instead of trying to import from user-management
+// Define CORS headers for all responses
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -9,8 +10,6 @@ const corsHeaders = {
 
 // Create a Supabase admin client for server operations
 const createAdminClient = () => {
-  const { createClient } = require("https://esm.sh/@supabase/supabase-js@2.21.0");
-  
   return createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
