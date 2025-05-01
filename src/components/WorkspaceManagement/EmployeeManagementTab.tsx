@@ -1,13 +1,11 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, Pencil, Trash2, Search, Filter, KeyRound } from 'lucide-react';
+import { UserPlus, Trash2, Search, Filter, KeyRound } from 'lucide-react';
 import { AddEmployeeDialog } from './AddEmployeeDialog';
-import { EditEmployeeDialog } from './AddEmployeeDialog/EditEmployeeDialog';
 import { DeleteEmployeeDialog } from './AddEmployeeDialog/DeleteEmployeeDialog';
 import { EmployeeWithProfile } from '@/types/employee';
 import { useToast } from '@/components/ui/use-toast';
@@ -26,7 +24,6 @@ import { userService } from '@/services/userService';
 
 export function EmployeeManagementTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithProfile | null>(null);
   const { toast } = useToast();
@@ -59,14 +56,6 @@ export function EmployeeManagementTab() {
     }
   }, [employees]);
 
-  const handleEditEmployee = (employee: EmployeeWithProfile, e: React.MouseEvent) => {
-    // Prevent the row click event from firing
-    e.stopPropagation();
-    console.log('Opening edit dialog for employee:', employee);
-    setSelectedEmployee(employee);
-    setShowEditDialog(true);
-  };
-
   const handleDeleteEmployee = (employee: EmployeeWithProfile, e: React.MouseEvent) => {
     // Prevent the row click event from firing
     e.stopPropagation();
@@ -75,7 +64,6 @@ export function EmployeeManagementTab() {
   };
 
   const handleViewEmployee = (employee: EmployeeWithProfile) => {
-    console.log('Opening view dialog for employee with city:', employee.city);
     setSelectedEmployee(employee);
     setShowViewDialog(true);
   };
@@ -214,15 +202,6 @@ export function EmployeeManagementTab() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        onClick={(e) => handleEditEmployee(employee, e)}
-                        title="Edit Employee"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
                         onClick={(e) => handleResetPassword(employee, e)}
                         disabled={isPendingReset}
                         title="Reset Password"
@@ -257,19 +236,9 @@ export function EmployeeManagementTab() {
         }} 
       />
 
-      {/* Edit Employee Dialog - only rendered when an employee is selected */}
+      {/* Only keep the Delete and View dialogs */}
       {selectedEmployee && (
         <>
-          <EditEmployeeDialog
-            open={showEditDialog}
-            onClose={() => {
-              setShowEditDialog(false);
-              setSelectedEmployee(null);
-              refetch();
-            }}
-            employee={selectedEmployee}
-          />
-          
           <DeleteEmployeeDialog
             open={showDeleteDialog}
             onClose={() => {
