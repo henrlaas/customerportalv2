@@ -51,79 +51,16 @@ export const employeeService = {
     return parsedEmployees;
   },
 
-  async createUserAndEmployee(userData: {
-    email: string;
-    first_name: string;
-    last_name: string;
-    phone_number?: string;
-  }, employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>): Promise<Employee> {
-    console.log("Creating new user with email:", userData.email);
+  async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>): Promise<Employee> {
+    // Generate a new UUID for the employee
+    const employeeId = crypto.randomUUID();
     
-    try {
-      // Call the user-management edge function to create a new user
-      const response = await supabase.functions.invoke('user-management', {
-        body: {
-          action: 'invite',
-          email: userData.email,
-          firstName: userData.first_name,
-          lastName: userData.last_name,
-          phoneNumber: userData.phone_number || '',
-          role: 'employee',
-          language: 'en',
-          redirect: `${window.location.origin}/set-password`,
-          team: 'Employees',
-        },
-      });
-      
-      if (response.error) {
-        console.error('Error creating user:', response.error);
-        throw new Error(response.error.message || 'Failed to create user');
-      }
-      
-      console.log("User created successfully:", response.data);
-      
-      // Get the new user's ID
-      const userId = response.data.user.id;
-      
-      // Create the employee record with the new user's ID
-      return await this.createEmployee(employeeData, userId);
-    } catch (error: any) {
-      console.error('Error in createUserAndEmployee:', error);
-      throw error;
-    }
-  },
-
-  async employeeExists(userId: string): Promise<boolean> {
-    console.log("Checking if employee exists with ID:", userId);
+    console.log("Creating new employee with generated ID:", employeeId);
     
+    // Insert into the employees table with the generated ID
     const { data, error } = await supabase
       .from('employees')
-      .select('id')
-      .eq('id', userId)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') { // PGRST116 means "no rows returned", which is not an error for us
-      console.error("Error checking if employee exists:", error);
-      throw error;
-    }
-    
-    return !!data;
-  },
-
-  async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
-    console.log("Creating employee with ID:", userId, "and data:", employeeData);
-    
-    // First check if employee exists to avoid duplicate key errors
-    const exists = await this.employeeExists(userId);
-    if (exists) {
-      console.error("Cannot create employee: ID already exists:", userId);
-      throw new Error("Employee with this ID already exists. Cannot create duplicate.");
-    }
-    
-    // Insert into the employees table with the proper type definitions and explicitly set the id
-    const { data, error } = await supabase
-      .from('employees')
-      .insert([{ ...employeeData, id: userId }])
+      .insert([{ ...employeeData, id: employeeId }])
       .select()
       .single();
 
