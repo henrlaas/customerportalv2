@@ -1,4 +1,3 @@
-
 export interface Employee {
   id: string;
   address: string;
@@ -49,4 +48,3 @@ export interface EmployeeFormData {
   accountNumber: string;
   paycheckSolution?: string;
 }
-
