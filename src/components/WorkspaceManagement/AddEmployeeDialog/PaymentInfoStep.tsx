@@ -41,9 +41,10 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
   });
   
   const inviteUserMutation = useInviteUser({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Extract the user ID from the nested response structure
       let userId;
+      let isNewUser = true;
       
       // The response structure can be different based on whether it's a new or existing user
       if (data && data.user) {
@@ -59,28 +60,64 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         userId = data.userId;
       }
       
+      // Check if this is an existing user
+      if (data && data.isNewUser === false) {
+        isNewUser = false;
+      }
+      
       if (userId) {
         console.log("User invitation successful, creating employee record with user ID:", userId);
-        handleCreateEmployee(userId);
+        try {
+          // Check if the employee already exists
+          const employeeExists = await employeeService.employeeExists(userId);
+          
+          if (employeeExists && !isEdit) {
+            // If this is supposed to be a new employee, but it already exists, update it
+            console.log("Employee already exists for this user, updating instead of creating");
+            await handleUpdateEmployee(userId);
+            toast({
+              title: "Employee Updated",
+              description: `${formData.first_name} ${formData.last_name}'s information has been updated.`,
+            });
+          } else if (!employeeExists) {
+            // This is a new employee
+            await handleCreateEmployee(userId);
+            toast({
+              title: "Employee Added",
+              description: `${formData.first_name} ${formData.last_name} has been added successfully. ${isNewUser ? "An invitation email has been sent." : ""}`,
+            });
+          } else {
+            // This is an edit operation on an existing employee
+            await handleUpdateEmployee(userId);
+            toast({
+              title: "Employee Updated",
+              description: `${formData.first_name} ${formData.last_name}'s information has been updated.`,
+            });
+          }
+          
+          setIsSubmitting(false);
+          onClose();
+        } catch (error) {
+          handleError(error);
+        }
       } else {
         console.error("Failed to get user ID from invitation response:", data);
-        setIsSubmitting(false);
-        toast({
-          title: "Error",
-          description: "Failed to create employee: Invalid user ID in response",
-          variant: "destructive",
-        });
+        handleError(new Error("Failed to create employee: Invalid user ID in response"));
       }
     },
     onError: (error) => {
-      setIsSubmitting(false);
-      toast({
-        title: "Error",
-        description: `Failed to invite user: ${error.message}`,
-        variant: "destructive",
-      });
+      handleError(error);
     }
   });
+
+  const handleError = (error: any) => {
+    setIsSubmitting(false);
+    toast({
+      title: "Error",
+      description: error.message || "An error occurred during the operation",
+      variant: "destructive",
+    });
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -104,76 +141,63 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
       [field]: value
     }));
   };
+
+  const getUpdatedEmployeeData = () => {
+    // Combine parent formData with our local values
+    return {
+      address: formData.address,
+      zipcode: formData.zipcode,
+      country: formData.country,
+      city: formData.city,
+      employee_type: formData.employee_type,
+      hourly_salary: formData.hourly_salary,
+      employed_percentage: formData.employed_percentage,
+      social_security_number: localFormData.social_security_number,
+      account_number: localFormData.account_number,
+      paycheck_solution: localFormData.paycheck_solution || ''
+    };
+  };
   
   const handleCreateEmployee = async (userId: string) => {
     try {
-      // Update the parent formData with our local values before submission
-      const updatedFormData = {
-        ...formData,
-        social_security_number: localFormData.social_security_number,
-        account_number: localFormData.account_number,
-        paycheck_solution: localFormData.paycheck_solution
-      };
+      const employeeData = getUpdatedEmployeeData();
       
       console.log("Creating employee record with data:", {
         userId,
-        address: updatedFormData.address,
-        zipcode: updatedFormData.zipcode,
-        country: updatedFormData.country,
-        city: updatedFormData.city,
-        employee_type: updatedFormData.employee_type,
-        hourly_salary: updatedFormData.hourly_salary,
-        employed_percentage: updatedFormData.employed_percentage,
-        social_security_number: updatedFormData.social_security_number,
-        account_number: updatedFormData.account_number,
-        paycheck_solution: updatedFormData.paycheck_solution || ''
+        ...employeeData
       });
       
-      if (isEdit && employeeId) {
-        // Update existing employee record
-        await employeeService.updateEmployee(employeeId, {
-          address: updatedFormData.address,
-          zipcode: updatedFormData.zipcode,
-          country: updatedFormData.country,
-          city: updatedFormData.city,
-          employee_type: updatedFormData.employee_type,
-          hourly_salary: updatedFormData.hourly_salary,
-          employed_percentage: updatedFormData.employed_percentage,
-          social_security_number: updatedFormData.social_security_number,
-          account_number: updatedFormData.account_number,
-          paycheck_solution: updatedFormData.paycheck_solution || '',
-        });
-      } else {
-        // Create new employee record
-        await employeeService.createEmployee({
-          address: updatedFormData.address,
-          zipcode: updatedFormData.zipcode,
-          country: updatedFormData.country,
-          city: updatedFormData.city,
-          employee_type: updatedFormData.employee_type,
-          hourly_salary: updatedFormData.hourly_salary,
-          employed_percentage: updatedFormData.employed_percentage,
-          social_security_number: updatedFormData.social_security_number,
-          account_number: updatedFormData.account_number,
-          paycheck_solution: updatedFormData.paycheck_solution || '',
-        }, userId);
-      }
+      // Create new employee record
+      await employeeService.createEmployee({
+        ...employeeData
+      }, userId);
       
-      toast({
-        title: isEdit ? "Employee Updated" : "Employee Added",
-        description: `${updatedFormData.first_name} ${updatedFormData.last_name} has been ${isEdit ? "updated" : "added"} successfully. ${!isEdit ? "An invitation email has been sent." : ""}`,
-      });
-      
-      setIsSubmitting(false);
-      onClose();
+      return true;
     } catch (error: any) {
       console.error('Error creating employee record:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create employee record",
-        variant: "destructive",
+      throw error;
+    }
+  };
+  
+  const handleUpdateEmployee = async (userId: string) => {
+    try {
+      const employeeData = getUpdatedEmployeeData();
+      
+      console.log("Updating employee record with data:", {
+        userId,
+        ...employeeData
       });
-      setIsSubmitting(false);
+      
+      // Use the provided employeeId or the userId for updating
+      const idToUpdate = employeeId || userId;
+      
+      // Update existing employee record
+      await employeeService.updateEmployee(idToUpdate, employeeData);
+      
+      return true;
+    } catch (error: any) {
+      console.error('Error updating employee record:', error);
+      throw error;
     }
   };
 
@@ -185,20 +209,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     try {
       if (isEdit && employeeId) {
         // Update existing employee
-        const employeeData = {
-          address: formData.address,
-          zipcode: formData.zipcode,
-          country: formData.country,
-          city: formData.city,
-          employee_type: formData.employee_type,
-          hourly_salary: formData.hourly_salary,
-          employed_percentage: formData.employed_percentage,
-          social_security_number: localFormData.social_security_number,
-          account_number: localFormData.account_number,
-          paycheck_solution: localFormData.paycheck_solution || ''
-        };
-        
-        await employeeService.updateEmployee(employeeId, employeeData);
+        await handleUpdateEmployee(employeeId);
         
         toast({
           title: "Employee Updated",
@@ -219,7 +230,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         const siteUrl = window.location.origin;
         const redirectUrl = `${siteUrl}/set-password`;
         
-        // Use the inviteUser hook instead of direct edge function call
+        // Use the inviteUser hook
         inviteUserMutation.mutate({
           email: formData.email,
           firstName: formData.first_name,

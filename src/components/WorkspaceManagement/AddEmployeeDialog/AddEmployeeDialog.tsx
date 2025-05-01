@@ -11,24 +11,27 @@ interface AddEmployeeDialogProps {
   onClose: () => void;
 }
 
+// Default form data for a new employee
+const defaultFormData = {
+  email: '',
+  first_name: '',
+  last_name: '',
+  phone_number: '',
+  address: '',
+  zipcode: '',
+  country: '',
+  city: '',
+  employee_type: 'Employee' as 'Employee' | 'Freelancer',
+  hourly_salary: 0,
+  employed_percentage: 100,
+  social_security_number: '',
+  account_number: '',
+  paycheck_solution: '',
+};
+
 export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    email: '',
-    first_name: '',
-    last_name: '',
-    phone_number: '',
-    address: '',
-    zipcode: '',
-    country: '',
-    city: '',
-    employee_type: 'Employee' as 'Employee' | 'Freelancer',
-    hourly_salary: 0,
-    employed_percentage: 100,
-    social_security_number: '',
-    account_number: '',
-    paycheck_solution: '',
-  });
+  const [formData, setFormData] = useState({ ...defaultFormData });
 
   const updateFormData = (data: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...data }));
@@ -45,22 +48,7 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
   const handleClose = () => {
     // Reset the form when closing
     setStep(1);
-    setFormData({
-      email: '',
-      first_name: '',
-      last_name: '',
-      phone_number: '',
-      address: '',
-      zipcode: '',
-      country: '',
-      city: '',
-      employee_type: 'Employee',
-      hourly_salary: 0,
-      employed_percentage: 100,
-      social_security_number: '',
-      account_number: '',
-      paycheck_solution: '',
-    });
+    setFormData({ ...defaultFormData });
     onClose();
   };
 
