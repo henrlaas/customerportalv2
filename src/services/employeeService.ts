@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Employee, EmployeeWithProfile } from '@/types/employee';
 
@@ -47,6 +48,7 @@ export const employeeService = {
     country: string;
     city: string;
     employeeType: 'Employee' | 'Freelancer';
+    team: string;
     hourlySalary: number;
     employedPercentage: number;
     socialSecurityNumber: string;

@@ -1,3 +1,4 @@
+
 export interface Employee {
   id: string;
   address: string;
@@ -42,6 +43,7 @@ export interface EmployeeFormData {
   country: string;
   city: string;
   employeeType: 'Employee' | 'Freelancer';
+  team: string;
   hourlySalary: number;
   employedPercentage: number;
   socialSecurityNumber: string;

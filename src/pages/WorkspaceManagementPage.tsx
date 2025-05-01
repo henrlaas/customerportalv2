@@ -5,9 +5,11 @@ import { workspaceService, WorkspaceSetting } from "@/services/workspaceService"
 import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
 import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
 import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
+import { EmployeeManagementTab } from "@/components/WorkspaceManagement/EmployeeManagementTab";
 import {
   Settings,
-  Users
+  Users,
+  UserPlus
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -114,7 +116,7 @@ const WorkspaceManagementPage = () => {
       </div>
       
       <p className="text-muted-foreground mb-8">
-        Configure global settings for your workspace and manage users.
+        Configure global settings for your workspace, manage employees, and user accounts.
       </p>
 
       <Tabs defaultValue="all-settings" className="space-y-4">
@@ -122,6 +124,10 @@ const WorkspaceManagementPage = () => {
           <TabsTrigger value="all-settings">
             <Settings className="h-4 w-4 mr-2" />
             All Settings
+          </TabsTrigger>
+          <TabsTrigger value="employees">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Employees
           </TabsTrigger>
           <TabsTrigger value="users">
             <Users className="h-4 w-4 mr-2" />
@@ -160,6 +166,10 @@ const WorkspaceManagementPage = () => {
           <div className="mt-4">
             <AddSettingForm onAdd={handleAddSetting} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="employees">
+          <EmployeeManagementTab />
         </TabsContent>
 
         <TabsContent value="users">
