@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Employee, EmployeeWithProfile } from '@/types/employee';
 

@@ -1,3 +1,1 @@
-
-export { AddEmployeeDialog } from './AddEmployeeDialog';
-export { DeleteEmployeeDialog } from './DeleteEmployeeDialog';
+// This file is now empty as employee functionality has been removed

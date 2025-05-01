@@ -12,7 +12,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { EmployeeManagementTab } from "@/components/WorkspaceManagement/EmployeeManagementTab";
 
 // Helper to filter settings by category
 const filterSettingsByCategory = (settings: WorkspaceSetting[], category: string) => {
@@ -124,10 +123,6 @@ const WorkspaceManagementPage = () => {
             <Settings className="h-4 w-4 mr-2" />
             All Settings
           </TabsTrigger>
-          <TabsTrigger value="employees">
-            <Users className="h-4 w-4 mr-2" />
-            Employees
-          </TabsTrigger>
           <TabsTrigger value="users">
             <Users className="h-4 w-4 mr-2" />
             Users
@@ -165,10 +160,6 @@ const WorkspaceManagementPage = () => {
           <div className="mt-4">
             <AddSettingForm onAdd={handleAddSetting} />
           </div>
-        </TabsContent>
-
-        <TabsContent value="employees">
-          <EmployeeManagementTab />
         </TabsContent>
 
         <TabsContent value="users">
