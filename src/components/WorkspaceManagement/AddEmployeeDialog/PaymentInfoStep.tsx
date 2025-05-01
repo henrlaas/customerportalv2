@@ -75,12 +75,20 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
       console.log("Submitting employee data:", employeeData);
 
       // Create the employee through our service
-      await employeeService.createEmployee(employeeData);
+      const response = await employeeService.createEmployee(employeeData);
       
-      toast({
-        title: "Employee Added",
-        description: `${formData.firstName} ${formData.lastName} has been added successfully.`,
-      });
+      // Handle existing employee scenario
+      if (response.isExisting) {
+        toast({
+          title: "Employee Already Exists",
+          description: `${formData.firstName} ${formData.lastName} is already registered as an employee.`,
+        });
+      } else {
+        toast({
+          title: "Employee Added",
+          description: `${formData.firstName} ${formData.lastName} has been added successfully.`,
+        });
+      }
       
       setIsSubmitting(false);
       onClose();

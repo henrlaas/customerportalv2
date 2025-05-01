@@ -53,7 +53,7 @@ export const employeeService = {
     socialSecurityNumber: string;
     accountNumber: string;
     paycheckSolution?: string;
-  }): Promise<{ id: string; email: string }> {
+  }): Promise<{ id: string; email: string; isExisting?: boolean }> {
     try {
       console.log("Calling edge function with data:", employeeData);
       

@@ -81,35 +81,73 @@ async function handleCreateEmployee(body: EmployeeCreateData, origin: string, su
   } = body;
 
   try {
-    // Step 1: Invite the user via email - Create auth account
-    const redirect = `${origin}/set-password`;
-    console.log("Attempting to invite user with email:", email);
-    
-    const { data: userData, error: inviteError } = await supabaseAdmin.functions.invoke('user-management', {
-      body: {
-        action: 'invite',
-        email,
-        firstName,
-        lastName,
-        phoneNumber: phone,
-        role: 'employee',
-        language: 'en',
-        redirect,
-        team: 'Employees',
-      },
+    // Step 1: Check if user with this email already exists
+    const { data: existingUser, error: userCheckError } = await supabaseAdmin.auth.admin.listUsers({
+      filter: {
+        email: email
+      }
     });
 
-    if (inviteError) {
-      console.error("Error creating user:", inviteError);
-      throw inviteError;
+    if (userCheckError) {
+      console.error("Error checking for existing user:", userCheckError);
+      throw userCheckError;
     }
 
-    if (!userData || !userData.userId) {
-      throw new Error("Failed to create user account. No user ID returned.");
-    }
+    let userId;
+    let isNewUser = true;
 
-    const userId = userData.userId;
-    console.log("Created user with ID:", userId);
+    // If user exists, get their ID
+    if (existingUser && existingUser.users && existingUser.users.length > 0) {
+      userId = existingUser.users[0].id;
+      isNewUser = false;
+      console.log("User already exists with ID:", userId);
+      
+      // Check if employee record already exists
+      const { data: existingEmployee } = await supabaseAdmin
+        .from('employees')
+        .select('id')
+        .eq('id', userId)
+        .single();
+        
+      if (existingEmployee) {
+        return {
+          id: userId,
+          email,
+          message: "Employee already exists. No changes made.",
+          isExisting: true
+        };
+      }
+    } else {
+      // Create new user if they don't exist
+      const redirect = `${origin}/set-password`;
+      console.log("Attempting to invite user with email:", email);
+      
+      const { data: userData, error: inviteError } = await supabaseAdmin.functions.invoke('user-management', {
+        body: {
+          action: 'invite',
+          email,
+          firstName,
+          lastName,
+          phoneNumber: phone,
+          role: 'employee',
+          language: 'en',
+          redirect,
+          team: 'Employees',
+        },
+      });
+
+      if (inviteError) {
+        console.error("Error creating user:", inviteError);
+        throw inviteError;
+      }
+
+      if (!userData || !userData.userId) {
+        throw new Error("Failed to create user account. No user ID returned.");
+      }
+
+      userId = userData.userId;
+      console.log("Created user with ID:", userId);
+    }
 
     // Step 2: Insert employee record with the user's ID
     const employeeRecord = {
@@ -135,17 +173,19 @@ async function handleCreateEmployee(body: EmployeeCreateData, origin: string, su
     if (employeeError) {
       console.error("Error creating employee record:", employeeError);
       
-      // If employee creation fails, attempt to clean up the auth user
-      try {
-        console.log("Attempting to clean up auth user after employee creation error");
-        await supabaseAdmin.functions.invoke('user-management', {
-          body: {
-            action: 'delete',
-            userId
-          }
-        });
-      } catch (cleanupError) {
-        console.error("Failed to clean up auth user after employee creation error:", cleanupError);
+      // If employee creation fails and we created a new user, clean up
+      if (isNewUser) {
+        try {
+          console.log("Attempting to clean up auth user after employee creation error");
+          await supabaseAdmin.functions.invoke('user-management', {
+            body: {
+              action: 'delete',
+              userId
+            }
+          });
+        } catch (cleanupError) {
+          console.error("Failed to clean up auth user after employee creation error:", cleanupError);
+        }
       }
       
       throw employeeError;
@@ -171,7 +211,7 @@ async function handleCreateEmployee(body: EmployeeCreateData, origin: string, su
       email,
       firstName,
       lastName,
-      message: "Employee created successfully and invitation email sent."
+      message: isNewUser ? "Employee created successfully and invitation email sent." : "Employee record created for existing user."
     };
   } catch (error) {
     console.error("Error in createEmployee:", error);
