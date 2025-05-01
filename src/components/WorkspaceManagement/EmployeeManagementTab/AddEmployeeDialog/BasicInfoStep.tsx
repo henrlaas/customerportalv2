@@ -83,7 +83,7 @@ export function BasicInfoStep() {
           <FormItem>
             <FormLabel>Phone Number</FormLabel>
             <FormControl>
-              <PhoneInput defaultCountry="NO" placeholder="Enter phone number" {...field} />
+              <PhoneInput placeholder="Enter phone number" {...field} />
             </FormControl>
             <FormDescription>
               Phone number with country code

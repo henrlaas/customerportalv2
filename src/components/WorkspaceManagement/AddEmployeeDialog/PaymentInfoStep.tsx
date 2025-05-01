@@ -65,6 +65,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         country: formData.country,
         city: formData.city,
         employeeType: formData.employeeType,
+        team: formData.team || '',  // Add the missing team property
         hourlySalary: formData.hourlySalary,
         employedPercentage: formData.employedPercentage,
         socialSecurityNumber: localFormData.socialSecurityNumber,
