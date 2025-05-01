@@ -5,24 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { employeeService } from '@/services/employeeService';
+import { EmployeeFormData } from '@/types/employee';
 
 interface PaymentInfoStepProps {
-  formData: {
-    email: string;
-    first_name: string;
-    last_name: string;
-    phone_number: string;
-    address: string;
-    zipcode: string;
-    country: string;
-    city: string;
-    employee_type: 'Employee' | 'Freelancer';
-    hourly_salary: number;
-    employed_percentage: number;
-    social_security_number: string;
-    account_number: string;
-    paycheck_solution?: string;
-  };
+  formData: EmployeeFormData;
   onBack: () => void;
   onClose: () => void;
   isEdit?: boolean;
@@ -34,22 +20,22 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [localFormData, setLocalFormData] = useState({
-    social_security_number: formData.social_security_number,
-    account_number: formData.account_number,
-    paycheck_solution: formData.paycheck_solution || ''
+    socialSecurityNumber: formData.socialSecurityNumber,
+    accountNumber: formData.accountNumber,
+    paycheckSolution: formData.paycheckSolution || ''
   });
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!localFormData.social_security_number) 
-      newErrors.social_security_number = 'Social security number is required';
+    if (!localFormData.socialSecurityNumber) 
+      newErrors.socialSecurityNumber = 'Social security number is required';
     
-    if (!localFormData.account_number) 
-      newErrors.account_number = 'Account number is required';
+    if (!localFormData.accountNumber) 
+      newErrors.accountNumber = 'Account number is required';
     
-    if (formData.employee_type === 'Freelancer' && !localFormData.paycheck_solution)
-      newErrors.paycheck_solution = 'Paycheck solution is required for Freelancers';
+    if (formData.employeeType === 'Freelancer' && !localFormData.paycheckSolution)
+      newErrors.paycheckSolution = 'Paycheck solution is required for Freelancers';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -68,23 +54,30 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     
     setIsSubmitting(true);
     try {
-      // Create the employee record directly with a generated UUID
-      await employeeService.createEmployee({
+      // Prepare the final employee data
+      const employeeData = {
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
         address: formData.address,
         zipcode: formData.zipcode,
         country: formData.country,
         city: formData.city,
-        employee_type: formData.employee_type,
-        hourly_salary: formData.hourly_salary,
-        employed_percentage: formData.employed_percentage,
-        social_security_number: localFormData.social_security_number,
-        account_number: localFormData.account_number,
-        paycheck_solution: localFormData.paycheck_solution || ''
-      });
+        employeeType: formData.employeeType,
+        hourlySalary: formData.hourlySalary,
+        employedPercentage: formData.employedPercentage,
+        socialSecurityNumber: localFormData.socialSecurityNumber,
+        accountNumber: localFormData.accountNumber,
+        paycheckSolution: localFormData.paycheckSolution
+      };
+
+      // Create the employee through our service
+      await employeeService.createEmployee(employeeData);
       
       toast({
         title: "Employee Added",
-        description: `${formData.first_name} ${formData.last_name} has been added successfully.`,
+        description: `${formData.firstName} ${formData.lastName} has been added successfully.`,
       });
       
       setIsSubmitting(false);
@@ -106,35 +99,35 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         <h2 className="text-lg font-medium">Payment Information</h2>
         
         <div className="space-y-2">
-          <Label htmlFor="social_security_number">Social Security Number *</Label>
+          <Label htmlFor="socialSecurityNumber">Social Security Number *</Label>
           <Input 
-            id="social_security_number"
-            value={localFormData.social_security_number}
-            onChange={(e) => handleInputChange('social_security_number', e.target.value)}
+            id="socialSecurityNumber"
+            value={localFormData.socialSecurityNumber}
+            onChange={(e) => handleInputChange('socialSecurityNumber', e.target.value)}
           />
-          {errors.social_security_number && <p className="text-sm text-red-500">{errors.social_security_number}</p>}
+          {errors.socialSecurityNumber && <p className="text-sm text-red-500">{errors.socialSecurityNumber}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="account_number">Bank Account Number *</Label>
+          <Label htmlFor="accountNumber">Bank Account Number *</Label>
           <Input 
-            id="account_number"
-            value={localFormData.account_number}
-            onChange={(e) => handleInputChange('account_number', e.target.value)}
+            id="accountNumber"
+            value={localFormData.accountNumber}
+            onChange={(e) => handleInputChange('accountNumber', e.target.value)}
           />
-          {errors.account_number && <p className="text-sm text-red-500">{errors.account_number}</p>}
+          {errors.accountNumber && <p className="text-sm text-red-500">{errors.accountNumber}</p>}
         </div>
 
-        {formData.employee_type === 'Freelancer' && (
+        {formData.employeeType === 'Freelancer' && (
           <div className="space-y-2">
-            <Label htmlFor="paycheck_solution">Paycheck Solution *</Label>
+            <Label htmlFor="paycheckSolution">Paycheck Solution *</Label>
             <Input
-              id="paycheck_solution"
-              value={localFormData.paycheck_solution}
-              onChange={(e) => handleInputChange('paycheck_solution', e.target.value)}
+              id="paycheckSolution"
+              value={localFormData.paycheckSolution}
+              onChange={(e) => handleInputChange('paycheckSolution', e.target.value)}
               placeholder="Enter paycheck solution details"
             />
-            {errors.paycheck_solution && <p className="text-sm text-red-500">{errors.paycheck_solution}</p>}
+            {errors.paycheckSolution && <p className="text-sm text-red-500">{errors.paycheckSolution}</p>}
           </div>
         )}
       </div>
