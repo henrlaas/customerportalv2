@@ -5,19 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CountrySelector } from '@/components/ui/country-selector';
+import { EmployeeFormData } from '@/types/employee';
 
 interface EmploymentDetailsStepProps {
-  formData: {
-    address: string;
-    zipcode: string;
-    country: string;
-    city: string;
-    employee_type: 'Employee' | 'Freelancer';
-    hourly_salary: number;
-    employed_percentage: number;
-    paycheck_solution?: string;
-  };
-  onUpdate: (data: Partial<EmploymentDetailsStepProps['formData']>) => void;
+  formData: EmployeeFormData;
+  onUpdate: (data: Partial<EmployeeFormData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -37,15 +29,15 @@ export function EmploymentDetailsStep({
     if (!formData.zipcode) newErrors.zipcode = 'Zip code is required';
     if (!formData.country) newErrors.country = 'Country is required';
     if (!formData.city) newErrors.city = 'City is required';
-    if (!formData.employee_type) newErrors.employee_type = 'Employee type is required';
-    if (!formData.hourly_salary) newErrors.hourly_salary = 'Hourly salary is required';
-    if (!formData.employed_percentage) newErrors.employed_percentage = 'Employment percentage is required';
-    else if (formData.employed_percentage <= 0 || formData.employed_percentage > 100) {
-      newErrors.employed_percentage = 'Employment percentage must be between 1 and 100';
+    if (!formData.employeeType) newErrors.employeeType = 'Employee type is required';
+    if (!formData.hourlySalary) newErrors.hourlySalary = 'Hourly salary is required';
+    if (!formData.employedPercentage) newErrors.employedPercentage = 'Employment percentage is required';
+    else if (formData.employedPercentage <= 0 || formData.employedPercentage > 100) {
+      newErrors.employedPercentage = 'Employment percentage must be between 1 and 100';
     }
     
-    if (formData.employee_type === 'Freelancer' && !formData.paycheck_solution) {
-      newErrors.paycheck_solution = 'Paycheck solution is required for Freelancers';
+    if (formData.employeeType === 'Freelancer' && !formData.paycheckSolution) {
+      newErrors.paycheckSolution = 'Paycheck solution is required for Freelancers';
     }
     
     setErrors(newErrors);
@@ -109,12 +101,12 @@ export function EmploymentDetailsStep({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="employee_type">Employee Type *</Label>
+          <Label htmlFor="employeeType">Employee Type *</Label>
           <Select
-            value={formData.employee_type}
+            value={formData.employeeType}
             onValueChange={(value: 'Employee' | 'Freelancer') => onUpdate({ 
-              employee_type: value,
-              paycheck_solution: value === 'Employee' ? undefined : formData.paycheck_solution 
+              employeeType: value,
+              paycheckSolution: value === 'Employee' ? undefined : formData.paycheckSolution 
             })}
           >
             <SelectTrigger>
@@ -125,49 +117,49 @@ export function EmploymentDetailsStep({
               <SelectItem value="Freelancer">Freelancer</SelectItem>
             </SelectContent>
           </Select>
-          {errors.employee_type && <p className="text-sm text-red-500">{errors.employee_type}</p>}
+          {errors.employeeType && <p className="text-sm text-red-500">{errors.employeeType}</p>}
         </div>
 
-        {formData.employee_type === 'Freelancer' && (
+        {formData.employeeType === 'Freelancer' && (
           <div className="space-y-2">
-            <Label htmlFor="paycheck_solution">Paycheck Solution *</Label>
+            <Label htmlFor="paycheckSolution">Paycheck Solution *</Label>
             <Input 
-              id="paycheck_solution"
-              value={formData.paycheck_solution || ''}
-              onChange={(e) => onUpdate({ paycheck_solution: e.target.value })}
+              id="paycheckSolution"
+              value={formData.paycheckSolution || ''}
+              onChange={(e) => onUpdate({ paycheckSolution: e.target.value })}
               placeholder="Enter paycheck solution details"
-              className={errors.paycheck_solution ? 'border-red-500' : ''}
+              className={errors.paycheckSolution ? 'border-red-500' : ''}
             />
-            {errors.paycheck_solution && <p className="text-sm text-red-500">{errors.paycheck_solution}</p>}
+            {errors.paycheckSolution && <p className="text-sm text-red-500">{errors.paycheckSolution}</p>}
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="hourly_salary">Hourly Rate (NOK) *</Label>
+            <Label htmlFor="hourlySalary">Hourly Rate (NOK) *</Label>
             <Input 
-              id="hourly_salary"
+              id="hourlySalary"
               type="number"
               min="0"
-              value={formData.hourly_salary || ''}
-              onChange={(e) => onUpdate({ hourly_salary: parseFloat(e.target.value) || 0 })}
-              className={errors.hourly_salary ? 'border-red-500' : ''}
+              value={formData.hourlySalary || ''}
+              onChange={(e) => onUpdate({ hourlySalary: parseFloat(e.target.value) || 0 })}
+              className={errors.hourlySalary ? 'border-red-500' : ''}
             />
-            {errors.hourly_salary && <p className="text-sm text-red-500">{errors.hourly_salary}</p>}
+            {errors.hourlySalary && <p className="text-sm text-red-500">{errors.hourlySalary}</p>}
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="employed_percentage">Employment Percentage (%) *</Label>
+            <Label htmlFor="employedPercentage">Employment Percentage (%) *</Label>
             <Input 
-              id="employed_percentage"
+              id="employedPercentage"
               type="number"
               min="1"
               max="100"
-              value={formData.employed_percentage || ''}
-              onChange={(e) => onUpdate({ employed_percentage: parseInt(e.target.value) || 0 })}
-              className={errors.employed_percentage ? 'border-red-500' : ''}
+              value={formData.employedPercentage || ''}
+              onChange={(e) => onUpdate({ employedPercentage: parseInt(e.target.value) || 0 })}
+              className={errors.employedPercentage ? 'border-red-500' : ''}
             />
-            {errors.employed_percentage && <p className="text-sm text-red-500">{errors.employed_percentage}</p>}
+            {errors.employedPercentage && <p className="text-sm text-red-500">{errors.employedPercentage}</p>}
           </div>
         </div>
       </div>

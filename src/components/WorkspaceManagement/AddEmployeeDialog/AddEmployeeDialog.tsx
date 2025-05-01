@@ -5,6 +5,7 @@ import { Steps } from './Steps';
 import { BasicInfoStep } from './BasicInfoStep';
 import { EmploymentDetailsStep } from './EmploymentDetailsStep';
 import { PaymentInfoStep } from './PaymentInfoStep';
+import { EmployeeFormData } from '@/types/employee';
 
 interface AddEmployeeDialogProps {
   open: boolean;
@@ -12,28 +13,28 @@ interface AddEmployeeDialogProps {
 }
 
 // Default form data for a new employee
-const defaultFormData = {
+const defaultFormData: EmployeeFormData = {
   email: '',
-  first_name: '',
-  last_name: '',
-  phone_number: '',
+  firstName: '',
+  lastName: '',
+  phone: '',
   address: '',
   zipcode: '',
   country: '',
   city: '',
-  employee_type: 'Employee' as 'Employee' | 'Freelancer',
-  hourly_salary: 0,
-  employed_percentage: 100,
-  social_security_number: '',
-  account_number: '',
-  paycheck_solution: '',
+  employeeType: 'Employee',
+  hourlySalary: 0,
+  employedPercentage: 100,
+  socialSecurityNumber: '',
+  accountNumber: '',
+  paycheckSolution: '',
 };
 
 export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({ ...defaultFormData });
+  const [formData, setFormData] = useState<EmployeeFormData>({ ...defaultFormData });
 
-  const updateFormData = (data: Partial<typeof formData>) => {
+  const updateFormData = (data: Partial<EmployeeFormData>) => {
     setFormData(prev => ({ ...prev, ...data }));
   };
 
@@ -78,7 +79,6 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
             formData={formData}
             onBack={handleBack}
             onClose={handleClose}
-            isEdit={false}
           />
         )}
       </DialogContent>
