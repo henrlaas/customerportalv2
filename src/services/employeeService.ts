@@ -91,6 +91,13 @@ export const employeeService = {
   async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
     console.log("Creating employee with ID:", userId, "and data:", employeeData);
     
+    // First check if employee exists to avoid duplicate key errors
+    const exists = await this.employeeExists(userId);
+    if (exists) {
+      console.error("Cannot create employee: ID already exists:", userId);
+      throw new Error("Employee with this ID already exists. Cannot create duplicate.");
+    }
+    
     // Insert into the employees table with the proper type definitions and explicitly set the id
     const { data, error } = await supabase
       .from('employees')
