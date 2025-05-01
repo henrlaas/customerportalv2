@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
@@ -6,8 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserPlus, Trash2, Search, Filter, KeyRound } from 'lucide-react';
-import { AddEmployeeDialog } from './AddEmployeeDialog';
-import { DeleteEmployeeDialog } from './AddEmployeeDialog/DeleteEmployeeDialog';
 import { EmployeeWithProfile } from '@/types/employee';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -18,18 +15,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ViewEmployeeDialog } from './EmployeeDetails/ViewEmployeeDialog';
-import { useEmployeeFilters } from '@/hooks/useEmployeeFilters';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { userService } from '@/services/userService';
+import { useEmployeeFilters } from '@/hooks/useEmployeeFilters';
+import { AddEmployeeDialog } from './AddEmployeeDialog';
+import { DeleteEmployeeDialog } from './DeleteEmployeeDialog';
+import { ViewEmployeeDialog } from './ViewEmployeeDialog';
 
 export function EmployeeManagementTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithProfile | null>(null);
-  const { toast } = useToast();
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [isPendingReset, setIsPendingReset] = useState(false);
+  const { toast } = useToast();
 
   const { data: employees = [], isLoading, refetch } = useQuery({
     queryKey: ['employees'],
@@ -45,17 +43,6 @@ export function EmployeeManagementTab() {
     employeeTypes,
     filteredEmployees
   } = useEmployeeFilters(employees);
-
-  // Debug the employee data when it changes
-  useEffect(() => {
-    if (employees.length > 0) {
-      console.log('Employee data in management tab:', employees);
-      // Check if city is present for each employee
-      employees.forEach((employee, index) => {
-        console.log(`Employee ${index + 1} city:`, employee.city);
-      });
-    }
-  }, [employees]);
 
   const handleDeleteEmployee = (employee: EmployeeWithProfile, e: React.MouseEvent) => {
     // Prevent the row click event from firing
@@ -77,7 +64,7 @@ export function EmployeeManagementTab() {
     
     try {
       setIsPendingReset(true);
-      await userService.resetPassword(employee.email);
+      await employeeService.resetPassword(employee.email);
       toast({
         title: 'Password Reset Email Sent',
         description: `A password reset email has been sent to ${employee.email}`,
@@ -228,7 +215,7 @@ export function EmployeeManagementTab() {
         </Table>
       </div>
 
-      {/* Add Employee Dialog - standalone dialog */}
+      {/* Add Employee Dialog */}
       <AddEmployeeDialog 
         open={showAddDialog} 
         onClose={() => {
@@ -237,7 +224,7 @@ export function EmployeeManagementTab() {
         }} 
       />
 
-      {/* Only keep the Delete and View dialogs */}
+      {/* Delete and View dialogs */}
       {selectedEmployee && (
         <>
           <DeleteEmployeeDialog
