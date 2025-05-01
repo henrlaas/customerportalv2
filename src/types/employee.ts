@@ -48,3 +48,4 @@ export interface EmployeeFormData {
   accountNumber: string;
   paycheckSolution?: string;
 }
+
