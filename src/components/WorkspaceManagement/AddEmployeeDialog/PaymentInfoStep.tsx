@@ -116,7 +116,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
       };
       
       console.log("Creating employee record with data:", {
-        userId, // Log the userId explicitly
+        userId,
         address: updatedFormData.address,
         zipcode: updatedFormData.zipcode,
         country: updatedFormData.country,
@@ -144,7 +144,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           paycheck_solution: updatedFormData.paycheck_solution || '',
         });
       } else {
-        // Create new employee record - using createEmployee instead of createOrUpdateEmployee
+        // Create new employee record
         await employeeService.createEmployee({
           address: updatedFormData.address,
           zipcode: updatedFormData.zipcode,

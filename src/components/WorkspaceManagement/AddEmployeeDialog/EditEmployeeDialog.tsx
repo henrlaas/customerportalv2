@@ -23,7 +23,7 @@ export function EditEmployeeDialog({ open, onClose, employee }: EditEmployeeDial
     address: employee.address,
     zipcode: employee.zipcode,
     country: employee.country,
-    city: employee.city, // Ensure city is included here
+    city: employee.city,
     employee_type: employee.employee_type as 'Employee' | 'Freelancer',
     hourly_salary: employee.hourly_salary,
     employed_percentage: employee.employed_percentage,
@@ -45,6 +45,7 @@ export function EditEmployeeDialog({ open, onClose, employee }: EditEmployeeDial
   };
 
   const handleClose = () => {
+    // Reset the step when closing
     setStep(1);
     onClose();
   };

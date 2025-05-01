@@ -21,7 +21,7 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
     address: '',
     zipcode: '',
     country: '',
-    city: '', // Added city field
+    city: '',
     employee_type: 'Employee' as 'Employee' | 'Freelancer',
     hourly_salary: 0,
     employed_percentage: 100,
@@ -42,8 +42,30 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
     setStep(prev => Math.max(prev - 1, 1));
   };
 
+  const handleClose = () => {
+    // Reset the form when closing
+    setStep(1);
+    setFormData({
+      email: '',
+      first_name: '',
+      last_name: '',
+      phone_number: '',
+      address: '',
+      zipcode: '',
+      country: '',
+      city: '',
+      employee_type: 'Employee',
+      hourly_salary: 0,
+      employed_percentage: 100,
+      social_security_number: '',
+      account_number: '',
+      paycheck_solution: '',
+    });
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px]">
         <Steps currentStep={step} />
 
@@ -52,6 +74,7 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
             formData={formData}
             onUpdate={updateFormData}
             onNext={handleNext}
+            isEdit={false}
           />
         )}
         {step === 2 && (
@@ -66,7 +89,8 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
           <PaymentInfoStep
             formData={formData}
             onBack={handleBack}
-            onClose={onClose}
+            onClose={handleClose}
+            isEdit={false}
           />
         )}
       </DialogContent>

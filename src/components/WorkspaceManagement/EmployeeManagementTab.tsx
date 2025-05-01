@@ -248,6 +248,7 @@ export function EmployeeManagementTab() {
         </Table>
       </div>
 
+      {/* Add Employee Dialog - standalone dialog */}
       <AddEmployeeDialog 
         open={showAddDialog} 
         onClose={() => {
@@ -256,6 +257,7 @@ export function EmployeeManagementTab() {
         }} 
       />
 
+      {/* Edit Employee Dialog - only rendered when an employee is selected */}
       {selectedEmployee && (
         <>
           <EditEmployeeDialog
