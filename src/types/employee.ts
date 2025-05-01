@@ -4,16 +4,14 @@ export interface Employee {
   address: string;
   zipcode: string;
   country: string;
-  city: string; // Ensure city field is defined
-  employee_type: 'Employee' | 'Freelancer'; // Restricted to specific types
+  city: string;
+  employee_type: 'Employee' | 'Freelancer';
   hourly_salary: number;
   employed_percentage: number;
   social_security_number: string;
   account_number: string;
   paycheck_solution: string;
-  avatar_url?: string; // Optional avatar URL
-  created_at?: string;
-  updated_at?: string;
+  avatar_url?: string;
 }
 
 export interface EmployeeWithProfile {
@@ -25,12 +23,29 @@ export interface EmployeeWithProfile {
   address: string;
   zipcode: string;
   country: string;
-  city: string; // Ensure city field is defined
-  employee_type: 'Employee' | 'Freelancer'; // Restricted to specific types
+  city: string;
+  employee_type: 'Employee' | 'Freelancer';
   hourly_salary: number;
   employed_percentage: number;
   social_security_number: string;
   account_number: string;
   paycheck_solution: string;
-  avatar_url?: string; // Optional avatar URL
+  avatar_url?: string;
+}
+
+export interface EmployeeFormData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  zipcode: string;
+  country: string;
+  city: string;
+  employeeType: 'Employee' | 'Freelancer';
+  hourlySalary: number;
+  employedPercentage: number;
+  socialSecurityNumber: string;
+  accountNumber: string;
+  paycheckSolution?: string;
 }

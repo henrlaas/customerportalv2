@@ -13,22 +13,8 @@ export const employeeService = {
       throw error;
     }
 
-    // Debug the response data
-    console.log('Raw employee data from DB:', data);
-
-    // Ensure we're getting the expected data structure
-    if (data && Array.isArray(data) && data.length > 0) {
-      console.log('First employee example:', data[0]);
-      // Log the entire object and keys for debugging
-      console.log('First employee data contains:', Object.keys(data[0]).join(', '));
-    }
-
-    // Parse the JSON structure correctly to ensure all fields are accessible
+    // Parse the response data to ensure all fields are properly structured
     const parsedEmployees = data ? data.map((item: any) => {
-      // Log specific JSON parsing for debugging
-      console.log('Processing employee item with city:', item.city);
-      
-      // Return a properly structured employee object ensuring all fields are included
       return {
         id: item.id,
         first_name: item.first_name,
@@ -38,57 +24,94 @@ export const employeeService = {
         address: item.address,
         zipcode: item.zipcode,
         country: item.country,
-        city: item.city, // Explicitly include the city field
+        city: item.city,
         employee_type: item.employee_type,
         hourly_salary: item.hourly_salary,
         employed_percentage: item.employed_percentage,
         social_security_number: item.social_security_number,
         account_number: item.account_number,
-        paycheck_solution: item.paycheck_solution
+        paycheck_solution: item.paycheck_solution,
+        avatar_url: item.avatar_url
       } as EmployeeWithProfile;
     }) : [];
 
     return parsedEmployees;
   },
 
-  async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>): Promise<Employee> {
-    // Generate a new UUID for the employee
-    const employeeId = crypto.randomUUID();
-    
-    console.log("Creating new employee with generated ID:", employeeId);
-    
-    // Insert into the employees table with the generated ID
-    const { data, error } = await supabase
-      .from('employees')
-      .insert([{ ...employeeData, id: employeeId }])
-      .select()
-      .single();
+  async createEmployee(employeeData: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    address: string;
+    zipcode: string;
+    country: string;
+    city: string;
+    employeeType: 'Employee' | 'Freelancer';
+    hourlySalary: number;
+    employedPercentage: number;
+    socialSecurityNumber: string;
+    accountNumber: string;
+    paycheckSolution?: string;
+  }): Promise<{ id: string; email: string }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('employee-management', {
+        body: {
+          action: 'create',
+          ...employeeData
+        }
+      });
 
-    if (error) {
-      console.error("Error creating employee:", error);
-      throw error;
+      if (error) {
+        console.error("Error creating employee:", error);
+        throw new Error(error.message || 'Failed to create employee');
+      }
+      
+      console.log("Employee created successfully:", data);
+      return data;
+    } catch (error: any) {
+      console.error('Error in createEmployee:', error);
+      throw new Error(error.message || 'Failed to create employee');
     }
-    
-    console.log("Employee created successfully:", data);
-    return data as Employee;
   },
 
   async deleteEmployee(employeeId: string): Promise<void> {
     try {
-      // Delete the employee record directly
-      const { error } = await supabase
-        .from('employees')
-        .delete()
-        .eq('id', employeeId);
+      const { error } = await supabase.functions.invoke('employee-management', {
+        body: {
+          action: 'delete',
+          employeeId
+        }
+      });
       
       if (error) {
         throw new Error(error.message || 'Failed to delete employee');
       }
       
       return;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in deleteEmployee:', error);
       throw error;
     }
   },
+
+  async resetPassword(email: string): Promise<void> {
+    try {
+      const { error } = await supabase.functions.invoke('employee-management', {
+        body: {
+          action: 'resetPassword',
+          email
+        }
+      });
+      
+      if (error) {
+        throw new Error(error.message || 'Failed to send password reset');
+      }
+      
+      return;
+    } catch (error: any) {
+      console.error('Error in resetPassword:', error);
+      throw error;
+    }
+  }
 };
