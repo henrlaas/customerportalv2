@@ -55,6 +55,8 @@ export const employeeService = {
     paycheckSolution?: string;
   }): Promise<{ id: string; email: string }> {
     try {
+      console.log("Calling edge function with data:", employeeData);
+      
       const { data, error } = await supabase.functions.invoke('employee-management', {
         body: {
           action: 'create',

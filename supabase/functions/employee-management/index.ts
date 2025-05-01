@@ -61,6 +61,8 @@ interface EmployeeCreateData {
 }
 
 async function handleCreateEmployee(body: EmployeeCreateData, origin: string, supabaseAdmin: any) {
+  console.log("Creating employee with data:", JSON.stringify(body, null, 2));
+  
   const {
     email,
     firstName,
@@ -81,6 +83,8 @@ async function handleCreateEmployee(body: EmployeeCreateData, origin: string, su
   try {
     // Step 1: Invite the user via email - Create auth account
     const redirect = `${origin}/set-password`;
+    console.log("Attempting to invite user with email:", email);
+    
     const { data: userData, error: inviteError } = await supabaseAdmin.functions.invoke('user-management', {
       body: {
         action: 'invite',
@@ -108,27 +112,32 @@ async function handleCreateEmployee(body: EmployeeCreateData, origin: string, su
     console.log("Created user with ID:", userId);
 
     // Step 2: Insert employee record with the user's ID
+    const employeeRecord = {
+      id: userId,
+      address,
+      zipcode,
+      country,
+      city,
+      employee_type: employeeType,
+      hourly_salary: hourlySalary,
+      employed_percentage: employedPercentage,
+      social_security_number: socialSecurityNumber,
+      account_number: accountNumber,
+      paycheck_solution: paycheckSolution
+    };
+    
+    console.log("Attempting to insert employee record:", JSON.stringify(employeeRecord, null, 2));
+    
     const { error: employeeError } = await supabaseAdmin
       .from('employees')
-      .insert([{
-        id: userId,
-        address,
-        zipcode,
-        country,
-        city,
-        employee_type: employeeType,
-        hourly_salary: hourlySalary,
-        employed_percentage: employedPercentage,
-        social_security_number: socialSecurityNumber,
-        account_number: accountNumber,
-        paycheck_solution: paycheckSolution
-      }]);
+      .insert([employeeRecord]);
 
     if (employeeError) {
       console.error("Error creating employee record:", employeeError);
       
       // If employee creation fails, attempt to clean up the auth user
       try {
+        console.log("Attempting to clean up auth user after employee creation error");
         await supabaseAdmin.functions.invoke('user-management', {
           body: {
             action: 'delete',
@@ -144,6 +153,7 @@ async function handleCreateEmployee(body: EmployeeCreateData, origin: string, su
 
     // Update the user profile with additional information
     try {
+      console.log("Updating user profile with additional information");
       await updateUserProfile(supabaseAdmin, userId, {
         firstName,
         lastName,

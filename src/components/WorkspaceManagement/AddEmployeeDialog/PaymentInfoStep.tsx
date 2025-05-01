@@ -54,7 +54,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     
     setIsSubmitting(true);
     try {
-      // Prepare the final employee data
+      // Prepare the final employee data - ensure camelCase for all properties
       const employeeData = {
         email: formData.email,
         firstName: formData.firstName,
@@ -71,6 +71,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         accountNumber: localFormData.accountNumber,
         paycheckSolution: localFormData.paycheckSolution
       };
+
+      console.log("Submitting employee data:", employeeData);
 
       // Create the employee through our service
       await employeeService.createEmployee(employeeData);
