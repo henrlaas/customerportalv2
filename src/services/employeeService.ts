@@ -68,26 +68,6 @@ export const employeeService = {
     return !!data;
   },
 
-  async createOrUpdateEmployee(employeeData: Omit<Employee, 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
-    console.log("Creating or updating employee with ID:", userId);
-    
-    try {
-      // First check if employee exists
-      const exists = await this.employeeExists(userId);
-      
-      if (exists) {
-        console.log("Employee exists, updating record for ID:", userId);
-        return this.updateEmployee(userId, employeeData);
-      } else {
-        console.log("Employee doesn't exist, creating new record with ID:", userId);
-        return this.createEmployee(employeeData, userId);
-      }
-    } catch (error) {
-      console.error("Error in createOrUpdateEmployee:", error);
-      throw error;
-    }
-  },
-
   async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
     console.log("Creating employee with ID:", userId, "and data:", employeeData);
     
@@ -114,43 +94,17 @@ export const employeeService = {
     return data as Employee;
   },
 
-  async updateEmployee(employeeId: string, employeeData: Partial<Employee>): Promise<Employee> {
-    console.log("Updating employee with ID:", employeeId);
-    
-    // Update the employee record in the database
-    const { data, error } = await supabase
-      .from('employees')
-      .update(employeeData)
-      .eq('id', employeeId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error updating employee:", error);
-      throw error;
-    }
-    
-    console.log("Employee updated successfully:", data);
-    return data as Employee;
-  },
-
   async deleteEmployee(employeeId: string): Promise<void> {
     try {
-      // Call the Supabase Edge Function to delete the user account
-      const response = await supabase.functions.invoke('user-management', {
-        body: {
-          action: 'delete',
-          userId: employeeId,
-        },
-      });
+      // Delete the employee record directly
+      const { error } = await supabase
+        .from('employees')
+        .delete()
+        .eq('id', employeeId);
       
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to delete employee');
+      if (error) {
+        throw new Error(error.message || 'Failed to delete employee');
       }
-      
-      // Note: We don't need to delete the employee record from 'employees' table
-      // or the profile from 'profiles' table as they both have foreign key constraints
-      // that will automatically delete them when the user account is deleted (ON DELETE CASCADE)
       
       return;
     } catch (error) {

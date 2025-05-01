@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { employeeService } from '@/services/employeeService';
-import { useInviteUser } from '@/hooks/useInviteUser';
 
 interface PaymentInfoStepProps {
   formData: {
@@ -39,85 +38,6 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     account_number: formData.account_number,
     paycheck_solution: formData.paycheck_solution || ''
   });
-  
-  const inviteUserMutation = useInviteUser({
-    onSuccess: async (data) => {
-      // Extract the user ID from the nested response structure
-      let userId;
-      let isNewUser = true;
-      
-      // The response structure can be different based on whether it's a new or existing user
-      if (data && data.user) {
-        if (data.user.id) {
-          // Direct user ID (simpler structure)
-          userId = data.user.id;
-        } else if (data.user.user && data.user.user.id) {
-          // Nested user object (structure seen in logs)
-          userId = data.user.user.id;
-        }
-      } else if (data && data.userId) {
-        // Use the userId field directly if available
-        userId = data.userId;
-      }
-      
-      // Check if this is an existing user
-      if (data && data.isNewUser === false) {
-        isNewUser = false;
-      }
-      
-      if (userId) {
-        console.log("User invitation successful, creating employee record with user ID:", userId);
-        try {
-          // Check if the employee already exists
-          const employeeExists = await employeeService.employeeExists(userId);
-          
-          if (employeeExists && !isEdit) {
-            // If this is supposed to be a new employee, but it already exists, update it
-            console.log("Employee already exists for this user, updating instead of creating");
-            await handleUpdateEmployee(userId);
-            toast({
-              title: "Employee Updated",
-              description: `${formData.first_name} ${formData.last_name}'s information has been updated.`,
-            });
-          } else if (!employeeExists) {
-            // This is a new employee
-            await handleCreateEmployee(userId);
-            toast({
-              title: "Employee Added",
-              description: `${formData.first_name} ${formData.last_name} has been added successfully. ${isNewUser ? "An invitation email has been sent." : ""}`,
-            });
-          } else {
-            // This is an edit operation on an existing employee
-            await handleUpdateEmployee(userId);
-            toast({
-              title: "Employee Updated",
-              description: `${formData.first_name} ${formData.last_name}'s information has been updated.`,
-            });
-          }
-          
-          setIsSubmitting(false);
-          onClose();
-        } catch (error) {
-          handleError(error);
-        }
-      } else {
-        console.error("Failed to get user ID from invitation response:", data);
-        handleError(new Error("Failed to create employee: Invalid user ID in response"));
-      }
-    },
-    onError: (error) => {
-      handleError(error);
-    }
-  });
-
-  const handleError = (error: any) => {
-    setIsSubmitting(false);
-    toast({
-      title: "Error",
-      description: error.message || "An error occurred during the operation",
-      variant: "destructive",
-    });
-  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -142,9 +62,15 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     }));
   };
 
-  const getUpdatedEmployeeData = () => {
+  const getEmployeeData = () => {
     // Combine parent formData with our local values
     return {
+      // Use a random UUID as the ID for new employees
+      id: crypto.randomUUID(),
+      email: formData.email,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      phone_number: formData.phone_number || '',
       address: formData.address,
       zipcode: formData.zipcode,
       country: formData.country,
@@ -157,49 +83,6 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
       paycheck_solution: localFormData.paycheck_solution || ''
     };
   };
-  
-  const handleCreateEmployee = async (userId: string) => {
-    try {
-      const employeeData = getUpdatedEmployeeData();
-      
-      console.log("Creating employee record with data:", {
-        userId,
-        ...employeeData
-      });
-      
-      // Create new employee record
-      await employeeService.createEmployee({
-        ...employeeData
-      }, userId);
-      
-      return true;
-    } catch (error: any) {
-      console.error('Error creating employee record:', error);
-      throw error;
-    }
-  };
-  
-  const handleUpdateEmployee = async (userId: string) => {
-    try {
-      const employeeData = getUpdatedEmployeeData();
-      
-      console.log("Updating employee record with data:", {
-        userId,
-        ...employeeData
-      });
-      
-      // Use the provided employeeId or the userId for updating
-      const idToUpdate = employeeId || userId;
-      
-      // Update existing employee record
-      await employeeService.updateEmployee(idToUpdate, employeeData);
-      
-      return true;
-    } catch (error: any) {
-      console.error('Error updating employee record:', error);
-      throw error;
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,47 +90,36 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     
     setIsSubmitting(true);
     try {
-      if (isEdit && employeeId) {
-        // Update existing employee
-        await handleUpdateEmployee(employeeId);
-        
-        toast({
-          title: "Employee Updated",
-          description: `${formData.first_name} ${formData.last_name} has been updated successfully.`,
-        });
-        setIsSubmitting(false);
-        onClose();
-      } else {
-        // Create new employee using inviteUserMutation
-        console.log('Creating new employee with user data:', {
-          email: formData.email,
-          firstName: formData.first_name,
-          lastName: formData.last_name,
-          phoneNumber: formData.phone_number
-        });
-        
-        // Get the current URL for redirect
-        const siteUrl = window.location.origin;
-        const redirectUrl = `${siteUrl}/set-password`;
-        
-        // Use the inviteUser hook
-        inviteUserMutation.mutate({
-          email: formData.email,
-          firstName: formData.first_name,
-          lastName: formData.last_name,
-          phoneNumber: formData.phone_number || undefined,
-          role: 'employee',
-          language: 'en',
-          redirect: redirectUrl,
-          team: 'Employees',
-          sendEmail: true // Explicitly request to send invitation email
-        });
-      }
+      const employeeData = getEmployeeData();
+      
+      console.log('Creating new employee with data:', employeeData);
+      
+      // Create new employee record directly without user invitation
+      await employeeService.createEmployee({
+        address: employeeData.address,
+        zipcode: employeeData.zipcode,
+        country: employeeData.country,
+        city: employeeData.city,
+        employee_type: employeeData.employee_type,
+        hourly_salary: employeeData.hourly_salary,
+        employed_percentage: employeeData.employed_percentage,
+        social_security_number: employeeData.social_security_number,
+        account_number: employeeData.account_number,
+        paycheck_solution: employeeData.paycheck_solution || ''
+      }, employeeData.id);
+      
+      toast({
+        title: "Employee Added",
+        description: `${formData.first_name} ${formData.last_name} has been added successfully.`,
+      });
+      
+      setIsSubmitting(false);
+      onClose();
     } catch (error: any) {
       console.error('Form submission error:', error);
       toast({
         title: "Error",
-        description: error.message || (isEdit ? "Failed to update employee" : "Failed to add employee"),
+        description: error.message || "Failed to add employee",
         variant: "destructive",
       });
       setIsSubmitting(false);
@@ -299,8 +171,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting 
-            ? (isEdit ? 'Updating Employee...' : 'Adding Employee...') 
-            : (isEdit ? 'Update Employee' : 'Add Employee')}
+            ? 'Adding Employee...'
+            : 'Add Employee'}
         </Button>
       </div>
     </form>
