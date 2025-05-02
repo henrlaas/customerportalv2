@@ -126,8 +126,6 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           throw new Error('Failed to create user');
         }
 
-        console.log('User invited successfully:', result.user);
-
         // Create employee record
         const employeeData = {
           id: result.user.id,
@@ -140,8 +138,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           employed_percentage: formData.employed_percentage,
           social_security_number: formData.social_security_number,
           account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || '',
-          team: formData.team
+          paycheck_solution: formData.paycheck_solution || ''
         };
         
         await employeeService.createEmployee(employeeData, result.user.id);
@@ -159,13 +156,12 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         
         toast({
           title: "Employee Added",
-          description: `${formData.first_name} ${formData.last_name} has been added successfully. A password reset email has been sent.`,
+          description: `${formData.first_name} ${formData.last_name} has been added successfully. An invitation email has been sent.`,
         });
       }
       
       onClose();
     } catch (error: any) {
-      console.error('Error in PaymentInfoStep:', error);
       toast({
         title: "Error",
         description: error.message || (isEdit ? "Failed to update employee" : "Failed to add employee"),

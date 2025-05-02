@@ -61,10 +61,6 @@ export const employeeService = {
       .single();
 
     if (error) throw error;
-
-    // Send password reset email after employee creation
-    await this.sendPasswordResetEmail(userId);
-    
     return data as Employee;
   },
 
@@ -105,48 +101,4 @@ export const employeeService = {
       throw error;
     }
   },
-
-  async sendPasswordResetEmail(userId: string): Promise<void> {
-    try {
-      // Since we can't directly access auth.users table, use the edge function to get user email
-      const response = await supabase.functions.invoke('user-management', {
-        body: {
-          action: 'get-user-emails',
-          userIds: [userId],
-        },
-      });
-      
-      if (response.error) {
-        console.error('Error getting user email from edge function:', response.error);
-        throw response.error;
-      }
-      
-      const emails = response.data?.emails || [];
-      if (emails.length === 0) {
-        throw new Error('User email not found');
-      }
-      
-      const userEmail = emails[0].email;
-      
-      // Send password reset email
-      console.log(`Sending password reset email to: ${userEmail}`);
-      const resetResponse = await supabase.functions.invoke('user-management', {
-        body: {
-          action: 'resetPassword',
-          email: userEmail,
-        },
-      });
-      
-      if (resetResponse.error) {
-        console.error('Error sending password reset email:', resetResponse.error);
-        throw resetResponse.error;
-      }
-      
-      console.log('Password reset email sent successfully');
-      return;
-    } catch (error) {
-      console.error('Error in sendPasswordResetEmail:', error);
-      throw error;
-    }
-  }
 };
