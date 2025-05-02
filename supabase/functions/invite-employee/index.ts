@@ -50,38 +50,61 @@ serve(async (req) => {
     // Check if user already exists
     const { data: existingUser, error: fetchError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
     
-    if (fetchError && fetchError.message !== 'User not found') {
-      console.error('Error checking for existing user:', fetchError);
-      throw fetchError;
+    if (fetchError) {
+      // Only throw if it's not a "user not found" error
+      if (fetchError.message !== 'User not found') {
+        console.error('Error checking for existing user:', fetchError);
+        throw new Error(`Error checking user: ${fetchError.message}`);
+      }
     }
     
     let userData;
+    let statusMessage;
     
     if (existingUser) {
       console.log('User already exists, returning existing user data');
       userData = existingUser;
+      statusMessage = `User with email ${email} already exists, no invitation needed`;
     } else {
       // Invite the user using the admin API
-      const { data: newUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: redirectUrl,
-        data: {
-          role: 'employee',
-        },
-      });
+      try {
+        const { data: newUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+          redirectTo: redirectUrl,
+          data: {
+            role: 'employee',
+          },
+        });
 
-      if (inviteError) {
-        console.error('Error inviting employee:', inviteError);
-        throw inviteError;
+        if (inviteError) {
+          console.error('Error inviting employee:', inviteError);
+          return new Response(
+            JSON.stringify({ error: inviteError.message || 'Failed to invite employee' }),
+            {
+              status: 500,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
+        }
+
+        console.log('Employee invited successfully:', newUser);
+        userData = newUser;
+        statusMessage = `Invitation sent to ${email}`;
+      } catch (inviteError) {
+        console.error('Unexpected error during invitation:', inviteError);
+        return new Response(
+          JSON.stringify({ error: inviteError.message || 'An unexpected error occurred during invitation' }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
       }
-
-      console.log('Employee invited successfully:', newUser);
-      userData = newUser;
     }
 
     // Return success response
     return new Response(
       JSON.stringify({ 
-        message: `Invitation sent to ${email}`,
+        message: statusMessage,
         data: userData 
       }),
       {
