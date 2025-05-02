@@ -153,12 +153,16 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           console.log('Proceeding with employee creation despite email sending failure');
         }
         
-        // Get the user data from the auth system now that it's been created
-        const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(formData.email);
+        // Get the user data from the edge function response
+        const { data: userData } = await supabase.functions.invoke('invite-employee', {
+          body: { email: formData.email, checkOnly: true }
+        });
         
-        if (userError || !userData?.user) {
-          throw new Error(userError?.message || 'Failed to get user data after creation');
+        if (!userData || !userData.data || !userData.data.id) {
+          throw new Error('Failed to get user data after creation');
         }
+        
+        const userId = userData.data.id;
         
         // Update profile information
         await supabase
@@ -170,11 +174,11 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
             role: 'employee',
             team: formData.team
           })
-          .eq('id', userData.user.id);
+          .eq('id', userId);
 
         // Create employee record
         const employeeData = {
-          id: userData.user.id,
+          id: userId,
           address: formData.address,
           zipcode: formData.zipcode,
           country: formData.country,
@@ -188,7 +192,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           team: formData.team
         };
         
-        await employeeService.createEmployee(employeeData, userData.user.id);
+        await employeeService.createEmployee(employeeData, userId);
 
         toast({
           title: "Employee Added",

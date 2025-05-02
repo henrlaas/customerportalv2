@@ -16,7 +16,7 @@ serve(async (req) => {
 
   try {
     // Parse request body
-    const { email } = await req.json();
+    const { email, checkOnly } = await req.json();
 
     // Validation
     if (!email) {
@@ -41,19 +41,28 @@ serve(async (req) => {
       }
     );
 
-    console.log(`Processing invite request for email: ${email}`);
+    console.log(`Processing ${checkOnly ? 'check' : 'invite'} request for email: ${email}`);
 
     // Get site URL for redirect
     const origin = req.headers.get('origin') || 'https://vjqbgnjeuvuxvuruewyc.supabase.co';
     const redirectUrl = `${origin}/set-password`;
 
-    // Check if user already exists
-    const { data: existingUser, error: fetchError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+    // Check if user already exists using admin API
+    let existingUser;
     
-    if (fetchError && fetchError.message !== 'User not found') {
-      console.error('Error checking for existing user:', fetchError);
+    try {
+      const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+      
+      if (listError) {
+        throw listError;
+      }
+      
+      // Find the user with matching email
+      existingUser = users.users.find(user => user.email === email);
+    } catch (error) {
+      console.error('Error listing users:', error);
       return new Response(
-        JSON.stringify({ error: `Error checking user: ${fetchError.message}` }),
+        JSON.stringify({ error: `Error checking user: ${error.message || error}` }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -64,25 +73,82 @@ serve(async (req) => {
     let userData;
     let statusMessage;
     
-    // User already exists scenario - just return the data without sending an invite
+    // User already exists scenario
     if (existingUser) {
-      console.log('User already exists, returning existing user data without new invitation');
+      console.log('User already exists, returning existing user data');
       userData = existingUser;
-      statusMessage = `User with email ${email} already exists, no invitation needed`;
+      statusMessage = `User with email ${email} already exists`;
       
-      return new Response(
-        JSON.stringify({ 
-          message: statusMessage,
-          data: userData 
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      if (checkOnly) {
+        return new Response(
+          JSON.stringify({ 
+            message: statusMessage,
+            data: userData 
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
+      
+      // If not just checking and user exists, send recovery email (as invitation)
+      try {
+        const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'recovery',
+          email: email,
+          options: {
+            redirectTo: redirectUrl,
+          }
+        });
+
+        if (resetError) {
+          console.error('Error sending invitation email to existing user:', resetError);
+          return new Response(
+            JSON.stringify({ 
+              message: `User exists, but invitation email failed: ${resetError.message}`,
+              data: userData,
+              emailError: resetError.message
+            }),
+            {
+              status: 200, // Still return 200 since we're returning user data
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
+        } else {
+          console.log('Invitation email sent successfully to existing user:', email);
+          statusMessage = `User exists and invitation sent to ${email}`;
         }
-      );
+      } catch (error) {
+        console.error('Exception sending invitation to existing user:', error);
+        return new Response(
+          JSON.stringify({ 
+            message: `User exists, but invitation failed: ${error.message || error}`,
+            data: userData,
+            emailError: error.message || 'Unknown error'
+          }),
+          {
+            status: 200, // Still return 200 since we're returning user data
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
     } 
     // User doesn't exist - we'll create a new user and then send an invitation
     else {
+      if (checkOnly) {
+        return new Response(
+          JSON.stringify({ 
+            message: "User does not exist",
+            error: "User does not exist"
+          }),
+          {
+            status: 404, // Return 404 since the user doesn't exist
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
+
       try {
         // First, create the user account without sending an automatic invite
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -134,17 +200,6 @@ serve(async (req) => {
         } else {
           console.log('Invitation email sent successfully to:', email);
           statusMessage = `Employee account created and invitation sent to ${email}`;
-          
-          return new Response(
-            JSON.stringify({ 
-              message: statusMessage,
-              data: userData 
-            }),
-            {
-              status: 200,
-              headers: { 'Content-Type': 'application/json', ...corsHeaders },
-            }
-          );
         }
       } catch (error) {
         console.error('Unexpected error during employee creation or invitation:', error);
@@ -158,6 +213,16 @@ serve(async (req) => {
       }
     }
 
+    return new Response(
+      JSON.stringify({ 
+        message: statusMessage,
+        data: userData 
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
   } catch (error) {
     console.error('Error in invite-employee function:', error.message);
     
