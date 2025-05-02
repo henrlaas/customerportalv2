@@ -28,7 +28,6 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
     social_security_number: '',
     account_number: '',
     paycheck_solution: '',
-    team: '', // Add team field to form data
   });
 
   const updateFormData = (data: Partial<typeof formData>) => {

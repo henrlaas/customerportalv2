@@ -33,5 +33,4 @@ export interface EmployeeWithProfile {
   account_number: string;
   paycheck_solution: string;
   avatar_url?: string; // Optional avatar URL
-  team?: string; // Add team field
 }
