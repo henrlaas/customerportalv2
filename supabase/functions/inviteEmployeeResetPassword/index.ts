@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
-import { createAdminClient } from "../user-management/utils/supabase.ts"
+import { createAdminClient } from "./supabase.ts"
 
 // Set up CORS headers
 const corsHeaders = {
