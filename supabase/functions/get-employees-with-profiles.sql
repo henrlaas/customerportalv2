@@ -11,7 +11,7 @@ BEGIN
       'first_name', p.first_name,
       'last_name', p.last_name,
       'phone_number', p.phone_number,
-      'team', p.team,
+      'team', p.team,  -- Ensure this is mapped from profiles table
       'address', e.address,
       'zipcode', e.zipcode,
       'country', e.country,

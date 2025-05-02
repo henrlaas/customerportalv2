@@ -123,8 +123,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           employed_percentage: formData.employed_percentage,
           social_security_number: formData.social_security_number,
           account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || '',
-          team: formData.team
+          paycheck_solution: formData.paycheck_solution || ''
+          // Note: team is removed from here as it belongs to the profiles table
         };
         
         await employeeService.updateEmployee(employeeId, employeeData);
@@ -136,7 +136,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
             first_name: formData.first_name,
             last_name: formData.last_name,
             phone_number: formData.phone_number || null,
-            team: formData.team
+            team: formData.team // Team belongs to the profiles table
           })
           .eq('id', employeeId);
         
@@ -172,7 +172,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
             last_name: formData.last_name,
             phone_number: formData.phone_number || null,
             role: 'employee',
-            team: formData.team
+            team: formData.team // Team belongs to the profiles table
           })
           .eq('id', userId);
 
@@ -188,8 +188,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           employed_percentage: formData.employed_percentage,
           social_security_number: formData.social_security_number,
           account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || '',
-          team: formData.team
+          paycheck_solution: formData.paycheck_solution || ''
+          // Note: team is removed from here as it belongs to the profiles table
         };
         
         await employeeService.createEmployee(employeeData, userId);
