@@ -1,5 +1,5 @@
 
 project_id = "vjqbgnjeuvuxvuruewyc"
 
-[functions.invite-employee]
-verify_jwt = false
+[functions.user-management]
+verify_jwt = true
