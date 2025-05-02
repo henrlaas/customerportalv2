@@ -43,7 +43,7 @@ export function PaymentInfoStep({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Add the missing updateFormData function
+  // Update form data function
   const updateFormData = (data: Partial<typeof formData>) => {
     setLocalFormData(prev => ({ ...prev, ...data }));
   };
@@ -61,6 +61,12 @@ export function PaymentInfoStep({
   };
 
   const createEmployeeRecord = async (userId: string) => {
+    console.log("Creating employee record for user ID:", userId);
+    if (!userId) {
+      console.error("Cannot create employee record: userId is empty");
+      throw new Error("User ID is required to create employee record");
+    }
+
     const employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'> = {
       address: localFormData.address,
       zipcode: localFormData.zipcode,
@@ -84,12 +90,21 @@ export function PaymentInfoStep({
           
         if (error) throw error;
       } else {
-        // Create new employee record
-        const { error } = await supabase
+        // Create new employee record with explicit ID
+        console.log("Inserting employee with ID:", userId, "and data:", employeeData);
+        const { data, error } = await supabase
           .from('employees')
-          .insert([{ ...employeeData, id: userId }]);
+          .insert([{ 
+            id: userId, 
+            ...employeeData 
+          }]);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase insert error:", error);
+          throw error;
+        }
+        
+        console.log("Employee record created successfully:", data);
       }
     } catch (err: any) {
       console.error("Error creating employee record:", err);
@@ -102,13 +117,15 @@ export function PaymentInfoStep({
       setPending(true);
       setError(null);
 
+      console.log("Creating user with data:", localFormData);
+      
       // Call Supabase Edge Function to create user
       const response = await supabase.functions.invoke('user-management', {
         body: {
           action: 'invite',
           email: localFormData.email,
-          firstName: localFormData.first_name,  // Make sure first_name is passed
-          lastName: localFormData.last_name,    // Make sure last_name is passed
+          firstName: localFormData.first_name,
+          lastName: localFormData.last_name,
           phoneNumber: localFormData.phone_number,
           team: localFormData.team,
           role: 'employee',
@@ -145,6 +162,9 @@ export function PaymentInfoStep({
             throw new Error('User not found');
           }
 
+          // Log the found user for debugging
+          console.log("Found existing user:", existingUser);
+
           // Update the profile with the correct role and team
           await supabase
             .from('profiles')
@@ -167,6 +187,7 @@ export function PaymentInfoStep({
       } else {
         // If user creation was successful, get the user ID from response
         const userId = response.data.id;
+        console.log("User created successfully with ID:", userId);
         
         // Create the employee record
         await createEmployeeRecord(userId);
