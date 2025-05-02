@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -65,15 +64,14 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     }));
   };
 
-  const sendInviteEmail = async (email: string, firstName: string, lastName: string, team?: string) => {
+  const sendInviteEmail = async (email: string, firstName: string, lastName: string) => {
     try {
       // Call the invite-employee edge function
       const { data, error } = await supabase.functions.invoke('invite-employee', {
         body: {
           email,
           firstName,
-          lastName,
-          team
+          lastName
         }
       });
 
@@ -187,8 +185,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         const inviteSent = await sendInviteEmail(
           formData.email, 
           formData.first_name, 
-          formData.last_name, 
-          formData.team
+          formData.last_name
         );
         
         toast({

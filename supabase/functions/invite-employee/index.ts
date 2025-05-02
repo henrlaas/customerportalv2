@@ -16,7 +16,7 @@ serve(async (req) => {
 
   try {
     // Parse request body
-    const { email, firstName, lastName, team } = await req.json();
+    const { email, firstName, lastName } = await req.json();
 
     // Validation
     if (!email) {
@@ -41,7 +41,7 @@ serve(async (req) => {
       }
     );
 
-    console.log(`Inviting employee: ${email} with name: ${firstName} ${lastName}, team: ${team}`);
+    console.log(`Inviting employee: ${email} with name: ${firstName} ${lastName}`);
 
     // Get site URL for redirect
     const origin = req.headers.get('origin') || 'https://vjqbgnjeuvuxvuruewyc.supabase.co';
@@ -54,7 +54,6 @@ serve(async (req) => {
         first_name: firstName,
         last_name: lastName,
         role: 'employee',
-        team: team || 'General',
       },
     });
 
