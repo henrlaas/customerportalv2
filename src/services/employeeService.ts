@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Employee, EmployeeWithProfile } from '@/types/employee';
 
@@ -137,13 +138,17 @@ export const employeeService = {
       const userEmail = userResponse.data.email;
       const siteUrl = window.location.origin;
 
-      // Use our new dedicated edge function for sending reset password invites
+      // Use our dedicated edge function for sending reset password invites
+      console.log(`Sending invite email to ${userEmail} with redirect URL: ${siteUrl}`);
       const response = await supabase.functions.invoke('inviteEmployeeResetPassword', {
         body: {
           email: userEmail,
           redirectUrl: siteUrl
         }
       });
+
+      // Log the full response for debugging
+      console.log('inviteEmployeeResetPassword response:', response);
 
       if (response.error) {
         throw new Error(`Failed to send invitation email: ${response.error.message}`);

@@ -15,48 +15,66 @@ serve(async (req) => {
   }
 
   try {
-    const { email, redirectUrl } = await req.json()
+    // Parse the incoming request body
+    let body;
+    try {
+      body = await req.json();
+    } catch (error) {
+      console.error('Error parsing request JSON:', error);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 400 }
+      );
+    }
+
+    const { email, redirectUrl } = body;
     
     if (!email) {
+      console.error('Missing required field: email');
       return new Response(
         JSON.stringify({ error: 'Email is required' }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 400 }
-      )
+      );
     }
 
-    const supabaseAdmin = createAdminClient()
+    const supabaseAdmin = createAdminClient();
     
     // Get the origin for redirects if not provided
-    const origin = redirectUrl || req.headers.get('origin') || 'http://localhost:3000'
+    const origin = redirectUrl || req.headers.get('origin') || 'http://localhost:3000';
     
-    console.log(`Sending password reset email to: ${email}`)
-    console.log(`Redirect URL: ${origin}/set-password?type=invite`)
+    console.log(`Sending password reset email to: ${email}`);
+    console.log(`Redirect URL: ${origin}/set-password?type=invite`);
     
     // Send the password reset email with a specific redirect URL that includes the "type=invite" parameter
-    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
+    const { error, data } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/set-password?type=invite`,
-    })
+    });
 
     if (error) {
-      console.error('Error sending password reset email:', error)
+      console.error('Error sending password reset email:', error);
       return new Response(
         JSON.stringify({ error: error.message }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
-      )
+      );
     }
 
+    console.log('Password reset email sent successfully');
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: `Password reset email sent to ${email}` 
+        message: `Password reset email sent to ${email}`,
+        data 
       }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 200 }
-    )
+    );
   } catch (error) {
-    console.error('Error in inviteEmployeeResetPassword function:', error)
+    console.error('Error in inviteEmployeeResetPassword function:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'An unknown error occurred' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'An unknown error occurred',
+        success: false
+      }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
-    )
+    );
   }
-})
+});
