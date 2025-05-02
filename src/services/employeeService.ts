@@ -61,6 +61,10 @@ export const employeeService = {
       .single();
 
     if (error) throw error;
+
+    // Send password reset email after employee creation
+    await this.sendPasswordResetEmail(userId);
+    
     return data as Employee;
   },
 
@@ -101,4 +105,66 @@ export const employeeService = {
       throw error;
     }
   },
+
+  async sendPasswordResetEmail(userId: string): Promise<void> {
+    try {
+      // Get the user's email
+      const { data: userData, error: userError } = await supabase
+        .from('auth.users')
+        .select('email')
+        .eq('id', userId)
+        .single();
+      
+      if (userError) {
+        console.error('Error getting user email:', userError);
+        throw userError;
+      }
+
+      // If no user found, fetch from auth users directly
+      let userEmail;
+      if (!userData || !userData.email) {
+        // Call the user-management edge function to get the user's email
+        const response = await supabase.functions.invoke('user-management', {
+          body: {
+            action: 'get-user-emails',
+            userIds: [userId],
+          },
+        });
+        
+        if (response.error) {
+          console.error('Error getting user email from edge function:', response.error);
+          throw response.error;
+        }
+        
+        const emails = response.data?.emails || [];
+        if (emails.length === 0) {
+          throw new Error('User email not found');
+        }
+        
+        userEmail = emails[0].email;
+      } else {
+        userEmail = userData.email;
+      }
+
+      // Send password reset email
+      console.log(`Sending password reset email to: ${userEmail}`);
+      const response = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'resetPassword',
+          email: userEmail,
+        },
+      });
+      
+      if (response.error) {
+        console.error('Error sending password reset email:', response.error);
+        throw response.error;
+      }
+      
+      console.log('Password reset email sent successfully');
+      return;
+    } catch (error) {
+      console.error('Error in sendPasswordResetEmail:', error);
+      throw error;
+    }
+  }
 };
