@@ -23,14 +23,14 @@ export function EditEmployeeDialog({ open, onClose, employee }: EditEmployeeDial
     address: employee.address,
     zipcode: employee.zipcode,
     country: employee.country,
-    city: employee.city,
+    city: employee.city, // Ensure city is included here
     employee_type: employee.employee_type as 'Employee' | 'Freelancer',
     hourly_salary: employee.hourly_salary,
     employed_percentage: employee.employed_percentage,
     social_security_number: employee.social_security_number,
     account_number: employee.account_number,
     paycheck_solution: employee.paycheck_solution || '',
-    team: employee.team || '', // Include team field with default from employee data
+    team: employee.team || '', // Add team field
   });
 
   const updateFormData = (data: Partial<typeof formData>) => {
