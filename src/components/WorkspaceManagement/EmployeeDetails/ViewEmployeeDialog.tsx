@@ -28,6 +28,7 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
       console.log("Available employee keys:", Object.keys(employee).join(", "));
       console.log("City value type:", employee.city ? typeof employee.city : "undefined");
       console.log("City value:", employee.city);
+      console.log("Team value:", employee.team);
       
       // Advanced debugging: check if city is nested in another property
       const employeeObj = employee as any;
@@ -75,6 +76,10 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
               <div>
                 <p className="text-sm text-muted-foreground">Phone Number</p>
                 <p className="font-medium">{employee.phone_number || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Team</p>
+                <p className="font-medium">{employee.team || '-'}</p>
               </div>
             </div>
           </div>

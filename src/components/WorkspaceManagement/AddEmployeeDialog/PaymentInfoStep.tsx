@@ -24,6 +24,7 @@ interface PaymentInfoStepProps {
     social_security_number: string;
     account_number: string;
     paycheck_solution?: string;
+    team: string; // Add team to formData interface
   };
   onBack: () => void;
   onClose: () => void;
@@ -92,13 +93,14 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         
         await employeeService.updateEmployee(employeeId, employeeData);
         
-        // Update profile information
+        // Update profile information including team
         await supabase
           .from('profiles')
           .update({ 
             first_name: formData.first_name,
             last_name: formData.last_name,
-            phone_number: formData.phone_number || null
+            phone_number: formData.phone_number || null,
+            team: formData.team // Update team value
           })
           .eq('id', employeeId);
         
@@ -115,7 +117,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           phoneNumber: formData.phone_number || undefined,
           role: 'employee',
           language: 'en',
-          team: 'Employees'
+          team: formData.team // Include team in userData
         };
         
         // Use the userService.inviteUser method directly
@@ -142,14 +144,15 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         
         await employeeService.createEmployee(employeeData, result.user.id);
         
-        // Directly update the profiles table with first name, last name and phone number
+        // Directly update the profiles table with first name, last name, phone number and team
         await supabase
           .from('profiles')
           .update({ 
             first_name: formData.first_name,
             last_name: formData.last_name,
             phone_number: formData.phone_number || null,
-            role: 'employee'
+            role: 'employee',
+            team: formData.team // Update team value
           })
           .eq('id', result.user.id);
         
@@ -161,6 +164,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
       
       onClose();
     } catch (error: any) {
+      console.error('Error in PaymentInfoStep:', error);
       toast({
         title: "Error",
         description: error.message || (isEdit ? "Failed to update employee" : "Failed to add employee"),
