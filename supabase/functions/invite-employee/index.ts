@@ -16,7 +16,7 @@ serve(async (req) => {
 
   try {
     // Parse request body
-    const { email, firstName, lastName } = await req.json();
+    const { email } = await req.json();
 
     // Validation
     if (!email) {
@@ -41,7 +41,7 @@ serve(async (req) => {
       }
     );
 
-    console.log(`Inviting employee: ${email} with name: ${firstName} ${lastName}`);
+    console.log(`Inviting employee with email: ${email}`);
 
     // Get site URL for redirect
     const origin = req.headers.get('origin') || 'https://vjqbgnjeuvuxvuruewyc.supabase.co';
@@ -61,12 +61,11 @@ serve(async (req) => {
       console.log('User already exists, returning existing user data');
       userData = existingUser;
     } else {
-      // Invite the user using the admin API
+      // Invite the user using the admin API - without setting first name and last name
+      // since these are already stored in the database
       const { data: newUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         redirectTo: redirectUrl,
         data: {
-          first_name: firstName,
-          last_name: lastName,
           role: 'employee',
         },
       });

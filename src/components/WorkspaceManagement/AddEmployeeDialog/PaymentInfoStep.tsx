@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -64,15 +65,11 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     }));
   };
 
-  const sendInviteEmail = async (email: string, firstName: string, lastName: string) => {
+  const sendInviteEmail = async (email: string) => {
     try {
-      // Call the invite-employee edge function
+      // Call the invite-employee edge function - simplified to only send email
       const { data, error } = await supabase.functions.invoke('invite-employee', {
-        body: {
-          email,
-          firstName,
-          lastName
-        }
+        body: { email }
       });
 
       if (error) {
@@ -181,12 +178,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           })
           .eq('id', result.user.id);
 
-        // Send invite email through new edge function
-        const inviteSent = await sendInviteEmail(
-          formData.email, 
-          formData.first_name, 
-          formData.last_name
-        );
+        // Send invite email through new edge function - simplified to only need email
+        const inviteSent = await sendInviteEmail(formData.email);
         
         toast({
           title: "Employee Added",
