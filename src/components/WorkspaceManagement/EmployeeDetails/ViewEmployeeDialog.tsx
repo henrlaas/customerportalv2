@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmployeeWithProfile } from "@/types/employee";
 import { Separator } from "@/components/ui/separator";
@@ -26,16 +25,6 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
       console.log("Employee data in dialog:", employee);
       // Log all available keys for debugging
       console.log("Available employee keys:", Object.keys(employee).join(", "));
-      console.log("City value type:", employee.city ? typeof employee.city : "undefined");
-      console.log("City value:", employee.city);
-      
-      // Advanced debugging: check if city is nested in another property
-      const employeeObj = employee as any;
-      Object.keys(employeeObj).forEach(key => {
-        if (typeof employeeObj[key] === 'object' && employeeObj[key] !== null) {
-          console.log(`Checking nested object in ${key}:`, employeeObj[key]);
-        }
-      });
     }
   }, [employee]);
 
@@ -75,6 +64,10 @@ export function ViewEmployeeDialog({ employee, open, onClose }: ViewEmployeeDial
               <div>
                 <p className="text-sm text-muted-foreground">Phone Number</p>
                 <p className="font-medium">{employee.phone_number || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Team</p>
+                <p className="font-medium">{employee.team || '-'}</p>
               </div>
             </div>
           </div>

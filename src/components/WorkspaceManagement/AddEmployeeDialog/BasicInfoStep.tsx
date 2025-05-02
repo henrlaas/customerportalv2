@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PhoneInput } from '@/components/ui/phone-input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TEAMS } from '@/constants/teams';
 
 interface BasicInfoStepProps {
   formData: {
@@ -11,6 +13,7 @@ interface BasicInfoStepProps {
     first_name: string;
     last_name: string;
     phone_number: string;
+    team: string;
   };
   onUpdate: (data: Partial<BasicInfoStepProps['formData']>) => void;
   onNext: () => void;
@@ -107,6 +110,25 @@ export function BasicInfoStep({
             value={formData.phone_number}
             onChange={(value) => onUpdate({ phone_number: value })}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="team">Team</Label>
+          <Select
+            value={formData.team}
+            onValueChange={(value) => onUpdate({ team: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a team" />
+            </SelectTrigger>
+            <SelectContent>
+              {TEAMS.map((team) => (
+                <SelectItem key={team} value={team}>
+                  {team}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

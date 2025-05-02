@@ -5,6 +5,7 @@ import { Steps } from './Steps';
 import { BasicInfoStep } from './BasicInfoStep';
 import { EmploymentDetailsStep } from './EmploymentDetailsStep';
 import { PaymentInfoStep } from './PaymentInfoStep';
+import { DEFAULT_TEAM } from '@/constants/teams';
 
 interface AddEmployeeDialogProps {
   open: boolean;
@@ -28,6 +29,7 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
     social_security_number: '',
     account_number: '',
     paycheck_solution: '',
+    team: DEFAULT_TEAM, // Initialize with default team
   });
 
   const updateFormData = (data: Partial<typeof formData>) => {
