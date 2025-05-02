@@ -110,55 +110,70 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         });
       } else {
         // Create new employee
-        // First, invite user and create auth user using userService.inviteUser
-        const userData = {
-          firstName: formData.first_name,
-          lastName: formData.last_name,
-          phoneNumber: formData.phone_number || undefined,
-          role: 'employee',
-          language: 'en',
-          team: formData.team
-        };
-        
-        // Use the userService.inviteUser method directly
-        const result = await userService.inviteUser(formData.email, userData);
-        
-        if (!result || !result.user) {
-          throw new Error('Failed to create user');
-        }
+        try {
+          // First, invite user and create auth user using userService.inviteUser
+          const userData = {
+            firstName: formData.first_name,
+            lastName: formData.last_name,
+            phoneNumber: formData.phone_number || undefined,
+            role: 'employee',
+            language: 'en',
+            team: formData.team
+          };
+          
+          // Use the userService.inviteUser method directly
+          const result = await userService.inviteUser(formData.email, userData);
+          
+          if (!result || !result.user) {
+            throw new Error('Failed to create user');
+          }
 
-        // Create employee record
-        const employeeData = {
-          address: formData.address,
-          zipcode: formData.zipcode,
-          country: formData.country,
-          city: formData.city,
-          employee_type: formData.employee_type,
-          hourly_salary: formData.hourly_salary,
-          employed_percentage: formData.employed_percentage,
-          social_security_number: formData.social_security_number,
-          account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || '',
-          team: formData.team // Include team field in employee creation
-        };
-        
-        await employeeService.createEmployee(employeeData, result.user.id);
-        
-        // Directly update the profiles table with first name, last name and phone number
-        await supabase
-          .from('profiles')
-          .update({ 
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            phone_number: formData.phone_number || null,
-            role: 'employee'
-          })
-          .eq('id', result.user.id);
-        
-        toast({
-          title: "Employee Added",
-          description: `${formData.first_name} ${formData.last_name} has been added successfully. A password setup email has been sent to ${formData.email}.`,
-        });
+          // Create employee record
+          const employeeData = {
+            address: formData.address,
+            zipcode: formData.zipcode,
+            country: formData.country,
+            city: formData.city,
+            employee_type: formData.employee_type,
+            hourly_salary: formData.hourly_salary,
+            employed_percentage: formData.employed_percentage,
+            social_security_number: formData.social_security_number,
+            account_number: formData.account_number,
+            paycheck_solution: formData.paycheck_solution || '',
+            team: formData.team // Include team field in employee creation
+          };
+          
+          await employeeService.createEmployee(employeeData, result.user.id);
+          
+          // Directly update the profiles table with first name, last name and phone number
+          await supabase
+            .from('profiles')
+            .update({ 
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+              phone_number: formData.phone_number || null,
+              role: 'employee'
+            })
+            .eq('id', result.user.id);
+          
+          toast({
+            title: "Employee Added",
+            description: `${formData.first_name} ${formData.last_name} has been added successfully. A password setup email has been sent to ${formData.email}.`,
+          });
+        } catch (error: any) {
+          // Check for email already exists error
+          if (error.message && error.message.includes('already been registered')) {
+            toast({
+              title: "Email Already Registered",
+              description: `The email address ${formData.email} is already registered in the system.`,
+              variant: "destructive",
+            });
+          } else {
+            // Handle other errors
+            throw error;
+          }
+          return;
+        }
       }
       
       onClose();
