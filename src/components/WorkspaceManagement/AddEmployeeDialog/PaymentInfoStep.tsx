@@ -116,7 +116,10 @@ export function PaymentInfoStep({
           }
 
           // Find the user with matching email
-          const existingUser = userData?.users?.find(user => user.email === formData.email);
+          // Use type assertion to help TypeScript understand the structure
+          type UserEntry = { id: string, email?: string };
+          const users = userData?.users as UserEntry[] || [];
+          const existingUser = users.find(user => user.email === formData.email);
           
           if (!existingUser) {
             throw new Error('User not found');
