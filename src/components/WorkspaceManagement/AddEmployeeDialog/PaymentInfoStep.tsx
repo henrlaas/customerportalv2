@@ -65,6 +65,31 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     }));
   };
 
+  const sendInviteEmail = async (email: string, firstName: string, lastName: string, team?: string) => {
+    try {
+      // Call the invite-employee edge function
+      const { data, error } = await supabase.functions.invoke('invite-employee', {
+        body: {
+          email,
+          firstName,
+          lastName,
+          team
+        }
+      });
+
+      if (error) {
+        console.error('Error sending invite email:', error);
+        return false;
+      }
+
+      console.log('Invite sent successfully:', data);
+      return true;
+    } catch (error) {
+      console.error('Error sending invite email:', error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -88,7 +113,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           employed_percentage: formData.employed_percentage,
           social_security_number: formData.social_security_number,
           account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || ''
+          paycheck_solution: formData.paycheck_solution || '',
+          team: formData.team
         };
         
         await employeeService.updateEmployee(employeeId, employeeData);
@@ -99,7 +125,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           .update({ 
             first_name: formData.first_name,
             last_name: formData.last_name,
-            phone_number: formData.phone_number || null
+            phone_number: formData.phone_number || null,
+            team: formData.team
           })
           .eq('id', employeeId);
         
@@ -138,7 +165,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           employed_percentage: formData.employed_percentage,
           social_security_number: formData.social_security_number,
           account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || ''
+          paycheck_solution: formData.paycheck_solution || '',
+          team: formData.team
         };
         
         await employeeService.createEmployee(employeeData, result.user.id);
@@ -150,13 +178,22 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
             first_name: formData.first_name,
             last_name: formData.last_name,
             phone_number: formData.phone_number || null,
-            role: 'employee'
+            role: 'employee',
+            team: formData.team
           })
           .eq('id', result.user.id);
+
+        // Send invite email through new edge function
+        const inviteSent = await sendInviteEmail(
+          formData.email, 
+          formData.first_name, 
+          formData.last_name, 
+          formData.team
+        );
         
         toast({
           title: "Employee Added",
-          description: `${formData.first_name} ${formData.last_name} has been added successfully. An invitation email has been sent.`,
+          description: `${formData.first_name} ${formData.last_name} has been added successfully. ${inviteSent ? 'An invitation email has been sent.' : 'Note: There was an issue sending the invitation email, but the employee was created.'}`,
         });
       }
       
