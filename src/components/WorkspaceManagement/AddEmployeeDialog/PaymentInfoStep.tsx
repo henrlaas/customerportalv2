@@ -108,19 +108,17 @@ export function PaymentInfoStep({
         console.error('Error creating user:', response.error);
         
         if (response.error.message === 'User already exists') {
-          // If user already exists, get the user ID
-          const { data: userData, error: userError } = await supabase.auth
-            .admin.listUsers({
-              filter: {
-                email: formData.email
-              }
-            });
+          // If user already exists, get the user ID by listing users with email filter
+          const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
           
           if (userError) {
             throw new Error(`Failed to get user: ${userError.message}`);
           }
 
-          if (!userData || userData.users.length === 0) {
+          // Find the user with matching email
+          const existingUser = userData?.users?.find(user => user.email === formData.email);
+          
+          if (!existingUser) {
             throw new Error('User not found');
           }
 
@@ -134,10 +132,10 @@ export function PaymentInfoStep({
               phone_number: formData.phone_number,
               team: formData.team
             })
-            .eq('id', userData.users[0].id);
+            .eq('id', existingUser.id);
 
           // Continue with creating employee record using the existing user's ID
-          const userId = userData.users[0].id;
+          const userId = existingUser.id;
           await createEmployeeRecord(userId);
           
         } else {
