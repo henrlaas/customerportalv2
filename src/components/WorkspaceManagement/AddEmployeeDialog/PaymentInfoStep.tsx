@@ -74,17 +74,26 @@ export function PaymentInfoStep({
       paycheck_solution: localFormData.paycheck_solution,
     };
 
-    if (isEdit && employeeId) {
-      // Update existing employee record
-      await supabase
-        .from('employees')
-        .update(employeeData)
-        .eq('id', employeeId);
-    } else {
-      // Create new employee record
-      await supabase
-        .from('employees')
-        .insert([{ ...employeeData, id: userId }]);
+    try {
+      if (isEdit && employeeId) {
+        // Update existing employee record
+        const { error } = await supabase
+          .from('employees')
+          .update(employeeData)
+          .eq('id', employeeId);
+          
+        if (error) throw error;
+      } else {
+        // Create new employee record
+        const { error } = await supabase
+          .from('employees')
+          .insert([{ ...employeeData, id: userId }]);
+          
+        if (error) throw error;
+      }
+    } catch (err: any) {
+      console.error("Error creating employee record:", err);
+      throw new Error(`Failed to create employee record: ${err.message}`);
     }
   };
 
@@ -98,6 +107,11 @@ export function PaymentInfoStep({
         body: {
           action: 'invite',
           email: localFormData.email,
+          firstName: localFormData.first_name,  // Make sure first_name is passed
+          lastName: localFormData.last_name,    // Make sure last_name is passed
+          phoneNumber: localFormData.phone_number,
+          team: localFormData.team,
+          role: 'employee',
           options: {
             data: {
               first_name: localFormData.first_name,
@@ -144,8 +158,7 @@ export function PaymentInfoStep({
             .eq('id', existingUser.id);
 
           // Continue with creating employee record using the existing user's ID
-          const userId = existingUser.id;
-          await createEmployeeRecord(userId);
+          await createEmployeeRecord(existingUser.id);
           
         } else {
           // For any other error, throw it
@@ -154,6 +167,8 @@ export function PaymentInfoStep({
       } else {
         // If user creation was successful, get the user ID from response
         const userId = response.data.id;
+        
+        // Create the employee record
         await createEmployeeRecord(userId);
       }
 
