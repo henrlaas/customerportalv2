@@ -120,8 +120,14 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           }
         });
         
-        if (inviteError || !inviteResponse?.data?.user) {
-          throw new Error(inviteError?.message || 'Failed to invite employee');
+        if (inviteError) {
+          console.error('Invite error:', inviteError);
+          throw new Error(inviteError.message || 'Failed to invite employee');
+        }
+        
+        if (!inviteResponse || !inviteResponse.data || !inviteResponse.data.user) {
+          console.error('Invalid response from invite function:', inviteResponse);
+          throw new Error('Received invalid response from server');
         }
         
         // Get the user ID from the invite response
