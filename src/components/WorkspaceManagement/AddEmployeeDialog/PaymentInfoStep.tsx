@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,7 +97,7 @@ export function PaymentInfoStep({
               first_name: formData.first_name,
               last_name: formData.last_name,
               phone_number: formData.phone_number,
-              team: formData.team, // Add team field
+              team: formData.team,
               role: 'employee'
             }
           }
@@ -109,13 +110,17 @@ export function PaymentInfoStep({
         if (response.error.message === 'User already exists') {
           // If user already exists, get the user ID
           const { data: userData, error: userError } = await supabase.auth
-            .admin.getUserByEmail(formData.email);
+            .admin.listUsers({
+              filter: {
+                email: formData.email
+              }
+            });
           
           if (userError) {
             throw new Error(`Failed to get user: ${userError.message}`);
           }
 
-          if (!userData) {
+          if (!userData || userData.users.length === 0) {
             throw new Error('User not found');
           }
 
@@ -129,10 +134,10 @@ export function PaymentInfoStep({
               phone_number: formData.phone_number,
               team: formData.team
             })
-            .eq('id', userData.id);
+            .eq('id', userData.users[0].id);
 
           // Continue with creating employee record using the existing user's ID
-          const userId = userData.id;
+          const userId = userData.users[0].id;
           await createEmployeeRecord(userId);
           
         } else {
