@@ -61,8 +61,7 @@ serve(async (req) => {
       console.log('User already exists, returning existing user data');
       userData = existingUser;
     } else {
-      // Invite the user using the admin API - without setting first name and last name
-      // since these are already stored in the database
+      // Invite the user using the admin API
       const { data: newUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         redirectTo: redirectUrl,
         data: {
