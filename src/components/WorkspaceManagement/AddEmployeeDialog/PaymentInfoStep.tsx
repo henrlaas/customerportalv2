@@ -133,7 +133,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           toast({
             title: "Email Warning",
             description: `The employee account will be created, but there was an issue sending the invitation email: ${inviteResponse.emailError}`,
-            variant: "warning",
+            variant: "destructive", // Changed from "warning" to "destructive" as that's a valid variant
           });
         }
         
