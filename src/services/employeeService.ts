@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Employee, EmployeeWithProfile } from '@/types/employee';
 
@@ -61,6 +60,16 @@ export const employeeService = {
       .single();
 
     if (error) throw error;
+    
+    // After successfully creating the employee, send the password reset email
+    try {
+      await this.sendPasswordResetEmail(userId);
+      console.log('Password reset email sent to newly created employee');
+    } catch (resetError) {
+      console.error('Error sending password reset email:', resetError);
+      // We don't throw here as the employee was already created successfully
+    }
+
     return data as Employee;
   },
 
@@ -101,4 +110,44 @@ export const employeeService = {
       throw error;
     }
   },
+
+  async sendPasswordResetEmail(userId: string): Promise<void> {
+    try {
+      // First, we need to get the user's email using the user-management edge function
+      const userResponse = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'get-user-by-id',
+          userId: userId
+        }
+      });
+
+      if (userResponse.error) {
+        throw new Error(`Error fetching user email: ${userResponse.error.message}`);
+      }
+
+      if (!userResponse.data || !userResponse.data.email) {
+        throw new Error('User email not found');
+      }
+
+      const userEmail = userResponse.data.email;
+
+      // Use the user-management edge function to send the password reset email
+      const response = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'resetPassword',
+          email: userEmail
+        }
+      });
+
+      if (response.error) {
+        throw new Error(`Failed to send password reset email: ${response.error.message}`);
+      }
+
+      console.log('Password reset email sent successfully to:', userEmail);
+      return;
+    } catch (error) {
+      console.error('Error in sendPasswordResetEmail:', error);
+      throw error;
+    }
+  }
 };

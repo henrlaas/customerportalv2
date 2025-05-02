@@ -8,6 +8,7 @@ import { handleDeleteUser } from './handlers/delete-user.ts'
 import { handleListUsers } from './handlers/list-users.ts'
 import { handleResetPassword } from './handlers/reset-password.ts'
 import { handleGetUserEmails } from './handlers/get-user-emails.ts'
+import { handleGetUserById } from './handlers/get-user-by-id.ts'
 
 serve(async (req) => {
   // Handle CORS
@@ -40,6 +41,8 @@ serve(async (req) => {
         return await handleResetPassword(body, origin, supabaseAdmin, corsHeaders)
       case 'get-user-emails':
         return await handleGetUserEmails(req)
+      case 'get-user-by-id':
+        return await handleGetUserById(body, supabaseAdmin, corsHeaders)
       default:
         console.error(`Unknown action: ${action}`);
         return new Response(

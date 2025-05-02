@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -156,7 +155,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         
         toast({
           title: "Employee Added",
-          description: `${formData.first_name} ${formData.last_name} has been added successfully. An invitation email has been sent.`,
+          description: `${formData.first_name} ${formData.last_name} has been added successfully. A password setup email has been sent to ${formData.email}.`,
         });
       }
       
