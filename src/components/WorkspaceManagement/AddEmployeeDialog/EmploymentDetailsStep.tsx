@@ -10,7 +10,7 @@ interface EmploymentDetailsStepProps {
     employee_type: 'Employee' | 'Freelancer';
     hourly_salary: number;
     employed_percentage: number;
-    team: string; // Add team to formData interface
+    team: string; // Team field in the props interface
   };
   onUpdate: (data: Partial<typeof formData>) => void;
   onNext: () => void;
