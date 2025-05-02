@@ -3,80 +3,110 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { countries } from '@/lib/countries';
-import { Globe } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface EmploymentDetailsStepProps {
   formData: {
+    employee_type: 'Employee' | 'Freelancer';
+    hourly_salary: number;
+    employed_percentage: number;
     address: string;
     zipcode: string;
     country: string;
     city: string;
-    employee_type: 'Employee' | 'Freelancer';
-    hourly_salary: number;
-    employed_percentage: number;
-    paycheck_solution?: string;
   };
   onUpdate: (data: Partial<EmploymentDetailsStepProps['formData']>) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-export function EmploymentDetailsStep({ 
-  formData, 
-  onUpdate, 
-  onNext, 
-  onBack 
-}: EmploymentDetailsStepProps) {
+export function EmploymentDetailsStep({ formData, onUpdate, onNext, onBack }: EmploymentDetailsStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Set default country to Norway if not already set
-  if (!formData.country) {
-    onUpdate({ country: 'Norway' });
-  }
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.address) newErrors.address = 'Address is required';
-    if (!formData.zipcode) newErrors.zipcode = 'Zip code is required';
-    if (!formData.country) newErrors.country = 'Country is required';
-    if (!formData.city) newErrors.city = 'City is required';
-    if (!formData.employee_type) newErrors.employee_type = 'Employee type is required';
-    if (!formData.hourly_salary) newErrors.hourly_salary = 'Hourly salary is required';
-    if (!formData.employed_percentage) newErrors.employed_percentage = 'Employment percentage is required';
-    else if (formData.employed_percentage <= 0 || formData.employed_percentage > 100) {
-      newErrors.employed_percentage = 'Employment percentage must be between 1 and 100';
-    }
+    if (!formData.address) 
+      newErrors.address = 'Address is required';
     
-    if (formData.employee_type === 'Freelancer' && !formData.paycheck_solution) {
-      newErrors.paycheck_solution = 'Paycheck solution is required for Freelancers';
-    }
+    if (!formData.zipcode) 
+      newErrors.zipcode = 'ZIP code is required';
+    
+    if (!formData.country) 
+      newErrors.country = 'Country is required';
+    
+    if (!formData.city) 
+      newErrors.city = 'City is required';
+    
+    if (formData.hourly_salary <= 0)
+      newErrors.hourly_salary = 'Hourly salary must be greater than 0';
+    
+    if (formData.employed_percentage <= 0 || formData.employed_percentage > 100)
+      newErrors.employed_percentage = 'Employed percentage must be between 1 and 100';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleNext = () => {
     if (validateForm()) {
       onNext();
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="text-lg font-medium">Employment Details</h2>
         
+        <div className="space-y-2">
+          <Label>Employee Type *</Label>
+          <RadioGroup 
+            value={formData.employee_type}
+            onValueChange={(value) => onUpdate({ employee_type: value as 'Employee' | 'Freelancer' })}
+            className="flex space-x-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Employee" id="employee" />
+              <Label htmlFor="employee">Employee</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Freelancer" id="freelancer" />
+              <Label htmlFor="freelancer">Freelancer</Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="hourly_salary">Hourly Salary (NOK) *</Label>
+          <Input 
+            id="hourly_salary"
+            type="number"
+            value={formData.hourly_salary}
+            onChange={(e) => onUpdate({ hourly_salary: parseFloat(e.target.value) || 0 })}
+          />
+          {errors.hourly_salary && <p className="text-sm text-red-500">{errors.hourly_salary}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="employed_percentage">Employed Percentage *</Label>
+          <Input 
+            id="employed_percentage"
+            type="number"
+            value={formData.employed_percentage}
+            onChange={(e) => onUpdate({ employed_percentage: parseFloat(e.target.value) || 0 })}
+            min="1"
+            max="100"
+          />
+          {errors.employed_percentage && <p className="text-sm text-red-500">{errors.employed_percentage}</p>}
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="address">Address *</Label>
           <Input 
             id="address"
             value={formData.address}
             onChange={(e) => onUpdate({ address: e.target.value })}
-            className={errors.address ? 'border-red-500' : ''}
           />
           {errors.address && <p className="text-sm text-red-500">{errors.address}</p>}
         </div>
@@ -88,18 +118,16 @@ export function EmploymentDetailsStep({
               id="city"
               value={formData.city}
               onChange={(e) => onUpdate({ city: e.target.value })}
-              className={errors.city ? 'border-red-500' : ''}
             />
             {errors.city && <p className="text-sm text-red-500">{errors.city}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="zipcode">Zip Code *</Label>
+            <Label htmlFor="zipcode">ZIP Code *</Label>
             <Input 
               id="zipcode"
               value={formData.zipcode}
               onChange={(e) => onUpdate({ zipcode: e.target.value })}
-              className={errors.zipcode ? 'border-red-500' : ''}
             />
             {errors.zipcode && <p className="text-sm text-red-500">{errors.zipcode}</p>}
           </div>
@@ -107,92 +135,13 @@ export function EmploymentDetailsStep({
 
         <div className="space-y-2">
           <Label htmlFor="country">Country *</Label>
-          <div className="relative">
-            <Select 
-              value={formData.country}
-              onValueChange={(value) => onUpdate({ country: value })}
-            >
-              <SelectTrigger 
-                className={`${errors.country ? 'border-red-500' : ''} pl-10`}
-              >
-                <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <SelectValue placeholder="Select a country" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {countries.map((country) => (
-                  <SelectItem key={country.code} value={country.name}>
-                    {country.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Input 
+            id="country"
+            value={formData.country}
+            onChange={(e) => onUpdate({ country: e.target.value })}
+            placeholder="Norway"
+          />
           {errors.country && <p className="text-sm text-red-500">{errors.country}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="employee_type">Employee Type *</Label>
-          <Select
-            value={formData.employee_type}
-            onValueChange={(value: 'Employee' | 'Freelancer') => onUpdate({ 
-              employee_type: value,
-              paycheck_solution: value === 'Employee' ? undefined : formData.paycheck_solution 
-            })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select employee type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Employee">Employee</SelectItem>
-              <SelectItem value="Freelancer">Freelancer</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.employee_type && <p className="text-sm text-red-500">{errors.employee_type}</p>}
-        </div>
-
-        {formData.employee_type === 'Freelancer' && (
-          <div className="space-y-2">
-            <Label htmlFor="paycheck_solution">Paycheck Solution *</Label>
-            <Input 
-              id="paycheck_solution"
-              value={formData.paycheck_solution || ''}
-              onChange={(e) => onUpdate({ paycheck_solution: e.target.value })}
-              placeholder="Enter paycheck solution details"
-              className={errors.paycheck_solution ? 'border-red-500' : ''}
-            />
-            {errors.paycheck_solution && <p className="text-sm text-red-500">{errors.paycheck_solution}</p>}
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="hourly_salary">Hourly Rate (NOK) *</Label>
-            <Input 
-              id="hourly_salary"
-              type="number"
-              min="0"
-              value={formData.hourly_salary || ''}
-              onChange={(e) => onUpdate({ hourly_salary: parseFloat(e.target.value) || 0 })}
-              className={errors.hourly_salary ? 'border-red-500' : ''}
-            />
-            {errors.hourly_salary && <p className="text-sm text-red-500">{errors.hourly_salary}</p>}
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="employed_percentage">Employment Percentage (%) *</Label>
-            <Input 
-              id="employed_percentage"
-              type="number"
-              min="1"
-              max="100"
-              value={formData.employed_percentage || ''}
-              onChange={(e) => onUpdate({ employed_percentage: parseInt(e.target.value) || 0 })}
-              className={errors.employed_percentage ? 'border-red-500' : ''}
-            />
-            {errors.employed_percentage && <p className="text-sm text-red-500">{errors.employed_percentage}</p>}
-          </div>
         </div>
       </div>
 
@@ -200,10 +149,10 @@ export function EmploymentDetailsStep({
         <Button type="button" variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button type="submit">
-          Next Step
+        <Button onClick={handleNext}>
+          Next
         </Button>
       </div>
-    </form>
+    </div>
   );
 }

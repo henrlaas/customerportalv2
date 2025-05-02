@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { employeeService } from '@/services/employeeService';
-import { userService } from '@/services/userService';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentInfoStepProps {
@@ -65,6 +64,35 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     }));
   };
 
+  const inviteEmployee = async (userId: string) => {
+    try {
+      // Get the current URL for redirect
+      const siteUrl = window.location.origin;
+      const redirectUrl = `${siteUrl}/set-password`;
+      
+      // Use our new edge function to send the invitation
+      const response = await supabase.functions.invoke('invite-employee', {
+        body: {
+          email: formData.email,
+          firstName: formData.first_name,
+          lastName: formData.last_name,
+          role: 'employee',
+          team: formData.team,
+          redirectUrl
+        },
+      });
+      
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to send invitation');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error inviting employee:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -99,7 +127,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           .update({ 
             first_name: formData.first_name,
             last_name: formData.last_name,
-            phone_number: formData.phone_number || null
+            phone_number: formData.phone_number || null,
+            team: formData.team || null
           })
           .eq('id', employeeId);
         
@@ -109,26 +138,18 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
         });
       } else {
         // Create new employee
-        // First, invite user and create auth user using userService.inviteUser
-        const userData = {
-          firstName: formData.first_name,
-          lastName: formData.last_name,
-          phoneNumber: formData.phone_number || undefined,
-          role: 'employee',
-          language: 'en',
-          team: formData.team
-        };
-        
-        // Use the userService.inviteUser method directly
-        const result = await userService.inviteUser(formData.email, userData);
+        // First, use our custom invite employee function instead of userService.inviteUser
+        const result = await inviteEmployee(formData.email);
         
         if (!result || !result.user) {
           throw new Error('Failed to create user');
         }
 
+        const userId = result.user.id;
+
         // Create employee record
         const employeeData = {
-          id: result.user.id,
+          id: userId,
           address: formData.address,
           zipcode: formData.zipcode,
           country: formData.country,
@@ -141,18 +162,19 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           paycheck_solution: formData.paycheck_solution || ''
         };
         
-        await employeeService.createEmployee(employeeData, result.user.id);
+        await employeeService.createEmployee(employeeData, userId);
         
-        // Directly update the profiles table with first name, last name and phone number
+        // Directly update the profiles table with first name, last name, phone number and team
         await supabase
           .from('profiles')
           .update({ 
             first_name: formData.first_name,
             last_name: formData.last_name,
             phone_number: formData.phone_number || null,
+            team: formData.team || null,
             role: 'employee'
           })
-          .eq('id', result.user.id);
+          .eq('id', userId);
         
         toast({
           title: "Employee Added",
