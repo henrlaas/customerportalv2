@@ -73,14 +73,14 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
       });
 
       if (error) {
-        console.error('Error sending invite email:', error);
+        console.error('Error in employee invite process:', error);
         return false;
       }
 
-      console.log('Invite sent successfully:', data);
+      console.log('Employee invite process completed:', data);
       return true;
     } catch (error) {
-      console.error('Error sending invite email:', error);
+      console.error('Exception during employee invite process:', error);
       return false;
     }
   };
@@ -178,7 +178,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           })
           .eq('id', result.user.id);
 
-        // Send invite email through new edge function - simplified to only need email
+        // After user and employee records are created, send the invitation email
         const inviteSent = await sendInviteEmail(formData.email);
         
         toast({

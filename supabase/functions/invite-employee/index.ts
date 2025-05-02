@@ -41,7 +41,7 @@ serve(async (req) => {
       }
     );
 
-    console.log(`Inviting employee with email: ${email}`);
+    console.log(`Processing invite request for email: ${email}`);
 
     // Get site URL for redirect
     const origin = req.headers.get('origin') || 'https://vjqbgnjeuvuxvuruewyc.supabase.co';
@@ -54,31 +54,41 @@ serve(async (req) => {
       // Only throw if it's not a "user not found" error
       if (fetchError.message !== 'User not found') {
         console.error('Error checking for existing user:', fetchError);
-        throw new Error(`Error checking user: ${fetchError.message}`);
+        return new Response(
+          JSON.stringify({ error: `Error checking user: ${fetchError.message}` }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
       }
     }
     
     let userData;
     let statusMessage;
     
+    // User already exists scenario - just return the data without sending an invite
     if (existingUser) {
-      console.log('User already exists, returning existing user data');
+      console.log('User already exists, returning existing user data without new invitation');
       userData = existingUser;
       statusMessage = `User with email ${email} already exists, no invitation needed`;
-    } else {
-      // Invite the user using the admin API
+    } 
+    // User doesn't exist - we'll create a new user without sending an invitation initially
+    else {
       try {
-        const { data: newUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-          redirectTo: redirectUrl,
-          data: {
+        // First, create the user account without sending an automatic invite
+        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email: email,
+          email_confirm: true, // Mark email as confirmed
+          user_metadata: {
             role: 'employee',
           },
         });
 
-        if (inviteError) {
-          console.error('Error inviting employee:', inviteError);
+        if (createError) {
+          console.error('Error creating employee account:', createError);
           return new Response(
-            JSON.stringify({ error: inviteError.message || 'Failed to invite employee' }),
+            JSON.stringify({ error: createError.message || 'Failed to create employee account' }),
             {
               status: 500,
               headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -86,13 +96,31 @@ serve(async (req) => {
           );
         }
 
-        console.log('Employee invited successfully:', newUser);
+        console.log('Employee account created successfully:', newUser);
         userData = newUser;
-        statusMessage = `Invitation sent to ${email}`;
-      } catch (inviteError) {
-        console.error('Unexpected error during invitation:', inviteError);
+        
+        // Now that the user is created, send a password reset email which acts as our invitation
+        const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'recovery',
+          email: email,
+          options: {
+            redirectTo: redirectUrl,
+          }
+        });
+
+        if (resetError) {
+          console.error('Error sending invitation email:', resetError);
+          // We don't want to fail the entire process if just the email fails
+          // The user account is created, we just couldn't send the invite
+          statusMessage = `Employee account created, but invitation email failed: ${resetError.message}`;
+        } else {
+          console.log('Invitation email sent successfully to:', email);
+          statusMessage = `Employee account created and invitation sent to ${email}`;
+        }
+      } catch (error) {
+        console.error('Unexpected error during employee creation or invitation:', error);
         return new Response(
-          JSON.stringify({ error: inviteError.message || 'An unexpected error occurred during invitation' }),
+          JSON.stringify({ error: error.message || 'An unexpected error occurred' }),
           {
             status: 500,
             headers: { 'Content-Type': 'application/json', ...corsHeaders },
