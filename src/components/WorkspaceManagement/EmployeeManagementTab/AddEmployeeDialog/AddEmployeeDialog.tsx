@@ -78,15 +78,23 @@ export function AddEmployeeDialog({
   const createEmployeeMutation = useMutation({
     mutationFn: employeeService.createEmployee,
     onSuccess: (data) => {
-      toast({
-        title: "Employee created",
-        description: "The employee has been successfully created.",
-      });
-      form.reset();
-      setCurrentStep(0);
-      onOpenChange(false);
-      if (onSuccess) {
-        onSuccess();
+      if (data.isExisting) {
+        toast({
+          title: "User already exists",
+          description: "This email is already registered as an employee.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Employee created",
+          description: "The employee has been successfully created.",
+        });
+        form.reset();
+        setCurrentStep(0);
+        onOpenChange(false);
+        if (onSuccess) {
+          onSuccess();
+        }
       }
     },
     onError: (error: Error) => {
