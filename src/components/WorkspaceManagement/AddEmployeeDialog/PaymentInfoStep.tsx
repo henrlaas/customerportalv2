@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -87,7 +88,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           employed_percentage: formData.employed_percentage,
           social_security_number: formData.social_security_number,
           account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || ''
+          paycheck_solution: formData.paycheck_solution || '',
+          team: formData.team // Ensure team is included in update
         };
         
         await employeeService.updateEmployee(employeeId, employeeData);
@@ -127,7 +129,6 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
 
         // Create employee record
         const employeeData = {
-          id: result.user.id,
           address: formData.address,
           zipcode: formData.zipcode,
           country: formData.country,
@@ -137,7 +138,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           employed_percentage: formData.employed_percentage,
           social_security_number: formData.social_security_number,
           account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || ''
+          paycheck_solution: formData.paycheck_solution || '',
+          team: formData.team // Include team field in employee creation
         };
         
         await employeeService.createEmployee(employeeData, result.user.id);
