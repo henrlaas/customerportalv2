@@ -1,34 +1,35 @@
 
-import { useState, useMemo } from 'react';
-import { EmployeeWithProfile } from '@/types/employee';
+import { useState, useMemo } from "react";
+import { EmployeeWithProfile } from "@/types/employee";
 
-export function useEmployeeFilters(employees: EmployeeWithProfile[]) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('All');
+export function useEmployeeFilters(employees: EmployeeWithProfile[] = []) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All Types");
+
+  // Define specific employee types for filters
+  const employeeTypes: string[] = useMemo(() => {
+    return ["All Types", "Employee", "Freelancer"];
+  }, []);
   
-  // Get unique employee types for the filter
-  const employeeTypes = useMemo(() => {
-    const types = ['All', ...new Set(employees.map(employee => employee.employee_type))];
-    return types;
-  }, [employees]);
-  
-  // Filter employees based on search term and type filter
+  // Filter employees based on search term and filters
   const filteredEmployees = useMemo(() => {
     return employees.filter(employee => {
-      // Apply search filter
-      const searchMatch = 
-        (employee.first_name && employee.first_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (employee.last_name && employee.last_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (employee.email && employee.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (employee.phone_number && employee.phone_number.toLowerCase().includes(searchTerm.toLowerCase()));
+      const firstName = employee.first_name || '';
+      const lastName = employee.last_name || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      const email = employee.email || '';
       
-      // Apply type filter
-      const typeMatch = typeFilter === 'All' || employee.employee_type === typeFilter;
+      const matchesSearch = 
+        fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (employee.phone_number || '').toLowerCase().includes(searchTerm.toLowerCase());
+        
+      const matchesType = typeFilter === "All Types" || employee.employee_type === typeFilter;
       
-      return searchMatch && typeMatch;
+      return matchesSearch && matchesType;
     });
   }, [employees, searchTerm, typeFilter]);
-  
+
   return {
     searchTerm,
     setSearchTerm,

@@ -792,7 +792,6 @@ export type Database = {
           last_name: string | null
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"]
-          team: string | null
           updated_at: string
         }
         Insert: {
@@ -805,7 +804,6 @@ export type Database = {
           last_name?: string | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          team?: string | null
           updated_at?: string
         }
         Update: {
@@ -818,42 +816,9 @@ export type Database = {
           last_name?: string | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          team?: string | null
           updated_at?: string
         }
         Relationships: []
-      }
-      task_assignees: {
-        Row: {
-          created_at: string | null
-          id: string
-          notes: string | null
-          task_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          task_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          task_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_assignees_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       task_attachments: {
         Row: {
@@ -1040,7 +1005,6 @@ export type Database = {
           description: string | null
           end_time: string | null
           id: string
-          is_running: boolean | null
           start_time: string
           task_id: string | null
           updated_at: string
@@ -1051,7 +1015,6 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
-          is_running?: boolean | null
           start_time: string
           task_id?: string | null
           updated_at?: string
@@ -1062,7 +1025,6 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
-          is_running?: boolean | null
           start_time?: string
           task_id?: string | null
           updated_at?: string

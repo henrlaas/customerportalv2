@@ -11,12 +11,11 @@ type InviteUserParams = {
   role?: string;
   language?: string;
   redirect?: string;
-  team?: string;
-  sendEmail?: boolean;
+  team?: string; // Add team as an optional parameter
 };
 
 type UseInviteUserProps = {
-  onSuccess?: (data: any) => void;
+  onSuccess?: () => void;
   onError?: (error: Error) => void;
 };
 
@@ -29,21 +28,9 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
       const siteUrl = window.location.origin;
       const redirectUrl = params.redirect || `${siteUrl}/set-password`;
 
-      console.log('Inviting user with params:', JSON.stringify({
-        email: params.email,
-        firstName: params.firstName,
-        lastName: params.lastName,
-        phoneNumber: params.phoneNumber,
-        role: params.role || 'client',
-        language: params.language || 'en',
-        redirect: redirectUrl,
-        team: params.team,
-        sendEmail: params.sendEmail !== false // Default to true if not specified
-      }));
-
       const { data, error } = await supabase.functions.invoke('user-management', {
         body: {
-          action: 'invite',
+          action: 'invite', // Changed from 'invite-user' to 'invite' to match handler expectation
           email: params.email,
           firstName: params.firstName,
           lastName: params.lastName,
@@ -51,8 +38,7 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
           role: params.role || 'client',
           language: params.language || 'en',
           redirect: redirectUrl,
-          team: params.team,
-          sendEmail: params.sendEmail !== false // Default to true if not specified
+          team: params.team, // Forward team parameter to the edge function
         },
       });
 
@@ -61,28 +47,16 @@ export const useInviteUser = ({ onSuccess, onError }: UseInviteUserProps = {}) =
         throw new Error(error.message);
       }
 
-      if (!data) {
-        throw new Error('No data returned from invite function');
-      }
-
-      console.log('Invitation response:', data);
       return data;
     },
     onSuccess: (data) => {
-      // Log the entire response for debugging
-      console.log('Invitation mutation succeeded with response:', JSON.stringify(data));
-      
-      const isNewUser = data.isNewUser !== false;
       toast({
-        title: isNewUser ? 'User invited' : 'User updated',
-        description: data.message || (isNewUser ? 
-          'An invitation has been sent to the user.' : 
-          'The user has been updated and a reset email has been sent.'),
+        title: 'User invited',
+        description: 'An invitation has been sent to the user.',
       });
-      if (onSuccess) onSuccess(data);
+      if (onSuccess) onSuccess();
     },
     onError: (error: Error) => {
-      console.error('Invitation mutation failed:', error);
       toast({
         title: 'Error',
         description: `Failed to invite user: ${error.message}`,

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,66 +13,24 @@ import { FileUploader } from "@/components/FileUploader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import MultiStageContractDialog from '@/components/Contracts/MultiStageContractDialog';
-import { useQuery } from '@tanstack/react-query';
 
-type Contract = {
-  id: string;
-  title: string;
-  status: string;
-  value: number | null;
-  company: string;
-  startDate: string | null;
-  endDate: string | null;
-};
+// Mock data for contracts - in a real app, this would come from Supabase
+const mockContracts = [
+  { id: '1', name: 'Website Redesign Contract', status: 'active', value: 5000, client: 'Acme Corp', startDate: '2025-01-15', endDate: '2025-07-15' },
+  { id: '2', name: 'SEO Services Agreement', status: 'pending', value: 1200, client: 'TechStart', startDate: '2025-02-01', endDate: '2025-05-01' },
+  { id: '3', name: 'Content Marketing', status: 'completed', value: 3500, client: 'Global Media', startDate: '2024-11-01', endDate: '2025-03-01' },
+  { id: '4', name: 'Social Media Management', status: 'active', value: 1800, client: 'Local Business', startDate: '2025-01-01', endDate: '2025-12-31' },
+];
 
 export const ContractsPage = () => {
+  const [contracts, setContracts] = useState(mockContracts);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
-  
-  // Fetch contract data using React Query
-  const {
-    data: contracts = [],
-    isLoading,
-    refetch
-  } = useQuery({
-    queryKey: ['contracts'],
-    queryFn: async () => {
-      const { data: contractsData, error } = await supabase
-        .from('contracts')
-        .select(`
-          id,
-          title,
-          status,
-          value,
-          start_date,
-          end_date,
-          company_id,
-          companies(name)
-        `);
-
-      if (error) {
-        throw error;
-      }
-
-      return contractsData.map((contract: any) => ({
-        id: contract.id,
-        title: contract.title,
-        status: contract.status,
-        value: contract.value,
-        company: contract.companies?.name || 'Unknown Company',
-        startDate: contract.start_date,
-        endDate: contract.end_date,
-      })) as Contract[];
-    }
-  });
 
   // Filter contracts based on search term and status filter
-  const filteredContracts = contracts.filter((contract: Contract) => {
-    const matchesSearch = contract.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          contract.company.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredContracts = contracts.filter((contract: any) => {
+    const matchesSearch = contract.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !filterStatus || filterStatus === 'all' || contract.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -97,17 +55,11 @@ export const ContractsPage = () => {
     });
   };
 
-  // Format date for display
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Contracts</h1>
-        <Button onClick={() => setDialogOpen(true)}>New Contract</Button>
+        <Button>New Contract</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6">
@@ -130,44 +82,35 @@ export const ContractsPage = () => {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {isLoading ? (
-            <div className="text-center py-10">
-              <p className="text-gray-500">Loading contracts...</p>
-            </div>
-          ) : filteredContracts.length > 0 ? (
+          {filteredContracts.length > 0 ? (
             <div className="grid grid-cols-1 gap-4">
-              {filteredContracts.map((contract: Contract) => (
+              {filteredContracts.map((contract: any) => (
                 <Card key={contract.id}>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{contract.title}</CardTitle>
+                    <CardTitle className="text-lg">{contract.name}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <p className="text-sm font-medium">Status</p>
-                        <p className="text-sm capitalize">{contract.status}</p>
+                        <p className="text-sm">{contract.status}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">Client</p>
-                        <p className="text-sm">{contract.company}</p>
+                        <p className="text-sm">{contract.client}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">Value</p>
-                        <p className="text-sm">
-                          {contract.value ? `$${contract.value.toLocaleString()}` : 'N/A'}
-                        </p>
+                        <p className="text-sm">${contract.value}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">Duration</p>
-                        <p className="text-sm">
-                          {formatDate(contract.startDate)} to {formatDate(contract.endDate)}
-                        </p>
+                        <p className="text-sm">{contract.startDate} to {contract.endDate}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -195,12 +138,6 @@ export const ContractsPage = () => {
           </Card>
         </div>
       </div>
-
-      <MultiStageContractDialog 
-        open={dialogOpen} 
-        onOpenChange={setDialogOpen}
-        onSuccess={() => refetch()}
-      />
     </div>
   );
 };

@@ -3,11 +3,15 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { EmployeeFormData } from '@/types/employee';
 
 interface BasicInfoStepProps {
-  formData: EmployeeFormData;
-  onUpdate: (data: Partial<EmployeeFormData>) => void;
+  formData: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone_number: string;
+  };
+  onUpdate: (data: Partial<BasicInfoStepProps['formData']>) => void;
   onNext: () => void;
   isEdit?: boolean;
 }
@@ -23,12 +27,12 @@ export function BasicInfoStep({
   const validate = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.firstName) {
-      newErrors.firstName = 'First name is required';
+    if (!formData.first_name) {
+      newErrors.first_name = 'First name is required';
     }
     
-    if (!formData.lastName) {
-      newErrors.lastName = 'Last name is required';
+    if (!formData.last_name) {
+      newErrors.last_name = 'Last name is required';
     }
     
     if (!isEdit && !formData.email) {
@@ -55,25 +59,25 @@ export function BasicInfoStep({
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="firstName">First Name *</Label>
+            <Label htmlFor="first_name">First Name *</Label>
             <Input
-              id="firstName"
-              value={formData.firstName}
-              onChange={(e) => onUpdate({ firstName: e.target.value })}
-              className={errors.firstName ? 'border-red-500' : ''}
+              id="first_name"
+              value={formData.first_name}
+              onChange={(e) => onUpdate({ first_name: e.target.value })}
+              className={errors.first_name ? 'border-red-500' : ''}
             />
-            {errors.firstName && <p className="text-sm text-red-500">{errors.firstName}</p>}
+            {errors.first_name && <p className="text-sm text-red-500">{errors.first_name}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name *</Label>
+            <Label htmlFor="last_name">Last Name *</Label>
             <Input
-              id="lastName"
-              value={formData.lastName}
-              onChange={(e) => onUpdate({ lastName: e.target.value })}
-              className={errors.lastName ? 'border-red-500' : ''}
+              id="last_name"
+              value={formData.last_name}
+              onChange={(e) => onUpdate({ last_name: e.target.value })}
+              className={errors.last_name ? 'border-red-500' : ''}
             />
-            {errors.lastName && <p className="text-sm text-red-500">{errors.lastName}</p>}
+            {errors.last_name && <p className="text-sm text-red-500">{errors.last_name}</p>}
           </div>
         </div>
 
@@ -91,11 +95,11 @@ export function BasicInfoStep({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
+          <Label htmlFor="phone_number">Phone Number</Label>
           <Input
-            id="phone"
-            value={formData.phone}
-            onChange={(e) => onUpdate({ phone: e.target.value })}
+            id="phone_number"
+            value={formData.phone_number}
+            onChange={(e) => onUpdate({ phone_number: e.target.value })}
           />
         </div>
       </div>

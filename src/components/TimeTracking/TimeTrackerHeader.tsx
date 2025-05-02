@@ -1,110 +1,125 @@
 
 import { useState } from 'react';
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
+import { Play, Pause, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Play, Pause } from 'lucide-react';
-import { TimeEntry, Task } from '@/types/timeTracking';
+import { TimeEntryForm } from './TimeEntryForm';
 import { formatDuration } from '@/utils/timeUtils';
 
-interface TimeTrackerHeaderProps {
+type TimeTrackerHeaderProps = {
   isTracking: boolean;
   elapsedTime: number;
-  activeEntry: TimeEntry | null;
-  setIsTracking: (isTracking: boolean) => void;
-  setActiveEntry: (entry: TimeEntry | null) => void;
-  onStart: (taskId: string | null) => void;
-  onStop: (description: string | null) => void;
-  tasks: Task[];
-}
+  activeEntry: any | null;
+  setIsTracking: (value: boolean) => void;
+  setActiveEntry: (entry: any | null) => void;
+};
 
 export const TimeTrackerHeader = ({
   isTracking,
   elapsedTime,
   activeEntry,
-  onStart,
-  onStop,
-  tasks,
+  setIsTracking,
+  setActiveEntry
 }: TimeTrackerHeaderProps) => {
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [description, setDescription] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const handleStart = () => {
-    onStart(selectedTaskId);
+  // Start time tracking
+  const startTracking = async () => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to track time.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('time_entries')
+        .insert([{
+          user_id: user.id,
+          start_time: new Date().toISOString(),
+          description: 'Time tracking session',
+        }])
+        .select();
+      
+      if (error) throw error;
+      
+      setIsTracking(true);
+      setActiveEntry(data[0]);
+      queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
+      
+      toast({
+        title: 'Time tracking started',
+        description: 'Your timer has started.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error starting timer',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
-
-  const handleStop = () => {
-    onStop(description);
-    setDescription('');
+  
+  // Stop time tracking
+  const stopTracking = async () => {
+    if (!activeEntry) return;
+    
+    try {
+      const { error } = await supabase
+        .from('time_entries')
+        .update({
+          end_time: new Date().toISOString(),
+        })
+        .eq('id', activeEntry.id);
+      
+      if (error) throw error;
+      
+      setIsTracking(false);
+      setActiveEntry(null);
+      queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
+      
+      toast({
+        title: 'Time tracking stopped',
+        description: 'Your timer has been stopped.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error stopping timer',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
-    <Card className="mb-6">
-      <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="flex-1 w-full">
-            {!isTracking ? (
-              <div className="flex flex-col md:flex-row gap-2">
-                <Select value={selectedTaskId || ''} onValueChange={setSelectedTaskId}>
-                  <SelectTrigger className="w-full md:w-[200px]">
-                    <SelectValue placeholder="Select a task" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">No task</SelectItem>
-                    {tasks.map(task => (
-                      <SelectItem key={task.id} value={task.id}>{task.title}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={handleStart} className="flex-shrink-0">
-                  <Play className="mr-2 h-4 w-4" />
-                  Start Timer
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4 w-full">
-                <div className="flex flex-col md:flex-row gap-4 items-center">
-                  <div className="text-3xl font-mono font-semibold md:mr-4">
-                    {formatDuration(elapsedTime)}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">
-                      {activeEntry && activeEntry.task_id
-                        ? `Working on: ${
-                            tasks.find(t => t.id === activeEntry.task_id)?.title || 'Unknown task'
-                          }`
-                        : 'Timer running'}
-                    </p>
-                  </div>
-                  <Button onClick={handleStop} className="bg-red-500 hover:bg-red-600">
-                    <Pause className="mr-2 h-4 w-4" />
-                    Stop Timer
-                  </Button>
-                </div>
-                <Textarea
-                  placeholder="What are you working on? (Optional)"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="resize-none"
-                  rows={2}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex justify-between items-center mb-6">
+      <h1 className="text-3xl font-bold">Time Tracking</h1>
+      <div className="flex gap-2">
+        {isTracking ? (
+          <Button variant="destructive" onClick={stopTracking}>
+            <Pause className="mr-2 h-4 w-4" />
+            Stop ({formatDuration(elapsedTime)})
+          </Button>
+        ) : (
+          <Button onClick={startTracking}>
+            <Play className="mr-2 h-4 w-4" />
+            Start Timer
+          </Button>
+        )}
+        <TimeEntryForm 
+          isCreating={isCreating}
+          setIsCreating={setIsCreating} 
+        />
+      </div>
+    </div>
   );
 };
-
-export default TimeTrackerHeader;

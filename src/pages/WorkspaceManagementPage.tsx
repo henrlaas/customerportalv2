@@ -5,15 +5,14 @@ import { workspaceService, WorkspaceSetting } from "@/services/workspaceService"
 import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
 import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
 import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
-import { EmployeeManagementTab } from "@/components/WorkspaceManagement/EmployeeManagementTab";
 import {
   Settings,
-  Users,
-  UserPlus
+  Users
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { EmployeeManagementTab } from "@/components/WorkspaceManagement/EmployeeManagementTab";
 
 // Helper to filter settings by category
 const filterSettingsByCategory = (settings: WorkspaceSetting[], category: string) => {
@@ -116,7 +115,7 @@ const WorkspaceManagementPage = () => {
       </div>
       
       <p className="text-muted-foreground mb-8">
-        Configure global settings for your workspace, manage employees, and user accounts.
+        Configure global settings for your workspace and manage users.
       </p>
 
       <Tabs defaultValue="all-settings" className="space-y-4">
@@ -126,7 +125,7 @@ const WorkspaceManagementPage = () => {
             All Settings
           </TabsTrigger>
           <TabsTrigger value="employees">
-            <UserPlus className="h-4 w-4 mr-2" />
+            <Users className="h-4 w-4 mr-2" />
             Employees
           </TabsTrigger>
           <TabsTrigger value="users">

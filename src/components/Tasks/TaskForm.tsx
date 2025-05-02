@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,17 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  MultiSelect,
-  MultiSelectItem,
-} from '@/components/ui/multi-select';
 
 // Define types
 type Contact = {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  avatar_url?: string | null;
 };
 
 type Campaign = {
@@ -57,23 +52,11 @@ const taskSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']),
   status: z.enum(['todo', 'in_progress', 'completed']),
   due_date: z.string().optional(),
-  assignees: z.array(z.string()).optional(),
+  assigned_to: z.string().optional(),
   campaign_id: z.string().optional(),
   client_visible: z.boolean().default(false),
   related_type: z.enum(['none', 'campaign', 'project']).default('none'),
 });
-
-// Define a type for task with ID for type safety
-interface TaskWithId {
-  id: string;
-  [key: string]: any;
-}
-
-// Define a type for the insert result from insertWithUser
-type InsertResult = {
-  data: TaskWithId | TaskWithId[] | null;
-  error: any;
-};
 
 export const TaskForm: React.FC<TaskFormProps> = ({
   onSuccess,
@@ -85,47 +68,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const { toast } = useToast();
   const isEditing = !!taskId;
 
-  // Fetch current assignees if editing
-  const [currentAssignees, setCurrentAssignees] = React.useState<string[]>([]);
-  
-  useEffect(() => {
-    const fetchAssignees = async () => {
-      if (!isEditing || !taskId) return;
-      
-      try {
-        console.log('Fetching assignees for task:', taskId);
-        // Fetch assignees from task_assignees table
-        const { data, error } = await supabase
-          .from('task_assignees')
-          .select('user_id')
-          .eq('task_id', taskId);
-        
-        if (error) {
-          console.error('Error fetching task assignees:', error);
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          const assigneeIds = data.map(a => a.user_id);
-          console.log('Found assignees:', assigneeIds);
-          setCurrentAssignees(assigneeIds);
-        } 
-        // For backward compatibility, check the legacy assigned_to field
-        else if (initialData?.assigned_to) {
-          console.log('Using legacy assigned_to:', initialData.assigned_to);
-          setCurrentAssignees([initialData.assigned_to]);
-        } else {
-          console.log('No assignees found for task');
-          setCurrentAssignees([]);
-        }
-      } catch (error) {
-        console.error('Error fetching task assignees:', error);
-      }
-    };
-    
-    fetchAssignees();
-  }, [isEditing, taskId, initialData]);
-  
   // Set up the form
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
@@ -135,25 +77,16 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       priority: initialData?.priority || 'medium',
       status: initialData?.status || 'todo',
       due_date: initialData?.due_date || '',
-      assignees: [],
+      assigned_to: initialData?.assigned_to || '',
       campaign_id: initialData?.campaign_id || '',
       client_visible: initialData?.client_visible || false,
       related_type: initialData?.related_type || 'none',
     },
   });
 
-  // Update form values when currentAssignees changes
-  useEffect(() => {
-    if (currentAssignees.length > 0) {
-      console.log('Setting assignees in form:', currentAssignees);
-      form.setValue('assignees', currentAssignees);
-    }
-  }, [currentAssignees, form]);
-
   // Create task mutation
   const createTaskMutation = useMutation({
     mutationFn: async (data: z.infer<typeof taskSchema>) => {
-      console.log('Submitting task with data:', data);
       // Prepare the data for insertion
       const taskData = {
         title: data.title,
@@ -161,18 +94,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         priority: data.priority,
         status: data.status,
         due_date: data.due_date || null,
-        assigned_to: data.assignees && data.assignees.length > 0 ? data.assignees[0] : null, // For backward compatibility
+        assigned_to: data.assigned_to || null,
         campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
         client_visible: data.client_visible,
         related_type: data.related_type === 'none' ? null : data.related_type,
       };
       
-      // Initialize a variable to store task ID
-      let createdTaskId: string | null = null;
-      
       // Create or update the task
-      if (isEditing && taskId) {
-        console.log('Updating existing task:', taskId);
+      if (isEditing) {
         const { data: result, error } = await supabase
           .from('tasks')
           .update(taskData)
@@ -180,98 +109,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           .select()
           .single();
         
-        if (error) {
-          console.error('Error updating task:', error);
-          throw error;
-        }
-        if (result) {
-          createdTaskId = result.id;
-        } else {
-          throw new Error("Failed to update task: No result returned");
-        }
+        if (error) throw error;
+        return result;
       } else {
-        console.log('Creating new task');
-        // Fix for the type error - explicitly handle the response type
-        const { data: result, error }: InsertResult = await insertWithUser('tasks', taskData);
-        if (error) {
-          console.error('Error creating task:', error);
-          throw error;
-        }
-        
-        // Handle potential null result
-        if (!result) {
-          throw new Error("Failed to create task: No result returned");
-        }
-        
-        // Safely handle the result with proper type checking
-        if (Array.isArray(result)) {
-          // If result is an array, get the first item's id
-          if (result.length > 0 && result[0] && 'id' in result[0]) {
-            createdTaskId = result[0].id;
-          }
-        } else if (result && 'id' in result) {
-          // If result is a direct object with id
-          createdTaskId = result.id;
-        }
-        
-        if (!createdTaskId) {
-          throw new Error("Failed to create task: No ID returned");
-        }
+        const { data: result, error } = await insertWithUser('tasks', taskData);
+        if (error) throw error;
+        return result;
       }
-      
-      // Handle assignees
-      if (createdTaskId && data.assignees && data.assignees.length > 0) {
-        console.log('Handling assignees for task:', createdTaskId, data.assignees);
-        
-        // If editing, remove existing assignees first
-        if (isEditing) {
-          console.log('Removing existing assignees');
-          const { error: deleteError } = await supabase
-            .from('task_assignees')
-            .delete()
-            .eq('task_id', createdTaskId);
-            
-          if (deleteError) {
-            console.error('Error deleting existing assignees:', deleteError);
-            throw deleteError;
-          }
-        }
-        
-        // Add new assignees - process each assignee in the array
-        const assigneeInserts = data.assignees.map(userId => ({
-          task_id: createdTaskId as string,
-          user_id: userId,
-        }));
-        
-        // Only proceed if we have assignees to insert
-        if (assigneeInserts.length > 0) {
-          console.log('Inserting new assignees:', assigneeInserts);
-          const { error: insertError } = await supabase
-            .from('task_assignees')
-            .insert(assigneeInserts);
-            
-          if (insertError) {
-            console.error('Error inserting assignees:', insertError);
-            throw insertError;
-          }
-        }
-      } else if (createdTaskId && (!data.assignees || data.assignees.length === 0)) {
-        // If no assignees selected, remove any existing ones
-        if (isEditing) {
-          console.log('Removing all assignees as none are selected');
-          const { error: deleteError } = await supabase
-            .from('task_assignees')
-            .delete()
-            .eq('task_id', createdTaskId);
-            
-          if (deleteError) {
-            console.error('Error deleting existing assignees:', deleteError);
-            throw deleteError;
-          }
-        }
-      }
-      
-      return createdTaskId;
     },
     onSuccess: () => {
       toast({
@@ -291,17 +135,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Submit handler
   const onSubmit = (data: z.infer<typeof taskSchema>) => {
-    console.log('Form submitted with values:', data);
     createTaskMutation.mutate(data);
   };
 
   // Watch the related type to show/hide campaign selector
   const relatedType = form.watch('related_type');
-
-  // Helper function to format names
-  const formatName = (contact: Contact) => {
-    return `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown User';
-  };
 
   return (
     <Form {...form}>
@@ -410,29 +248,28 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
           <FormField
             control={form.control}
-            name="assignees"
+            name="assigned_to"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Assignees</FormLabel>
-                <FormControl>
-                  <MultiSelect
-                    value={field.value || []}
-                    onValueChange={(newValue) => {
-                      console.log("MultiSelect value changed:", newValue);
-                      field.onChange(newValue);
-                    }}
-                    placeholder="Select assignees"
-                  >
-                    {profiles.map((profile) => (
-                      <MultiSelectItem 
-                        key={profile.id} 
-                        value={profile.id}
-                      >
-                        {formatName(profile)}
-                      </MultiSelectItem>
+                <FormLabel>Assign To</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select assignee" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {profiles.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id}>
+                        {`${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown User'}
+                      </SelectItem>
                     ))}
-                  </MultiSelect>
-                </FormControl>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

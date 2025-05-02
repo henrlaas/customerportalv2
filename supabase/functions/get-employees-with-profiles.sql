@@ -1,9 +1,7 @@
 
+-- Create a stored function to fetch employees with profile data
 CREATE OR REPLACE FUNCTION public.get_employees_with_profiles()
- RETURNS SETOF json
- LANGUAGE plpgsql
- SECURITY DEFINER
-AS $function$
+RETURNS SETOF json LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   RETURN QUERY 
   SELECT 
@@ -31,4 +29,4 @@ BEGIN
   LEFT JOIN 
     public.profiles p ON e.id = p.id;
 END;
-$function$
+$$;
