@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Employee, EmployeeWithProfile } from '@/types/employee';
 
@@ -140,18 +139,24 @@ export const employeeService = {
 
       // Use our dedicated edge function for sending reset password invites
       console.log(`Sending invite email to ${userEmail} with redirect URL: ${siteUrl}`);
-      const response = await supabase.functions.invoke('inviteEmployeeResetPassword', {
-        body: {
-          email: userEmail,
-          redirectUrl: siteUrl
+      
+      try {
+        const response = await supabase.functions.invoke('inviteEmployeeResetPassword', {
+          body: {
+            email: userEmail,
+            redirectUrl: siteUrl
+          }
+        });
+
+        // Log the full response for debugging
+        console.log('inviteEmployeeResetPassword response:', response);
+
+        if (response.error) {
+          throw new Error(`Failed to send invitation email: ${response.error.message}`);
         }
-      });
-
-      // Log the full response for debugging
-      console.log('inviteEmployeeResetPassword response:', response);
-
-      if (response.error) {
-        throw new Error(`Failed to send invitation email: ${response.error.message}`);
+      } catch (invokeError) {
+        console.error('Error invoking inviteEmployeeResetPassword function:', invokeError);
+        throw new Error(`Error invoking edge function: ${invokeError.message || 'Unknown error'}`);
       }
 
       console.log('Invitation email sent successfully to:', userEmail);
