@@ -50,18 +50,15 @@ serve(async (req) => {
     // Check if user already exists
     const { data: existingUser, error: fetchError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
     
-    if (fetchError) {
-      // Only throw if it's not a "user not found" error
-      if (fetchError.message !== 'User not found') {
-        console.error('Error checking for existing user:', fetchError);
-        return new Response(
-          JSON.stringify({ error: `Error checking user: ${fetchError.message}` }),
-          {
-            status: 500,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
+    if (fetchError && fetchError.message !== 'User not found') {
+      console.error('Error checking for existing user:', fetchError);
+      return new Response(
+        JSON.stringify({ error: `Error checking user: ${fetchError.message}` }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
     
     let userData;
@@ -72,8 +69,19 @@ serve(async (req) => {
       console.log('User already exists, returning existing user data without new invitation');
       userData = existingUser;
       statusMessage = `User with email ${email} already exists, no invitation needed`;
+      
+      return new Response(
+        JSON.stringify({ 
+          message: statusMessage,
+          data: userData 
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     } 
-    // User doesn't exist - we'll create a new user without sending an invitation initially
+    // User doesn't exist - we'll create a new user and then send an invitation
     else {
       try {
         // First, create the user account without sending an automatic invite
@@ -112,10 +120,31 @@ serve(async (req) => {
           console.error('Error sending invitation email:', resetError);
           // We don't want to fail the entire process if just the email fails
           // The user account is created, we just couldn't send the invite
-          statusMessage = `Employee account created, but invitation email failed: ${resetError.message}`;
+          return new Response(
+            JSON.stringify({ 
+              message: `Employee account created, but invitation email failed: ${resetError.message}`,
+              data: userData,
+              emailError: resetError.message
+            }),
+            {
+              status: 200, // Still return 200 since the user was created
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
         } else {
           console.log('Invitation email sent successfully to:', email);
           statusMessage = `Employee account created and invitation sent to ${email}`;
+          
+          return new Response(
+            JSON.stringify({ 
+              message: statusMessage,
+              data: userData 
+            }),
+            {
+              status: 200,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
         }
       } catch (error) {
         console.error('Unexpected error during employee creation or invitation:', error);
@@ -128,18 +157,6 @@ serve(async (req) => {
         );
       }
     }
-
-    // Return success response
-    return new Response(
-      JSON.stringify({ 
-        message: statusMessage,
-        data: userData 
-      }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      }
-    );
 
   } catch (error) {
     console.error('Error in invite-employee function:', error.message);

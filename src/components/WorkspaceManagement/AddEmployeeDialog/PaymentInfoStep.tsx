@@ -67,20 +67,35 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
 
   const sendInviteEmail = async (email: string) => {
     try {
-      // Call the invite-employee edge function - simplified to only send email
+      // Call the invite-employee edge function
       const { data, error } = await supabase.functions.invoke('invite-employee', {
         body: { email }
       });
 
       if (error) {
         console.error('Error in employee invite process:', error);
-        return false;
+        throw new Error(error.message || 'Failed to send invitation email');
       }
 
       console.log('Employee invite process completed:', data);
+      
+      if (data.emailError) {
+        console.warn('Warning: Invitation email could not be sent:', data.emailError);
+        toast({
+          title: "Employee Added",
+          description: `${formData.first_name} ${formData.last_name} has been added successfully, but the invitation email could not be sent. Ask them to contact you for access.`,
+        });
+        return false;
+      }
+      
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Exception during employee invite process:', error);
+      toast({
+        title: "Warning",
+        description: `Employee was created but there was a problem sending the invitation email: ${error.message}`,
+        variant: "destructive",
+      });
       return false;
     }
   };
@@ -130,27 +145,36 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           description: `${formData.first_name} ${formData.last_name} has been updated successfully.`,
         });
       } else {
-        // Create new employee
-        // First, invite user and create auth user using userService.inviteUser
-        const userData = {
-          firstName: formData.first_name,
-          lastName: formData.last_name,
-          phoneNumber: formData.phone_number || undefined,
-          role: 'employee',
-          language: 'en',
-          team: formData.team
-        };
-        
-        // Use the userService.inviteUser method directly
-        const result = await userService.inviteUser(formData.email, userData);
-        
-        if (!result || !result.user) {
-          throw new Error('Failed to create user');
+        // First, invite user - this will create the user and send an invitation
+        const inviteResult = await sendInviteEmail(formData.email);
+
+        if (!inviteResult) {
+          // If invitation fails but the user was created, we can proceed with creating the employee record
+          console.log('Proceeding with employee creation despite email sending failure');
         }
+        
+        // Get the user data from the auth system now that it's been created
+        const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(formData.email);
+        
+        if (userError || !userData?.user) {
+          throw new Error(userError?.message || 'Failed to get user data after creation');
+        }
+        
+        // Update profile information
+        await supabase
+          .from('profiles')
+          .update({ 
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            phone_number: formData.phone_number || null,
+            role: 'employee',
+            team: formData.team
+          })
+          .eq('id', userData.user.id);
 
         // Create employee record
         const employeeData = {
-          id: result.user.id,
+          id: userData.user.id,
           address: formData.address,
           zipcode: formData.zipcode,
           country: formData.country,
@@ -164,26 +188,11 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           team: formData.team
         };
         
-        await employeeService.createEmployee(employeeData, result.user.id);
-        
-        // Directly update the profiles table with first name, last name and phone number
-        await supabase
-          .from('profiles')
-          .update({ 
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            phone_number: formData.phone_number || null,
-            role: 'employee',
-            team: formData.team
-          })
-          .eq('id', result.user.id);
+        await employeeService.createEmployee(employeeData, userData.user.id);
 
-        // After user and employee records are created, send the invitation email
-        const inviteSent = await sendInviteEmail(formData.email);
-        
         toast({
           title: "Employee Added",
-          description: `${formData.first_name} ${formData.last_name} has been added successfully. ${inviteSent ? 'An invitation email has been sent.' : 'Note: There was an issue sending the invitation email, but the employee was created.'}`,
+          description: `${formData.first_name} ${formData.last_name} has been added successfully. An invitation email has been sent.`,
         });
       }
       
