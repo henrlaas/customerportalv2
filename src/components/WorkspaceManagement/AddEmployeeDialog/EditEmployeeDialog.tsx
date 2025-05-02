@@ -30,6 +30,7 @@ export function EditEmployeeDialog({ open, onClose, employee }: EditEmployeeDial
     social_security_number: employee.social_security_number,
     account_number: employee.account_number,
     paycheck_solution: employee.paycheck_solution || '',
+    team: employee.team || '', // Add team field
   });
 
   const updateFormData = (data: Partial<typeof formData>) => {

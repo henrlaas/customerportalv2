@@ -4,6 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PhoneInput } from '@/components/ui/phone-input';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 
 interface BasicInfoStepProps {
   formData: {
@@ -11,6 +18,7 @@ interface BasicInfoStepProps {
     first_name: string;
     last_name: string;
     phone_number: string;
+    team?: string; // Add team field
   };
   onUpdate: (data: Partial<BasicInfoStepProps['formData']>) => void;
   onNext: () => void;
@@ -57,6 +65,18 @@ export function BasicInfoStep({
   if (!formData.phone_number) {
     onUpdate({ phone_number: '+47' });
   }
+
+  // Team options
+  const teamOptions = [
+    'Advisor',
+    'Marketing',
+    'Sales',
+    'Advertiser',
+    'Designer',
+    'Branding',
+    'Developer',
+    'Other'
+  ];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -107,6 +127,26 @@ export function BasicInfoStep({
             value={formData.phone_number}
             onChange={(value) => onUpdate({ phone_number: value })}
           />
+        </div>
+
+        {/* Add Team Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="team">Team</Label>
+          <Select
+            value={formData.team || ''}
+            onValueChange={(value) => onUpdate({ team: value })}
+          >
+            <SelectTrigger id="team">
+              <SelectValue placeholder="Select a team" />
+            </SelectTrigger>
+            <SelectContent>
+              {teamOptions.map((team) => (
+                <SelectItem key={team} value={team}>
+                  {team}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

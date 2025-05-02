@@ -32,5 +32,6 @@ export interface EmployeeWithProfile {
   social_security_number: string;
   account_number: string;
   paycheck_solution: string;
+  team?: string; // Add team field
   avatar_url?: string; // Optional avatar URL
 }
