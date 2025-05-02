@@ -63,10 +63,10 @@ export const employeeService = {
     
     // After successfully creating the employee, send the password reset email
     try {
-      await this.sendPasswordResetEmail(userId);
-      console.log('Password reset email sent to newly created employee');
+      await this.sendInviteEmail(userId);
+      console.log('Invitation email sent to newly created employee');
     } catch (resetError) {
-      console.error('Error sending password reset email:', resetError);
+      console.error('Error sending invitation email:', resetError);
       // We don't throw here as the employee was already created successfully
     }
 
@@ -112,6 +112,11 @@ export const employeeService = {
   },
 
   async sendPasswordResetEmail(userId: string): Promise<void> {
+    // Keep the old method for compatibility, but use the new one internally
+    return this.sendInviteEmail(userId);
+  },
+  
+  async sendInviteEmail(userId: string): Promise<void> {
     try {
       // First, we need to get the user's email using the user-management edge function
       const userResponse = await supabase.functions.invoke('user-management', {
@@ -130,23 +135,24 @@ export const employeeService = {
       }
 
       const userEmail = userResponse.data.email;
+      const siteUrl = window.location.origin;
 
-      // Use the user-management edge function to send the password reset email
-      const response = await supabase.functions.invoke('user-management', {
+      // Use our new dedicated edge function for sending reset password invites
+      const response = await supabase.functions.invoke('inviteEmployeeResetPassword', {
         body: {
-          action: 'resetPassword',
-          email: userEmail
+          email: userEmail,
+          redirectUrl: siteUrl
         }
       });
 
       if (response.error) {
-        throw new Error(`Failed to send password reset email: ${response.error.message}`);
+        throw new Error(`Failed to send invitation email: ${response.error.message}`);
       }
 
-      console.log('Password reset email sent successfully to:', userEmail);
+      console.log('Invitation email sent successfully to:', userEmail);
       return;
     } catch (error) {
-      console.error('Error in sendPasswordResetEmail:', error);
+      console.error('Error in sendInviteEmail:', error);
       throw error;
     }
   }
