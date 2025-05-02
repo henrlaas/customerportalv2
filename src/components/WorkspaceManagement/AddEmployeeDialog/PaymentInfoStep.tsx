@@ -116,7 +116,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           employed_percentage: formData.employed_percentage,
           social_security_number: formData.social_security_number,
           account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || ''
+          paycheck_solution: formData.paycheck_solution || '',
+          team: formData.team // Include team field for update
         };
         
         await employeeService.updateEmployee(employeeId, employeeData);
@@ -147,7 +148,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
 
         const userId = result.user.id;
 
-        // Create employee record
+        // Create employee record - include the team field here
         const employeeData = {
           id: userId,
           address: formData.address,
@@ -159,7 +160,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           employed_percentage: formData.employed_percentage,
           social_security_number: formData.social_security_number,
           account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || ''
+          paycheck_solution: formData.paycheck_solution || '',
+          team: formData.team // Add the team field here
         };
         
         await employeeService.createEmployee(employeeData, userId);
