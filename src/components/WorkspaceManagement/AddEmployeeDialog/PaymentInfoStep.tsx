@@ -24,6 +24,7 @@ interface PaymentInfoStepProps {
     social_security_number: string;
     account_number: string;
     paycheck_solution?: string;
+    team: string;
   };
   onBack: () => void;
   onClose: () => void;
@@ -115,7 +116,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           phoneNumber: formData.phone_number || undefined,
           role: 'employee',
           language: 'en',
-          team: 'Employees'
+          team: formData.team
         };
         
         // Use the userService.inviteUser method directly
