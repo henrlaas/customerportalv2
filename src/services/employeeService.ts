@@ -39,7 +39,7 @@ export const employeeService = {
         zipcode: item.zipcode,
         country: item.country,
         team: item.team,
-        city: item.city, // Explicitly include the city field
+        city: item.city,
         employee_type: item.employee_type,
         hourly_salary: item.hourly_salary,
         employed_percentage: item.employed_percentage,
