@@ -10,9 +10,9 @@ interface EmploymentDetailsStepProps {
     employee_type: 'Employee' | 'Freelancer';
     hourly_salary: number;
     employed_percentage: number;
-    team: string;
+    team: string; // Add team to formData interface
   };
-  onUpdate: (data: Partial<EmploymentDetailsStepProps['formData']>) => void;
+  onUpdate: (data: Partial<typeof formData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
