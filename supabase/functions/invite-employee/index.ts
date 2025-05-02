@@ -16,7 +16,15 @@ serve(async (req) => {
 
   try {
     // Parse request body
-    const { email, checkOnly } = await req.json();
+    const { 
+      email, 
+      firstName, 
+      lastName, 
+      phoneNumber,
+      team,
+      role = 'employee',
+      checkOnly = false
+    } = await req.json();
 
     // Validation
     if (!email) {
@@ -41,58 +49,61 @@ serve(async (req) => {
       }
     );
 
-    console.log(`Processing ${checkOnly ? 'check' : 'invite'} request for email: ${email}`);
-
     // Get site URL for redirect
     const origin = req.headers.get('origin') || 'https://vjqbgnjeuvuxvuruewyc.supabase.co';
     const redirectUrl = `${origin}/set-password`;
-
+    
+    console.log(`Processing ${checkOnly ? 'check' : 'invite'} request for email: ${email}`);
+    
     // Check if user already exists using admin API
-    let existingUser;
-    
-    try {
-      const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
       
-      if (listError) {
-        throw listError;
-      }
-      
-      // Find the user with matching email
-      existingUser = users.users.find(user => user.email === email);
-    } catch (error) {
-      console.error('Error listing users:', error);
-      return new Response(
-        JSON.stringify({ error: `Error checking user: ${error.message || error}` }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
+    if (listError) {
+      throw listError;
     }
-    
-    let userData;
+      
+    // Find the user with matching email
+    let existingUser = users.users.find(user => user.email === email);
     let statusMessage;
     
-    // User already exists scenario
-    if (existingUser) {
-      console.log('User already exists, returning existing user data');
-      userData = existingUser;
-      statusMessage = `User with email ${email} already exists`;
-      
-      if (checkOnly) {
+    // If just checking if user exists, return the data
+    if (checkOnly) {
+      if (existingUser) {
         return new Response(
           JSON.stringify({ 
-            message: statusMessage,
-            data: userData 
+            message: `User with email ${email} already exists`,
+            data: existingUser 
           }),
           {
             status: 200,
             headers: { 'Content-Type': 'application/json', ...corsHeaders },
           }
         );
+      } else {
+        return new Response(
+          JSON.stringify({ 
+            message: "User does not exist",
+            error: "User does not exist"
+          }),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
       }
+    }
+    
+    // Create or update user block
+    let userData;
+    let emailError;
+    
+    // User already exists scenario
+    if (existingUser) {
+      console.log('User already exists, sending recovery email');
+      userData = existingUser;
+      statusMessage = `User with email ${email} already exists`;
       
-      // If not just checking and user exists, send recovery email (as invitation)
+      // Send recovery email (as invitation)
       try {
         const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'recovery',
@@ -104,59 +115,32 @@ serve(async (req) => {
 
         if (resetError) {
           console.error('Error sending invitation email to existing user:', resetError);
-          return new Response(
-            JSON.stringify({ 
-              message: `User exists, but invitation email failed: ${resetError.message}`,
-              data: userData,
-              emailError: resetError.message
-            }),
-            {
-              status: 200, // Still return 200 since we're returning user data
-              headers: { 'Content-Type': 'application/json', ...corsHeaders },
-            }
-          );
+          emailError = resetError.message;
         } else {
           console.log('Invitation email sent successfully to existing user:', email);
           statusMessage = `User exists and invitation sent to ${email}`;
         }
       } catch (error) {
         console.error('Exception sending invitation to existing user:', error);
-        return new Response(
-          JSON.stringify({ 
-            message: `User exists, but invitation failed: ${error.message || error}`,
-            data: userData,
-            emailError: error.message || 'Unknown error'
-          }),
-          {
-            status: 200, // Still return 200 since we're returning user data
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
+        emailError = error.message || 'Unknown error';
       }
     } 
-    // User doesn't exist - we'll create a new user and then send an invitation
+    // User doesn't exist - create new user and send invitation
     else {
-      if (checkOnly) {
-        return new Response(
-          JSON.stringify({ 
-            message: "User does not exist",
-            error: "User does not exist"
-          }),
-          {
-            status: 404, // Return 404 since the user doesn't exist
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
-
       try {
-        // First, create the user account without sending an automatic invite
+        // User metadata for profile
+        const userMetadata = {
+          role: role,
+        };
+        
+        if (firstName) userMetadata.first_name = firstName;
+        if (lastName) userMetadata.last_name = lastName;
+
+        // Create the user account with metadata
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email: email,
-          email_confirm: true, // Mark email as confirmed
-          user_metadata: {
-            role: 'employee',
-          },
+          email_confirm: true,
+          user_metadata: userMetadata,
         });
 
         if (createError) {
@@ -173,7 +157,25 @@ serve(async (req) => {
         console.log('Employee account created successfully:', newUser);
         userData = newUser;
         
-        // Now that the user is created, send a password reset email which acts as our invitation
+        // Update or create profile with firstName, lastName, phoneNumber, and team
+        if (userData.user && userData.user.id) {
+          const { error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .upsert({ 
+              id: userData.user.id,
+              first_name: firstName || null,
+              last_name: lastName || null,
+              phone_number: phoneNumber || null,
+              role: role,
+              team: team || null
+            });
+            
+          if (profileError) {
+            console.error('Error updating profile:', profileError);
+          }
+        }
+        
+        // Send invitation email
         const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'recovery',
           email: email,
@@ -184,19 +186,7 @@ serve(async (req) => {
 
         if (resetError) {
           console.error('Error sending invitation email:', resetError);
-          // We don't want to fail the entire process if just the email fails
-          // The user account is created, we just couldn't send the invite
-          return new Response(
-            JSON.stringify({ 
-              message: `Employee account created, but invitation email failed: ${resetError.message}`,
-              data: userData,
-              emailError: resetError.message
-            }),
-            {
-              status: 200, // Still return 200 since the user was created
-              headers: { 'Content-Type': 'application/json', ...corsHeaders },
-            }
-          );
+          emailError = resetError.message;
         } else {
           console.log('Invitation email sent successfully to:', email);
           statusMessage = `Employee account created and invitation sent to ${email}`;
@@ -216,7 +206,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         message: statusMessage,
-        data: userData 
+        data: userData,
+        emailError: emailError 
       }),
       {
         status: 200,
