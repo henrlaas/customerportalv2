@@ -47,28 +47,44 @@ serve(async (req) => {
     const origin = req.headers.get('origin') || 'https://vjqbgnjeuvuxvuruewyc.supabase.co';
     const redirectUrl = `${origin}/set-password`;
 
-    // Invite the user using the admin API
-    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: redirectUrl,
-      data: {
-        first_name: firstName,
-        last_name: lastName,
-        role: 'employee',
-      },
-    });
-
-    if (error) {
-      console.error('Error inviting employee:', error);
-      throw error;
+    // Check if user already exists
+    const { data: existingUser, error: fetchError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+    
+    if (fetchError && fetchError.message !== 'User not found') {
+      console.error('Error checking for existing user:', fetchError);
+      throw fetchError;
     }
+    
+    let userData;
+    
+    if (existingUser) {
+      console.log('User already exists, returning existing user data');
+      userData = existingUser;
+    } else {
+      // Invite the user using the admin API
+      const { data: newUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        redirectTo: redirectUrl,
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          role: 'employee',
+        },
+      });
 
-    console.log('Employee invited successfully:', data);
+      if (inviteError) {
+        console.error('Error inviting employee:', inviteError);
+        throw inviteError;
+      }
+
+      console.log('Employee invited successfully:', newUser);
+      userData = newUser;
+    }
 
     // Return success response
     return new Response(
       JSON.stringify({ 
         message: `Invitation sent to ${email}`,
-        data: data 
+        data: userData 
       }),
       {
         status: 200,
@@ -80,7 +96,7 @@ serve(async (req) => {
     console.error('Error in invite-employee function:', error.message);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || 'An unknown error occurred' }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
