@@ -38,16 +38,22 @@ export function PaymentInfoStep({
   isEdit = false,
   employeeId,
 }: PaymentInfoStepProps) {
+  const [localFormData, setLocalFormData] = useState({ ...formData });
   const [isPending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Add the missing updateFormData function
+  const updateFormData = (data: Partial<typeof formData>) => {
+    setLocalFormData(prev => ({ ...prev, ...data }));
+  };
+
   const validate = () => {
-    if (!formData.account_number) {
+    if (!localFormData.account_number) {
       setError('Account number is required');
       return false;
     }
-    if (!formData.social_security_number) {
+    if (!localFormData.social_security_number) {
       setError('Social security number is required');
       return false;
     }
@@ -56,16 +62,16 @@ export function PaymentInfoStep({
 
   const createEmployeeRecord = async (userId: string) => {
     const employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'> = {
-      address: formData.address,
-      zipcode: formData.zipcode,
-      country: formData.country,
-      city: formData.city,
-      employee_type: formData.employee_type,
-      hourly_salary: formData.hourly_salary,
-      employed_percentage: formData.employed_percentage,
-      social_security_number: formData.social_security_number,
-      account_number: formData.account_number,
-      paycheck_solution: formData.paycheck_solution,
+      address: localFormData.address,
+      zipcode: localFormData.zipcode,
+      country: localFormData.country,
+      city: localFormData.city,
+      employee_type: localFormData.employee_type,
+      hourly_salary: localFormData.hourly_salary,
+      employed_percentage: localFormData.employed_percentage,
+      social_security_number: localFormData.social_security_number,
+      account_number: localFormData.account_number,
+      paycheck_solution: localFormData.paycheck_solution,
     };
 
     if (isEdit && employeeId) {
@@ -91,13 +97,13 @@ export function PaymentInfoStep({
       const response = await supabase.functions.invoke('user-management', {
         body: {
           action: 'invite',
-          email: formData.email,
+          email: localFormData.email,
           options: {
             data: {
-              first_name: formData.first_name,
-              last_name: formData.last_name,
-              phone_number: formData.phone_number,
-              team: formData.team,
+              first_name: localFormData.first_name,
+              last_name: localFormData.last_name,
+              phone_number: localFormData.phone_number,
+              team: localFormData.team,
               role: 'employee'
             }
           }
@@ -119,7 +125,7 @@ export function PaymentInfoStep({
           // Use type assertion to help TypeScript understand the structure
           type UserEntry = { id: string, email?: string };
           const users = userData?.users as UserEntry[] || [];
-          const existingUser = users.find(user => user.email === formData.email);
+          const existingUser = users.find(user => user.email === localFormData.email);
           
           if (!existingUser) {
             throw new Error('User not found');
@@ -130,10 +136,10 @@ export function PaymentInfoStep({
             .from('profiles')
             .update({
               role: 'employee',
-              first_name: formData.first_name,
-              last_name: formData.last_name,
-              phone_number: formData.phone_number,
-              team: formData.team
+              first_name: localFormData.first_name,
+              last_name: localFormData.last_name,
+              phone_number: localFormData.phone_number,
+              team: localFormData.team
             })
             .eq('id', existingUser.id);
 
@@ -183,9 +189,8 @@ export function PaymentInfoStep({
           <Label htmlFor="social_security_number">Social Security Number</Label>
           <Input
             id="social_security_number"
-            value={formData.social_security_number}
+            value={localFormData.social_security_number}
             onChange={(e) =>
-              // @ts-expect-error
               updateFormData({ social_security_number: e.target.value })
             }
           />
@@ -195,22 +200,20 @@ export function PaymentInfoStep({
           <Label htmlFor="account_number">Account Number</Label>
           <Input
             id="account_number"
-            value={formData.account_number}
+            value={localFormData.account_number}
             onChange={(e) =>
-              // @ts-expect-error
               updateFormData({ account_number: e.target.value })
             }
           />
         </div>
 
-        {formData.employee_type === 'Freelancer' && (
+        {localFormData.employee_type === 'Freelancer' && (
           <div className="space-y-2">
             <Label htmlFor="paycheck_solution">Paycheck Solution</Label>
             <Input
               id="paycheck_solution"
-              value={formData.paycheck_solution}
+              value={localFormData.paycheck_solution}
               onChange={(e) =>
-                // @ts-expect-error
                 updateFormData({ paycheck_solution: e.target.value })
               }
             />
