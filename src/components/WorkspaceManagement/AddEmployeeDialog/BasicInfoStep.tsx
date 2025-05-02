@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 interface BasicInfoStepProps {
   formData: {
@@ -52,6 +53,11 @@ export function BasicInfoStep({
     }
   };
 
+  // Initialize phone number with +47 prefix if not already set
+  if (!formData.phone_number) {
+    onUpdate({ phone_number: '+47' });
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
@@ -96,10 +102,10 @@ export function BasicInfoStep({
 
         <div className="space-y-2">
           <Label htmlFor="phone_number">Phone Number</Label>
-          <Input
+          <PhoneInput
             id="phone_number"
             value={formData.phone_number}
-            onChange={(e) => onUpdate({ phone_number: e.target.value })}
+            onChange={(value) => onUpdate({ phone_number: value })}
           />
         </div>
       </div>

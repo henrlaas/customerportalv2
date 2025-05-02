@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { countries } from '@/lib/countries';
+import { Globe } from 'lucide-react';
 
 interface EmploymentDetailsStepProps {
   formData: {
@@ -28,6 +30,11 @@ export function EmploymentDetailsStep({
   onBack 
 }: EmploymentDetailsStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Set default country to Norway if not already set
+  if (!formData.country) {
+    onUpdate({ country: 'Norway' });
+  }
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -100,12 +107,28 @@ export function EmploymentDetailsStep({
 
         <div className="space-y-2">
           <Label htmlFor="country">Country *</Label>
-          <Input 
-            id="country"
-            value={formData.country}
-            onChange={(e) => onUpdate({ country: e.target.value })}
-            className={errors.country ? 'border-red-500' : ''}
-          />
+          <div className="relative">
+            <Select 
+              value={formData.country}
+              onValueChange={(value) => onUpdate({ country: value })}
+            >
+              <SelectTrigger 
+                className={`${errors.country ? 'border-red-500' : ''} pl-10`}
+              >
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <SelectValue placeholder="Select a country" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {countries.map((country) => (
+                  <SelectItem key={country.code} value={country.name}>
+                    {country.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {errors.country && <p className="text-sm text-red-500">{errors.country}</p>}
         </div>
 

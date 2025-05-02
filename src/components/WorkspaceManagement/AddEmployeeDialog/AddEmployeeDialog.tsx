@@ -17,11 +17,11 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
     email: '',
     first_name: '',
     last_name: '',
-    phone_number: '',
+    phone_number: '+47', // Initialize with +47 prefix
     address: '',
     zipcode: '',
-    country: '',
-    city: '', // Added city field
+    country: 'Norway', // Initialize with Norway as default
+    city: '',
     employee_type: 'Employee' as 'Employee' | 'Freelancer',
     hourly_salary: 0,
     employed_percentage: 100,
