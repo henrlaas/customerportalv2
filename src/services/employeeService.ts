@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Employee, EmployeeWithProfile } from '@/types/employee';
 
@@ -43,8 +44,7 @@ export const employeeService = {
         employed_percentage: item.employed_percentage,
         social_security_number: item.social_security_number,
         account_number: item.account_number,
-        paycheck_solution: item.paycheck_solution,
-        team: item.team
+        paycheck_solution: item.paycheck_solution
       } as EmployeeWithProfile;
     }) : [];
 
@@ -52,11 +52,6 @@ export const employeeService = {
   },
 
   async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
-    console.log("Service creating employee with ID:", userId);
-    if (!userId) {
-      throw new Error("User ID is required to create employee record");
-    }
-    
     // Insert into the employees table with the proper type definitions
     const { data, error } = await supabase
       .from('employees')
@@ -64,10 +59,7 @@ export const employeeService = {
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating employee in service:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data as Employee;
   },
 
