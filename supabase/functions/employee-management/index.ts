@@ -157,8 +157,22 @@ async function handleCreateEmployee(data, supabaseAdmin) {
       throw profileError;
     }
     
-    // Step 3: Create/update employee record only if it's a new user or if we're not modifying an existing employee
-    if (!isExisting) {
+    // Step 3: Create/update employee record
+    // For existing users, we should check if they already have an employee record
+    let employeeExists = false;
+    
+    if (isExisting) {
+      const { data: existingEmployee } = await supabaseAdmin
+        .from('employees')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+        
+      employeeExists = !!existingEmployee;
+    }
+    
+    // If new user or existing user without employee record, create one
+    if (!employeeExists) {
       const { error: employeeError } = await supabaseAdmin
         .from('employees')
         .insert({
@@ -179,6 +193,10 @@ async function handleCreateEmployee(data, supabaseAdmin) {
         console.error(`Error creating employee record: ${employeeError.message}`);
         throw employeeError;
       }
+    } else {
+      // If employee record exists and this is an existing user, we could update it here
+      // This is optional based on your business requirements
+      console.log(`Employee record already exists for user ${userId}, not modifying it`);
     }
     
     return new Response(
