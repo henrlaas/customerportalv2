@@ -25,18 +25,20 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div 
-      className="relative transition-all duration-300 ease-in-out" 
-      style={{ width: collapsed ? '80px' : '240px' }}
+      className={cn(
+        "fixed left-0 top-0 h-full transition-all duration-300 ease-in-out z-20",
+        collapsed ? "w-[80px]" : "w-[240px]"
+      )}
     >
       <ShadcnSidebar 
-        className="border-r border-r-evergreen/30 bg-evergreen transition-all duration-300"
+        className="border-r border-r-evergreen/30 bg-evergreen transition-all duration-300 h-full"
       >
         <SidebarHeader className="p-4 flex justify-center items-center">
           <Logo collapsed={collapsed} />
         </SidebarHeader>
 
         <button 
-          className="absolute -right-3 top-16 bg-evergreen text-white rounded-full p-1 shadow-md z-10 flex items-center justify-center"
+          className="absolute -right-3 top-16 bg-evergreen text-white rounded-full p-1 shadow-md z-30 flex items-center justify-center"
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
