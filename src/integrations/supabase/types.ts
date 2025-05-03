@@ -823,74 +823,6 @@ export type Database = {
         }
         Relationships: []
       }
-      projects: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          description: string | null
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      subtasks: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          is_completed: boolean
-          position: number
-          task_id: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_completed?: boolean
-          position?: number
-          task_id: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_completed?: boolean
-          position?: number
-          task_id?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subtasks_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       task_assignees: {
         Row: {
           created_at: string | null
@@ -964,41 +896,6 @@ export type Database = {
           },
         ]
       }
-      task_comments: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          task_id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          task_id: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          task_id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_comments_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tasks: {
         Row: {
           assigned_to: string | null
@@ -1007,13 +904,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           creator_id: string | null
-          department: string | null
           description: string | null
           due_date: string | null
-          estimated_time: number | null
           id: string
           priority: string
-          project_id: string | null
           related_type: string | null
           status: string
           title: string
@@ -1026,13 +920,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           creator_id?: string | null
-          department?: string | null
           description?: string | null
           due_date?: string | null
-          estimated_time?: number | null
           id?: string
           priority?: string
-          project_id?: string | null
           related_type?: string | null
           status?: string
           title: string
@@ -1045,13 +936,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           creator_id?: string | null
-          department?: string | null
           description?: string | null
           due_date?: string | null
-          estimated_time?: number | null
           id?: string
           priority?: string
-          project_id?: string | null
           related_type?: string | null
           status?: string
           title?: string
