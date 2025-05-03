@@ -76,7 +76,7 @@ export function getSidebarItems() {
     },
     {
       title: t('Management'),
-      href: '/workspace-management',
+      href: '/workspace',
       icon: Sliders,
       roles: ['admin'],
     },
