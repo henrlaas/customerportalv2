@@ -1,88 +1,45 @@
 
-import { corsHeaders } from '../utils/cors.ts'
-import { createAdminClient } from '../utils/supabase.ts'
+import { corsHeaders } from '../utils/cors.ts';
+import { createAdminClient } from '../utils/supabase.ts';
 
-// Handler for getting emails for a list of user IDs
-export async function handleGetUserEmails(req: Request) {
+export const handleGetUserEmails = async (req: Request) => {
   try {
-    const { userIds } = await req.json()
-    
-    if (!Array.isArray(userIds)) {
+    // Check if the request is a POST request
+    if (req.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    }
+
+    // Parse the request body
+    const { userIds } = await req.json();
+
+    // Validate request body
+    if (!userIds || !Array.isArray(userIds)) {
       return new Response(
-        JSON.stringify({ error: 'userIds must be an array' }),
+        JSON.stringify({ error: 'userIds array is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
-    }
-    
-    // Get admin supabase client
-    const supabase = createAdminClient()
-
-    // Get user role to determine permission
-    const { data: userData, error: userError } = await supabase.auth.getUser()
-    
-    if (userError) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized', message: userError.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      )
+      );
     }
 
-    const userId = userData.user?.id
-    
-    // Get user role
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single()
-      
-    const isAdminOrEmployee = profileData?.role === 'admin' || profileData?.role === 'employee'
-    
-    let filteredUserIds = userIds
-    
-    // If not admin/employee, only allow access to their own email
-    if (!isAdminOrEmployee) {
-      filteredUserIds = userIds.filter(id => id === userId)
-    }
-    
-    // If no valid IDs after filtering, return empty array
-    if (filteredUserIds.length === 0) {
-      return new Response(
-        JSON.stringify([]),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-    
-    // Query users table securely using admin client
-    const { data, error } = await supabase.auth.admin.listUsers({
-      filter: {
-        id: {
-          in: filteredUserIds.join(',')
-        }
-      }
-    })
-    
-    if (error) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch users', details: error.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
-    }
-    
-    // Map to return only id and email
-    const emails = data?.users.map(user => ({
-      id: user.id,
-      email: user.email
-    })) || []
-    
+    // Create admin client
+    const supabase = createAdminClient();
+
+    // Use the built-in function to get user emails
+    const { data, error } = await supabase.rpc('get_users_email', {
+      user_ids: userIds,
+    });
+
+    if (error) throw error;
+
+    // Return the emails
     return new Response(
-      JSON.stringify(emails),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      JSON.stringify({ data }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+    );
   } catch (error) {
+    console.error('Error in handleGetUserEmails:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'An unknown error occurred' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+    );
   }
-}
+};

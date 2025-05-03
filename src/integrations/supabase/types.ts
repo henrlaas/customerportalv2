@@ -903,6 +903,7 @@ export type Database = {
           client_visible: boolean | null
           created_at: string
           created_by: string | null
+          creator_id: string | null
           description: string | null
           due_date: string | null
           id: string
@@ -918,6 +919,7 @@ export type Database = {
           client_visible?: boolean | null
           created_at?: string
           created_by?: string | null
+          creator_id?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -933,6 +935,7 @@ export type Database = {
           client_visible?: boolean | null
           created_at?: string
           created_by?: string | null
+          creator_id?: string | null
           description?: string | null
           due_date?: string | null
           id?: string

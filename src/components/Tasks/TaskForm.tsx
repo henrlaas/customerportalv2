@@ -1,10 +1,11 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase, insertWithUser } from '@/integrations/supabase/client';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,12 +25,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { MultiAssigneeSelect } from './MultiAssigneeSelect';
+import { UserSelect } from './UserSelect';
 
 // Define types
 type Contact = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  avatar_url?: string | null;
 };
 
 type Campaign = {
@@ -52,7 +56,8 @@ const taskSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']),
   status: z.enum(['todo', 'in_progress', 'completed']),
   due_date: z.string().optional(),
-  assigned_to: z.string().optional(),
+  assignees: z.array(z.string()).optional(),
+  creator_id: z.string().nullable().optional(),
   campaign_id: z.string().optional(),
   client_visible: z.boolean().default(false),
   related_type: z.enum(['none', 'campaign', 'project']).default('none'),
@@ -66,7 +71,54 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   campaigns,
 }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isEditing = !!taskId;
+  const [loadingAssignees, setLoadingAssignees] = useState(isEditing);
+
+  // Get the current user's id for the creator field
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setCurrentUserId(session.user.id);
+      }
+    };
+    
+    getUser();
+  }, []);
+
+  // Fetch existing task assignees if editing
+  const [existingAssignees, setExistingAssignees] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (isEditing && taskId) {
+      const fetchTaskAssignees = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('task_assignees')
+            .select('user_id')
+            .eq('task_id', taskId);
+
+          if (error) throw error;
+          
+          if (data) {
+            const assigneeIds = data.map(record => record.user_id);
+            setExistingAssignees(assigneeIds);
+          }
+        } catch (error) {
+          console.error('Error fetching task assignees:', error);
+        } finally {
+          setLoadingAssignees(false);
+        }
+      };
+
+      fetchTaskAssignees();
+    } else {
+      setLoadingAssignees(false);
+    }
+  }, [isEditing, taskId]);
 
   // Set up the form
   const form = useForm<z.infer<typeof taskSchema>>({
@@ -77,15 +129,30 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       priority: initialData?.priority || 'medium',
       status: initialData?.status || 'todo',
       due_date: initialData?.due_date || '',
-      assigned_to: initialData?.assigned_to || '',
+      creator_id: initialData?.creator_id || currentUserId || null,
+      assignees: loadingAssignees ? [] : existingAssignees,
       campaign_id: initialData?.campaign_id || '',
       client_visible: initialData?.client_visible || false,
       related_type: initialData?.related_type || 'none',
     },
   });
 
-  // Create task mutation
-  const createTaskMutation = useMutation({
+  // Update assignees when they're loaded
+  useEffect(() => {
+    if (!loadingAssignees) {
+      form.setValue('assignees', existingAssignees);
+    }
+  }, [loadingAssignees, existingAssignees, form]);
+
+  // Update creator field when currentUserId is set
+  useEffect(() => {
+    if (currentUserId && !isEditing) {
+      form.setValue('creator_id', currentUserId);
+    }
+  }, [currentUserId, form, isEditing]);
+
+  // Create or update task mutation
+  const taskMutation = useMutation({
     mutationFn: async (data: z.infer<typeof taskSchema>) => {
       // Prepare the data for insertion
       const taskData = {
@@ -94,11 +161,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         priority: data.priority,
         status: data.status,
         due_date: data.due_date || null,
-        assigned_to: data.assigned_to || null,
+        creator_id: data.creator_id || null,
         campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
         client_visible: data.client_visible,
         related_type: data.related_type === 'none' ? null : data.related_type,
       };
+      
+      let taskResult;
       
       // Create or update the task
       if (isEditing) {
@@ -110,12 +179,38 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           .single();
         
         if (error) throw error;
-        return result;
+        taskResult = result;
       } else {
         const { data: result, error } = await insertWithUser('tasks', taskData);
         if (error) throw error;
-        return result;
+        taskResult = result;
       }
+      
+      // Now handle assignees - first remove existing assignees if updating
+      if (isEditing) {
+        const { error: deleteError } = await supabase
+          .from('task_assignees')
+          .delete()
+          .eq('task_id', taskId);
+        
+        if (deleteError) throw deleteError;
+      }
+      
+      // Insert new assignees
+      if (data.assignees && data.assignees.length > 0) {
+        const assigneesData = data.assignees.map(userId => ({
+          task_id: isEditing ? taskId : taskResult.id,
+          user_id: userId
+        }));
+        
+        const { error: assignError } = await supabase
+          .from('task_assignees')
+          .insert(assigneesData);
+        
+        if (assignError) throw assignError;
+      }
+      
+      return taskResult;
     },
     onSuccess: () => {
       toast({
@@ -123,6 +218,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         description: isEditing ? 'Your task has been updated' : 'Your task has been created',
       });
       onSuccess();
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
     onError: (error) => {
       toast({
@@ -135,11 +231,15 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Submit handler
   const onSubmit = (data: z.infer<typeof taskSchema>) => {
-    createTaskMutation.mutate(data);
+    taskMutation.mutate(data);
   };
 
   // Watch the related type to show/hide campaign selector
   const relatedType = form.watch('related_type');
+
+  if (loadingAssignees) {
+    return <div>Loading task details...</div>;
+  }
 
   return (
     <Form {...form}>
@@ -248,33 +348,42 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
           <FormField
             control={form.control}
-            name="assigned_to"
+            name="creator_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Assign To</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select assignee" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {profiles.map((contact) => (
-                      <SelectItem key={contact.id} value={contact.id}>
-                        {`${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown User'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormLabel>Creator</FormLabel>
+                <FormControl>
+                  <UserSelect
+                    users={profiles}
+                    selectedUserId={field.value || null}
+                    onChange={field.onChange}
+                    placeholder="Select creator"
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="assignees"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Assignees</FormLabel>
+              <FormControl>
+                <MultiAssigneeSelect
+                  users={profiles}
+                  selectedUserIds={field.value || []}
+                  onChange={field.onChange}
+                  placeholder="Select assignees"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
@@ -360,12 +469,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         <div className="flex justify-end gap-2">
           <Button 
             type="submit" 
-            disabled={createTaskMutation.isPending}
+            disabled={taskMutation.isPending}
           >
             {isEditing ? (
-              createTaskMutation.isPending ? "Updating..." : "Update Task"
+              taskMutation.isPending ? "Updating..." : "Update Task"
             ) : (
-              createTaskMutation.isPending ? "Creating..." : "Create Task"
+              taskMutation.isPending ? "Creating..." : "Create Task"
             )}
           </Button>
         </div>

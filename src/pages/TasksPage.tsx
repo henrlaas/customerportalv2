@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, insertWithUser } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import * as z from 'zod';
@@ -40,8 +41,9 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X } from 'lucide-react';
 import { TaskForm } from '@/components/Tasks/TaskForm';
 import { TaskFilters } from '@/components/Tasks/TaskFilters';
-import { Skeleton } from '@/components/ui/skeleton'; // <-- Added import
+import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
+import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -52,12 +54,16 @@ type Task = {
   priority: 'low' | 'medium' | 'high';
   due_date: string | null;
   campaign_id: string | null;
-  assigned_to: string | null;
+  creator_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
   client_visible: boolean | null;
   related_type: string | null;
+  assignees?: {
+    id: string;
+    user_id: string;
+  }[];
 };
 
 // Define the Contact type for assignees
@@ -65,6 +71,7 @@ type Contact = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  avatar_url?: string | null;
 };
 
 // Define the Campaign type for related campaigns
@@ -94,7 +101,7 @@ export const TasksPage = () => {
     queryFn: async () => {
       let query = supabase
         .from('tasks')
-        .select('*')
+        .select('*, assignees:task_assignees(id, user_id)')
         .order('created_at', { ascending: false });
       
       // Apply filters
@@ -107,8 +114,9 @@ export const TasksPage = () => {
       if (filters.search) {
         query = query.ilike('title', `%${filters.search}%`);
       }
+      // Filter by assignee from the task_assignees table
       if (filters.assignee && filters.assignee !== 'all') {
-        query = query.eq('assigned_to', filters.assignee);
+        query = query.contains('task_assignees.user_id', [filters.assignee]);
       }
       if (filters.campaign && filters.campaign !== 'all') {
         query = query.eq('campaign_id', filters.campaign);
@@ -129,13 +137,13 @@ export const TasksPage = () => {
     },
   });
 
-  // Fetch profiles for assignees
+  // Fetch profiles for assignees and creator
   const { data: profiles = [] } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name')
+        .select('id, first_name, last_name, avatar_url')
         .order('first_name');
       
       if (error) {
@@ -189,13 +197,22 @@ export const TasksPage = () => {
     });
   };
   
-  // Function to get assignee name
-  const getAssigneeName = (assigneeId: string | null) => {
-    if (!assigneeId) return 'Unassigned';
+  // Get assignees for a task
+  const getTaskAssignees = (task: Task) => {
+    if (!task.assignees) return [];
     
-    const assignee = profiles.find(p => p.id === assigneeId);
-    return assignee 
-      ? `${assignee.first_name || ''} ${assignee.last_name || ''}`.trim() || 'Unknown User'
+    return task.assignees
+      .map(assignee => profiles.find(p => p.id === assignee.user_id))
+      .filter((profile): profile is Contact => !!profile);
+  };
+
+  // Function to get creator name
+  const getCreatorName = (creatorId: string | null) => {
+    if (!creatorId) return 'Unassigned';
+    
+    const creator = profiles.find(p => p.id === creatorId);
+    return creator 
+      ? `${creator.first_name || ''} ${creator.last_name || ''}`.trim() || 'Unknown User'
       : 'Unknown User';
   };
   
@@ -329,7 +346,8 @@ export const TasksPage = () => {
                   <TableHead>Title</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Priority</TableHead>
-                  <TableHead>Assignee</TableHead>
+                  <TableHead>Assignees</TableHead>
+                  <TableHead>Creator</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Related To</TableHead>
                   <TableHead>Client Visible</TableHead>
@@ -345,7 +363,21 @@ export const TasksPage = () => {
                     <TableCell className="font-medium">{task.title}</TableCell>
                     <TableCell>{getStatusBadge(task.status)}</TableCell>
                     <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                    <TableCell>{getAssigneeName(task.assigned_to)}</TableCell>
+                    <TableCell>
+                      <UserAvatarGroup 
+                        users={getTaskAssignees(task)}
+                        size="sm"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {task.creator_id && (
+                        <UserAvatarGroup 
+                          users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
+                          size="sm"
+                        />
+                      )}
+                      {!task.creator_id && 'Unassigned'}
+                    </TableCell>
                     <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
                     <TableCell>
                       {task.campaign_id ? (
