@@ -21,8 +21,8 @@ export const Sidebar: React.FC = () => {
   const sidebarItems = getSidebarItems();
 
   return (
-    <ShadcnSidebar className="border-r bg-white">
-      <SidebarHeader className="p-4">
+    <ShadcnSidebar className="border-r border-sidebar-border bg-teal text-white">
+      <SidebarHeader className="p-6">
         <Logo />
       </SidebarHeader>
       <SidebarContent>
@@ -36,13 +36,13 @@ export const Sidebar: React.FC = () => {
               >
                 <Link 
                   to={item.href} 
-                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg ${
+                  className={`sidebar-item ${
                     location.pathname === item.href 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-coral text-black' 
+                      : 'text-white hover:bg-teal-700'
                   }`}
                 >
-                  <item.icon className={`h-5 w-5 ${location.pathname === item.href ? 'text-blue-600' : 'text-gray-500'}`} />
+                  <item.icon className={`h-5 w-5 ${location.pathname === item.href ? 'text-black' : 'text-white'}`} />
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
@@ -50,7 +50,7 @@ export const Sidebar: React.FC = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t p-4 mt-auto">
+      <SidebarFooter className="border-t border-sidebar-border p-6 mt-auto">
         <SidebarMenuButton 
           asChild
           isActive={location.pathname === '/settings'}
@@ -58,13 +58,13 @@ export const Sidebar: React.FC = () => {
         >
           <Link 
             to="/settings" 
-            className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg ${
+            className={`sidebar-item ${
               location.pathname === '/settings' 
-                ? 'bg-blue-50 text-blue-600' 
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-coral text-black' 
+                : 'text-white hover:bg-teal-700'
             }`}
           >
-            <Settings className={`h-5 w-5 ${location.pathname === '/settings' ? 'text-blue-600' : 'text-gray-500'}`} />
+            <Settings className={`h-5 w-5 ${location.pathname === '/settings' ? 'text-black' : 'text-white'}`} />
             <span>Settings</span>
           </Link>
         </SidebarMenuButton>

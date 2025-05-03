@@ -313,9 +313,12 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
   if (isLoadingTask && taskId) {
     return (
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-xl">
+        <SheetContent className="sm:max-w-xl rounded-l-2xl border-l-0">
           <div className="flex justify-center items-center h-full">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            <div className="animate-pulse-soft text-center">
+              <div className="h-12 w-12 rounded-full border-4 border-t-transparent border-teal animate-spin mx-auto mb-4"></div>
+              <p className="text-lg font-medium text-teal">Loading task details...</p>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
@@ -325,9 +328,9 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
   if (!task && taskId) {
     return (
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-xl">
+        <SheetContent className="sm:max-w-xl rounded-l-2xl border-l-0">
           <div className="flex flex-col items-center justify-center h-full">
-            <h2 className="text-xl font-semibold">Task not found</h2>
+            <h2 className="text-xl font-heading font-bold">Task not found</h2>
             <p className="text-muted-foreground mt-2">The task you're looking for doesn't exist or has been deleted.</p>
             <Button className="mt-4" onClick={() => onOpenChange(false)}>
               Close
@@ -341,27 +344,27 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-xl overflow-y-auto pb-20" side="right">
+        <SheetContent className="sm:max-w-xl overflow-y-auto pb-20 rounded-l-2xl border-l-0" side="right">
           {task && (
             <>
               <SheetHeader className="space-y-2 pb-4 pt-2">
                 <div className="flex justify-between items-start">
-                  <SheetTitle className="text-2xl mr-8">{task.title}</SheetTitle>
+                  <SheetTitle className="text-2xl mr-8 font-heading">{task.title}</SheetTitle>
                   <SheetClose asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="rounded-full">
                       <X className="h-4 w-4" />
                     </Button>
                   </SheetClose>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className={getStatusColor(task.status)}>
+                  <Badge variant="outline" className={`${getStatusColor(task.status)} rounded-full`}>
                     {task.status === 'in_progress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
                   </Badge>
-                  <Badge variant="outline" className={getPriorityColor(task.priority)}>
+                  <Badge variant="outline" className={`${getPriorityColor(task.priority)} rounded-full`}>
                     {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
                   </Badge>
                   {task.client_visible && (
-                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 rounded-full">
                       Client Visible
                     </Badge>
                   )}
@@ -376,6 +379,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                     size="sm"
                     onClick={() => updateStatusMutation.mutate('todo')}
                     disabled={updateStatusMutation.isPending}
+                    className="rounded-full"
                   >
                     Todo
                   </Button>
@@ -384,15 +388,16 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                     size="sm"
                     onClick={() => updateStatusMutation.mutate('in_progress')}
                     disabled={updateStatusMutation.isPending}
+                    className="rounded-full"
                   >
                     In Progress
                   </Button>
                   <Button
-                    variant={task.status === 'completed' ? "default" : "outline"}
+                    variant={task.status === 'completed' ? "mint" : "outline"}
                     size="sm"
-                    className={task.status === 'completed' ? "bg-green-600 hover:bg-green-700" : ""}
                     onClick={() => updateStatusMutation.mutate('completed')}
                     disabled={updateStatusMutation.isPending}
+                    className="rounded-full"
                   >
                     <CheckCircle className="mr-1 h-4 w-4" />
                     Complete
@@ -401,11 +406,11 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                 
                 {/* Action buttons */}
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}>
+                  <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)} className="rounded-full">
                     <Edit className="mr-1 h-4 w-4" />
                     Edit
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => toggleVisibilityMutation.mutate()}>
+                  <Button variant="outline" size="sm" onClick={() => toggleVisibilityMutation.mutate()} className="rounded-full">
                     {task.client_visible ? (
                       <>
                         <Eye className="mr-1 h-4 w-4" />
@@ -418,11 +423,11 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                       </>
                     )}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setIsShareDialogOpen(true)}>
+                  <Button variant="outline" size="sm" onClick={() => setIsShareDialogOpen(true)} className="rounded-full">
                     <Share className="mr-1 h-4 w-4" />
                     Share
                   </Button>
-                  <Button variant="outline" size="sm" className="text-red-500 hover:text-red-700" onClick={() => setIsDeleteDialogOpen(true)}>
+                  <Button variant="outline" size="sm" className="text-red-500 hover:text-red-700 rounded-full" onClick={() => setIsDeleteDialogOpen(true)}>
                     <Trash2 className="mr-1 h-4 w-4" />
                     Delete
                   </Button>
@@ -430,8 +435,8 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                 
                 {/* Description - always visible above tabs */}
                 {task.description && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
+                  <div className="space-y-2 bg-offwhite p-4 rounded-xl">
+                    <h3 className="text-sm font-medium text-teal-800">Description</h3>
                     <div className="prose max-w-none text-sm">
                       <p className="whitespace-pre-wrap">{task.description}</p>
                     </div>
@@ -440,48 +445,48 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
 
                 {/* Tab selector */}
                 <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid grid-cols-3 w-full">
-                    <TabsTrigger value="details">Details</TabsTrigger>
-                    <TabsTrigger value="timeTracking">Time Tracking</TabsTrigger>
-                    <TabsTrigger value="attachments">Attachments</TabsTrigger>
+                  <TabsList className="grid grid-cols-3 w-full rounded-xl bg-offwhite p-1">
+                    <TabsTrigger value="details" className="rounded-lg data-[state=active]:bg-white">Details</TabsTrigger>
+                    <TabsTrigger value="timeTracking" className="rounded-lg data-[state=active]:bg-white">Time Tracking</TabsTrigger>
+                    <TabsTrigger value="attachments" className="rounded-lg data-[state=active]:bg-white">Attachments</TabsTrigger>
                   </TabsList>
                   
                   {/* Details Tab */}
                   <TabsContent value="details" className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium text-muted-foreground">Details</h3>
-                      <div className="grid grid-cols-1 gap-2 text-sm">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
+                    <div className="space-y-3 bg-white p-4 rounded-xl shadow-soft">
+                      <h3 className="text-base font-medium text-teal-800 font-heading">Details</h3>
+                      <div className="grid grid-cols-1 gap-3 text-sm">
+                        <div className="flex items-center bg-offwhite p-3 rounded-lg">
+                          <Calendar className="h-5 w-5 text-teal mr-3" />
                           <span>Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</span>
                         </div>
                         
-                        <div className="flex items-center">
-                          <User className="h-4 w-4 text-muted-foreground mr-2" />
-                          <span>Assigned to: {getAssigneeName(task.assigned_to)}</span>
+                        <div className="flex items-center bg-offwhite p-3 rounded-lg">
+                          <User className="h-5 w-5 text-teal mr-3" />
+                          <span>Assigned to: <strong>{getAssigneeName(task.assigned_to)}</strong></span>
                         </div>
                         
-                        <div className="flex items-center">
-                          <User className="h-4 w-4 text-muted-foreground mr-2" />
-                          <span>Created by: {getCreatorName(task.creator_id)}</span>
+                        <div className="flex items-center bg-offwhite p-3 rounded-lg">
+                          <User className="h-5 w-5 text-teal mr-3" />
+                          <span>Created by: <strong>{getCreatorName(task.creator_id)}</strong></span>
                         </div>
                         
                         {task.campaign_id && (
-                          <div className="flex items-center">
-                            <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                            <span>Related to campaign: {getCampaignName(task.campaign_id)}</span>
+                          <div className="flex items-center bg-offwhite p-3 rounded-lg">
+                            <LinkIcon className="h-5 w-5 text-teal mr-3" />
+                            <span>Related to campaign: <strong>{getCampaignName(task.campaign_id)}</strong></span>
                           </div>
                         )}
                         
                         {task.related_type && task.related_type !== 'campaign' && (
-                          <div className="flex items-center">
-                            <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                            <span>Related to: {task.related_type}</span>
+                          <div className="flex items-center bg-offwhite p-3 rounded-lg">
+                            <LinkIcon className="h-5 w-5 text-teal mr-3" />
+                            <span>Related to: <strong>{task.related_type}</strong></span>
                           </div>
                         )}
                         
-                        <div className="flex items-center">
-                          <Clock3 className="h-4 w-4 text-muted-foreground mr-2" />
+                        <div className="flex items-center bg-offwhite p-3 rounded-lg">
+                          <Clock3 className="h-5 w-5 text-teal mr-3" />
                           <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
@@ -490,16 +495,16 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                   
                   {/* Time Tracking Tab */}
                   <TabsContent value="timeTracking" className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium">Time Tracking</h3>
+                    <div className="space-y-3 bg-white p-4 rounded-xl shadow-soft">
+                      <h3 className="text-base font-medium text-teal-800 font-heading">Time Tracking</h3>
                       <TaskTimer taskId={task.id} />
                     </div>
                   </TabsContent>
                   
                   {/* Attachments Tab */}
                   <TabsContent value="attachments" className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium">Attachments</h3>
+                    <div className="space-y-3 bg-white p-4 rounded-xl shadow-soft">
+                      <h3 className="text-base font-medium text-teal-800 font-heading">Attachments</h3>
                       <TaskAttachments taskId={task.id} />
                     </div>
                   </TabsContent>
@@ -512,9 +517,9 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
       
       {/* Edit task dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] rounded-2xl bg-white">
           <DialogHeader>
-            <DialogTitle>Edit Task</DialogTitle>
+            <DialogTitle className="text-2xl font-heading">Edit Task</DialogTitle>
           </DialogHeader>
           {task && (
             <TaskForm 
@@ -533,18 +538,18 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
       
       {/* Delete confirmation dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[400px] rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Delete Task</DialogTitle>
+            <DialogTitle className="text-2xl font-heading text-red-600">Delete Task</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p>Are you sure you want to delete this task? This action cannot be undone.</p>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="rounded-full">
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleteTaskMutation.isPending}>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteTaskMutation.isPending} className="rounded-full">
               {deleteTaskMutation.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </div>
@@ -553,15 +558,15 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
       
       {/* Share dialog */}
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[400px] rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Share Task</DialogTitle>
+            <DialogTitle className="text-2xl font-heading">Share Task</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p>Share this task with your team or clients by copying the link:</p>
           </div>
           <div className="flex justify-end gap-2">
-            <Button onClick={shareTask}>
+            <Button onClick={shareTask} className="rounded-full">
               Copy Link
             </Button>
           </div>
