@@ -59,6 +59,14 @@ export function UserSelect({
     return displayName.includes(searchQuery.toLowerCase());
   });
 
+  // Handler for when a user is clicked
+  const handleUserClick = (userId: string | null) => {
+    onChange(userId);
+    setOpen(false);
+    // Stop propagation to prevent PopoverContent from closing due to its own click event
+    // This is important for preventing event bubbling issues
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -94,10 +102,11 @@ export function UserSelect({
           <ScrollArea className="h-[200px]">
             <div className="p-1">
               <div 
+                key="unassigned"
                 className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
-                onClick={() => {
-                  onChange(null);
-                  setOpen(false);
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUserClick(null);
                 }}
               >
                 <UserRound className="mr-2 h-4 w-4" />
@@ -112,9 +121,9 @@ export function UserSelect({
                   <div
                     key={user.id}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
-                    onClick={() => {
-                      onChange(user.id);
-                      setOpen(false);
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleUserClick(user.id);
                     }}
                   >
                     <Avatar className="h-5 w-5 mr-2">

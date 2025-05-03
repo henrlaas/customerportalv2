@@ -42,7 +42,10 @@ export function MultiAssigneeSelect({
   const safeUsers = Array.isArray(users) ? users : [];
   const safeSelectedUserIds = Array.isArray(selectedUserIds) ? selectedUserIds : [];
 
-  const handleSelect = (userId: string) => {
+  const handleSelect = (userId: string, e: React.MouseEvent) => {
+    // Stop propagation to prevent the popover from closing
+    e.stopPropagation();
+    
     if (safeSelectedUserIds.includes(userId)) {
       // Remove if already selected
       onChange(safeSelectedUserIds.filter(id => id !== userId));
@@ -136,7 +139,7 @@ export function MultiAssigneeSelect({
                     <div
                       key={user.id}
                       className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
-                      onClick={() => handleSelect(user.id)}
+                      onClick={(e) => handleSelect(user.id, e)}
                     >
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={user.avatar_url || undefined} />
