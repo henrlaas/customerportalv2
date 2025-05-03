@@ -27,13 +27,13 @@ export const Sidebar: React.FC = () => {
 
   return (
     <ShadcnSidebar variant="sidebar" collapsible="icon" className="border-r bg-sidebar">
-      <SidebarHeader className={`p-4 flex items-center justify-between ${isExpanded ? 'px-4' : 'px-2'}`}>
-        {isExpanded && <Logo />}
+      <SidebarHeader className="p-4 flex items-center justify-center">
+        {isExpanded && <Logo className="mr-auto" />}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar} 
-          className="text-sidebar-foreground hover:bg-sidebar-accent rounded-full ml-auto"
+          className={`text-sidebar-foreground hover:bg-sidebar-accent rounded-full ${isExpanded ? 'ml-auto' : 'mx-auto'}`}
         >
           {isExpanded ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
         </Button>
@@ -49,14 +49,14 @@ export const Sidebar: React.FC = () => {
               >
                 <Link 
                   to={item.href} 
-                  className={`flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-4 py-3.5 text-base font-medium rounded-xl transition-all duration-200 ${
                     location.pathname === item.href 
                       ? 'bg-sidebar-accent text-sidebar-foreground' 
                       : 'text-sidebar-foreground hover:bg-sidebar-accent/70'
-                  }`}
+                  } ${!isExpanded ? 'justify-center' : ''}`}
                 >
-                  <item.icon className={`h-5 w-5 ${location.pathname === item.href ? 'text-sidebar-foreground' : 'text-sidebar-foreground/80'}`} />
-                  {isExpanded && <span>{item.title}</span>}
+                  <item.icon className={`h-6 w-6 ${location.pathname === item.href ? 'text-sidebar-foreground' : 'text-sidebar-foreground/80'}`} />
+                  {isExpanded && <span className="text-lg">{item.title}</span>}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -71,14 +71,14 @@ export const Sidebar: React.FC = () => {
         >
           <Link 
             to="/settings" 
-            className={`flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl transition-all duration-200 ${
+            className={`flex items-center gap-3 px-4 py-3.5 text-base font-medium rounded-xl transition-all duration-200 ${
               location.pathname === '/settings' 
                 ? 'bg-sidebar-accent text-sidebar-foreground' 
                 : 'text-sidebar-foreground hover:bg-sidebar-accent/70'
-            }`}
+            } ${!isExpanded ? 'justify-center' : ''}`}
           >
-            <Settings className={`h-5 w-5 ${location.pathname === '/settings' ? 'text-sidebar-foreground' : 'text-sidebar-foreground/80'}`} />
-            {isExpanded && <span>Settings</span>}
+            <Settings className={`h-6 w-6 ${location.pathname === '/settings' ? 'text-sidebar-foreground' : 'text-sidebar-foreground/80'}`} />
+            {isExpanded && <span className="text-lg">Settings</span>}
           </Link>
         </SidebarMenuButton>
       </SidebarFooter>
