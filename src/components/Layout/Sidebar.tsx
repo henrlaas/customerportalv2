@@ -24,12 +24,15 @@ export const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="relative" style={{ width: collapsed ? '80px' : '240px', transition: 'width 0.3s ease' }}>
+    <div 
+      className="relative transition-all duration-300 ease-in-out" 
+      style={{ width: collapsed ? '80px' : '240px' }}
+    >
       <ShadcnSidebar 
         className="border-r border-r-evergreen/30 bg-evergreen transition-all duration-300"
       >
         <SidebarHeader className="p-4 flex justify-center items-center">
-          <Logo className="w-full" />
+          <Logo collapsed={collapsed} />
         </SidebarHeader>
 
         <button 

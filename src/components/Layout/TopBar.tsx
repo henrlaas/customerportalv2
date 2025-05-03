@@ -18,7 +18,7 @@ export const TopBar: React.FC = () => {
 
   return (
     <div className="border-b bg-white shadow-sm">
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-between p-6">
         <div className="animate-fade-in">
           <h2 className="text-lg font-bold">Hi there, {profile?.first_name}! 👋</h2>
           <p className="text-sm text-gray-500">{format(today, 'EEEE, dd MMMM')}</p>
