@@ -25,20 +25,18 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div 
-      className={cn(
-        "fixed left-0 top-0 h-full transition-all duration-300 ease-in-out z-20",
-        collapsed ? "w-[80px]" : "w-[240px]"
-      )}
+      className="relative transition-all duration-300 ease-in-out" 
+      style={{ width: collapsed ? '80px' : '240px' }}
     >
       <ShadcnSidebar 
-        className="border-r border-r-evergreen/30 bg-evergreen transition-all duration-300 h-full"
+        className="border-r border-r-evergreen/30 bg-evergreen transition-all duration-300"
       >
         <SidebarHeader className="p-4 flex justify-center items-center">
           <Logo collapsed={collapsed} />
         </SidebarHeader>
 
         <button 
-          className="absolute -right-3 top-16 bg-evergreen text-white rounded-full p-1 shadow-md z-30 flex items-center justify-center"
+          className="absolute -right-3 top-16 bg-evergreen text-white rounded-full p-1 shadow-md z-10 flex items-center justify-center"
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -52,7 +50,7 @@ export const Sidebar: React.FC = () => {
         <SidebarContent>
           <SidebarMenu>
             {sidebarItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
+              <SidebarMenuItem key={item.href} className="my-2"> {/* Added my-2 for more space between items */}
                 <SidebarMenuButton 
                   asChild
                   isActive={location.pathname === item.href}
@@ -61,7 +59,7 @@ export const Sidebar: React.FC = () => {
                   <Link 
                     to={item.href} 
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 text-lg font-medium rounded-lg transition-all duration-200",
+                      "flex items-center gap-4 px-4 py-4 text-xl font-medium rounded-lg transition-all duration-200", /* Increased text size to text-xl and padding-y to py-4 */
                       location.pathname === item.href 
                         ? "bg-sidebar-accent/80 text-white" 
                         : "text-white/80 hover:bg-sidebar-accent/50 hover:text-white",
@@ -69,9 +67,9 @@ export const Sidebar: React.FC = () => {
                     )}
                   >
                     <item.icon className={cn(
-                      "h-7 w-7 transition-all",
+                      "h-8 w-8 transition-all", /* Increased icon size from h-7 w-7 to h-8 w-8 */
                       location.pathname === item.href ? "text-white" : "text-white/80",
-                      collapsed && "h-8 w-8"
+                      collapsed && "h-9 w-9" /* Increased collapsed icon size from h-8 w-8 to h-9 w-9 */
                     )} />
                     {!collapsed && <span className="animate-slide-in">{item.title}</span>}
                   </Link>
@@ -90,7 +88,7 @@ export const Sidebar: React.FC = () => {
             <Link 
               to="/settings" 
               className={cn(
-                "flex items-center gap-3 px-4 py-3 text-lg font-medium rounded-lg transition-all duration-200",
+                "flex items-center gap-4 px-4 py-4 text-xl font-medium rounded-lg transition-all duration-200", /* Increased text size to text-xl and padding-y to py-4 */
                 location.pathname === '/settings' 
                   ? "bg-sidebar-accent/80 text-white" 
                   : "text-white/80 hover:bg-sidebar-accent/50 hover:text-white",
@@ -98,9 +96,9 @@ export const Sidebar: React.FC = () => {
               )}
             >
               <Settings className={cn(
-                "h-7 w-7 transition-all", 
+                "h-8 w-8 transition-all", /* Increased icon size from h-7 w-7 to h-8 w-8 */
                 location.pathname === '/settings' ? "text-white" : "text-white/80",
-                collapsed && "h-8 w-8"
+                collapsed && "h-9 w-9" /* Increased collapsed icon size from h-8 w-8 to h-9 w-9 */
               )} />
               {!collapsed && <span>Settings</span>}
             </Link>

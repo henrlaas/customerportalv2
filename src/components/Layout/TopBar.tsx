@@ -17,7 +17,7 @@ export const TopBar: React.FC = () => {
   const today = new Date();
 
   return (
-    <div className="border-b bg-white shadow-sm ml-[80px] transition-all duration-300">
+    <div className="border-b bg-white shadow-sm">
       <div className="flex items-center justify-between p-6">
         <div className="animate-fade-in">
           <h2 className="text-lg font-bold">Hi there, {profile?.first_name}! 👋</h2>
