@@ -3,7 +3,6 @@ import React from 'react';
 
 type LogoProps = {
   className?: string;
-  showText?: boolean;
 };
 
 export const Logo: React.FC<LogoProps> = ({ className = '' }) => {
