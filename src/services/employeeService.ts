@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Employee, EmployeeWithProfile } from '@/types/employee';
 
@@ -52,14 +53,40 @@ export const employeeService = {
   },
 
   async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
-    // Insert into the employees table with the proper type definitions
+    console.log('Creating employee with data:', employeeData);
+    
+    // Extract profile data from employeeData
+    const { first_name, last_name, phone_number, team, ...employeeFields } = employeeData as any;
+    
+    // Insert into the employees table with ONLY employee fields
+    console.log('Employee fields for employees table:', employeeFields);
     const { data, error } = await supabase
       .from('employees')
-      .insert([{ ...employeeData, id: userId }])
+      .insert([{ ...employeeFields, id: userId }])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating employee record:', error);
+      throw error;
+    }
+    
+    // Now update the profile table with the profile fields
+    console.log('Updating profile with:', { first_name, last_name, phone_number, team });
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ 
+        first_name, 
+        last_name, 
+        phone_number,
+        team 
+      })
+      .eq('id', userId);
+    
+    if (profileError) {
+      console.error('Error updating profile for employee:', profileError);
+      throw profileError;
+    }
     
     // After successfully creating the employee, send the password reset email
     try {
@@ -74,16 +101,59 @@ export const employeeService = {
   },
 
   async updateEmployee(employeeId: string, employeeData: Partial<Employee>): Promise<Employee> {
-    // Update the employee record in the database
-    const { data, error } = await supabase
-      .from('employees')
-      .update(employeeData)
-      .eq('id', employeeId)
-      .select()
-      .single();
+    console.log('Updating employee with data:', employeeData);
+    
+    // Extract profile data from employeeData
+    const { first_name, last_name, phone_number, team, ...employeeFields } = employeeData as any;
+    
+    // Only update the employee table if there are employee fields to update
+    if (Object.keys(employeeFields).length > 0) {
+      console.log('Employee fields for employees table:', employeeFields);
+      const { data, error } = await supabase
+        .from('employees')
+        .update(employeeFields)
+        .eq('id', employeeId)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data as Employee;
+      if (error) {
+        console.error('Error updating employee record:', error);
+        throw error;
+      }
+    }
+    
+    // Update the profile table if there are profile fields to update
+    if (first_name !== undefined || last_name !== undefined || phone_number !== undefined || team !== undefined) {
+      const profileData: any = {};
+      if (first_name !== undefined) profileData.first_name = first_name;
+      if (last_name !== undefined) profileData.last_name = last_name;
+      if (phone_number !== undefined) profileData.phone_number = phone_number;
+      if (team !== undefined) profileData.team = team;
+      
+      console.log('Updating profile with:', profileData);
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update(profileData)
+        .eq('id', employeeId);
+      
+      if (profileError) {
+        console.error('Error updating profile for employee:', profileError);
+        throw profileError;
+      }
+    }
+    
+    // Get the updated employee with profile data
+    const { data: updatedEmployee, error: fetchError } = await supabase
+      .rpc('get_employees_with_profiles')
+      .filter('id', 'eq', employeeId)
+      .single();
+    
+    if (fetchError) {
+      console.error('Error fetching updated employee:', fetchError);
+      throw fetchError;
+    }
+    
+    return updatedEmployee as Employee;
   },
 
   async deleteEmployee(employeeId: string): Promise<void> {
