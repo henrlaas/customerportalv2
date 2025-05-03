@@ -17,17 +17,27 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { profile } = useAuth();
 
   if (!profile) {
-    return <div className="flex items-center justify-center min-h-screen">Loading profile...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-secondary">
+        <div className="p-8 rounded-xl bg-white shadow-playful">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-16 w-16 bg-primary/20 rounded-full mb-4"></div>
+            <div className="h-4 w-48 bg-primary/20 rounded-full mb-2"></div>
+            <div className="h-3 w-32 bg-primary/10 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-white">
+      <div className="flex h-screen w-full bg-secondary">
         <Sidebar />
-        <SidebarInset className="flex-1">
+        <SidebarInset className="flex-1 overflow-hidden">
           <div className="flex-1 overflow-auto">
             <TopBar />
-            <main className="w-full overflow-x-hidden">
+            <main className="w-full overflow-x-hidden p-4 md:p-6 lg:p-8">
               {children || <Outlet />}
             </main>
           </div>
