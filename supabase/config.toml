@@ -3,6 +3,3 @@ project_id = "vjqbgnjeuvuxvuruewyc"
 
 [functions.user-management]
 verify_jwt = true
-
-[functions.inviteEmployeeResetPassword]
-verify_jwt = false

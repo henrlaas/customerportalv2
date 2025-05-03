@@ -38,8 +38,8 @@ export const employeeService = {
         address: item.address,
         zipcode: item.zipcode,
         country: item.country,
-        team: item.team, 
-        city: item.city,
+        team: item.team,
+        city: item.city, // Explicitly include the city field
         employee_type: item.employee_type,
         hourly_salary: item.hourly_salary,
         employed_percentage: item.employed_percentage,
@@ -53,122 +53,28 @@ export const employeeService = {
   },
 
   async createEmployee(employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'>, userId: string): Promise<Employee> {
-    console.log('Creating employee with data:', employeeData);
-    
-    // Extract profile data from employeeData
-    const { first_name, last_name, phone_number, team, ...employeeFields } = employeeData as any;
-    
-    // Insert into the employees table with ONLY employee fields
-    console.log('Employee fields for employees table:', employeeFields);
+    // Insert into the employees table with the proper type definitions
     const { data, error } = await supabase
       .from('employees')
-      .insert([{ ...employeeFields, id: userId }])
+      .insert([{ ...employeeData, id: userId }])
       .select()
       .single();
 
-    if (error) {
-      console.error('Error creating employee record:', error);
-      throw error;
-    }
-    
-    // Now update the profile table with the profile fields
-    console.log('Updating profile with:', { first_name, last_name, phone_number, team });
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ 
-        first_name, 
-        last_name, 
-        phone_number,
-        team 
-      })
-      .eq('id', userId);
-    
-    if (profileError) {
-      console.error('Error updating profile for employee:', profileError);
-      throw profileError;
-    }
-    
-    // After successfully creating the employee, send the password reset email
-    try {
-      await this.sendInviteEmail(userId);
-      console.log('Invitation email sent to newly created employee');
-    } catch (resetError) {
-      console.error('Error sending invitation email:', resetError);
-      // We don't throw here as the employee was already created successfully
-    }
-
-    // Cast data as Employee explicitly after validating it meets the Employee interface
-    if (!data || typeof data !== 'object') {
-      throw new Error('Invalid employee data returned from database');
-    }
-    
+    if (error) throw error;
     return data as Employee;
   },
 
   async updateEmployee(employeeId: string, employeeData: Partial<Employee>): Promise<Employee> {
-    console.log('Updating employee with data:', employeeData);
-    
-    // Extract profile data from employeeData
-    const { first_name, last_name, phone_number, team, ...employeeFields } = employeeData as any;
-    
-    // Only update the employee table if there are employee fields to update
-    let updatedEmployee: any = null;
-    
-    if (Object.keys(employeeFields).length > 0) {
-      console.log('Employee fields for employees table:', employeeFields);
-      const { data, error } = await supabase
-        .from('employees')
-        .update(employeeFields)
-        .eq('id', employeeId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error updating employee record:', error);
-        throw error;
-      }
-      
-      updatedEmployee = data;
-    }
-    
-    // Update the profile table if there are profile fields to update
-    if (first_name !== undefined || last_name !== undefined || phone_number !== undefined || team !== undefined) {
-      const profileData: any = {};
-      if (first_name !== undefined) profileData.first_name = first_name;
-      if (last_name !== undefined) profileData.last_name = last_name;
-      if (phone_number !== undefined) profileData.phone_number = phone_number;
-      if (team !== undefined) profileData.team = team;
-      
-      console.log('Updating profile with:', profileData);
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update(profileData)
-        .eq('id', employeeId);
-      
-      if (profileError) {
-        console.error('Error updating profile for employee:', profileError);
-        throw profileError;
-      }
-    }
-    
-    // Get the updated employee with profile data
-    const { data: fetchedEmployee, error: fetchError } = await supabase
-      .rpc('get_employees_with_profiles')
-      .filter('id', 'eq', employeeId)
+    // Update the employee record in the database
+    const { data, error } = await supabase
+      .from('employees')
+      .update(employeeData)
+      .eq('id', employeeId)
+      .select()
       .single();
-    
-    if (fetchError) {
-      console.error('Error fetching updated employee:', fetchError);
-      throw fetchError;
-    }
-    
-    // Cast the response to Employee after validating it's not null or an array
-    if (!fetchedEmployee || Array.isArray(fetchedEmployee)) {
-      throw new Error('Invalid employee data returned from database');
-    }
-    
-    // Ensure the response matches our Employee type
-    return fetchedEmployee as unknown as Employee;
+
+    if (error) throw error;
+    return data as Employee;
   },
 
   async deleteEmployee(employeeId: string): Promise<void> {
@@ -195,60 +101,4 @@ export const employeeService = {
       throw error;
     }
   },
-
-  async sendPasswordResetEmail(userId: string): Promise<void> {
-    // Keep the old method for compatibility, but use the new one internally
-    return this.sendInviteEmail(userId);
-  },
-  
-  async sendInviteEmail(userId: string): Promise<void> {
-    try {
-      // First, we need to get the user's email using the user-management edge function
-      const userResponse = await supabase.functions.invoke('user-management', {
-        body: {
-          action: 'get-user-by-id',
-          userId: userId
-        }
-      });
-
-      if (userResponse.error) {
-        throw new Error(`Error fetching user email: ${userResponse.error.message}`);
-      }
-
-      if (!userResponse.data || !userResponse.data.email) {
-        throw new Error('User email not found');
-      }
-
-      const userEmail = userResponse.data.email;
-      const siteUrl = window.location.origin;
-
-      // Use our dedicated edge function for sending reset password invites
-      console.log(`Sending invite email to ${userEmail} with redirect URL: ${siteUrl}`);
-      
-      try {
-        const response = await supabase.functions.invoke('inviteEmployeeResetPassword', {
-          body: {
-            email: userEmail,
-            redirectUrl: siteUrl
-          }
-        });
-
-        // Log the full response for debugging
-        console.log('inviteEmployeeResetPassword response:', response);
-
-        if (response.error) {
-          throw new Error(`Failed to send invitation email: ${response.error.message}`);
-        }
-      } catch (invokeError) {
-        console.error('Error invoking inviteEmployeeResetPassword function:', invokeError);
-        throw new Error(`Error invoking edge function: ${invokeError.message || 'Unknown error'}`);
-      }
-
-      console.log('Invitation email sent successfully to:', userEmail);
-      return;
-    } catch (error) {
-      console.error('Error in sendInviteEmail:', error);
-      throw error;
-    }
-  }
 };
