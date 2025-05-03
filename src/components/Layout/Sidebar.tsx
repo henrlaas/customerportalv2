@@ -50,7 +50,7 @@ export const Sidebar: React.FC = () => {
         <SidebarContent>
           <SidebarMenu>
             {sidebarItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
+              <SidebarMenuItem key={item.href} className="my-2"> {/* Added my-2 for more space between items */}
                 <SidebarMenuButton 
                   asChild
                   isActive={location.pathname === item.href}
@@ -59,7 +59,7 @@ export const Sidebar: React.FC = () => {
                   <Link 
                     to={item.href} 
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 text-lg font-medium rounded-lg transition-all duration-200",
+                      "flex items-center gap-4 px-4 py-4 text-xl font-medium rounded-lg transition-all duration-200", /* Increased text size to text-xl and padding-y to py-4 */
                       location.pathname === item.href 
                         ? "bg-sidebar-accent/80 text-white" 
                         : "text-white/80 hover:bg-sidebar-accent/50 hover:text-white",
@@ -67,9 +67,9 @@ export const Sidebar: React.FC = () => {
                     )}
                   >
                     <item.icon className={cn(
-                      "h-7 w-7 transition-all",
+                      "h-8 w-8 transition-all", /* Increased icon size from h-7 w-7 to h-8 w-8 */
                       location.pathname === item.href ? "text-white" : "text-white/80",
-                      collapsed && "h-8 w-8"
+                      collapsed && "h-9 w-9" /* Increased collapsed icon size from h-8 w-8 to h-9 w-9 */
                     )} />
                     {!collapsed && <span className="animate-slide-in">{item.title}</span>}
                   </Link>
@@ -88,7 +88,7 @@ export const Sidebar: React.FC = () => {
             <Link 
               to="/settings" 
               className={cn(
-                "flex items-center gap-3 px-4 py-3 text-lg font-medium rounded-lg transition-all duration-200",
+                "flex items-center gap-4 px-4 py-4 text-xl font-medium rounded-lg transition-all duration-200", /* Increased text size to text-xl and padding-y to py-4 */
                 location.pathname === '/settings' 
                   ? "bg-sidebar-accent/80 text-white" 
                   : "text-white/80 hover:bg-sidebar-accent/50 hover:text-white",
@@ -96,9 +96,9 @@ export const Sidebar: React.FC = () => {
               )}
             >
               <Settings className={cn(
-                "h-7 w-7 transition-all", 
+                "h-8 w-8 transition-all", /* Increased icon size from h-7 w-7 to h-8 w-8 */
                 location.pathname === '/settings' ? "text-white" : "text-white/80",
-                collapsed && "h-8 w-8"
+                collapsed && "h-9 w-9" /* Increased collapsed icon size from h-8 w-8 to h-9 w-9 */
               )} />
               {!collapsed && <span>Settings</span>}
             </Link>
