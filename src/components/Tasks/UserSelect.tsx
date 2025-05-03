@@ -27,6 +27,17 @@ export function UserSelect({
   className,
   placeholder = "Select a user..."
 }: UserSelectProps) {
+  // Utility functions defined BEFORE they are used
+  const getUserDisplayName = (user: User) => {
+    return `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
+  };
+
+  const getInitials = (user: User) => {
+    const first = user.first_name?.[0] || '';
+    const last = user.last_name?.[0] || '';
+    return (first + last).toUpperCase() || 'U';
+  };
+  
   // Ensure users is always an array, even if passed as undefined
   const safeUsers = Array.isArray(users) ? users : [];
   
@@ -44,16 +55,6 @@ export function UserSelect({
   const selectedOption = selectedUserId 
     ? options.find(option => option.value === selectedUserId) 
     : options[0];
-
-  const getUserDisplayName = (user: User) => {
-    return `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
-  };
-
-  const getInitials = (user: User) => {
-    const first = user.first_name?.[0] || '';
-    const last = user.last_name?.[0] || '';
-    return (first + last).toUpperCase() || 'U';
-  };
 
   // Custom formatting for the dropdown options
   const formatOptionLabel = (option: any) => {

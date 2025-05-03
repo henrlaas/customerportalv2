@@ -28,6 +28,17 @@ export function MultiAssigneeSelect({
   className,
   placeholder = "Select team members..."
 }: MultiAssigneeSelectProps) {
+  // Utility functions defined BEFORE they are used
+  const getUserDisplayName = (user: User) => {
+    return `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
+  };
+
+  const getInitials = (user: User) => {
+    const first = user.first_name?.[0] || '';
+    const last = user.last_name?.[0] || '';
+    return (first + last).toUpperCase() || 'U';
+  };
+  
   // Ensure users and selectedUserIds are always arrays
   const safeUsers = Array.isArray(users) ? users : [];
   const safeSelectedUserIds = Array.isArray(selectedUserIds) ? selectedUserIds : [];
@@ -43,16 +54,6 @@ export function MultiAssigneeSelect({
   const selectedOptions = options.filter(option => 
     safeSelectedUserIds.includes(option.value)
   );
-
-  const getUserDisplayName = (user: User) => {
-    return `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
-  };
-
-  const getInitials = (user: User) => {
-    const first = user.first_name?.[0] || '';
-    const last = user.last_name?.[0] || '';
-    return (first + last).toUpperCase() || 'U';
-  };
 
   const handleRemove = (userId: string) => {
     onChange(safeSelectedUserIds.filter(id => id !== userId));
