@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import * as z from 'zod';
 import {
   Table,
@@ -44,6 +44,7 @@ import { TaskFilters } from '@/components/Tasks/TaskFilters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
+import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -82,7 +83,6 @@ type Campaign = {
 
 export const TasksPage = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -94,6 +94,10 @@ export const TasksPage = () => {
     campaign: 'all',
   });
   const [showFilters, setShowFilters] = useState(false);
+  
+  // State for task detail sheet
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
   
   // Fetch tasks with filtering
   const { data: tasks = [], isLoading: isLoadingTasks } = useQuery({
@@ -181,9 +185,10 @@ export const TasksPage = () => {
     },
   });
   
-  // Function to handle task click to navigate to details page
+  // Function to handle task click to show detail sheet
   const handleTaskClick = (taskId: string) => {
-    navigate(`/tasks/${taskId}`);
+    setSelectedTaskId(taskId);
+    setIsTaskSheetOpen(true);
   };
   
   // Function to reset all filters
@@ -404,6 +409,13 @@ export const TasksPage = () => {
           </div>
         </div>
       )}
+      
+      {/* Task Detail Sheet */}
+      <TaskDetailSheet 
+        isOpen={isTaskSheetOpen} 
+        onOpenChange={setIsTaskSheetOpen} 
+        taskId={selectedTaskId} 
+      />
     </div>
   );
 };
