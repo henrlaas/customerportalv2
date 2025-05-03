@@ -28,8 +28,8 @@ export const Sidebar: React.FC = () => {
       <ShadcnSidebar 
         className="border-r border-r-evergreen/30 bg-evergreen transition-all duration-300"
       >
-        <SidebarHeader className="p-4 flex justify-between items-center">
-          <Logo showText={!collapsed} className={collapsed ? 'justify-center' : ''} />
+        <SidebarHeader className="p-4 flex justify-center items-center">
+          <Logo className="w-full" />
         </SidebarHeader>
 
         <button 
