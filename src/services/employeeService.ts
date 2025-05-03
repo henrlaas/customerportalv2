@@ -38,8 +38,8 @@ export const employeeService = {
         address: item.address,
         zipcode: item.zipcode,
         country: item.country,
-        team: item.team,
-        city: item.city, // Explicitly include the city field
+        team: item.team, 
+        city: item.city,
         employee_type: item.employee_type,
         hourly_salary: item.hourly_salary,
         employed_percentage: item.employed_percentage,
@@ -97,6 +97,11 @@ export const employeeService = {
       // We don't throw here as the employee was already created successfully
     }
 
+    // Cast data as Employee explicitly after validating it meets the Employee interface
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid employee data returned from database');
+    }
+    
     return data as Employee;
   },
 
@@ -107,6 +112,8 @@ export const employeeService = {
     const { first_name, last_name, phone_number, team, ...employeeFields } = employeeData as any;
     
     // Only update the employee table if there are employee fields to update
+    let updatedEmployee: any = null;
+    
     if (Object.keys(employeeFields).length > 0) {
       console.log('Employee fields for employees table:', employeeFields);
       const { data, error } = await supabase
@@ -120,6 +127,8 @@ export const employeeService = {
         console.error('Error updating employee record:', error);
         throw error;
       }
+      
+      updatedEmployee = data;
     }
     
     // Update the profile table if there are profile fields to update
@@ -143,7 +152,7 @@ export const employeeService = {
     }
     
     // Get the updated employee with profile data
-    const { data: updatedEmployee, error: fetchError } = await supabase
+    const { data: fetchedEmployee, error: fetchError } = await supabase
       .rpc('get_employees_with_profiles')
       .filter('id', 'eq', employeeId)
       .single();
@@ -153,7 +162,13 @@ export const employeeService = {
       throw fetchError;
     }
     
-    return updatedEmployee as Employee;
+    // Cast the response to Employee after validating it's not null or an array
+    if (!fetchedEmployee || Array.isArray(fetchedEmployee)) {
+      throw new Error('Invalid employee data returned from database');
+    }
+    
+    // Ensure the response matches our Employee type
+    return fetchedEmployee as unknown as Employee;
   },
 
   async deleteEmployee(employeeId: string): Promise<void> {
