@@ -181,13 +181,19 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         if (error) throw error;
         taskResult = result;
       } else {
-        const { data: result, error } = await insertWithUser('tasks', taskData);
+        // Use regular insert instead of insertWithUser if you're setting the creator manually
+        const { data: result, error } = await supabase
+          .from('tasks')
+          .insert(taskData)
+          .select()
+          .single();
+        
         if (error) throw error;
         taskResult = result;
       }
       
       // Now handle assignees - first remove existing assignees if updating
-      if (isEditing) {
+      if (isEditing && taskId) {
         const { error: deleteError } = await supabase
           .from('task_assignees')
           .delete()
@@ -197,7 +203,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       }
       
       // Insert new assignees
-      if (data.assignees && data.assignees.length > 0) {
+      if (data.assignees && data.assignees.length > 0 && taskResult && taskResult.id) {
         const assigneesData = data.assignees.map(userId => ({
           task_id: isEditing ? taskId : taskResult.id,
           user_id: userId
@@ -231,6 +237,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Submit handler
   const onSubmit = (data: z.infer<typeof taskSchema>) => {
+    console.log("Submitting form with data:", data);
     taskMutation.mutate(data);
   };
 
