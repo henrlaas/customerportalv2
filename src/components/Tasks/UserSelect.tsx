@@ -1,16 +1,9 @@
 
 import { useState } from 'react';
-import { Check, ChevronsUpDown, UserRound } from "lucide-react";
+import Select from 'react-select';
+import { UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 type User = {
   id: string;
@@ -34,14 +27,23 @@ export function UserSelect({
   className,
   placeholder = "Select a user..."
 }: UserSelectProps) {
-  const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
   // Ensure users is always an array, even if passed as undefined
   const safeUsers = Array.isArray(users) ? users : [];
   
-  // Find the selected user
-  const selectedUser = safeUsers.find(user => user?.id === selectedUserId);
+  // Format users for react-select
+  const options = [
+    { value: null, label: 'Unassigned', isUnassigned: true },
+    ...safeUsers.map(user => ({
+      value: user.id,
+      label: getUserDisplayName(user),
+      user
+    }))
+  ];
+
+  // Find the selected option
+  const selectedOption = selectedUserId 
+    ? options.find(option => option.value === selectedUserId) 
+    : options[0];
 
   const getUserDisplayName = (user: User) => {
     return `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
@@ -53,88 +55,54 @@ export function UserSelect({
     return (first + last).toUpperCase() || 'U';
   };
 
-  // Filter users based on search query
-  const filteredUsers = safeUsers.filter(user => {
-    const displayName = getUserDisplayName(user).toLowerCase();
-    return displayName.includes(searchQuery.toLowerCase());
-  });
+  // Custom formatting for the dropdown options
+  const formatOptionLabel = (option: any) => {
+    if (option.isUnassigned) {
+      return (
+        <div className="flex items-center">
+          <UserRound className="mr-2 h-4 w-4" />
+          <span>Unassigned</span>
+        </div>
+      );
+    }
+
+    const user = option.user;
+    return (
+      <div className="flex items-center">
+        <Avatar className="h-5 w-5 mr-2">
+          <AvatarImage src={user.avatar_url || undefined} />
+          <AvatarFallback className="text-xs">{getInitials(user)}</AvatarFallback>
+        </Avatar>
+        {getUserDisplayName(user)}
+      </div>
+    );
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between", className)}
-          type="button"
-        >
-          {selectedUser ? (
-            <div className="flex items-center">
-              <Avatar className="h-5 w-5 mr-2">
-                <AvatarImage src={selectedUser.avatar_url || undefined} />
-                <AvatarFallback className="text-xs">{getInitials(selectedUser)}</AvatarFallback>
-              </Avatar>
-              {getUserDisplayName(selectedUser)}
-            </div>
-          ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
-          )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0" align="start">
-        <div className="p-2">
-          <Input
-            placeholder="Search users..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="mb-2"
-          />
-          <ScrollArea className="h-[200px]">
-            <div className="p-1">
-              <button 
-                type="button"
-                key="unassigned"
-                className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
-                onClick={() => {
-                  onChange(null);
-                  setOpen(false);
-                }}
-              >
-                <UserRound className="mr-2 h-4 w-4" />
-                <span>Unassigned</span>
-                {selectedUserId === null && <Check className="ml-auto h-4 w-4" />}
-              </button>
-              
-              {filteredUsers.length === 0 ? (
-                <div className="px-2 py-4 text-center text-sm text-muted-foreground">No user found.</div>
-              ) : (
-                filteredUsers.map((user) => (
-                  <button
-                    type="button"
-                    key={user.id}
-                    className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
-                    onClick={() => {
-                      onChange(user.id);
-                      setOpen(false);
-                    }}
-                  >
-                    <Avatar className="h-5 w-5 mr-2">
-                      <AvatarImage src={user.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs">{getInitials(user)}</AvatarFallback>
-                    </Avatar>
-                    {getUserDisplayName(user)}
-                    {selectedUserId === user.id && (
-                      <Check className="ml-auto h-4 w-4" />
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        </div>
-      </PopoverContent>
-    </Popover>
+    <div className={className}>
+      <Select
+        options={options}
+        value={selectedOption}
+        onChange={(option) => onChange(option?.value ?? null)}
+        placeholder={placeholder}
+        formatOptionLabel={formatOptionLabel}
+        className="react-select-container"
+        classNamePrefix="react-select"
+        styles={{
+          control: (baseStyles) => ({
+            ...baseStyles,
+            borderColor: 'hsl(var(--input))',
+            boxShadow: 'none',
+            '&:hover': {
+              borderColor: 'hsl(var(--input))'
+            }
+          }),
+          menu: (baseStyles) => ({
+            ...baseStyles,
+            zIndex: 50
+          })
+        }}
+      />
+    </div>
   );
 }
