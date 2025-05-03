@@ -42,10 +42,7 @@ export function MultiAssigneeSelect({
   const safeUsers = Array.isArray(users) ? users : [];
   const safeSelectedUserIds = Array.isArray(selectedUserIds) ? selectedUserIds : [];
 
-  const handleSelect = (userId: string, e: React.MouseEvent) => {
-    // Stop propagation to prevent the popover from closing
-    e.stopPropagation();
-    
+  const handleSelect = (userId: string) => {
     if (safeSelectedUserIds.includes(userId)) {
       // Remove if already selected
       onChange(safeSelectedUserIds.filter(id => id !== userId));
@@ -136,10 +133,13 @@ export function MultiAssigneeSelect({
                   <div className="px-2 py-4 text-center text-sm text-muted-foreground">No team member found.</div>
                 ) : (
                   filteredUsers.map((user) => (
-                    <div
+                    <button
+                      type="button"
                       key={user.id}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
-                      onClick={(e) => handleSelect(user.id, e)}
+                      className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
+                      onClick={() => {
+                        handleSelect(user.id);
+                      }}
                     >
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={user.avatar_url || undefined} />
@@ -149,7 +149,7 @@ export function MultiAssigneeSelect({
                       {safeSelectedUserIds.includes(user.id) && (
                         <Check className="ml-auto h-4 w-4" />
                       )}
-                    </div>
+                    </button>
                   ))
                 )}
               </div>
