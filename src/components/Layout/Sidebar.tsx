@@ -48,7 +48,7 @@ export const Sidebar: React.FC = () => {
         </button>
 
         <SidebarContent>
-          <SidebarMenu className="space-y-3">
+          <SidebarMenu>
             {sidebarItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton 
@@ -59,7 +59,7 @@ export const Sidebar: React.FC = () => {
                   <Link 
                     to={item.href} 
                     className={cn(
-                      "flex items-center gap-4 px-4 py-3.5 text-lg font-medium rounded-lg transition-all duration-200",
+                      "flex items-center gap-3 px-4 py-3 text-lg font-medium rounded-lg transition-all duration-200",
                       location.pathname === item.href 
                         ? "bg-sidebar-accent/80 text-white" 
                         : "text-white/80 hover:bg-sidebar-accent/50 hover:text-white",
@@ -67,11 +67,11 @@ export const Sidebar: React.FC = () => {
                     )}
                   >
                     <item.icon className={cn(
-                      "h-8 w-8 transition-all",
+                      "h-7 w-7 transition-all",
                       location.pathname === item.href ? "text-white" : "text-white/80",
-                      collapsed && "h-9 w-9"
+                      collapsed && "h-8 w-8"
                     )} />
-                    {!collapsed && <span className="animate-slide-in text-xl">{item.title}</span>}
+                    {!collapsed && <span className="animate-slide-in">{item.title}</span>}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -88,7 +88,7 @@ export const Sidebar: React.FC = () => {
             <Link 
               to="/settings" 
               className={cn(
-                "flex items-center gap-4 px-4 py-3.5 text-lg font-medium rounded-lg transition-all duration-200",
+                "flex items-center gap-3 px-4 py-3 text-lg font-medium rounded-lg transition-all duration-200",
                 location.pathname === '/settings' 
                   ? "bg-sidebar-accent/80 text-white" 
                   : "text-white/80 hover:bg-sidebar-accent/50 hover:text-white",
@@ -96,11 +96,11 @@ export const Sidebar: React.FC = () => {
               )}
             >
               <Settings className={cn(
-                "h-8 w-8 transition-all", 
+                "h-7 w-7 transition-all", 
                 location.pathname === '/settings' ? "text-white" : "text-white/80",
-                collapsed && "h-9 w-9"
+                collapsed && "h-8 w-8"
               )} />
-              {!collapsed && <span className="text-xl">Settings</span>}
+              {!collapsed && <span>Settings</span>}
             </Link>
           </SidebarMenuButton>
         </SidebarFooter>
