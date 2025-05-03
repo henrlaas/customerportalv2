@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,21 +26,38 @@ const CompaniesPage = () => {
   const { isAdmin, isEmployee } = useAuth();
   const navigate = useNavigate();
   
-  // Fetch companies
+  // Fetch companies with improved error handling
   const { data: companies = [], isLoading, error } = useQuery({
     queryKey: ['companies'],
-    queryFn: companyService.fetchCompanies,
+    queryFn: async () => {
+      try {
+        console.log("Fetching companies...");
+        const result = await companyService.fetchCompanies();
+        console.log("Companies fetched:", result);
+        return result;
+      } catch (err) {
+        console.error("Error fetching companies:", err);
+        throw err;
+      }
+    },
+    retry: 1,
   });
 
+  useEffect(() => {
+    console.log("Companies in state:", companies);
+  }, [companies]);
+
   // Show error toast if fetching companies fails
-  if (error) {
-    console.error("Error loading companies:", error);
-    toast({
-      title: "Error loading companies",
-      description: "There was a problem loading your companies. Please try again.",
-      variant: "destructive",
-    });
-  }
+  useEffect(() => {
+    if (error) {
+      console.error("Error loading companies:", error);
+      toast({
+        title: "Error loading companies",
+        description: "There was a problem loading your companies. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [error]);
   
   // Filter companies by search query, type, and parent status
   const filteredCompanies = companies.filter(company => {
