@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, ChevronsUpDown, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,11 @@ export function UserSelect({
 }: UserSelectProps) {
   const [open, setOpen] = useState(false);
 
-  const selectedUser = users.find(user => user.id === selectedUserId);
+  // Ensure users is always an array, even if passed as undefined
+  const safeUsers = Array.isArray(users) ? users : [];
+  
+  // Find the selected user
+  const selectedUser = safeUsers.find(user => user?.id === selectedUserId);
 
   const getUserDisplayName = (user: User) => {
     return `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
@@ -82,6 +86,7 @@ export function UserSelect({
           <CommandEmpty>No user found.</CommandEmpty>
           <CommandGroup>
             <CommandItem 
+              key="unassigned"
               value="unassigned" 
               onSelect={() => {
                 onChange(null);
@@ -92,7 +97,7 @@ export function UserSelect({
               <span>Unassigned</span>
             </CommandItem>
             
-            {users.map((user) => (
+            {safeUsers.map((user) => (
               <CommandItem
                 key={user.id}
                 value={getUserDisplayName(user)}

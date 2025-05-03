@@ -42,18 +42,22 @@ export function MultiAssigneeSelect({
 }: MultiAssigneeSelectProps) {
   const [open, setOpen] = useState(false);
 
+  // Ensure users and selectedUserIds are always arrays
+  const safeUsers = Array.isArray(users) ? users : [];
+  const safeSelectedUserIds = Array.isArray(selectedUserIds) ? selectedUserIds : [];
+
   const handleSelect = (userId: string) => {
-    if (selectedUserIds.includes(userId)) {
+    if (safeSelectedUserIds.includes(userId)) {
       // Remove if already selected
-      onChange(selectedUserIds.filter(id => id !== userId));
+      onChange(safeSelectedUserIds.filter(id => id !== userId));
     } else {
       // Add if not selected
-      onChange([...selectedUserIds, userId]);
+      onChange([...safeSelectedUserIds, userId]);
     }
   };
 
   const handleRemove = (userId: string) => {
-    onChange(selectedUserIds.filter(id => id !== userId));
+    onChange(safeSelectedUserIds.filter(id => id !== userId));
   };
 
   const getUserDisplayName = (user: User) => {
@@ -66,7 +70,7 @@ export function MultiAssigneeSelect({
     return (first + last).toUpperCase() || 'U';
   };
 
-  const selectedUsers = users.filter(user => selectedUserIds.includes(user.id));
+  const selectedUsers = safeUsers.filter(user => safeSelectedUserIds.includes(user.id));
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -88,6 +92,7 @@ export function MultiAssigneeSelect({
                 size="sm" 
                 className="h-4 w-4 p-0 ml-1" 
                 onClick={() => handleRemove(user.id)}
+                type="button"
               >
                 <X className="h-3 w-3" />
                 <span className="sr-only">Remove</span>
@@ -103,10 +108,11 @@ export function MultiAssigneeSelect({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn("w-full justify-between", !selectedUserIds.length && "text-muted-foreground")}
+            className={cn("w-full justify-between", !safeSelectedUserIds.length && "text-muted-foreground")}
+            type="button"
           >
-            {selectedUserIds.length > 0
-              ? `${selectedUserIds.length} team member${selectedUserIds.length > 1 ? 's' : ''} selected`
+            {safeSelectedUserIds.length > 0
+              ? `${safeSelectedUserIds.length} team member${safeSelectedUserIds.length > 1 ? 's' : ''} selected`
               : placeholder}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -116,7 +122,7 @@ export function MultiAssigneeSelect({
             <CommandInput placeholder="Search team members..." />
             <CommandEmpty>No team member found.</CommandEmpty>
             <CommandGroup>
-              {users.map((user) => (
+              {safeUsers.map((user) => (
                 <CommandItem
                   key={user.id}
                   value={getUserDisplayName(user)}
@@ -133,7 +139,7 @@ export function MultiAssigneeSelect({
                   <Check
                     className={cn(
                       "ml-auto h-4 w-4",
-                      selectedUserIds.includes(user.id) ? "opacity-100" : "opacity-0"
+                      safeSelectedUserIds.includes(user.id) ? "opacity-100" : "opacity-0"
                     )}
                   />
                 </CommandItem>
