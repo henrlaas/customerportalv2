@@ -10,6 +10,12 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { Edit2, Trash2, Send } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+type ProfileData = {
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+}
+
 type Comment = {
   id: string;
   task_id: string;
@@ -17,11 +23,7 @@ type Comment = {
   content: string;
   created_at: string;
   updated_at: string;
-  profiles?: {
-    first_name: string | null;
-    last_name: string | null;
-    avatar_url: string | null;
-  }
+  profiles?: ProfileData | null;
 };
 
 type TaskCommentsProps = {
@@ -71,7 +73,8 @@ export const TaskComments = ({ taskId }: TaskCommentsProps) => {
         return [];
       }
       
-      return data as Comment[];
+      // Type assertion to handle the profiles relation
+      return (data as unknown) as Comment[];
     },
     enabled: !!taskId
   });

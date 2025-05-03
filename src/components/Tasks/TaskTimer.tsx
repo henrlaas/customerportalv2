@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +20,12 @@ import { TimeEntryForm } from '../TimeTracking/TimeEntryForm';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
+type ProfileData = {
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+}
+
 type TimeEntry = {
   id: string;
   user_id: string;
@@ -30,11 +35,7 @@ type TimeEntry = {
   description: string | null;
   is_running: boolean | null;
   created_at: string;
-  profiles?: {
-    first_name: string | null;
-    last_name: string | null;
-    avatar_url: string | null;
-  }
+  profiles?: ProfileData | null;
 };
 
 type TaskTimerProps = {
@@ -85,7 +86,8 @@ export const TaskTimer = ({ taskId }: TaskTimerProps) => {
         return [];
       }
       
-      return data as TimeEntry[];
+      // Type assertion to handle the profiles relation
+      return (data as unknown) as TimeEntry[];
     },
     enabled: !!taskId
   });
@@ -265,11 +267,11 @@ export const TaskTimer = ({ taskId }: TaskTimerProps) => {
               <DialogTitle>Add Time Entry</DialogTitle>
             </DialogHeader>
             <TimeEntryForm
-              onSuccess={() => {
+              initialTaskId={taskId}
+              onComplete={() => {
                 setIsAddTimeDialogOpen(false);
                 queryClient.invalidateQueries({ queryKey: ['taskTimeEntries', taskId] });
               }}
-              initialTaskId={taskId}
             />
           </DialogContent>
         </Dialog>
