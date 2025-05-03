@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +14,7 @@ import { CompanyCardView } from '@/components/Companies/CompanyCardView';
 import { Company } from '@/types/company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
+import { toast } from '@/components/ui/use-toast';
 
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -24,15 +26,25 @@ const CompaniesPage = () => {
   const { isAdmin, isEmployee } = useAuth();
   const navigate = useNavigate();
   
-  // Fetch companies - use fetchCompanies
-  const { data: companies = [], isLoading } = useQuery({
+  // Fetch companies
+  const { data: companies = [], isLoading, error } = useQuery({
     queryKey: ['companies'],
     queryFn: companyService.fetchCompanies,
   });
+
+  // Show error toast if fetching companies fails
+  if (error) {
+    console.error("Error loading companies:", error);
+    toast({
+      title: "Error loading companies",
+      description: "There was a problem loading your companies. Please try again.",
+      variant: "destructive",
+    });
+  }
   
   // Filter companies by search query, type, and parent status
   const filteredCompanies = companies.filter(company => {
-    const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (company.address && company.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.country && company.country.toLowerCase().includes(searchQuery.toLowerCase()));
