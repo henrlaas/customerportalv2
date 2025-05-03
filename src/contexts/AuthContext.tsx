@@ -9,6 +9,11 @@ type UserProfile = {
   last_name: string | null;
   role: string;
   is_client?: boolean;
+  is_admin?: boolean;
+  is_employee?: boolean;
+  language?: string;
+  avatar_url?: string;
+  phone_number?: string;
 };
 
 type AuthContextType = {
@@ -16,6 +21,11 @@ type AuthContextType = {
   profile: UserProfile | null;
   session: Session | null;
   loading: boolean;
+  isAdmin: boolean;
+  isEmployee: boolean;
+  isClient: boolean;
+  language: string;
+  setLanguage: (lang: string) => void;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -40,6 +50,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [language, setLanguage] = useState<string>('en');
 
   useEffect(() => {
     const getSession = async () => {
@@ -81,7 +92,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name, role, is_client')
+      .select('id, first_name, last_name, role, is_client, language, avatar_url, phone_number')
       .eq('id', userId)
       .single();
     
@@ -90,7 +101,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return;
     }
     
-    setProfile(data);
+    // Determine user roles based on profile data
+    const userData = {
+      ...data,
+      is_admin: data.role === 'admin',
+      is_employee: ['admin', 'employee', 'manager'].includes(data.role),
+    };
+    
+    setProfile(userData);
+    
+    // Set language from profile if available
+    if (userData.language) {
+      setLanguage(userData.language);
+    }
   };
 
   const signIn = async (email: string, password: string) => {
@@ -115,11 +138,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     await supabase.auth.signOut();
   };
 
+  // Determine role-based flags
+  const isAdmin = profile?.is_admin || false;
+  const isEmployee = profile?.is_employee || false;
+  const isClient = profile?.is_client || false;
+
   const value = {
     user,
     profile,
     session,
     loading,
+    isAdmin,
+    isEmployee,
+    isClient,
+    language,
+    setLanguage,
     signIn,
     signUp,
     signOut,

@@ -16,7 +16,7 @@ export const ClientProtectedRoute = () => {
   }
 
   // Check if user is a client
-  if (profile && profile.role !== 'client') {
+  if (profile && !profile.is_client) {
     return <Navigate to="/unauthorized" replace />;
   }
 

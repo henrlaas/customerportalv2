@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from "./components/providers/ThemeProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 
 import Auth from './pages/Auth';
@@ -11,8 +11,8 @@ import Dashboard from './pages/Dashboard';
 import CompaniesPage from './pages/CompaniesPage';
 import CompanyDetailsPage from './pages/CompanyDetailsPage';
 import CampaignsPage from './pages/CampaignsPage';
-import CampaignDetailsPage from './pages/CampaignDetailsPage';
-import AdSetDetailsPage from './pages/AdSetDetailsPage';
+import { CampaignDetailsPage } from './pages/CampaignDetailsPage';
+import { AdSetDetailsPage } from './pages/AdSetDetailsPage';
 import AdDetailsPage from './pages/AdDetailsPage';
 import DealsPage from './pages/DealsPage';
 import TimeTrackingPage from './pages/TimeTrackingPage';
