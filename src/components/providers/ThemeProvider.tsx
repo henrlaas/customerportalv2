@@ -10,13 +10,13 @@ interface ThemeProviderProps {
   attribute?: string;
 }
 
-export function ThemeProvider({ 
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ 
   children,
   defaultTheme = "light",
   storageKey = "theme",
   enableSystem = true,
   attribute = "class"
-}: ThemeProviderProps) {
+}) => {
   return (
     <NextThemesProvider 
       attribute={attribute} 
@@ -27,6 +27,6 @@ export function ThemeProvider({
       {children}
     </NextThemesProvider>
   );
-}
+};
 
 export default ThemeProvider;

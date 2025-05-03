@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSidebarItems } from './SidebarItems';
@@ -11,32 +10,20 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Logo } from './Logo';
-import { Button } from '@/components/ui/button';
 
 export const Sidebar: React.FC = () => {
-  const { state, toggleSidebar } = useSidebar();
   const location = useLocation();
-  const { isAdmin, isEmployee } = useAuth();
+  const { isAdmin, isEmployee, profile } = useAuth();
   const sidebarItems = getSidebarItems();
-  const isExpanded = state === 'expanded';
 
   return (
-    <ShadcnSidebar variant="sidebar" collapsible="icon" className="border-r bg-sidebar">
-      <SidebarHeader className="p-4 flex items-center justify-center">
-        {isExpanded && <Logo className="mr-auto" />}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleSidebar} 
-          className={`text-sidebar-foreground hover:bg-sidebar-accent rounded-full ${isExpanded ? 'ml-auto' : 'mx-auto'}`}
-        >
-          {isExpanded ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-        </Button>
+    <ShadcnSidebar className="border-r bg-white">
+      <SidebarHeader className="p-4">
+        <Logo />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -49,21 +36,21 @@ export const Sidebar: React.FC = () => {
               >
                 <Link 
                   to={item.href} 
-                  className={`flex items-center gap-3 px-4 py-3.5 text-base font-medium rounded-xl transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg ${
                     location.pathname === item.href 
-                      ? 'bg-sidebar-accent text-sidebar-foreground' 
-                      : 'text-sidebar-foreground hover:bg-sidebar-accent/70'
-                  } ${!isExpanded ? 'justify-center' : ''}`}
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
                 >
-                  <item.icon className={`h-6 w-6 ${location.pathname === item.href ? 'text-sidebar-foreground' : 'text-sidebar-foreground/80'}`} />
-                  {isExpanded && <span className="text-lg">{item.title}</span>}
+                  <item.icon className={`h-5 w-5 ${location.pathname === item.href ? 'text-blue-600' : 'text-gray-500'}`} />
+                  <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border p-4 mt-auto">
+      <SidebarFooter className="border-t p-4 mt-auto">
         <SidebarMenuButton 
           asChild
           isActive={location.pathname === '/settings'}
@@ -71,14 +58,14 @@ export const Sidebar: React.FC = () => {
         >
           <Link 
             to="/settings" 
-            className={`flex items-center gap-3 px-4 py-3.5 text-base font-medium rounded-xl transition-all duration-200 ${
+            className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg ${
               location.pathname === '/settings' 
-                ? 'bg-sidebar-accent text-sidebar-foreground' 
-                : 'text-sidebar-foreground hover:bg-sidebar-accent/70'
-            } ${!isExpanded ? 'justify-center' : ''}`}
+                ? 'bg-blue-50 text-blue-600' 
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
           >
-            <Settings className={`h-6 w-6 ${location.pathname === '/settings' ? 'text-sidebar-foreground' : 'text-sidebar-foreground/80'}`} />
-            {isExpanded && <span className="text-lg">Settings</span>}
+            <Settings className={`h-5 w-5 ${location.pathname === '/settings' ? 'text-blue-600' : 'text-gray-500'}`} />
+            <span>Settings</span>
           </Link>
         </SidebarMenuButton>
       </SidebarFooter>
