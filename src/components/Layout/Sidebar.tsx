@@ -26,14 +26,14 @@ export const Sidebar: React.FC = () => {
   const isExpanded = state === 'expanded';
 
   return (
-    <ShadcnSidebar className="border-r bg-sidebar">
+    <ShadcnSidebar variant="sidebar" collapsible="icon" className="border-r bg-sidebar">
       <SidebarHeader className={`p-4 flex items-center justify-between ${isExpanded ? 'px-4' : 'px-2'}`}>
-        <Logo />
+        {isExpanded && <Logo />}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar} 
-          className="text-sidebar-foreground hover:bg-sidebar-accent rounded-full"
+          className="text-sidebar-foreground hover:bg-sidebar-accent rounded-full ml-auto"
         >
           {isExpanded ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
         </Button>

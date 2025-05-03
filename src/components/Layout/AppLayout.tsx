@@ -18,7 +18,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-secondary">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="p-8 rounded-xl bg-white shadow-playful">
           <div className="animate-pulse flex flex-col items-center">
             <div className="h-16 w-16 bg-primary/20 rounded-full mb-4"></div>
@@ -32,7 +32,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-secondary">
+      <div className="flex h-screen w-full bg-background">
         <Sidebar />
         <SidebarInset className="flex-1 overflow-hidden">
           <div className="flex-1 overflow-auto">

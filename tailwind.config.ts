@@ -36,7 +36,7 @@ export default {
           dark: '#003330',
         },
         secondary: {
-          DEFAULT: '#E4EDED',
+          DEFAULT: '#FFFFFF',
           foreground: '#333333',
         },
         accent: {
