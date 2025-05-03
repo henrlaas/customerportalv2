@@ -4,19 +4,14 @@ import { Check, ChevronsUpDown, X, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type User = {
   id: string;
@@ -41,6 +36,7 @@ export function MultiAssigneeSelect({
   placeholder = "Select team members..."
 }: MultiAssigneeSelectProps) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Ensure users and selectedUserIds are always arrays
   const safeUsers = Array.isArray(users) ? users : [];
@@ -69,6 +65,12 @@ export function MultiAssigneeSelect({
     const last = user.last_name?.[0] || '';
     return (first + last).toUpperCase() || 'U';
   };
+
+  // Filter users based on search query
+  const filteredUsers = safeUsers.filter(user => {
+    const displayName = getUserDisplayName(user).toLowerCase();
+    return displayName.includes(searchQuery.toLowerCase());
+  });
 
   const selectedUsers = safeUsers.filter(user => safeSelectedUserIds.includes(user.id));
 
@@ -117,35 +119,39 @@ export function MultiAssigneeSelect({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
-          <Command>
-            <CommandInput placeholder="Search team members..." />
-            <CommandEmpty>No team member found.</CommandEmpty>
-            <CommandGroup>
-              {safeUsers.map((user) => (
-                <CommandItem
-                  key={user.id}
-                  value={getUserDisplayName(user)}
-                  onSelect={() => {
-                    handleSelect(user.id);
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={user.avatar_url || undefined} />
-                    <AvatarFallback className="text-xs">{getInitials(user)}</AvatarFallback>
-                  </Avatar>
-                  {getUserDisplayName(user)}
-                  <Check
-                    className={cn(
-                      "ml-auto h-4 w-4",
-                      safeSelectedUserIds.includes(user.id) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
+        <PopoverContent className="w-[300px] p-0" align="start">
+          <div className="p-2">
+            <Input
+              placeholder="Search team members..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="mb-2"
+            />
+            <ScrollArea className="h-[200px]">
+              <div className="p-1">
+                {filteredUsers.length === 0 ? (
+                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">No team member found.</div>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
+                      onClick={() => handleSelect(user.id)}
+                    >
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs">{getInitials(user)}</AvatarFallback>
+                      </Avatar>
+                      {getUserDisplayName(user)}
+                      {safeSelectedUserIds.includes(user.id) && (
+                        <Check className="ml-auto h-4 w-4" />
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </div>
         </PopoverContent>
       </Popover>
     </div>
