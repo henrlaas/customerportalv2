@@ -21,7 +21,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen w-full bg-white">
         <Sidebar />
         <SidebarInset className="flex-1">
