@@ -3,18 +3,17 @@ import React from 'react';
 
 type LogoProps = {
   className?: string;
-  showText?: boolean;
+  collapsed?: boolean;
 };
 
-export const Logo: React.FC<LogoProps> = ({ className = '', showText = true }) => {
+export const Logo: React.FC<LogoProps> = ({ className = '', collapsed = false }) => {
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
+    <div className={`flex items-center justify-center ${className} ${collapsed ? 'scale-90' : ''}`}>
       <img 
-        src="/lovable-uploads/d7b0c9d2-fac0-45d7-8f1f-0f8977a6ced2.png" 
-        alt="BOX Logo" 
-        className="h-8"
+        src="/lovable-uploads/56893e30-62e8-48f3-9577-a746295658f4.png" 
+        alt="Box Logo" 
+        className={`h-8 w-auto animate-pulse-gentle ${collapsed ? 'mx-auto' : ''}`}
       />
-      {showText && <h1 className="text-xl font-bold text-gray-800">Workspace</h1>}
     </div>
   );
 };
