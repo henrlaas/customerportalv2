@@ -1,92 +1,88 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '../integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
-import { useNavigate, useLocation } from 'react-router-dom';
 
-// Define types for profile data
-type Profile = {
+type UserProfile = {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  avatar_url: string | null;
-  role: 'admin' | 'employee' | 'client';
-  language: string;
-  created_at: string;
-  updated_at: string;
-  phone_number: string | null;
-}
+  role: string;
+  is_client?: boolean;
+  is_admin?: boolean;
+  is_employee?: boolean;
+  language?: string;
+  avatar_url?: string;
+  phone_number?: string;
+};
 
 type AuthContextType = {
-  session: Session | null;
   user: User | null;
-  profile: Profile | null;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signOut: () => Promise<void>;
+  profile: UserProfile | null;
+  session: Session | null;
   loading: boolean;
   isAdmin: boolean;
   isEmployee: boolean;
   isClient: boolean;
   language: string;
-  setLanguage: (lang: string) => Promise<void>;
+  setLanguage: (lang: string) => void;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
+type AuthProviderProps = {
+  children: ReactNode;
+};
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [language, setLanguage] = useState<string>('en');
 
   useEffect(() => {
-    // First set up the auth state listener
+    const getSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error getting session:', error);
+      }
+      
+      setSession(session);
+      setUser(session?.user || null);
+      setLoading(false);
+      
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+    };
+
+    getSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        console.log("Auth state changed:", event);
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+      async (_event, session) => {
+        setSession(session);
+        setUser(session?.user || null);
         
-        if (currentSession?.user) {
-          // Fetch user profile in a separate execution context to avoid Supabase auth deadlock
-          setTimeout(async () => {
-            await fetchProfile(currentSession.user.id);
-          }, 0);
+        if (session?.user) {
+          fetchProfile(session.user.id);
         } else {
           setProfile(null);
         }
       }
     );
-
-    // Then check for existing session
-    const initializeAuth = async () => {
-      try {
-        setLoading(true);
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
-        
-        if (initialSession?.user) {
-          await fetchProfile(initialSession.user.id);
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
 
     return () => {
       subscription.unsubscribe();
@@ -94,104 +90,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId as any)
-        .single() as { data: Profile | null, error: any };
-
-      if (error) throw error;
-      console.log("Fetched profile:", data);
-      setProfile(data);
-    } catch (error: any) {
-      console.error('Error fetching profile:', error.message);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, role, is_client, language, avatar_url, phone_number')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching profile:', error);
+      return;
+    }
+    
+    // Determine user roles based on profile data
+    const userData = {
+      ...data,
+      is_admin: data.role === 'admin',
+      is_employee: ['admin', 'employee', 'manager'].includes(data.role),
+    };
+    
+    setProfile(userData);
+    
+    // Set language from profile if available
+    if (userData.language) {
+      setLanguage(userData.language);
     }
   };
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      return { error: null };
-    } catch (error: any) {
-      console.error('Error signing in:', error.message);
-      toast({
-        title: 'Sign in failed',
-        description: error.message,
-        variant: 'destructive'
-      });
-      return { error };
-    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    return { error };
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    
+    return { error };
   };
 
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: 'Signed out',
-        description: 'You have been successfully signed out',
-      });
-    } catch (error: any) {
-      console.error('Error signing out:', error.message);
-      toast({
-        title: 'Sign out failed',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
+    await supabase.auth.signOut();
   };
 
-  const setLanguage = async (lang: string) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ language: lang } as any)
-        .eq('id', user.id as any) as { data: any, error: any };
-      
-      if (error) throw error;
-      
-      // Update local profile state
-      setProfile((prev) => prev ? { ...prev, language: lang } : null);
-      
-      toast({
-        title: 'Language updated',
-        description: `Interface language set to ${lang === 'en' ? 'English' : 'Norwegian'}`,
-      });
-    } catch (error: any) {
-      console.error('Error updating language:', error.message);
-      toast({
-        title: 'Failed to update language',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const isAdmin = profile?.role === 'admin';
-  const isEmployee = profile?.role === 'employee';
-  const isClient = profile?.role === 'client';
-  const language = profile?.language || 'en';
+  // Determine role-based flags
+  const isAdmin = profile?.is_admin || false;
+  const isEmployee = profile?.is_employee || false;
+  const isClient = profile?.is_client || false;
 
   const value = {
-    session,
     user,
     profile,
-    signIn,
-    signOut,
+    session,
     loading,
     isAdmin,
     isEmployee,
     isClient,
     language,
-    setLanguage
+    setLanguage,
+    signIn,
+    signUp,
+    signOut,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

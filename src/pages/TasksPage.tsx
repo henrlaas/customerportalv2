@@ -86,8 +86,6 @@ export const TasksPage = () => {
   const queryClient = useQueryClient();
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
   const [filters, setFilters] = useState({
     status: 'all',
     priority: 'all',
@@ -96,6 +94,10 @@ export const TasksPage = () => {
     campaign: 'all',
   });
   const [showFilters, setShowFilters] = useState(false);
+  
+  // State for task detail sheet
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
   
   // Fetch tasks with filtering
   const { data: tasks = [], isLoading: isLoadingTasks } = useQuery({
@@ -161,7 +163,7 @@ export const TasksPage = () => {
     },
   });
 
-  // Fetch campaigns for filtering and task creation
+  // Fetch campaigns for filtering
   const { data: campaigns = [] } = useQuery({
     queryKey: ['campaigns'],
     queryFn: async () => {
@@ -183,7 +185,7 @@ export const TasksPage = () => {
     },
   });
   
-  // Function to handle task click to open task detail sheet
+  // Function to handle task click to show detail sheet
   const handleTaskClick = (taskId: string) => {
     setSelectedTaskId(taskId);
     setIsTaskSheetOpen(true);
@@ -410,9 +412,9 @@ export const TasksPage = () => {
       
       {/* Task Detail Sheet */}
       <TaskDetailSheet 
+        isOpen={isTaskSheetOpen} 
+        onOpenChange={setIsTaskSheetOpen} 
         taskId={selectedTaskId} 
-        open={isTaskSheetOpen} 
-        onOpenChange={setIsTaskSheetOpen}
       />
     </div>
   );

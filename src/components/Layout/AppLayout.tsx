@@ -7,9 +7,10 @@ import {
   SidebarProvider, 
   SidebarInset
 } from '@/components/ui/sidebar';
+import { Outlet } from 'react-router-dom';
 
-type AppLayoutProps = {
-  children: React.ReactNode;
+export type AppLayoutProps = {
+  children?: React.ReactNode;
 };
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
@@ -26,7 +27,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <SidebarInset className="flex-1">
           <div className="flex-1 overflow-auto">
             <TopBar />
-            <main className="w-full overflow-x-hidden">{children}</main>
+            <main className="w-full overflow-x-hidden">
+              {children || <Outlet />}
+            </main>
           </div>
         </SidebarInset>
       </div>

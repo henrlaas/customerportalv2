@@ -1,55 +1,51 @@
 
-// Update the imports section by adding the X icon
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
-  SheetFooter,
   SheetClose,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger
-} from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  CalendarIcon,
-  CheckCircle2,
-  Clock,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Calendar,
+  User,
   Edit,
   Trash2,
-  Users,
-  Tag,
-  MoreHorizontal,
-  MessageSquare,
-  Paperclip,
-  PlayCircle,
-  PauseCircle,
-  CheckSquare,
-  Square,
-  Plus,
+  Share,
+  Clock3,
+  FileText,
+  Link as LinkIcon,
+  Eye,
+  EyeOff,
   X,
-} from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { TaskForm } from './TaskForm';
-import { TaskTimer } from './TaskTimer';
-import { TaskAttachments } from './TaskAttachments';
-import { TaskComments } from './TaskComments';
-import { SubtasksList } from './SubtasksList';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+  CheckCircle
+} from "lucide-react";
+import { TaskForm } from "@/components/Tasks/TaskForm";
+import { TaskAttachments } from "@/components/Tasks/TaskAttachments";
+import { TaskTimer } from "@/components/Tasks/TaskTimer";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+
+type TaskDetailSheetProps = {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  taskId: string | null;
+};
 
 type Task = {
   id: string;
@@ -59,36 +55,37 @@ type Task = {
   priority: 'low' | 'medium' | 'high';
   due_date: string | null;
   campaign_id: string | null;
+  assigned_to: string | null;
+  created_by: string | null;
   creator_id: string | null;
+  created_at: string;
+  updated_at: string;
   client_visible: boolean | null;
   related_type: string | null;
-  project_id: string | null;
-  department: string | null;
-  estimated_time: number | null;
 };
 
-type TaskDetailSheetProps = {
-  taskId: string | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+type Contact = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
 };
 
-export const TaskDetailSheet = ({ taskId, open, onOpenChange }: TaskDetailSheetProps) => {
+type Campaign = {
+  id: string;
+  name: string;
+};
+
+export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailSheetProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
-  const [timeTracking, setTimeTracking] = useState<{isRunning: boolean, entryId: string | null}>({
-    isRunning: false,
-    entryId: null
-  });
-
+  
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("details");
+  
   // Fetch task details
-  const { 
-    data: task, 
-    isLoading: isLoadingTask,
-    refetch: refetchTask
-  } = useQuery({
+  const { data: task, isLoading: isLoadingTask } = useQuery({
     queryKey: ['task', taskId],
     queryFn: async () => {
       if (!taskId) return null;
@@ -98,7 +95,7 @@ export const TaskDetailSheet = ({ taskId, open, onOpenChange }: TaskDetailSheetP
         .select('*')
         .eq('id', taskId)
         .single();
-      
+        
       if (error) {
         toast({
           title: 'Error fetching task',
@@ -110,225 +107,72 @@ export const TaskDetailSheet = ({ taskId, open, onOpenChange }: TaskDetailSheetP
       
       return data as Task;
     },
-    enabled: !!taskId && open
+    enabled: !!taskId && isOpen,
   });
-
-  // Fetch task assignees
-  const { data: assignees = [] } = useQuery({
-    queryKey: ['taskAssignees', taskId],
+  
+  // Fetch profiles
+  const { data: profiles = [] } = useQuery({
+    queryKey: ['profiles'],
     queryFn: async () => {
-      if (!taskId) return [];
-      
       const { data, error } = await supabase
-        .from('task_assignees')
-        .select('user_id, profiles:user_id(id, first_name, last_name, avatar_url)')
-        .eq('task_id', taskId);
+        .from('profiles')
+        .select('id, first_name, last_name');
       
       if (error) {
         toast({
-          title: 'Error fetching assignees',
+          title: 'Error fetching profiles',
           description: error.message,
           variant: 'destructive',
         });
         return [];
       }
       
-      return data.map(item => item.profiles);
+      return data as Contact[];
     },
-    enabled: !!taskId && open
   });
-
-  // Fetch creator details
-  const { data: creator } = useQuery({
-    queryKey: ['taskCreator', task?.creator_id],
+  
+  // Fetch campaigns
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ['campaigns'],
     queryFn: async () => {
-      if (!task?.creator_id) return null;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
-        .eq('id', task.creator_id)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching creator:', error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!task?.creator_id && open
-  });
-
-  // Fetch campaign details if related
-  const { data: campaign } = useQuery({
-    queryKey: ['taskCampaign', task?.campaign_id],
-    queryFn: async () => {
-      if (!task?.campaign_id) return null;
-      
       const { data, error } = await supabase
         .from('campaigns')
-        .select('id, name')
-        .eq('id', task.campaign_id)
-        .single();
+        .select('id, name');
       
       if (error) {
-        console.error('Error fetching campaign:', error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!task?.campaign_id && open
-  });
-
-  // Check for active time entries
-  useEffect(() => {
-    const checkActiveTimeEntries = async () => {
-      if (!taskId) return;
-      
-      const { data, error } = await supabase
-        .from('time_entries')
-        .select('*')
-        .eq('task_id', taskId)
-        .eq('is_running', true)
-        .limit(1);
-      
-      if (error) {
-        console.error('Error checking active time entries:', error);
-        return;
-      }
-      
-      if (data && data.length > 0) {
-        setTimeTracking({
-          isRunning: true,
-          entryId: data[0].id
+        toast({
+          title: 'Error fetching campaigns',
+          description: error.message,
+          variant: 'destructive',
         });
-      } else {
-        setTimeTracking({
-          isRunning: false,
-          entryId: null
-        });
-      }
-    };
-    
-    if (open && taskId) {
-      checkActiveTimeEntries();
-    }
-  }, [taskId, open]);
-
-  // Toggle time tracking
-  const toggleTimeTracking = async () => {
-    if (!taskId) return;
-    
-    try {
-      if (timeTracking.isRunning && timeTracking.entryId) {
-        // Stop tracking
-        const { error } = await supabase
-          .from('time_entries')
-          .update({
-            end_time: new Date().toISOString(),
-            is_running: false
-          })
-          .eq('id', timeTracking.entryId);
-        
-        if (error) throw error;
-        
-        setTimeTracking({ isRunning: false, entryId: null });
-        toast({ title: 'Time tracking stopped' });
-      } else {
-        // Start tracking
-        const { data: userSession } = await supabase.auth.getSession();
-        const userId = userSession.session?.user?.id;
-        
-        if (!userId) {
-          toast({ 
-            title: 'Authentication required', 
-            description: 'You must be logged in to track time',
-            variant: 'destructive' 
-          });
-          return;
-        }
-        
-        const { data, error } = await supabase
-          .from('time_entries')
-          .insert({
-            task_id: taskId,
-            user_id: userId,
-            start_time: new Date().toISOString(),
-            is_running: true
-          })
-          .select()
-          .single();
-        
-        if (error) throw error;
-        
-        setTimeTracking({ isRunning: true, entryId: data.id });
-        toast({ title: 'Time tracking started' });
+        return [];
       }
       
-      queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
-    } catch (error: any) {
-      toast({ 
-        title: 'Error tracking time', 
-        description: error.message,
-        variant: 'destructive' 
-      });
-    }
-  };
-
-  // Handle task status update
-  const updateTaskStatus = useMutation({
-    mutationFn: async (newStatus: 'todo' | 'in_progress' | 'completed') => {
-      if (!taskId) return;
-      
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: newStatus })
-        .eq('id', taskId);
-      
-      if (error) throw error;
-      
-      return newStatus;
+      return data as Campaign[];
     },
-    onSuccess: (newStatus) => {
-      toast({
-        title: 'Task updated',
-        description: `Task status changed to ${newStatus}`
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error updating task',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
   });
-
+  
   // Delete task mutation
-  const deleteTask = useMutation({
+  const deleteTaskMutation = useMutation({
     mutationFn: async () => {
-      if (!taskId) return;
+      if (!taskId) throw new Error('Task ID is missing');
       
       const { error } = await supabase
         .from('tasks')
         .delete()
         .eq('id', taskId);
-      
+        
       if (error) throw error;
+      
+      return true;
     },
     onSuccess: () => {
       toast({
         title: 'Task deleted',
-        description: 'The task has been deleted successfully'
+        description: 'The task has been deleted successfully',
       });
-      
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
     onError: (error: any) => {
       toast({
@@ -336,298 +180,395 @@ export const TaskDetailSheet = ({ taskId, open, onOpenChange }: TaskDetailSheetP
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
-
-  // Get initials for avatar
-  const getInitials = (firstName?: string | null, lastName?: string | null) => {
-    const first = firstName?.[0] || '';
-    const last = lastName?.[0] || '';
-    return (first + last).toUpperCase() || 'U';
+  
+  // Toggle client visibility mutation
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: async () => {
+      if (!taskId || !task) throw new Error('Task ID or data is missing');
+      
+      const { error } = await supabase
+        .from('tasks')
+        .update({ client_visible: !task.client_visible })
+        .eq('id', taskId);
+        
+      if (error) throw error;
+      
+      return {
+        ...task,
+        client_visible: !task.client_visible
+      };
+    },
+    onSuccess: (updatedTask) => {
+      queryClient.setQueryData(['task', taskId], updatedTask);
+      toast({
+        title: 'Visibility updated',
+        description: `Task is now ${updatedTask.client_visible ? 'visible' : 'hidden'} to clients`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error updating visibility',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+  
+  // Update task status mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async (newStatus: 'todo' | 'in_progress' | 'completed') => {
+      if (!taskId) throw new Error('Task ID is missing');
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      return data as Task;
+    },
+    onSuccess: (updatedTask) => {
+      queryClient.setQueryData(['task', taskId], updatedTask);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast({
+        title: 'Status updated',
+        description: `Task is now marked as ${updatedTask.status === 'completed' ? 'completed' : updatedTask.status === 'in_progress' ? 'in progress' : 'to do'}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error updating status',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+  
+  // Share task (placeholder for future implementation)
+  const shareTask = () => {
+    // Copy task URL to clipboard
+    navigator.clipboard.writeText(window.location.origin + `/tasks/${taskId}`);
+    toast({
+      title: 'Link copied',
+      description: 'Task link copied to clipboard',
+    });
+    setIsShareDialogOpen(false);
   };
-
-  // Get priority badge color
-  const getPriorityBadge = (priority: string) => {
+  
+  // Helper function to get assignee name
+  const getAssigneeName = (assigneeId: string | null) => {
+    if (!assigneeId) return 'Unassigned';
+    
+    const assignee = profiles.find(p => p.id === assigneeId);
+    return assignee 
+      ? `${assignee.first_name || ''} ${assignee.last_name || ''}`.trim() || 'Unknown User'
+      : 'Unknown User';
+  };
+  
+  // Helper function to get creator name
+  const getCreatorName = (creatorId: string | null) => {
+    if (!creatorId) return 'Unassigned';
+    
+    const creator = profiles.find(p => p.id === creatorId);
+    return creator 
+      ? `${creator.first_name || ''} ${creator.last_name || ''}`.trim() || 'Unknown User'
+      : 'Unknown User';
+  };
+  
+  // Helper function to get campaign name
+  const getCampaignName = (campaignId: string | null) => {
+    if (!campaignId) return null;
+    
+    const campaign = campaigns.find(c => c.id === campaignId);
+    return campaign ? campaign.name : 'Unknown Campaign';
+  };
+  
+  // Helper function for priority badge color
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high':
-        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">High</Badge>;
-      case 'medium':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Medium</Badge>;
-      default:
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Low</Badge>;
+      case 'high': return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default: return 'bg-green-100 text-green-800 border-green-200';
     }
   };
-
-  // Get status badge color
-  const getStatusBadge = (status: string) => {
+  
+  // Helper function for status badge color
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
-      case 'in_progress':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">In Progress</Badge>;
-      default:
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">Todo</Badge>;
+      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
+      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  // Format date
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'No due date';
-    return format(new Date(dateString), 'PP');
+  const handleDelete = () => {
+    deleteTaskMutation.mutate();
   };
 
-  // Handle sheet close
-  const handleSheetClose = () => {
-    setIsEditing(false);
-    onOpenChange(false);
-  };
+  if (isLoadingTask && taskId) {
+    return (
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetContent className="sm:max-w-xl">
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
-  if (!open) return null;
+  if (!task && taskId) {
+    return (
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetContent className="sm:max-w-xl">
+          <div className="flex flex-col items-center justify-center h-full">
+            <h2 className="text-xl font-semibold">Task not found</h2>
+            <p className="text-muted-foreground mt-2">The task you're looking for doesn't exist or has been deleted.</p>
+            <Button className="mt-4" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   return (
-    <Sheet open={open} onOpenChange={handleSheetClose}>
-      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl overflow-y-scroll" side="right">
-        <SheetHeader className="pb-4">
-          <div className="flex justify-between items-start">
-            <div className="flex-1 pr-4">
-              {!isEditing && task ? (
-                <SheetTitle className="text-xl font-bold break-words">{task.title}</SheetTitle>
-              ) : (
-                <div className="h-7 w-3/4 bg-muted animate-pulse rounded"></div>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {!isEditing && task && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-              )}
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {!isEditing && (
-                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
+    <>
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetContent className="sm:max-w-xl overflow-y-auto pb-20" side="right">
+          {task && (
+            <>
+              <SheetHeader className="space-y-2 pb-4 pt-2">
+                <div className="flex justify-between items-start">
+                  <SheetTitle className="text-2xl mr-8">{task.title}</SheetTitle>
+                  <SheetClose asChild>
+                    <Button variant="ghost" size="icon">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </SheetClose>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className={getStatusColor(task.status)}>
+                    {task.status === 'in_progress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                  </Badge>
+                  <Badge variant="outline" className={getPriorityColor(task.priority)}>
+                    {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
+                  </Badge>
+                  {task.client_visible && (
+                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                      Client Visible
+                    </Badge>
                   )}
-                  <DropdownMenuItem 
-                    onClick={() => deleteTask.mutate()}
-                    className="text-red-600 focus:text-red-600"
+                </div>
+              </SheetHeader>
+              
+              <div className="space-y-6">
+                {/* Status toggle buttons */}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={task.status === 'todo' ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => updateStatusMutation.mutate('todo')}
+                    disabled={updateStatusMutation.isPending}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    Todo
+                  </Button>
+                  <Button
+                    variant={task.status === 'in_progress' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => updateStatusMutation.mutate('in_progress')}
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    In Progress
+                  </Button>
+                  <Button
+                    variant={task.status === 'completed' ? "default" : "outline"}
+                    size="sm"
+                    className={task.status === 'completed' ? "bg-green-600 hover:bg-green-700" : ""}
+                    onClick={() => updateStatusMutation.mutate('completed')}
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    <CheckCircle className="mr-1 h-4 w-4" />
+                    Complete
+                  </Button>
+                </div>
+                
+                {/* Action buttons */}
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}>
+                    <Edit className="mr-1 h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => toggleVisibilityMutation.mutate()}>
+                    {task.client_visible ? (
+                      <>
+                        <Eye className="mr-1 h-4 w-4" />
+                        Visible
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="mr-1 h-4 w-4" />
+                        Hidden
+                      </>
+                    )}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setIsShareDialogOpen(true)}>
+                    <Share className="mr-1 h-4 w-4" />
+                    Share
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-red-500 hover:text-red-700" onClick={() => setIsDeleteDialogOpen(true)}>
+                    <Trash2 className="mr-1 h-4 w-4" />
                     Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              <SheetClose className="rounded-full">
-                <X className="h-5 w-5" />
-              </SheetClose>
-            </div>
-          </div>
-          
-          {!isEditing && task && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {getStatusBadge(task.status)}
-              {getPriorityBadge(task.priority)}
-              
-              {task.due_date && (
-                <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-                  <CalendarIcon className="h-3 w-3 mr-1" />
-                  {formatDate(task.due_date)}
-                </Badge>
-              )}
-              
-              {task.campaign_id && campaign && (
-                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                  {campaign.name}
-                </Badge>
-              )}
-              
-              {task.client_visible && (
-                <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-                  Client visible
-                </Badge>
-              )}
-            </div>
-          )}
-        </SheetHeader>
-
-        {isEditing && task ? (
-          <div className="py-4">
-            <TaskForm
-              onSuccess={() => {
-                setIsEditing(false);
-                refetchTask();
-                queryClient.invalidateQueries({ queryKey: ['tasks'] });
-              }}
-              taskId={task.id}
-              initialData={task}
-              profiles={[]}  // We'll populate this from the parent
-              campaigns={[]} // We'll populate this from the parent
-            />
-          </div>
-        ) : (
-          <>
-            {/* Quick actions */}
-            <div className="flex flex-wrap gap-2 my-4">
-              <Button 
-                variant={task?.status === 'todo' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => updateTaskStatus.mutate('todo')}
-                disabled={!task}
-              >
-                <Square className="h-4 w-4 mr-1" />
-                Todo
-              </Button>
-              <Button 
-                variant={task?.status === 'in_progress' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => updateTaskStatus.mutate('in_progress')}
-                disabled={!task}
-              >
-                <Clock className="h-4 w-4 mr-1" />
-                In Progress
-              </Button>
-              <Button 
-                variant={task?.status === 'completed' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => updateTaskStatus.mutate('completed')}
-                disabled={!task}
-              >
-                <CheckSquare className="h-4 w-4 mr-1" />
-                Completed
-              </Button>
-              
-              <Button
-                variant={timeTracking.isRunning ? "destructive" : "default"}
-                size="sm"
-                onClick={toggleTimeTracking}
-                disabled={!task}
-                className="ml-auto"
-              >
-                {timeTracking.isRunning ? (
-                  <>
-                    <PauseCircle className="h-4 w-4 mr-1" />
-                    Stop time
-                  </>
-                ) : (
-                  <>
-                    <PlayCircle className="h-4 w-4 mr-1" />
-                    Start time
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-              <TabsList className="grid grid-cols-4 mb-4">
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="subtasks">Subtasks</TabsTrigger>
-                <TabsTrigger value="comments">Comments</TabsTrigger>
-                <TabsTrigger value="time">Time</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="details" className="space-y-4">
-                {isLoadingTask ? (
-                  <div className="space-y-4">
-                    <div className="h-24 bg-muted animate-pulse rounded"></div>
-                    <div className="h-6 w-1/3 bg-muted animate-pulse rounded"></div>
-                    <div className="h-12 bg-muted animate-pulse rounded"></div>
+                  </Button>
+                </div>
+                
+                {/* Description - always visible above tabs */}
+                {task.description && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
+                    <div className="prose max-w-none text-sm">
+                      <p className="whitespace-pre-wrap">{task.description}</p>
+                    </div>
                   </div>
-                ) : task ? (
-                  <>
-                    {/* Description */}
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Description</h3>
-                      <div className="rounded-md bg-muted/30 p-3 min-h-[100px]">
-                        {task.description || <span className="text-muted-foreground italic">No description</span>}
-                      </div>
-                    </div>
-                    
-                    {/* Assignees */}
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Assignees</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {assignees.length > 0 ? assignees.map((assignee: any) => (
-                          <div key={assignee.id} className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-full">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={assignee.avatar_url || undefined} />
-                              <AvatarFallback>{getInitials(assignee.first_name, assignee.last_name)}</AvatarFallback>
-                            </Avatar>
-                            <span>
-                              {assignee.first_name || ''} {assignee.last_name || ''}
-                            </span>
+                )}
+
+                {/* Tab selector */}
+                <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid grid-cols-3 w-full">
+                    <TabsTrigger value="details">Details</TabsTrigger>
+                    <TabsTrigger value="timeTracking">Time Tracking</TabsTrigger>
+                    <TabsTrigger value="attachments">Attachments</TabsTrigger>
+                  </TabsList>
+                  
+                  {/* Details Tab */}
+                  <TabsContent value="details" className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium text-muted-foreground">Details</h3>
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span>Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</span>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span>Assigned to: {getAssigneeName(task.assigned_to)}</span>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span>Created by: {getCreatorName(task.creator_id)}</span>
+                        </div>
+                        
+                        {task.campaign_id && (
+                          <div className="flex items-center">
+                            <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
+                            <span>Related to campaign: {getCampaignName(task.campaign_id)}</span>
                           </div>
-                        )) : <span className="text-muted-foreground italic">No assignees</span>}
-                      </div>
-                    </div>
-                    
-                    {/* Creator */}
-                    {creator && (
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Creator</h3>
-                        <div className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-full inline-flex">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={creator.avatar_url || undefined} />
-                            <AvatarFallback>{getInitials(creator.first_name, creator.last_name)}</AvatarFallback>
-                          </Avatar>
-                          <span>
-                            {creator.first_name || ''} {creator.last_name || ''}
-                          </span>
+                        )}
+                        
+                        {task.related_type && task.related_type !== 'campaign' && (
+                          <div className="flex items-center">
+                            <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
+                            <span>Related to: {task.related_type}</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center">
+                          <Clock3 className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
-                    )}
-                    
-                    {/* Additional fields */}
-                    {task.estimated_time && (
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Estimated time</h3>
-                        <p>{task.estimated_time} minutes</p>
-                      </div>
-                    )}
-                    
-                    {task.department && (
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Department</h3>
-                        <p>{task.department}</p>
-                      </div>
-                    )}
-                    
-                    <TaskAttachments taskId={task.id} />
-                  </>
-                ) : (
-                  <p className="text-muted-foreground">Task not found</p>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="subtasks">
-                {task && <SubtasksList taskId={task.id} />}
-              </TabsContent>
-              
-              <TabsContent value="comments">
-                {task && <TaskComments taskId={task.id} />}
-              </TabsContent>
-              
-              <TabsContent value="time">
-                {task && <TaskTimer taskId={task.id} />}
-              </TabsContent>
-            </Tabs>
-          </>
-        )}
-      </SheetContent>
-    </Sheet>
+                    </div>
+                  </TabsContent>
+                  
+                  {/* Time Tracking Tab */}
+                  <TabsContent value="timeTracking" className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Time Tracking</h3>
+                      <TaskTimer taskId={task.id} />
+                    </div>
+                  </TabsContent>
+                  
+                  {/* Attachments Tab */}
+                  <TabsContent value="attachments" className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Attachments</h3>
+                      <TaskAttachments taskId={task.id} />
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+      
+      {/* Edit task dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+          </DialogHeader>
+          {task && (
+            <TaskForm 
+              taskId={task.id}
+              initialData={task}
+              profiles={profiles}
+              campaigns={campaigns}
+              onSuccess={() => {
+                setIsEditDialogOpen(false);
+                queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete confirmation dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Delete Task</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>Are you sure you want to delete this task? This action cannot be undone.</p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteTaskMutation.isPending}>
+              {deleteTaskMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Share dialog */}
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Share Task</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>Share this task with your team or clients by copying the link:</p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button onClick={shareTask}>
+              Copy Link
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
+
+export default TaskDetailSheet;

@@ -1,79 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { format, formatDistance, formatDistanceStrict } from 'date-fns';
-import { calculateDuration } from '@/utils/timeUtils';
-import { Play, Pause, Clock, Trash2, Plus, Calendar } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { TimeEntryForm } from '../TimeTracking/TimeEntryForm';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Clock, Play, Pause, Save } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-type ProfileData = {
-  first_name: string | null;
-  last_name: string | null;
-  avatar_url: string | null;
+interface TaskTimerProps {
+  taskId: string;
 }
 
 type TimeEntry = {
   id: string;
   user_id: string;
   task_id: string;
+  description: string | null;
   start_time: string;
   end_time: string | null;
-  description: string | null;
-  is_running: boolean | null;
   created_at: string;
-  profiles?: ProfileData | null;
 };
 
-type TaskTimerProps = {
-  taskId: string;
-};
-
-export const TaskTimer = ({ taskId }: TaskTimerProps) => {
+export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [activeTimeEntry, setActiveTimeEntry] = useState<TimeEntry | null>(null);
-  const [elapsedTime, setElapsedTime] = useState<string>('00:00:00');
-  const [isAddTimeDialogOpen, setIsAddTimeDialogOpen] = useState(false);
-  const [totalTrackedTime, setTotalTrackedTime] = useState<string>('00:00:00');
-
-  // Get current user
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      setCurrentUserId(data.session?.user.id || null);
-    };
-    getCurrentUser();
-  }, []);
-
-  // Fetch time entries
-  const { data: timeEntries = [], isLoading } = useQuery({
-    queryKey: ['taskTimeEntries', taskId],
+  
+  const [isRunning, setIsRunning] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const [activeEntry, setActiveEntry] = useState<any>(null);
+  const [description, setDescription] = useState('');
+  
+  // Fetch time entries for this task
+  const { data: timeEntries = [] } = useQuery({
+    queryKey: ['time-entries', taskId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('time_entries')
-        .select(`
-          *,
-          profiles:user_id (
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('task_id', taskId)
         .order('start_time', { ascending: false });
       
@@ -86,96 +51,97 @@ export const TaskTimer = ({ taskId }: TaskTimerProps) => {
         return [];
       }
       
-      // Type assertion to handle the profiles relation
-      return (data as unknown) as TimeEntry[];
+      return data as TimeEntry[];
     },
-    enabled: !!taskId
   });
-
-  // Calculate total time tracked
+  
+  // Check for active (running) time entries
   useEffect(() => {
-    if (timeEntries.length > 0) {
-      let totalSeconds = 0;
-      
-      timeEntries.forEach(entry => {
-        if (entry.start_time && entry.end_time) {
-          const start = new Date(entry.start_time);
-          const end = new Date(entry.end_time);
-          const diffInSeconds = (end.getTime() - start.getTime()) / 1000;
-          totalSeconds += diffInSeconds;
-        }
-      });
-      
-      // Format total time
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = Math.floor(totalSeconds % 60);
-      
-      setTotalTrackedTime(
-        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-      );
-    }
-  }, [timeEntries]);
-
-  // Check for active time entry
-  useEffect(() => {
-    const activeEntry = timeEntries.find(entry => entry.is_running && !entry.end_time);
-    setActiveTimeEntry(activeEntry || null);
-  }, [timeEntries]);
-
-  // Update elapsed time for active timer
-  useEffect(() => {
-    if (activeTimeEntry && activeTimeEntry.start_time) {
-      const interval = setInterval(() => {
-        const startTime = new Date(activeTimeEntry.start_time);
-        const now = new Date();
-        const diffInSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+    const checkForActiveTimer = async () => {
+      const { data: activeData, error } = await supabase
+        .from('time_entries')
+        .select('*')
+        .is('end_time', null)
+        .eq('task_id', taskId)
+        .maybeSingle();
         
-        // Format time
-        const hours = Math.floor(diffInSeconds / 3600);
-        const minutes = Math.floor((diffInSeconds % 3600) / 60);
-        const seconds = Math.floor(diffInSeconds % 60);
+      if (error) {
+        console.error('Error checking for active timer:', error);
+        return;
+      }
+      
+      if (activeData) {
+        setIsRunning(true);
+        setActiveEntry(activeData);
         
-        setElapsedTime(
-          `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-        );
+        // Calculate elapsed time
+        const startTime = new Date(activeData.start_time).getTime();
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+        setSeconds(elapsedSeconds);
+      }
+    };
+    
+    checkForActiveTimer();
+  }, [taskId]);
+  
+  // Timer logic
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    
+    if (isRunning) {
+      interval = setInterval(() => {
+        setSeconds(prev => prev + 1);
       }, 1000);
-      
-      return () => clearInterval(interval);
-    } else {
-      setElapsedTime('00:00:00');
     }
-  }, [activeTimeEntry]);
-
+    
+    return () => clearInterval(interval);
+  }, [isRunning]);
+  
   // Start timer mutation
-  const startTimer = useMutation({
+  const startTimerMutation = useMutation({
     mutationFn: async () => {
+      // Check if there's another active timer first
+      const { data: existingTimer, error: checkError } = await supabase
+        .from('time_entries')
+        .select('id')
+        .is('end_time', null)
+        .limit(1)
+        .maybeSingle();
+        
+      if (checkError) throw checkError;
+      
+      if (existingTimer) {
+        throw new Error('You already have an active timer');
+      }
+
+      // Get current user ID for the time entry
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user?.id;
       
       if (!userId) {
-        throw new Error("User not authenticated");
+        throw new Error('User not authenticated');
       }
       
+      // Create new time entry
       const { data, error } = await supabase
         .from('time_entries')
         .insert({
           task_id: taskId,
-          user_id: userId,
           start_time: new Date().toISOString(),
-          is_running: true
+          user_id: userId
         })
         .select()
         .single();
-      
+        
       if (error) throw error;
+      
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['taskTimeEntries', taskId] });
-      toast({
-        title: 'Timer started'
-      });
+    onSuccess: (data) => {
+      setIsRunning(true);
+      setSeconds(0);
+      setActiveEntry(data);
+      queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
     },
     onError: (error: any) => {
       toast({
@@ -183,26 +149,38 @@ export const TaskTimer = ({ taskId }: TaskTimerProps) => {
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
-
+  
   // Stop timer mutation
-  const stopTimer = useMutation({
-    mutationFn: async (entryId: string) => {
-      const { error } = await supabase
+  const stopTimerMutation = useMutation({
+    mutationFn: async () => {
+      if (!activeEntry) throw new Error('No active timer to stop');
+      
+      // Update time entry with end time and description
+      const { data, error } = await supabase
         .from('time_entries')
         .update({
           end_time: new Date().toISOString(),
-          is_running: false
+          description: description || null,
         })
-        .eq('id', entryId);
-      
+        .eq('id', activeEntry.id)
+        .select()
+        .single();
+        
       if (error) throw error;
+      
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['taskTimeEntries', taskId] });
+      setIsRunning(false);
+      setSeconds(0);
+      setDescription('');
+      setActiveEntry(null);
+      queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
       toast({
-        title: 'Timer stopped'
+        title: 'Timer stopped',
+        description: 'Your time has been logged successfully',
       });
     },
     onError: (error: any) => {
@@ -211,168 +189,147 @@ export const TaskTimer = ({ taskId }: TaskTimerProps) => {
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
-
-  // Delete time entry mutation
-  const deleteTimeEntry = useMutation({
-    mutationFn: async (entryId: string) => {
-      const { error } = await supabase
-        .from('time_entries')
-        .delete()
-        .eq('id', entryId);
+  
+  // Format seconds to HH:MM:SS
+  const formatTime = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    return [
+      hours.toString().padStart(2, '0'),
+      minutes.toString().padStart(2, '0'),
+      seconds.toString().padStart(2, '0')
+    ].join(':');
+  };
+  
+  // Calculate total time spent
+  const calculateTotalTimeSpent = () => {
+    if (!timeEntries.length) return 0;
+    
+    let totalSeconds = 0;
+    
+    timeEntries.forEach(entry => {
+      if (!entry.end_time) return;
       
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['taskTimeEntries', taskId] });
-      toast({
-        title: 'Time entry deleted'
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error deleting time entry',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Format date
-  const formatDateTime = (dateString: string) => {
-    return format(new Date(dateString), 'MMM dd, yyyy HH:mm');
+      const startTime = new Date(entry.start_time).getTime();
+      const endTime = new Date(entry.end_time).getTime();
+      const entrySeconds = Math.floor((endTime - startTime) / 1000);
+      
+      totalSeconds += entrySeconds;
+    });
+    
+    return totalSeconds;
   };
-
-  // Get initials for avatar
-  const getInitials = (firstName?: string | null, lastName?: string | null) => {
-    const first = firstName?.[0] || '';
-    const last = lastName?.[0] || '';
-    return (first + last).toUpperCase() || 'U';
+  
+  // Format a date to a readable string
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
   };
-
+  
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-sm font-medium text-muted-foreground">Time Tracking</h3>
-        <Dialog open={isAddTimeDialogOpen} onOpenChange={setIsAddTimeDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Add time
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Time Entry</DialogTitle>
-            </DialogHeader>
-            <TimeEntryForm
-              initialTaskId={taskId}
-              onComplete={() => {
-                setIsAddTimeDialogOpen(false);
-                queryClient.invalidateQueries({ queryKey: ['taskTimeEntries', taskId] });
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
-      
-      {/* Time tracker */}
-      <div className="p-4 border rounded-md bg-muted/30">
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center">
-            <Clock className="h-5 w-5 mr-2 text-muted-foreground" />
-            <span className="text-lg font-mono font-semibold">
-              {activeTimeEntry ? elapsedTime : '00:00:00'}
-            </span>
+      {/* Timer display */}
+      <div className="flex justify-center items-center border rounded-md p-4 bg-muted/30">
+        <div className="text-center">
+          <div className="text-3xl font-mono font-bold mb-2">
+            {formatTime(seconds)}
           </div>
           
-          {!activeTimeEntry ? (
-            <Button 
-              onClick={() => startTimer.mutate()}
-              disabled={startTimer.isPending || !currentUserId}
-            >
-              <Play className="h-4 w-4 mr-1" />
-              Start timer
-            </Button>
-          ) : (
-            <Button 
-              variant="destructive"
-              onClick={() => stopTimer.mutate(activeTimeEntry.id)}
-              disabled={stopTimer.isPending || activeTimeEntry.user_id !== currentUserId}
-            >
-              <Pause className="h-4 w-4 mr-1" />
-              Stop timer
-            </Button>
-          )}
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Total tracked: {totalTrackedTime}
+          <div className="flex justify-center gap-2">
+            {isRunning ? (
+              <Button
+                onClick={() => stopTimerMutation.mutate()}
+                disabled={stopTimerMutation.isPending}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                <Pause className="mr-2 h-4 w-4" />
+                Stop
+              </Button>
+            ) : (
+              <Button
+                onClick={() => startTimerMutation.mutate()}
+                disabled={startTimerMutation.isPending}
+              >
+                <Play className="mr-2 h-4 w-4" />
+                Start Timer
+              </Button>
+            )}
+          </div>
         </div>
       </div>
       
-      {/* Time entries list */}
-      <div>
-        <h4 className="text-sm font-medium mb-2">Time Entries</h4>
-        <ScrollArea className="h-[250px]">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Start</TableHead>
-                <TableHead>End</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">Loading...</TableCell>
-                </TableRow>
-              ) : timeEntries.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">No time entries yet</TableCell>
-                </TableRow>
-              ) : (
-                timeEntries.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={entry.profiles?.avatar_url || undefined} />
-                          <AvatarFallback>{getInitials(entry.profiles?.first_name, entry.profiles?.last_name)}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm">
-                          {entry.profiles?.first_name || ''} {entry.profiles?.last_name || 'User'}
+      {/* Description field (only when timer is running) */}
+      {isRunning && (
+        <div>
+          <Textarea
+            placeholder="What are you working on? (Optional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="resize-none"
+            rows={2}
+          />
+        </div>
+      )}
+      
+      <Separator className="my-4" />
+      
+      {/* Time entries summary */}
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <h3 className="font-medium">Time Entries</h3>
+          <Link to="/time-tracking">
+            <Button variant="ghost" size="sm">View All</Button>
+          </Link>
+        </div>
+        
+        <div className="py-2">
+          <div className="flex justify-between items-center mb-2">
+            <Badge variant="outline" className="bg-muted">
+              <Clock className="h-3 w-3 mr-1" />
+              Total: {formatTime(calculateTotalTimeSpent())}
+            </Badge>
+          </div>
+          
+          {timeEntries.length > 0 ? (
+            <div className="space-y-2">
+              {timeEntries.slice(0, 5).map((entry) => (
+                <div key={entry.id} className="text-sm border rounded-md p-2">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      {entry.end_time ? (
+                        <span>
+                          {formatTime(Math.floor(
+                            (new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / 1000
+                          ))}
                         </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatDateTime(entry.start_time)}</TableCell>
-                    <TableCell>
-                      {entry.end_time ? formatDateTime(entry.end_time) : 'Running'}
-                    </TableCell>
-                    <TableCell>
-                      {entry.end_time ? calculateDuration(entry.start_time, entry.end_time) : 'In progress'}
-                    </TableCell>
-                    <TableCell>
-                      {entry.user_id === currentUserId && !entry.is_running && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteTimeEntry.mutate(entry.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
+                      ) : (
+                        <Badge variant="outline" className="bg-green-100 text-green-800">
+                          Running
+                        </Badge>
                       )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </ScrollArea>
+                    </div>
+                    <div className="text-muted-foreground text-xs">
+                      {formatDate(entry.start_time)}
+                    </div>
+                  </div>
+                  {entry.description && (
+                    <p className="mt-1 text-muted-foreground truncate">{entry.description}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-sm text-muted-foreground">
+              No time entries yet
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
+
+export default TaskTimer;
