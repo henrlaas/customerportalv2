@@ -29,24 +29,24 @@ export const Sidebar: React.FC = () => {
 
   return (
     <ShadcnSidebar 
-      className="border-r bg-[#E4EDED]" 
+      className="border-r bg-[#004743]" 
       collapsible="icon"
       style={{
         "--sidebar-width-icon": "4rem", // Increasing the width of collapsed sidebar
       } as React.CSSProperties}
     >
-      <SidebarHeader className="p-6 bg-[#E4EDED] flex items-center justify-between">
+      <SidebarHeader className="p-6 bg-[#004743] flex items-center justify-between">
         {!isCollapsed && <Logo />}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar}
-          className={`text-gray-700 hover:text-gray-900 hover:bg-[#d6d9d9] ${isCollapsed ? 'mx-auto' : ''}`}
+          className={`text-white hover:text-gray-200 hover:bg-[#005a55] ${isCollapsed ? 'mx-auto' : ''}`}
         >
           {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
         </Button>
       </SidebarHeader>
-      <SidebarContent className="px-4 py-2 bg-[#E4EDED]">
+      <SidebarContent className="px-4 py-2 bg-[#004743]">
         {/* MENU section without the label text */}
         <SidebarGroup>
           <SidebarMenu>
@@ -62,15 +62,15 @@ export const Sidebar: React.FC = () => {
                     className={`flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium rounded-lg ${
                       location.pathname === item.href 
                         ? 'bg-[#F2FCE2] text-[#004743]' 
-                        : 'text-gray-700 hover:bg-[#d6d9d9] hover:text-gray-900'
+                        : 'text-white hover:bg-[#005a55] hover:text-white'
                     }`}
                   >
                     <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : ''}`}>
-                      <item.icon className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'} ${location.pathname === item.href ? 'text-[#004743]' : 'text-gray-600'}`} />
+                      <item.icon className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'} ${location.pathname === item.href ? 'text-[#004743]' : 'text-white'}`} />
                       {!isCollapsed && <span>{item.title}</span>}
                     </div>
                     {item.hasDropdown && !isCollapsed && (
-                      <ChevronDown className={`h-4 w-4 ${location.pathname === item.href ? 'text-[#004743]' : 'text-gray-500'}`} />
+                      <ChevronDown className={`h-4 w-4 ${location.pathname === item.href ? 'text-[#004743]' : 'text-gray-200'}`} />
                     )}
                   </Link>
                 </SidebarMenuButton>
@@ -82,3 +82,4 @@ export const Sidebar: React.FC = () => {
     </ShadcnSidebar>
   );
 };
+
