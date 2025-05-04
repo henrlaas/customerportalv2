@@ -28,7 +28,7 @@ export const Sidebar: React.FC = () => {
   const menuItems = sidebarItems.filter(item => !item.category || item.category === 'MENU');
 
   return (
-    <ShadcnSidebar className="border-r bg-[#004743]">
+    <ShadcnSidebar className="border-r bg-[#004743]" collapsible="icon">
       <SidebarHeader className="p-6 bg-[#004743] flex items-center justify-between">
         <Logo />
         <Button 
