@@ -14,7 +14,7 @@ export const Logo: React.FC<LogoProps> = ({ className = '', showText = true }) =
         alt="BOX Logo" 
         className="h-8"
       />
-      {showText && <h1 className="text-xl font-bold text-gray-800">Workspace</h1>}
+      {showText && <h1 className="text-xl font-bold text-primary">BOX</h1>}
     </div>
   );
 };
