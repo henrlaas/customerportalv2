@@ -1,13 +1,15 @@
 
-import React from 'react';
+import { LoaderCircle } from "lucide-react";
 
-export const CenteredSpinner: React.FC = () => {
+export function CenteredSpinner({ className = "" }: { className?: string }) {
   return (
-    <div className="loading-container">
-      <div className="spinner"></div>
-      <div className="loading-text">Loading...</div>
+    <div className={`flex justify-center items-center py-12 w-full ${className}`}>
+      <LoaderCircle 
+        className="animate-spin text-primary"
+        size={48}
+        aria-label="Loading"
+        role="status"
+      />
     </div>
   );
-};
-
-export default CenteredSpinner;
+}

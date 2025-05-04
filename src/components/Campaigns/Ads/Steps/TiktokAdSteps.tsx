@@ -105,7 +105,7 @@ export function TiktokAdSteps({ step, setStep, fileInfo, setFileInfo, form, toas
                 ) : (
                   <video src={fileInfo.url} controls className="h-20 rounded" />
                 )}
-                <Button type="button" variant="danger" size="sm" onClick={() => setFileInfo(null)}>
+                <Button type="button" variant="destructive" size="sm" onClick={() => setFileInfo(null)}>
                   Remove
                 </Button>
               </div>

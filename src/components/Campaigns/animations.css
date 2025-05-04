@@ -1,162 +1,196 @@
 
-/* TailAdmin Animations - Used for various UI effects */
-
-.fade-in {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.slide-in {
-  animation: slideIn 0.3s ease-in-out;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(10px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.pulse {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
 .campaign-card-enter {
   opacity: 0;
   transform: translateY(10px);
-  animation: cardEnter 0.3s forwards;
 }
 
-@keyframes cardEnter {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.campaign-card-enter-active {
+  opacity: 1;
+  transform: translateY(0px);
+  transition: opacity 300ms, transform 300ms;
 }
 
 .campaign-card-exit {
   opacity: 1;
-  transform: translateY(0);
-  animation: cardExit 0.3s forwards;
 }
 
-@keyframes cardExit {
-  to {
+.campaign-card-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.adset-expand-enter {
+  max-height: 0;
+  opacity: 0;
+}
+
+.adset-expand-enter-active {
+  max-height: 500px;
+  opacity: 1;
+  transition: max-height 300ms, opacity 300ms;
+}
+
+.adset-expand-exit {
+  max-height: 500px;
+  opacity: 1;
+}
+
+.adset-expand-exit-active {
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 300ms, opacity 300ms;
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.platform-icon-pulse:hover {
+  animation: pulseGlow 1.5s infinite;
+}
+
+/* New animations for the ad creation dialog */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-shift {
+  background-size: 200% 200%;
+  animation: gradientShift 5s ease infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0) 0%, 
+    rgba(255,255,255,0.2) 50%, 
+    rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.slide-up-fade-in {
+  animation: slideUpFadeIn 0.4s ease-out forwards;
+}
+
+@keyframes slideUpFadeIn {
+  from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(10px);
   }
-}
-
-/* Progress Bar Animation */
-.progress-bar-animate {
-  position: relative;
-  overflow: hidden;
-}
-
-.progress-bar-animate::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  animation: progressShimmer 1.5s infinite;
-}
-
-@keyframes progressShimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* Task Status Transitions */
-.task-status-change {
-  transition: all 0.3s ease;
-}
-
-/* Button Hover Effect */
-.btn-hover-effect {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.btn-hover-effect:hover::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: translateX(-100%) skewX(-15deg);
-  animation: btnShine 0.7s;
-}
-
-@keyframes btnShine {
   to {
-    transform: translateX(100%) skewX(-15deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Card hover effects */
-.card-hover {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+.scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
 }
 
-.card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* Spinner animation */
-.spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid rgba(74, 108, 247, 0.3);
-  border-radius: 50%;
-  border-top-color: #4A6CF7;
-  animation: spin 1s linear infinite;
+.pulse-soft {
+  animation: pulseSoft 2s infinite;
 }
 
-@keyframes spin {
+@keyframes pulseSoft {
   0% {
-    transform: rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
   100% {
-    transform: rotate(360deg);
+    opacity: 1;
   }
+}
+
+/* New animation for URL/CTA step */
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.bounce-in {
+  animation: bounceIn 0.5s forwards;
+}
+
+/* Card hover effect */
+.card-hover-effect {
+  transition: all 0.3s ease;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Button press effect */
+.press-effect {
+  transition: transform 0.1s;
+}
+
+.press-effect:active {
+  transform: scale(0.95);
 }

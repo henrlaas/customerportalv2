@@ -31,8 +31,8 @@ export function AdVariationStepper({
                 transition={{ delay: index * 0.1, duration: 0.3 }}
               >
                 <Button
-                  variant={currentStep === index ? "primary" : "outline"}
-                  size="sm"
+                  variant={currentStep === index ? "default" : "outline"}
+                  size="icon"
                   className={cn(
                     "h-8 w-8 rounded-full transition-all duration-300 press-effect",
                     currentStep === index && "bg-primary text-primary-foreground shadow-lg shadow-primary/20",

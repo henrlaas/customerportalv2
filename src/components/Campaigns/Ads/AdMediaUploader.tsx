@@ -57,7 +57,7 @@ export function AdMediaUploader({ fileInfo, onFileChange, onRemoveFile }: AdMedi
                 onChange={onFileChange}
               />
               <label htmlFor="file-upload">
-                <Button type="button" variant="secondary">
+                <Button type="button" variant="secondary" asChild>
                   <span>Browse Files</span>
                 </Button>
               </label>

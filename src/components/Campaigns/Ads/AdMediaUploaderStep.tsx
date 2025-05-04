@@ -48,8 +48,8 @@ export function AdMediaUploaderStep({
             <div className="relative rounded-md border overflow-hidden">
               <Button
                 type="button"
-                variant="secondary"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 shadow-md hover:bg-background"
                 onClick={onRemoveFile}
               >

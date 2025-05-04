@@ -13,25 +13,36 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Search,
-  Calendar, 
-  User, 
-  Edit, 
-  Share, 
-  Clock, 
-  Filter, 
-  X,
-  Plus,
-  EyeOff,
-  ChevronRight,
-  ChevronDown,
-  ArrowUpDown,
-  MoreVertical
-} from 'lucide-react';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X } from 'lucide-react';
 import { TaskForm } from '@/components/Tasks/TaskForm';
 import { TaskFilters } from '@/components/Tasks/TaskFilters';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
 
@@ -222,11 +233,11 @@ export const TasksPage = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <span className="badge badge-success">Completed</span>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
       case 'in_progress':
-        return <span className="badge badge-info">In Progress</span>;
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">In Progress</Badge>;
       default:
-        return <span className="badge badge-secondary">Todo</span>;
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">Todo</Badge>;
     }
   };
   
@@ -234,167 +245,43 @@ export const TasksPage = () => {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'high':
-        return <span className="badge badge-danger">High</span>;
+        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">High</Badge>;
       case 'medium':
-        return <span className="badge badge-warning">Medium</span>;
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Medium</Badge>;
       default:
-        return <span className="badge badge-success">Low</span>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Low</Badge>;
     }
   };
 
   return (
-    <div className="page-content">
-      <div className="page-header">
+    <div className="w-full max-w-full px-4 sm:px-6 py-6 overflow-x-hidden">
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="page-title">Tasks</h1>
-          <p className="text-gray">Manage and track your tasks</p>
+          <h1 className="text-3xl font-bold">Tasks</h1>
+          <p className="text-muted-foreground">Manage and track your tasks</p>
         </div>
         
-        <div className="d-flex align-items-center gap-2">
-          <button 
-            className={`btn btn-icon ${showFilters ? 'btn-primary' : 'btn-outline'}`}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
             onClick={() => setShowFilters(!showFilters)}
+            className={showFilters ? "bg-accent text-accent-foreground" : ""}
           >
-            <Filter size={18} />
-          </button>
-          
-          <button 
-            className="btn btn-primary" 
-            onClick={() => setIsCreateDialogOpen(true)}
-          >
-            <Plus size={18} className="mr-2" />
-            Add Task
-          </button>
-        </div>
-      </div>
-      
-      {/* Search and filters */}
-      <div className="search-filters mb-6">
-        <div className="search-container">
-          <Search className="search-icon" size={18} />
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search tasks..."
-            value={filters.search}
-            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-          />
-        </div>
-        
-        {showFilters && (
-          <button className="btn btn-text" onClick={resetFilters}>
-            <X size={16} className="mr-1" />
-            Clear Filters
-          </button>
-        )}
-      </div>
-      
-      {/* Filter panel */}
-      {showFilters && (
-        <div className="card mb-6">
-          <div className="card-content">
-            <TaskFilters 
-              filters={filters}
-              setFilters={setFilters}
-              profiles={profiles}
-              campaigns={campaigns}
-            />
-          </div>
-        </div>
-      )}
-      
-      {/* Tasks table */}
-      {isLoadingTasks ? (
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <div className="loading-text">Loading tasks...</div>
-        </div>
-      ) : tasks.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">📝</div>
-          <h3 className="empty-state-title">No tasks found</h3>
-          <p className="empty-state-description">Create your first task to get started</p>
-          <button className="btn btn-primary mt-4" onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus size={18} className="mr-2" />
-            Add Task
-          </button>
-        </div>
-      ) : (
-        <div className="table-container">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Assignees</TableHead>
-                <TableHead>Creator</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Related To</TableHead>
-                <TableHead>Client Visible</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tasks.map(task => (
-                <TableRow
-                  key={task.id}
-                  className="table-row-clickable"
-                  onClick={() => handleTaskClick(task.id)}
-                >
-                  <TableCell className="font-medium">{task.title}</TableCell>
-                  <TableCell>{getStatusBadge(task.status)}</TableCell>
-                  <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                  <TableCell>
-                    <UserAvatarGroup
-                      users={getTaskAssignees(task)}
-                      size="sm"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {task.creator_id && (
-                      <UserAvatarGroup
-                        users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
-                        size="sm"
-                      />
-                    )}
-                    {!task.creator_id && 'Unassigned'}
-                  </TableCell>
-                  <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
-                  <TableCell>
-                    {task.campaign_id ? (
-                      <span className="badge badge-primary">
-                        Campaign: {getCampaignName(task.campaign_id)}
-                      </span>
-                    ) : task.related_type ? (
-                      <span className="badge badge-info">
-                        {task.related_type}
-                      </span>
-                    ) : 'None'}
-                  </TableCell>
-                  <TableCell>
-                    {task.client_visible ? (
-                      <span className="badge badge-info">Visible</span>
-                    ) : (
-                      <span className="badge badge-secondary">Hidden</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-      
-      {/* Create Task Dialog */}
-      {isCreateDialogOpen && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <div className="modal-header">
-              <h3 className="modal-title">New Task</h3>
-              <button className="modal-close" onClick={() => setIsCreateDialogOpen(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <TaskForm
+            <Filter className="h-4 w-4" />
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Task
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>New Task</DialogTitle>
+              </DialogHeader>
+              <TaskForm 
                 onSuccess={() => {
                   setIsCreateDialogOpen(false);
                   queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -402,16 +289,132 @@ export const TasksPage = () => {
                 profiles={profiles}
                 campaigns={campaigns}
               />
-            </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+      
+      {/* Search and filters */}
+      <div className="mb-6 flex items-center gap-4 flex-wrap">
+        <div className="relative flex-1 min-w-[250px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search tasks..."
+            className="pl-10"
+            value={filters.search}
+            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+          />
+        </div>
+        
+        {showFilters && (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          </div>
+        )}
+      </div>
+      
+      {/* Filter panel */}
+      {showFilters && (
+        <Card className="mb-6 w-full">
+          <CardContent className="pt-6">
+            <TaskFilters 
+              filters={filters}
+              setFilters={setFilters}
+              profiles={profiles}
+              campaigns={campaigns}
+            />
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Tasks table */}
+      {isLoadingTasks ? (
+        <CenteredSpinner />
+      ) : tasks.length === 0 ? (
+        <div className="text-center p-12 border rounded-lg bg-muted/50">
+          <h3 className="text-lg font-medium mb-2">No tasks found</h3>
+          <p className="text-muted-foreground mb-4">Create your first task to get started</p>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Task
+          </Button>
+        </div>
+      ) : (
+        <div className="bg-white rounded-md border shadow-sm overflow-hidden w-full">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Assignees</TableHead>
+                  <TableHead>Creator</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Related To</TableHead>
+                  <TableHead>Client Visible</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tasks.map(task => (
+                  <TableRow 
+                    key={task.id}
+                    className="cursor-pointer hover:bg-muted/60"
+                    onClick={() => handleTaskClick(task.id)}
+                  >
+                    <TableCell className="font-medium">{task.title}</TableCell>
+                    <TableCell>{getStatusBadge(task.status)}</TableCell>
+                    <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+                    <TableCell>
+                      <UserAvatarGroup 
+                        users={getTaskAssignees(task)}
+                        size="sm"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {task.creator_id && (
+                        <UserAvatarGroup 
+                          users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
+                          size="sm"
+                        />
+                      )}
+                      {!task.creator_id && 'Unassigned'}
+                    </TableCell>
+                    <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
+                    <TableCell>
+                      {task.campaign_id ? (
+                        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
+                          Campaign: {getCampaignName(task.campaign_id)}
+                        </Badge>
+                      ) : task.related_type ? (
+                        <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
+                          {task.related_type}
+                        </Badge>
+                      ) : 'None'}
+                    </TableCell>
+                    <TableCell>
+                      {task.client_visible ? (
+                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Visible</Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200">Hidden</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
       
       {/* Task Detail Sheet */}
-      <TaskDetailSheet
-        isOpen={isTaskSheetOpen}
-        onOpenChange={setIsTaskSheetOpen}
-        taskId={selectedTaskId}
+      <TaskDetailSheet 
+        isOpen={isTaskSheetOpen} 
+        onOpenChange={setIsTaskSheetOpen} 
+        taskId={selectedTaskId} 
       />
     </div>
   );

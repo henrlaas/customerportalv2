@@ -64,8 +64,8 @@ export function AdSetList({
                 trigger={
                   <Button
                     type="button"
-                    size="sm"
-                    variant="secondary"
+                    size="icon"
+                    variant="ghost"
                     className="h-7 w-7"
                     tabIndex={-1}
                     aria-label="Edit"
@@ -83,8 +83,8 @@ export function AdSetList({
                 trigger={
                   <Button
                     type="button"
-                    size="sm"
-                    variant="secondary"
+                    size="icon"
+                    variant="ghost"
                     className="h-7 w-7 text-destructive"
                     tabIndex={-1}
                     aria-label="Delete"
@@ -101,3 +101,4 @@ export function AdSetList({
     </nav>
   );
 }
+

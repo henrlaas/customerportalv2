@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -59,7 +58,7 @@ export function EditAdSetDialog({ adset, onSuccess, trigger, disabled = false }:
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="secondary" size="sm" disabled={disabled}>
+          <Button variant="ghost" size="icon" disabled={disabled}>
             <Edit className="h-4 w-4" />
           </Button>
         )}
