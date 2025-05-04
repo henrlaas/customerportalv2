@@ -36,25 +36,27 @@ export const CompanyFilters = ({
   setShowSubsidiaries
 }: CompanyFiltersProps) => {
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in">
-      <div className="flex-grow relative">
-        <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400" />
-        <Input
-          type="search"
-          placeholder="Search companies..."
-          className="pl-10"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex-grow">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            type="search"
+            placeholder="Search companies..."
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
-      <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto items-center">
-        <div className="flex items-center gap-2 mr-2 bg-soft-purple/10 px-3 py-1.5 rounded-lg">
+      <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-center">
+        <div className="flex items-center gap-2 mr-2">
           <Switch
             id="show-subsidiaries"
             checked={showSubsidiaries}
             onCheckedChange={setShowSubsidiaries}
           />
-          <Label htmlFor="show-subsidiaries" className="cursor-pointer flex items-center gap-1 text-sm">
+          <Label htmlFor="show-subsidiaries" className="cursor-pointer flex items-center gap-1">
             <Building className="h-4 w-4" />
             <span>Show subsidiaries</span>
           </Label>
@@ -64,23 +66,23 @@ export const CompanyFilters = ({
           value={clientTypeFilter}
           onValueChange={setClientTypeFilter}
         >
-          <SelectTrigger className="w-full md:w-[180px] rounded-lg">
+          <SelectTrigger className="w-full md:w-[180px]">
             <SelectValue placeholder="Filter by type" />
           </SelectTrigger>
-          <SelectContent className="rounded-xl border-gray-100 shadow-playful animate-fade-in">
+          <SelectContent>
             <SelectGroup>
               <SelectLabel>Client Type</SelectLabel>
-              <SelectItem value="all" className="rounded-lg">All Types</SelectItem>
-              <SelectItem value="Marketing" className="rounded-lg">Marketing</SelectItem>
-              <SelectItem value="Web" className="rounded-lg">Web</SelectItem>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="Marketing">Marketing</SelectItem>
+              <SelectItem value="Web">Web</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
-        <div className="flex rounded-xl overflow-hidden border shadow-sm">
+        <div className="flex rounded-md border">
           <Button
             variant="ghost"
             size="icon"
-            className={`rounded-l-xl rounded-r-none ${viewMode === 'list' ? 'bg-soft-blue/20' : ''}`}
+            className={viewMode === 'list' ? 'bg-accent' : ''}
             onClick={() => setViewMode('list')}
           >
             <Briefcase className="h-4 w-4" />
@@ -88,7 +90,7 @@ export const CompanyFilters = ({
           <Button
             variant="ghost"
             size="icon"
-            className={`rounded-r-xl rounded-l-none ${viewMode === 'card' ? 'bg-soft-blue/20' : ''}`}
+            className={viewMode === 'card' ? 'bg-accent' : ''}
             onClick={() => setViewMode('card')}
           >
             <Layers className="h-4 w-4" />

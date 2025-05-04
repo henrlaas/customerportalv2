@@ -1,12 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sidebar } from '@/components/Layout/Sidebar';
 import { TopBar } from '@/components/Layout/TopBar';
-import { 
-  SidebarProvider,
-  SidebarInset
-} from '@/components/ui/sidebar';
 import { Outlet } from 'react-router-dom';
 
 export type AppLayoutProps = {
@@ -15,31 +11,30 @@ export type AppLayoutProps = {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { profile } = useAuth();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin h-10 w-10 rounded-full border-4 border-evergreen border-t-transparent mb-4"></div>
-          <p className="text-lg font-medium text-gray-600">Loading profile...</p>
-        </div>
+      <div className="playful-d-flex playful-items-center playful-justify-center playful-h-screen">
+        <div className="playful-loading-spinner"></div>
+        <span className="playful-ml-2">Loading profile...</span>
       </div>
     );
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full bg-white overflow-hidden">
-        <Sidebar />
-        <SidebarInset className="flex-1">
-          <div className="flex-1 overflow-auto h-full">
-            <TopBar />
-            <main className="w-full overflow-x-hidden p-6 bg-white">
-              {children || <Outlet />}
-            </main>
-          </div>
-        </SidebarInset>
+    <div className="playful-app">
+      <Sidebar collapsed={sidebarCollapsed} />
+      <div className="playful-content" style={{ marginLeft: sidebarCollapsed ? '60px' : '260px' }}>
+        <TopBar onToggleSidebar={toggleSidebar} />
+        <main className="playful-w-full">
+          {children || <Outlet />}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 };

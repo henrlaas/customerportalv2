@@ -1,157 +1,187 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, ArrowUp, ArrowDown, CreditCard, Calendar } from 'lucide-react';
+import { useState } from 'react';
+import { DollarSign, CreditCard, TrendingUp, Calendar, Plus } from 'lucide-react';
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 
-const FinancePage: React.FC = () => {
+const FinancePage = () => {
+  const [period, setPeriod] = useState('month');
+  
+  // Placeholder data for finances
+  const stats = {
+    revenue: 128500,
+    expenses: 45200,
+    profit: 83300,
+    outstanding: 24300
+  };
+  
+  const transactions = [
+    { id: 1, type: 'income', description: 'Website Development', client: 'Acme Corp', amount: 15000, date: '2025-05-01' },
+    { id: 2, type: 'expense', description: 'Software Subscription', vendor: 'Adobe', amount: 1200, date: '2025-04-28' },
+    { id: 3, type: 'income', description: 'Digital Marketing', client: 'TechGiant', amount: 8500, date: '2025-04-25' },
+    { id: 4, type: 'expense', description: 'Office Rent', vendor: 'Property Management Inc', amount: 3500, date: '2025-04-20' },
+    { id: 5, type: 'income', description: 'SEO Services', client: 'Global Media', amount: 5000, date: '2025-04-18' }
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Finance</h1>
-        <div className="flex gap-2">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Create Invoice
+    <div className="w-full max-w-full px-4 sm:px-6 py-6 space-y-6">
+      <div className="playful-d-flex playful-justify-between playful-items-center">
+        <h1 className="playful-text-2xl playful-font-bold">Finance</h1>
+        <div className="playful-d-flex playful-gap-2">
+          <button className="playful-btn playful-btn-outline">
+            <CreditCard size={20} className="playful-mr-1" />
+            New Invoice
           </button>
-          <button className="border border-gray-300 px-4 py-2 rounded hover:bg-gray-100">
-            Financial Report
+          <button className="playful-btn playful-btn-primary">
+            <Plus size={20} className="playful-mr-1" />
+            New Transaction
           </button>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-                <h3 className="text-2xl font-bold mt-1">84,324.00 kr</h3>
-                <p className="text-xs text-green-600 flex items-center mt-1">
-                  <ArrowUp className="h-3 w-3 mr-1" />
-                  8% from last month
-                </p>
+      
+      {/* Finance Stats */}
+      <div className="playful-row">
+        <div className="playful-col playful-col-quarter">
+          <div className="playful-stat-card">
+            <div className="playful-stat-header">
+              <div className="playful-stat-title">Total Revenue</div>
+              <div className="playful-stat-badge playful-stat-badge-up">
+                <TrendingUp size={14} />
+                <span>12%</span>
               </div>
-              <DollarSign className="h-8 w-8 text-green-600 bg-green-100 p-1.5 rounded-lg" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="playful-stat-value">${stats.revenue.toLocaleString()}</div>
+            <div className="playful-stat-desc">For current {period}</div>
+          </div>
+        </div>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Outstanding</p>
-                <h3 className="text-2xl font-bold mt-1">12,426.00 kr</h3>
-                <p className="text-xs text-red-600 flex items-center mt-1">
-                  <ArrowUp className="h-3 w-3 mr-1" />
-                  12% from last month
-                </p>
+        <div className="playful-col playful-col-quarter">
+          <div className="playful-stat-card">
+            <div className="playful-stat-header">
+              <div className="playful-stat-title">Total Expenses</div>
+              <div className="playful-stat-badge playful-stat-badge-down">
+                <TrendingUp size={14} />
+                <span>5%</span>
               </div>
-              <CreditCard className="h-8 w-8 text-blue-600 bg-blue-100 p-1.5 rounded-lg" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="playful-stat-value">${stats.expenses.toLocaleString()}</div>
+            <div className="playful-stat-desc">For current {period}</div>
+          </div>
+        </div>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Pending</p>
-                <h3 className="text-2xl font-bold mt-1">18,289.00 kr</h3>
-                <p className="text-xs text-gray-600 flex items-center mt-1">
-                  3 invoices pending
-                </p>
+        <div className="playful-col playful-col-quarter">
+          <div className="playful-stat-card">
+            <div className="playful-stat-header">
+              <div className="playful-stat-title">Net Profit</div>
+              <div className="playful-stat-badge playful-stat-badge-up">
+                <TrendingUp size={14} />
+                <span>18%</span>
               </div>
-              <Calendar className="h-8 w-8 text-amber-600 bg-amber-100 p-1.5 rounded-lg" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="playful-stat-value">${stats.profit.toLocaleString()}</div>
+            <div className="playful-stat-desc">For current {period}</div>
+          </div>
+        </div>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Expenses</p>
-                <h3 className="text-2xl font-bold mt-1">32,578.00 kr</h3>
-                <p className="text-xs text-green-600 flex items-center mt-1">
-                  <ArrowDown className="h-3 w-3 mr-1" />
-                  4% from last month
-                </p>
-              </div>
-              <DollarSign className="h-8 w-8 text-red-600 bg-red-100 p-1.5 rounded-lg" />
+        <div className="playful-col playful-col-quarter">
+          <div className="playful-stat-card">
+            <div className="playful-stat-header">
+              <div className="playful-stat-title">Outstanding</div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="playful-stat-value">${stats.outstanding.toLocaleString()}</div>
+            <div className="playful-stat-desc">Unpaid invoices</div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Period Filter */}
+      <div className="playful-card">
+        <div className="playful-card-content">
+          <div className="playful-d-flex playful-justify-between playful-items-center playful-flex-wrap playful-gap-3">
+            <div className="playful-d-flex playful-items-center playful-gap-2">
+              <button 
+                className={`playful-btn playful-btn-sm ${period === 'week' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
+                onClick={() => setPeriod('week')}
+              >
+                This Week
+              </button>
+              <button 
+                className={`playful-btn playful-btn-sm ${period === 'month' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
+                onClick={() => setPeriod('month')}
+              >
+                This Month
+              </button>
+              <button 
+                className={`playful-btn playful-btn-sm ${period === 'quarter' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
+                onClick={() => setPeriod('quarter')}
+              >
+                This Quarter
+              </button>
+              <button 
+                className={`playful-btn playful-btn-sm ${period === 'year' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
+                onClick={() => setPeriod('year')}
+              >
+                This Year
+              </button>
+            </div>
+            
+            <div className="playful-search">
+              <input className="playful-search-input" placeholder="Search transactions..." />
+              <span className="playful-search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-          <CardDescription>Overview of the latest financial activities</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium">Description</th>
-                  <th className="text-left py-3 px-4 font-medium">Category</th>
-                  <th className="text-left py-3 px-4 font-medium">Date</th>
-                  <th className="text-right py-3 px-4 font-medium">Amount</th>
-                  <th className="text-right py-3 px-4 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4">Website Redesign - Client ABC</td>
-                  <td className="py-3 px-4">Services</td>
-                  <td className="py-3 px-4">Apr 4, 2025</td>
-                  <td className="py-3 px-4 text-right">4,200.00 kr</td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                      Paid
+      {/* Transactions */}
+      <div className="playful-card">
+        <div className="playful-card-header">
+          <div className="playful-card-title">Recent Transactions</div>
+        </div>
+        <div className="playful-table-container">
+          <table className="playful-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Client/Vendor</th>
+                <th>Date</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map(transaction => (
+                <tr key={transaction.id}>
+                  <td>{transaction.description}</td>
+                  <td>{transaction.client || transaction.vendor}</td>
+                  <td>
+                    <div className="playful-d-flex playful-items-center">
+                      <Calendar size={16} className="playful-mr-1" />
+                      {new Date(transaction.date).toLocaleDateString()}
+                    </div>
+                  </td>
+                  <td>
+                    <span 
+                      className={
+                        transaction.type === 'income' 
+                          ? 'playful-text-success playful-font-semibold' 
+                          : 'playful-text-danger playful-font-semibold'
+                      }
+                    >
+                      {transaction.type === 'income' ? '+' : '-'} ${transaction.amount.toLocaleString()}
                     </span>
                   </td>
                 </tr>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4">Marketing Campaign - Client XYZ</td>
-                  <td className="py-3 px-4">Marketing</td>
-                  <td className="py-3 px-4">Apr 3, 2025</td>
-                  <td className="py-3 px-4 text-right">8,750.00 kr</td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                      Pending
-                    </span>
-                  </td>
-                </tr>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4">Office Supplies</td>
-                  <td className="py-3 px-4">Expenses</td>
-                  <td className="py-3 px-4">Apr 2, 2025</td>
-                  <td className="py-3 px-4 text-right">-350.00 kr</td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                      Completed
-                    </span>
-                  </td>
-                </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="py-3 px-4">Software Maintenance - Client DEF</td>
-                  <td className="py-3 px-4">Services</td>
-                  <td className="py-3 px-4">Apr 1, 2025</td>
-                  <td className="py-3 px-4 text-right">1,250.00 kr</td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                      Overdue
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
-}
+};
 
 export default FinancePage;

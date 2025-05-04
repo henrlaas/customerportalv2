@@ -1,421 +1,155 @@
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
-import { Link } from 'react-router-dom';
-import * as z from 'zod';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X } from 'lucide-react';
-import { TaskForm } from '@/components/Tasks/TaskForm';
-import { TaskFilters } from '@/components/Tasks/TaskFilters';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
-import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
-import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
+import { useState } from 'react';
+import { CheckSquare, Plus, Calendar, Clock, Filter } from 'lucide-react';
 
-// Define the Task type to match our database schema
-type Task = {
-  id: string;
-  title: string;
-  description: string | null;
-  status: 'todo' | 'in_progress' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-  due_date: string | null;
-  campaign_id: string | null;
-  creator_id: string | null;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
-  client_visible: boolean | null;
-  related_type: string | null;
-  assignees?: {
-    id: string;
-    user_id: string;
-  }[];
-};
-
-// Define the Contact type for assignees
-type Contact = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  avatar_url?: string | null;
-};
-
-// Define the Campaign type for related campaigns
-type Campaign = {
-  id: string;
-  name: string;
-};
-
-export const TasksPage = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+const TasksPage = () => {
+  const [filter, setFilter] = useState('all');
   
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    status: 'all',
-    priority: 'all',
-    search: '',
-    assignee: 'all',
-    campaign: 'all',
-  });
-  const [showFilters, setShowFilters] = useState(false);
+  // Placeholder data for tasks
+  const tasks = [
+    { id: 1, title: 'Create marketing plan', status: 'in-progress', priority: 'high', due: '2025-05-15', assignee: 'John Doe' },
+    { id: 2, title: 'Design new landing page', status: 'pending', priority: 'medium', due: '2025-05-20', assignee: 'Jane Smith' },
+    { id: 3, title: 'Review campaign analytics', status: 'completed', priority: 'low', due: '2025-05-10', assignee: 'John Doe' },
+    { id: 4, title: 'Client meeting preparation', status: 'in-progress', priority: 'high', due: '2025-05-12', assignee: 'Jane Smith' },
+    { id: 5, title: 'Update website content', status: 'pending', priority: 'medium', due: '2025-05-25', assignee: 'Mike Johnson' }
+  ];
   
-  // State for task detail sheet
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
+  const filteredTasks = filter === 'all' ? tasks : tasks.filter(task => task.status === filter);
   
-  // Fetch tasks with filtering
-  const { data: tasks = [], isLoading: isLoadingTasks } = useQuery({
-    queryKey: ['tasks', filters],
-    queryFn: async () => {
-      let query = supabase
-        .from('tasks')
-        .select('*, assignees:task_assignees(id, user_id)')
-        .order('created_at', { ascending: false });
-      
-      // Apply filters
-      if (filters.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-      if (filters.priority && filters.priority !== 'all') {
-        query = query.eq('priority', filters.priority);
-      }
-      if (filters.search) {
-        query = query.ilike('title', `%${filters.search}%`);
-      }
-      // Filter by assignee from the task_assignees table
-      if (filters.assignee && filters.assignee !== 'all') {
-        query = query.contains('task_assignees.user_id', [filters.assignee]);
-      }
-      if (filters.campaign && filters.campaign !== 'all') {
-        query = query.eq('campaign_id', filters.campaign);
-      }
-        
-      const { data, error } = await query;
-        
-      if (error) {
-        toast({
-          title: 'Error fetching tasks',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return [];
-      }
-      
-      return data as Task[];
-    },
-  });
-
-  // Fetch profiles for assignees and creator
-  const { data: profiles = [] } = useQuery({
-    queryKey: ['profiles'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
-        .order('first_name');
-      
-      if (error) {
-        toast({
-          title: 'Error fetching profiles',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return [];
-      }
-      
-      return data as Contact[];
-    },
-  });
-
-  // Fetch campaigns for filtering
-  const { data: campaigns = [] } = useQuery({
-    queryKey: ['campaigns'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('campaigns')
-        .select('id, name')
-        .order('name');
-      
-      if (error) {
-        toast({
-          title: 'Error fetching campaigns',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return [];
-      }
-      
-      return data as Campaign[];
-    },
-  });
-  
-  // Function to handle task click to show detail sheet
-  const handleTaskClick = (taskId: string) => {
-    setSelectedTaskId(taskId);
-    setIsTaskSheetOpen(true);
-  };
-  
-  // Function to reset all filters
-  const resetFilters = () => {
-    setFilters({
-      status: 'all',
-      priority: 'all',
-      search: '',
-      assignee: 'all',
-      campaign: 'all',
-    });
-  };
-  
-  // Get assignees for a task
-  const getTaskAssignees = (task: Task) => {
-    if (!task.assignees) return [];
-    
-    return task.assignees
-      .map(assignee => profiles.find(p => p.id === assignee.user_id))
-      .filter((profile): profile is Contact => !!profile);
-  };
-
-  // Function to get creator name
-  const getCreatorName = (creatorId: string | null) => {
-    if (!creatorId) return 'Unassigned';
-    
-    const creator = profiles.find(p => p.id === creatorId);
-    return creator 
-      ? `${creator.first_name || ''} ${creator.last_name || ''}`.trim() || 'Unknown User'
-      : 'Unknown User';
-  };
-  
-  // Function to get campaign name
-  const getCampaignName = (campaignId: string | null) => {
-    if (!campaignId) return 'None';
-    
-    const campaign = campaigns.find(c => c.id === campaignId);
-    return campaign ? campaign.name : 'Unknown Campaign';
-  };
-  
-  // Helper function for status badge
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
-      case 'in_progress':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">In Progress</Badge>;
+  const getPriorityBadge = (priority) => {
+    switch(priority) {
+      case 'high':
+        return <span className="playful-badge playful-badge-danger">High</span>;
+      case 'medium':
+        return <span className="playful-badge playful-badge-warning">Medium</span>;
+      case 'low':
+        return <span className="playful-badge playful-badge-info">Low</span>;
       default:
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">Todo</Badge>;
+        return null;
     }
   };
   
-  // Helper function for priority badge
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">High</Badge>;
-      case 'medium':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Medium</Badge>;
+  const getStatusClass = (status) => {
+    switch(status) {
+      case 'completed':
+        return 'playful-table-status-success';
+      case 'in-progress':
+        return 'playful-table-status-warning';
+      case 'pending':
+        return 'playful-table-status-danger';
       default:
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Low</Badge>;
+        return '';
     }
   };
 
   return (
-    <div className="w-full max-w-full px-4 sm:px-6 py-6 overflow-x-hidden">
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Tasks</h1>
-          <p className="text-muted-foreground">Manage and track your tasks</p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? "bg-accent text-accent-foreground" : ""}
-          >
-            <Filter className="h-4 w-4" />
-          </Button>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>New Task</DialogTitle>
-              </DialogHeader>
-              <TaskForm 
-                onSuccess={() => {
-                  setIsCreateDialogOpen(false);
-                  queryClient.invalidateQueries({ queryKey: ['tasks'] });
-                }}
-                profiles={profiles}
-                campaigns={campaigns}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+    <div className="w-full max-w-full px-4 sm:px-6 py-6 space-y-6">
+      <div className="playful-d-flex playful-justify-between playful-items-center">
+        <h1 className="playful-text-2xl playful-font-bold">Tasks</h1>
+        <button className="playful-btn playful-btn-primary">
+          <Plus size={20} className="playful-mr-1" />
+          Add Task
+        </button>
       </div>
       
-      {/* Search and filters */}
-      <div className="mb-6 flex items-center gap-4 flex-wrap">
-        <div className="relative flex-1 min-w-[250px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search tasks..."
-            className="pl-10"
-            value={filters.search}
-            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-          />
-        </div>
-        
-        {showFilters && (
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={resetFilters}>
-              <X className="h-4 w-4 mr-1" />
-              Clear
-            </Button>
+      {/* Filters */}
+      <div className="playful-card">
+        <div className="playful-card-content">
+          <div className="playful-d-flex playful-justify-between playful-items-center playful-flex-wrap playful-gap-3">
+            <div className="playful-d-flex playful-items-center playful-gap-2">
+              <button 
+                className={`playful-btn playful-btn-sm ${filter === 'all' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
+                onClick={() => setFilter('all')}
+              >
+                All
+              </button>
+              <button 
+                className={`playful-btn playful-btn-sm ${filter === 'in-progress' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
+                onClick={() => setFilter('in-progress')}
+              >
+                In Progress
+              </button>
+              <button 
+                className={`playful-btn playful-btn-sm ${filter === 'pending' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
+                onClick={() => setFilter('pending')}
+              >
+                Pending
+              </button>
+              <button 
+                className={`playful-btn playful-btn-sm ${filter === 'completed' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
+                onClick={() => setFilter('completed')}
+              >
+                Completed
+              </button>
+            </div>
+            
+            <div className="playful-search">
+              <input className="playful-search-input" placeholder="Search tasks..." />
+              <span className="playful-search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </span>
+            </div>
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* Tasks */}
+      <div className="playful-table-container">
+        <table className="playful-table">
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Priority</th>
+              <th>Due Date</th>
+              <th>Assignee</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredTasks.map(task => (
+              <tr key={task.id}>
+                <td>{task.title}</td>
+                <td>{getPriorityBadge(task.priority)}</td>
+                <td>
+                  <div className="playful-d-flex playful-items-center">
+                    <Calendar size={16} className="playful-mr-1" />
+                    {new Date(task.due).toLocaleDateString()}
+                  </div>
+                </td>
+                <td>
+                  <div className="playful-d-flex playful-items-center">
+                    <div className="playful-user-avatar" style={{ width: '24px', height: '24px', marginRight: '8px' }}>
+                      <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(task.assignee)}&background=random`} alt={task.assignee} />
+                    </div>
+                    {task.assignee}
+                  </div>
+                </td>
+                <td>
+                  <span className={`playful-table-status ${getStatusClass(task.status)}`}>
+                    {task.status.charAt(0).toUpperCase() + task.status.slice(1).replace('-', ' ')}
+                  </span>
+                </td>
+                <td className="playful-table-actions">
+                  <button className="playful-btn playful-btn-sm playful-btn-ghost">View</button>
+                  <button className="playful-btn playful-btn-sm playful-btn-ghost">Edit</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
       
-      {/* Filter panel */}
-      {showFilters && (
-        <Card className="mb-6 w-full">
-          <CardContent className="pt-6">
-            <TaskFilters 
-              filters={filters}
-              setFilters={setFilters}
-              profiles={profiles}
-              campaigns={campaigns}
-            />
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Tasks table */}
-      {isLoadingTasks ? (
-        <CenteredSpinner />
-      ) : tasks.length === 0 ? (
-        <div className="text-center p-12 border rounded-lg bg-muted/50">
-          <h3 className="text-lg font-medium mb-2">No tasks found</h3>
-          <p className="text-muted-foreground mb-4">Create your first task to get started</p>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Task
-          </Button>
-        </div>
-      ) : (
-        <div className="bg-white rounded-md border shadow-sm overflow-hidden w-full">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Assignees</TableHead>
-                  <TableHead>Creator</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Related To</TableHead>
-                  <TableHead>Client Visible</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tasks.map(task => (
-                  <TableRow 
-                    key={task.id}
-                    className="cursor-pointer hover:bg-muted/60"
-                    onClick={() => handleTaskClick(task.id)}
-                  >
-                    <TableCell className="font-medium">{task.title}</TableCell>
-                    <TableCell>{getStatusBadge(task.status)}</TableCell>
-                    <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                    <TableCell>
-                      <UserAvatarGroup 
-                        users={getTaskAssignees(task)}
-                        size="sm"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {task.creator_id && (
-                        <UserAvatarGroup 
-                          users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
-                          size="sm"
-                        />
-                      )}
-                      {!task.creator_id && 'Unassigned'}
-                    </TableCell>
-                    <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
-                    <TableCell>
-                      {task.campaign_id ? (
-                        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-                          Campaign: {getCampaignName(task.campaign_id)}
-                        </Badge>
-                      ) : task.related_type ? (
-                        <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
-                          {task.related_type}
-                        </Badge>
-                      ) : 'None'}
-                    </TableCell>
-                    <TableCell>
-                      {task.client_visible ? (
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Visible</Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200">Hidden</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+      {filteredTasks.length === 0 && (
+        <div className="playful-d-flex playful-flex-column playful-items-center playful-justify-center playful-p-5">
+          <CheckSquare size={48} className="playful-text-medium playful-mb-3" />
+          <h3 className="playful-text-lg playful-font-semibold playful-mb-2">No tasks found</h3>
+          <p className="playful-text-medium">Adjust your filters or create a new task</p>
         </div>
       )}
-      
-      {/* Task Detail Sheet */}
-      <TaskDetailSheet 
-        isOpen={isTaskSheetOpen} 
-        onOpenChange={setIsTaskSheetOpen} 
-        taskId={selectedTaskId} 
-      />
     </div>
   );
 };
