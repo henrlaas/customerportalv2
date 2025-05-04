@@ -8,13 +8,13 @@ type LogoProps = {
 
 export const Logo: React.FC<LogoProps> = ({ className = '', showText = true }) => {
   return (
-    <div className="sidebar-logo-container">
+    <div className={`flex items-center space-x-2 ${className}`}>
       <img 
-        src="/lovable-uploads/05853c35-38f2-4d06-83e2-ff6ca2d05876.png" 
+        src="/lovable-uploads/d7b0c9d2-fac0-45d7-8f1f-0f8977a6ced2.png" 
         alt="BOX Logo" 
-        className="sidebar-logo-image"
+        className="h-8"
       />
-      {showText && <span className="sidebar-logo-text">Workspace</span>}
+      {showText && <h1 className="text-xl font-bold text-gray-800">Workspace</h1>}
     </div>
   );
 };
