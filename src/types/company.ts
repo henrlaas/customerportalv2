@@ -24,6 +24,7 @@ export type Company = {
   trial_period: boolean | null;
   is_partner: boolean | null;
   advisor_id: string | null;
+  status: string | null; // Added status field
 };
 
 // Company contact type matching our database schema

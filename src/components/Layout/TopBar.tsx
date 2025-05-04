@@ -1,89 +1,109 @@
 
-import { Bell, Globe } from 'lucide-react';
+import { Bell, Globe, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
+import { useState, useEffect } from 'react';
 
 export const TopBar: React.FC = () => {
   const { signOut, profile, isAdmin, isEmployee, language, setLanguage } = useAuth();
   const today = new Date();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  useEffect(() => {
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      document.documentElement.classList.add('dark-mode');
+      setIsDarkMode(true);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    }
+  };
+
+  const handleLanguageChange = (lang: string) => {
+    setLanguage(lang);
+    setShowLanguageDropdown(false);
+  };
 
   return (
-    <div className="border-b bg-white">
-      <div className="flex items-center justify-between p-4">
-        <div>
-          <h2 className="text-lg font-medium">Hi there, {profile?.first_name}</h2>
-          <p className="text-sm text-gray-500">{format(today, 'EEEE, dd MMMM')}</p>
+    <div className="topbar">
+      <div className="topbar-left">
+        <h2 className="greeting-text">Hi there, {profile?.first_name}</h2>
+        <p className="date-text">{format(today, 'EEEE, dd MMMM')}</p>
+      </div>
+      
+      <div className="topbar-right">
+        <button className="btn btn-icon btn-ghost" aria-label="Notifications">
+          <Bell size={20} />
+        </button>
+        
+        <div className="dropdown">
+          <button 
+            className="btn btn-icon btn-ghost dropdown-toggle" 
+            onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+            aria-label="Language"
+          >
+            <Globe size={20} />
+          </button>
+          <div className={`dropdown-menu ${showLanguageDropdown ? 'show' : ''}`}>
+            <div className="dropdown-item" onClick={() => handleLanguageChange('en')}>
+              <span className="flag-icon">🇺🇸</span>
+              English
+              {language === 'en' && <span className="check-icon">✓</span>}
+            </div>
+            <div className="dropdown-item" onClick={() => handleLanguageChange('no')}>
+              <span className="flag-icon">🇳🇴</span>
+              Norwegian
+              {language === 'no' && <span className="check-icon">✓</span>}
+            </div>
+          </div>
         </div>
         
-        <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="icon" className="text-gray-600 rounded-full">
-            <Bell className="h-5 w-5" />
-          </Button>
-          
-          {/* Language selector dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-gray-600 rounded-full">
-                <Globe className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuLabel>Select Language</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => setLanguage('en')}
-                className={`flex items-center gap-2 ${language === 'en' ? 'bg-accent' : ''}`}
-              >
-                <span className="text-lg mr-1">🇺🇸</span>
-                English
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setLanguage('no')}
-                className={`flex items-center gap-2 ${language === 'no' ? 'bg-accent' : ''}`}
-              >
-                <span className="text-lg mr-1">🇳🇴</span>
-                Norwegian
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full overflow-hidden">
-                <img
-                  src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.first_name}+${profile?.last_name}&background=random`}
-                  alt={`${profile?.first_name} ${profile?.last_name}`}
-                  className="h-8 w-8 rounded-full"
-                />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>
-                {profile?.first_name} {profile?.last_name}
-                <p className="text-xs text-gray-500 mt-1">{profile?.role}</p>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => window.location.href = '/profile'}>
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => window.location.href = '/settings'}>
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => signOut()}>
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <button 
+          className="btn btn-icon btn-ghost"
+          onClick={toggleTheme}
+          aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+        
+        <div className="dropdown">
+          <button 
+            className="dropdown-toggle user-profile-button"
+            onClick={() => setShowUserDropdown(!showUserDropdown)}
+          >
+            <img
+              src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.first_name}+${profile?.last_name}&background=random`}
+              alt={`${profile?.first_name} ${profile?.last_name}`}
+              className="user-avatar"
+            />
+          </button>
+          <div className={`dropdown-menu ${showUserDropdown ? 'show' : ''}`}>
+            <div className="user-dropdown-header">
+              {profile?.first_name} {profile?.last_name}
+              <p className="user-role">{profile?.role}</p>
+            </div>
+            <div className="dropdown-divider"></div>
+            <a href="/profile" className="dropdown-item">Profile</a>
+            <a href="/settings" className="dropdown-item">Settings</a>
+            <div className="dropdown-divider"></div>
+            <div className="dropdown-item" onClick={() => signOut()}>Log out</div>
+          </div>
         </div>
       </div>
     </div>

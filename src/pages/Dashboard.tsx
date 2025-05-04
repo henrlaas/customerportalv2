@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -100,93 +99,206 @@ const Dashboard = () => {
     },
   });
 
+  useEffect(() => {
+    // Initialize charts when data is available and window.PlayfulUI is loaded
+    if (!isLoading && dashboardData && window.PlayfulUI) {
+      const salesData = [
+        { label: '1 Jul', value1: 30, value2: 40 },
+        { label: '2 Jul', value1: 25, value2: 45 },
+        { label: '3 Jul', value1: 40, value2: 60 },
+        { label: '4 Jul', value1: 35, value2: 40 },
+        { label: '5 Jul', value1: 45, value2: 50 },
+        { label: '6 Jul', value1: 20, value2: 30 },
+        { label: '7 Jul', value1: 25, value2: 45 },
+        { label: '8 Jul', value1: 35, value2: 40 },
+        { label: '9 Jul', value1: 30, value2: 35 },
+        { label: '10 Jul', value1: 40, value2: 45 },
+        { label: '11 Jul', value1: 45, value2: 50 },
+        { label: '12 Jul', value1: 55, value2: 45 }
+      ];
+      
+      const chartContainer = document.getElementById('sales-chart');
+      if (chartContainer) {
+        window.PlayfulUI.createBarChart(chartContainer, salesData);
+      }
+    }
+  }, [isLoading, dashboardData]);
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">
-        {t('Dashboard')}
-      </h1>
+    <div className="dashboard-container">
+      <div className="dashboard-welcome">
+        <h1 className="welcome-title">{t('Welcome')}, {profile?.first_name}</h1>
+        <p className="welcome-subtitle">
+          {isAdmin && "You have administrator access to the portal."}
+          {isEmployee && "You have employee access to the portal."}
+          {isClient && "You have client access to the portal."}
+        </p>
+        <div className="quick-actions">
+          <button className="quick-action-btn">View Reports</button>
+          <button className="quick-action-btn">Create Task</button>
+          <button className="quick-action-btn">Manage Users</button>
+        </div>
+      </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* Welcome Card */}
-        <Card className="col-span-full bg-white border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle>
-              {t('Welcome')}, {profile?.first_name} {profile?.last_name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">
-              {isAdmin && "You have administrator access to the portal."}
-              {isEmployee && "You have employee access to the portal."}
-              {isClient && "You have client access to the portal."}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Admin/Employee specific cards */}
+      <div className="dashboard-stats">
         {(isAdmin || isEmployee) && (
           <>
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Active Tasks')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
-                  {isLoading ? '...' : dashboardData?.activeTasks || 0}
+            <div className="stats-card">
+              <div className="stats-card-header">
+                <div className="stats-card-icon icon-customers">
+                  <i className="icon-users"></i>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="stats-card-trend trend-up">
+                  <span>2.5%</span>
+                  <span>↑</span>
+                </div>
+              </div>
+              <div className="stats-title">{t('Active Tasks')}</div>
+              <div className="stats-value">
+                {isLoading ? '...' : dashboardData?.activeTasks || 0}
+              </div>
+            </div>
 
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Active Campaigns')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
-                  {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
+            <div className="stats-card">
+              <div className="stats-card-header">
+                <div className="stats-card-icon icon-revenue">
+                  <i className="icon-chart"></i>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="stats-card-trend trend-up">
+                  <span>0.5%</span>
+                  <span>↑</span>
+                </div>
+              </div>
+              <div className="stats-title">{t('Active Campaigns')}</div>
+              <div className="stats-value">
+                {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
+              </div>
+            </div>
 
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Hours Logged This Week')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
-                  {isLoading ? '...' : dashboardData?.hoursLogged || 0}
+            <div className="stats-card">
+              <div className="stats-card-header">
+                <div className="stats-card-icon icon-orders">
+                  <i className="icon-clock"></i>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="stats-card-trend trend-up">
+                  <span>1.2%</span>
+                  <span>↑</span>
+                </div>
+              </div>
+              <div className="stats-title">{t('Hours Logged This Week')}</div>
+              <div className="stats-value">
+                {isLoading ? '...' : dashboardData?.hoursLogged || 0}
+              </div>
+            </div>
           </>
         )}
 
         {/* Client specific cards */}
         {isClient && (
           <>
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Active Campaigns')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
-                  {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
+            <div className="stats-card">
+              <div className="stats-card-header">
+                <div className="stats-card-icon icon-revenue">
+                  <i className="icon-chart"></i>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="stats-card-trend trend-up">
+                  <span>0.5%</span>
+                  <span>↑</span>
+                </div>
+              </div>
+              <div className="stats-title">{t('Active Campaigns')}</div>
+              <div className="stats-value">
+                {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
+              </div>
+            </div>
 
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Contracts')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
-                  {isLoading ? '...' : dashboardData?.contracts || 0}
+            <div className="stats-card">
+              <div className="stats-card-header">
+                <div className="stats-card-icon icon-returns">
+                  <i className="icon-file"></i>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="stats-card-trend trend-up">
+                  <span>0.8%</span>
+                  <span>↑</span>
+                </div>
+              </div>
+              <div className="stats-title">{t('Contracts')}</div>
+              <div className="stats-value">
+                {isLoading ? '...' : dashboardData?.contracts || 0}
+              </div>
+            </div>
           </>
         )}
+      </div>
+
+      <div className="dashboard-grid">
+        <div className="chart-container">
+          <div className="chart-header">
+            <h2 className="chart-title">Product sales</h2>
+            <div className="chart-legend">
+              <div className="legend-item">
+                <div className="legend-dot" style={{ backgroundColor: 'var(--secondary)' }}></div>
+                <span className="legend-label">Gross margin</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-dot" style={{ backgroundColor: 'var(--primary)' }}></div>
+                <span className="legend-label">Revenue</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="metrics-chart">
+            <div id="sales-chart" className="bar-chart"></div>
+            <div className="metric-highlight">
+              <p className="metric-highlight-value">$52,187</p>
+              <p className="metric-highlight-label">2.5% ↑</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="chart-container">
+          <div className="chart-header">
+            <h2 className="chart-title">Sales by product category</h2>
+          </div>
+          
+          <div className="donut-chart">
+            <div className="chart-placeholder">
+              <div style={{ width: '300px', height: '300px', margin: '0 auto', position: 'relative', borderRadius: '50%', background: 'conic-gradient(var(--primary) 0% 25%, var(--secondary) 25% 42%, #FFB83D 42% 54%, #FF5252 54% 64%, #E2D1C3 64% 73%, #C1E5FE 73% 81%, #B5F0DD 81% 87%, #F8D6FF 87% 93%, #FFE29F 93% 100%)' }}>
+                <div style={{ position: 'absolute', width: '150px', height: '150px', background: 'white', borderRadius: '50%', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}></div>
+              </div>
+            </div>
+            
+            <div className="product-categories">
+              <div className="category-list">
+                <div className="category-item">
+                  <span className="category-dot" style={{ backgroundColor: 'var(--primary)' }}></span>
+                  <span className="category-name">Living room</span>
+                  <span className="category-value">25%</span>
+                </div>
+                <div className="category-item">
+                  <span className="category-dot" style={{ backgroundColor: 'var(--secondary)' }}></span>
+                  <span className="category-name">Kids</span>
+                  <span className="category-value">17%</span>
+                </div>
+                <div className="category-item">
+                  <span className="category-dot" style={{ backgroundColor: '#FFB83D' }}></span>
+                  <span className="category-name">Office</span>
+                  <span className="category-value">13%</span>
+                </div>
+                <div className="category-item">
+                  <span className="category-dot" style={{ backgroundColor: '#FF5252' }}></span>
+                  <span className="category-name">Bedroom</span>
+                  <span className="category-value">12%</span>
+                </div>
+                <div className="category-item">
+                  <span className="category-dot" style={{ backgroundColor: '#E2D1C3' }}></span>
+                  <span className="category-name">Kitchen</span>
+                  <span className="category-value">9%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
