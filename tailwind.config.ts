@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -26,20 +25,8 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: '#004743',
-					foreground: 'hsl(var(--primary-foreground))',
-          light: '#0a605a',
-          dark: '#003935',
-          50: '#e6f0ef',
-          100: '#b3d6d4',
-          200: '#80bcb8',
-          300: '#4da19c',
-          400: '#267f7a',
-          500: '#004743',
-          600: '#00413d',
-          700: '#003330',
-          800: '#002725',
-          900: '#001a19',
+					DEFAULT: 'hsl(var(--primary))',
+					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -75,14 +62,8 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-        success: '#10b981',
-        warning: '#f59e0b',
-        danger: '#ef4444',
-        info: '#3b82f6',
-        light: '#f3f4f6',
-        dark: '#1f2937',
-        'evergreen': '#2A9D8F',
-        'minty': '#F2FCE2',
+        'evergreen': '#2A9D8F',   // Replacing the hardcoded evergreen color
+        'minty': '#F2FCE2',       // Replacing the hardcoded minty color
       },
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -110,11 +91,7 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
-			},
-      boxShadow: {
-        'card': '0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.06)',
-        'card-hover': '0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -2px rgba(0, 0, 0, 0.05)'
-      },
+			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

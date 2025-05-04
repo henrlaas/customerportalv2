@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,12 +94,10 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
         <div className="flex justify-center mb-8">
-          <Logo className="mx-auto" />
+          <Logo />
         </div>
-        
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Sign in to your account</h2>
         
         <Form {...loginForm}>
           <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-6">
@@ -109,7 +106,7 @@ const Auth = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">{t('Email')}</FormLabel>
+                  <FormLabel>{t('Email')}</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="email@example.com" 
@@ -127,7 +124,7 @@ const Auth = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">{t('Password')}</FormLabel>
+                  <FormLabel>{t('Password')}</FormLabel>
                   <FormControl>
                     <Input 
                       type="password" 
@@ -142,7 +139,7 @@ const Auth = () => {
 
             <Button 
               type="submit" 
-              className="w-full text-base font-medium rounded-md px-8 py-2.5 bg-primary text-white hover:bg-primary-600 active:bg-primary-700 transition-all duration-300 relative"
+              className={`w-full text-[18px] font-[500] rounded-[15px] px-8 py-[14px] bg-[#0D352A] text-[#85FAA1] hover:bg-[#0D352A]/90 transition-all duration-300 ease-in-out relative ${isProcessing ? 'animate-pulse' : ''}`}
               disabled={isProcessing}
             >
               <span className={`flex items-center justify-center gap-2 ${isProcessing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
