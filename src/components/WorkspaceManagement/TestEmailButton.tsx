@@ -12,8 +12,14 @@ interface TestEmailButtonProps {
 export const TestEmailButton = ({ recipientEmail = "henrik@box.no" }: TestEmailButtonProps) => {
   const [isSending, setIsSending] = useState(false);
   const { mutate: sendEmail } = useEmailSender({
-    onSuccess: () => setIsSending(false),
-    onError: () => setIsSending(false),
+    onSuccess: () => {
+      console.log("Email sent successfully");
+      setIsSending(false);
+    },
+    onError: (error) => {
+      console.error("Error sending email:", error);
+      setIsSending(false);
+    },
   });
 
   const handleSendTestEmail = () => {
@@ -34,6 +40,7 @@ export const TestEmailButton = ({ recipientEmail = "henrik@box.no" }: TestEmailB
       text: "This is a test email from the Box Workspace management system. If you're receiving this, the email integration is working correctly."
     };
 
+    console.log("Sending test email to:", recipientEmail);
     sendEmail(emailData);
   };
 

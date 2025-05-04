@@ -21,7 +21,8 @@ serve(async (req) => {
     const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
     const SMTP_USER = Deno.env.get("SMTP_USER") || "noreply@box.no";
     const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD");
-    const EMAIL_FROM = Deno.env.get("EMAIL_FROM") || "Box Workspace <noreply@box.no>";
+    const EMAIL_FROM_NAME = Deno.env.get("EMAIL_FROM_NAME") || "Box Workspace";
+    const EMAIL_FROM_ADDRESS = Deno.env.get("EMAIL_FROM_ADDRESS") || "noreply@box.no";
     
     if (!SMTP_PASSWORD) {
       return new Response(
@@ -58,9 +59,12 @@ serve(async (req) => {
       },
     });
 
+    // Format the FROM field properly to avoid email address validation errors
+    const formattedFrom = `${EMAIL_FROM_NAME} <${EMAIL_FROM_ADDRESS}>`;
+
     // Send email
     await client.send({
-      from: EMAIL_FROM,
+      from: formattedFrom,
       to: Array.isArray(to) ? to : [to],
       cc: cc ? (Array.isArray(cc) ? cc : [cc]) : undefined,
       bcc: bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined,
