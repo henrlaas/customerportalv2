@@ -27,10 +27,10 @@ export function getSidebarItems() {
       category: 'MENU',
       hasDropdown: false
     },
-    {
-      title: t('User Profile'),
-      href: '/profile',
-      icon: Users,
+        {
+      title: t('Campaigns'),
+      href: '/campaigns',
+      icon: BookOpen,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
       hasDropdown: false
@@ -39,14 +39,6 @@ export function getSidebarItems() {
       title: t('Tasks'),
       href: '/tasks',
       icon: CheckSquare,
-      roles: ['admin', 'employee', 'client'],
-      category: 'MENU',
-      hasDropdown: false
-    },
-    {
-      title: t('Campaigns'),
-      href: '/campaigns',
-      icon: BookOpen,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
       hasDropdown: false
@@ -92,8 +84,8 @@ export function getSidebarItems() {
       hasDropdown: false
     },
     {
-      title: t('Workspace Management'),
-      href: '/workspace-management',
+      title: t('Management'),
+      href: '/workspace',
       icon: Sliders,
       roles: ['admin'],
       category: 'MENU',
