@@ -39,7 +39,7 @@ export function AdSetList({
             tabIndex={0}
             className={`
               group flex items-center justify-between px-3 py-2 rounded-lg transition-colors cursor-pointer border
-              ${selected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/80 border-transparent'}
+              ${selected ? 'bg-primary/10 border-primary' : 'hover:bg-gray-50 border-transparent'}
               focus:outline-none
             `}
             aria-current={selected}
@@ -101,4 +101,3 @@ export function AdSetList({
     </nav>
   );
 }
-

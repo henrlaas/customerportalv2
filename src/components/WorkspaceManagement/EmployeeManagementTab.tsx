@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
@@ -190,7 +189,7 @@ export function EmployeeManagementTab() {
               filteredEmployees.map((employee) => (
                 <TableRow 
                   key={employee.id}
-                  className="cursor-pointer hover:bg-accent"
+                  className="cursor-pointer hover:bg-gray-50"
                   onClick={() => handleViewEmployee(employee)}
                 >
                   <TableCell>
