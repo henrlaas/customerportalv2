@@ -100,10 +100,10 @@ export const MrrChart: React.FC<MrrChartProps> = ({ isLoading }) => {
           <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
           <XAxis dataKey="month" />
           <YAxis 
-            tickFormatter={(value) => `$${value.toLocaleString()}`} 
+            tickFormatter={(value) => `kr ${value.toLocaleString()}`} 
           />
           <Tooltip 
-            formatter={(value: any) => [`$${value.toLocaleString()}`, 'MRR']} 
+            formatter={(value: any) => [`kr ${value.toLocaleString()}`, 'MRR']} 
             labelFormatter={(label) => `Month: ${label}`}
           />
           <Legend />
