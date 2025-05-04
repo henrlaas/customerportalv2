@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
 import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
 import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
 import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
-import { TestEmailButton } from "@/components/WorkspaceManagement/TestEmailButton";
+import { EmailForm } from "@/components/WorkspaceManagement/EmailForm";
 import {
   Settings,
   Users,
@@ -189,18 +188,17 @@ const WorkspaceManagementPage = () => {
               Email Tools
             </h2>
             <p className="text-muted-foreground">
-              Test and manage email functionality.
+              Send emails directly from your workspace.
             </p>
             <Separator />
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Email Testing</CardTitle>
+              <CardTitle>Send Email</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="mb-4">Send a test email to verify your email configuration is working correctly.</p>
-              <TestEmailButton recipientEmail="henrik@box.no" />
+              <EmailForm />
             </CardContent>
           </Card>
         </TabsContent>
