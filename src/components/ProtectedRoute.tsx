@@ -5,31 +5,24 @@ import { useAuth } from '@/contexts/AuthContext';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
-  isAuthenticated: boolean;
-  isLoading: boolean;
   allowedRoles?: Array<'admin' | 'employee' | 'client'>;
 };
 
-export const ProtectedRoute = ({ 
-  children, 
-  isAuthenticated, 
-  isLoading, 
-  allowedRoles 
-}: ProtectedRouteProps) => {
-  const { profile } = useAuth();
+export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!loading && !user) {
       console.log('User not authenticated, redirecting to login');
     }
-  }, [isLoading, isAuthenticated]);
+  }, [loading, user]);
 
-  if (isLoading) {
+  if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
@@ -53,5 +46,3 @@ export const ProtectedRoute = ({
 
   return <>{children}</>;
 };
-
-export default ProtectedRoute;
