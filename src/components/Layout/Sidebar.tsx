@@ -36,12 +36,12 @@ export const Sidebar: React.FC = () => {
       } as React.CSSProperties}
     >
       <SidebarHeader className="p-6 bg-[#004743] flex items-center justify-between">
-        <Logo />
+        {!isCollapsed && <Logo />}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar}
-          className="text-gray-200 hover:text-white hover:bg-[#005e59]"
+          className={`text-gray-200 hover:text-white hover:bg-[#005e59] ${isCollapsed ? 'mx-auto' : ''}`}
         >
           {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
         </Button>
@@ -65,8 +65,8 @@ export const Sidebar: React.FC = () => {
                         : 'text-gray-200 hover:bg-[#005e59] hover:text-white'
                     }`}
                   >
-                    <div className="flex items-center">
-                      <item.icon className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-3'} ${location.pathname === item.href ? 'text-[#004743]' : 'text-gray-300'}`} />
+                    <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : ''}`}>
+                      <item.icon className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'} ${location.pathname === item.href ? 'text-[#004743]' : 'text-gray-300'}`} />
                       {!isCollapsed && <span>{item.title}</span>}
                     </div>
                     {item.hasDropdown && !isCollapsed && (
