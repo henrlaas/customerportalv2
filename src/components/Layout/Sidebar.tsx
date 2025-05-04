@@ -1,4 +1,3 @@
-
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSidebarItems } from './SidebarItems';
@@ -35,13 +34,13 @@ export const Sidebar: React.FC = () => {
         "--sidebar-width-icon": "4rem", // Increasing the width of collapsed sidebar
       } as React.CSSProperties}
     >
-      <SidebarHeader className="p-6 bg-[#004743] flex items-center justify-between">
-        {!isCollapsed && <Logo />}
+      <SidebarHeader className="p-4 bg-[#004743] flex items-center justify-between">
+        {!isCollapsed && <div className="pl-2"><Logo /></div>}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar}
-          className={`text-white hover:text-gray-200 hover:bg-[#005a55] ${isCollapsed ? 'mx-auto' : ''}`}
+          className={`text-white hover:text-gray-200 hover:bg-[#005a55] ${isCollapsed ? 'mx-auto' : 'ml-auto'}`}
         >
           {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
         </Button>
@@ -82,4 +81,3 @@ export const Sidebar: React.FC = () => {
     </ShadcnSidebar>
   );
 };
-
