@@ -2,15 +2,16 @@
 import React from "react";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "success" | "danger" | "warning" | "info" | "outline" | "link";
-  size?: "sm" | "md" | "lg";
+  variant?: "primary" | "secondary" | "success" | "danger" | "warning" | "info" | "outline" | "link" | "ghost" | "destructive" | "default";
+  size?: "sm" | "md" | "lg" | "icon";
   icon?: React.ReactNode;
   isLoading?: boolean;
   fullWidth?: boolean;
+  asChild?: boolean;
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, children, variant = "primary", size = "md", icon, isLoading, fullWidth, ...props }, ref) => {
+  ({ className, children, variant = "primary", size = "md", icon, isLoading, fullWidth, asChild, ...props }, ref) => {
     const getVariantClass = () => {
       switch (variant) {
         case "primary":
@@ -29,6 +30,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           return "btn-outline";
         case "link":
           return "btn-link";
+        case "ghost":
+          return "btn-ghost";
+        case "destructive":
+          return "btn-destructive";
+        case "default":
+          return "btn-default";
         default:
           return "btn-primary";
       }
@@ -40,10 +47,21 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           return "btn-sm";
         case "lg":
           return "btn-lg";
+        case "icon":
+          return "btn-icon";
         default:
           return "";
       }
     };
+
+    // If asChild is true, we need to clone the child element with the proper props
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children, {
+        className: `btn ${getVariantClass()} ${getSizeClass()} ${fullWidth ? "w-100" : ""} ${className || ""}`,
+        ref,
+        ...props
+      });
+    }
 
     return (
       <button

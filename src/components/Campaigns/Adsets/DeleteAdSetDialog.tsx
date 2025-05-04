@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -69,7 +70,7 @@ export function DeleteAdSetDialog({ adsetId, adsetName, onSuccess, trigger, disa
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="icon" disabled={disabled}>
+          <Button variant="secondary" size="sm" disabled={disabled}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}

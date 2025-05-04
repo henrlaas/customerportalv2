@@ -31,7 +31,7 @@ export function AdSetCard({ adset, onUpdate, disableModifications = false }: Pro
                     onSuccess={onUpdate}
                     disabled={disableModifications}
                     trigger={
-                      <Button variant="ghost" size="icon" disabled={disableModifications}>
+                      <Button variant="secondary" size="sm" disabled={disableModifications}>
                         <Edit className="h-4 w-4" />
                       </Button>
                     } 
@@ -48,7 +48,7 @@ export function AdSetCard({ adset, onUpdate, disableModifications = false }: Pro
                     onSuccess={onUpdate}
                     disabled={disableModifications}
                     trigger={
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90" disabled={disableModifications}>
+                      <Button variant="secondary" size="sm" className="text-destructive hover:text-destructive/90" disabled={disableModifications}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     } 

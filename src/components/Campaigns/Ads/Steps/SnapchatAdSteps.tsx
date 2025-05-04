@@ -134,7 +134,7 @@ export function SnapchatAdSteps({ step, setStep, fileInfo, setFileInfo, form, to
                   )}
                   <Button
                     type="button"
-                    variant="destructive"
+                    variant="danger"
                     size="sm"
                     className="absolute top-2 right-2"
                     onClick={() => setFileInfo(null)}

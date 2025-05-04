@@ -145,7 +145,7 @@ export function AdMediaViewer({
                     {!comment.isResolved && comment.id && (
                       <Button
                         size="sm"
-                        variant="ghost"
+                        variant="secondary"
                         className="h-6 w-6 p-0"
                         onClick={() => onCommentResolve(comment.id!)}
                       >

@@ -36,8 +36,8 @@ export function AdCommentMarker({
     >
       <div className="relative">
         <Button 
-          size="sm" 
-          variant={isResolved ? "default" : isNew ? "default" : "secondary"}
+          size="icon" 
+          variant={isResolved ? "primary" : isNew ? "primary" : "secondary"}
           className={cn(
             "rounded-full w-8 h-8 p-0",
             isResolved && "bg-green-500 hover:bg-green-600"
@@ -52,7 +52,7 @@ export function AdCommentMarker({
         {(isHovered || isNew) && comment && (
           <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 z-10">
             <Badge 
-              variant={isResolved ? "default" : "secondary"} 
+              variant="secondary"
               className={cn(
                 "whitespace-nowrap",
                 isResolved && "bg-green-500"
