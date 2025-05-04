@@ -15,10 +15,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -82,6 +82,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("details");
   
   // Fetch task details
   const { data: task, isLoading: isLoadingTask } = useQuery({
@@ -427,7 +428,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                   </Button>
                 </div>
                 
-                {/* Description */}
+                {/* Description - always visible above tabs */}
                 {task.description && (
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
@@ -436,62 +437,73 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                     </div>
                   </div>
                 )}
-                
-                {/* Task metadata */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Details</h3>
-                  <div className="grid grid-cols-1 gap-2 text-sm">
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-                      <span>Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</span>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <User className="h-4 w-4 text-muted-foreground mr-2" />
-                      <span>Assigned to: {getAssigneeName(task.assigned_to)}</span>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <User className="h-4 w-4 text-muted-foreground mr-2" />
-                      <span>Created by: {getCreatorName(task.creator_id)}</span>
-                    </div>
-                    
-                    {task.campaign_id && (
-                      <div className="flex items-center">
-                        <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                        <span>Related to campaign: {getCampaignName(task.campaign_id)}</span>
+
+                {/* Tab selector */}
+                <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid grid-cols-3 w-full">
+                    <TabsTrigger value="details">Details</TabsTrigger>
+                    <TabsTrigger value="timeTracking">Time Tracking</TabsTrigger>
+                    <TabsTrigger value="attachments">Attachments</TabsTrigger>
+                  </TabsList>
+                  
+                  {/* Details Tab */}
+                  <TabsContent value="details" className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium text-muted-foreground">Details</h3>
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span>Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</span>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span>Assigned to: {getAssigneeName(task.assigned_to)}</span>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span>Created by: {getCreatorName(task.creator_id)}</span>
+                        </div>
+                        
+                        {task.campaign_id && (
+                          <div className="flex items-center">
+                            <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
+                            <span>Related to campaign: {getCampaignName(task.campaign_id)}</span>
+                          </div>
+                        )}
+                        
+                        {task.related_type && task.related_type !== 'campaign' && (
+                          <div className="flex items-center">
+                            <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
+                            <span>Related to: {task.related_type}</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center">
+                          <Clock3 className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
+                        </div>
                       </div>
-                    )}
-                    
-                    {task.related_type && task.related_type !== 'campaign' && (
-                      <div className="flex items-center">
-                        <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                        <span>Related to: {task.related_type}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center">
-                      <Clock3 className="h-4 w-4 text-muted-foreground mr-2" />
-                      <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
                     </div>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                {/* Time Tracking */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Time Tracking</h3>
-                  <TaskTimer taskId={task.id} />
-                </div>
-                
-                <Separator />
-                
-                {/* Attachments */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Attachments</h3>
-                  <TaskAttachments taskId={task.id} />
-                </div>
+                  </TabsContent>
+                  
+                  {/* Time Tracking Tab */}
+                  <TabsContent value="timeTracking" className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Time Tracking</h3>
+                      <TaskTimer taskId={task.id} />
+                    </div>
+                  </TabsContent>
+                  
+                  {/* Attachments Tab */}
+                  <TabsContent value="attachments" className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Attachments</h3>
+                      <TaskAttachments taskId={task.id} />
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
             </>
           )}
