@@ -1,0 +1,126 @@
+
+/* Table Styles */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+}
+
+.table th {
+  font-weight: 600;
+  color: var(--gray-700);
+  background-color: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  position: relative;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--gray-200);
+  transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: var(--gray-50);
+}
+
+/* Table variants */
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--gray-50);
+}
+
+.table-bordered {
+  border: 1px solid var(--gray-200);
+}
+
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid var(--gray-200);
+}
+
+.table-hoverable tbody tr:hover {
+  background-color: var(--gray-100);
+}
+
+/* Table sizes */
+.table-sm th,
+.table-sm td {
+  padding: var(--space-2) var(--space-3);
+}
+
+.table-lg th,
+.table-lg td {
+  padding: var(--space-4) var(--space-6);
+}
+
+/* Table utilities */
+.table-fixed {
+  table-layout: fixed;
+}
+
+.table-auto {
+  table-layout: auto;
+}
+
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Table row status */
+.table-row-success {
+  background-color: var(--success-light) !important;
+}
+
+.table-row-warning {
+  background-color: var(--warning-light) !important;
+}
+
+.table-row-danger {
+  background-color: var(--error-light) !important;
+}
+
+/* Table row actions */
+.table-row-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* Table column sorting */
+.table-sort {
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.table-sort::after {
+  content: '↕';
+  margin-left: var(--space-2);
+  opacity: 0.5;
+}
+
+.table-sort-asc::after {
+  content: '↑';
+  opacity: 1;
+}
+
+.table-sort-desc::after {
+  content: '↓';
+  opacity: 1;
+}

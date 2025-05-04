@@ -1,0 +1,118 @@
+
+/* Tooltip Styles */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-content {
+  position: absolute;
+  z-index: 100;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--gray-900);
+  color: white;
+  font-size: var(--font-size-xs);
+  border-radius: var(--border-radius-sm);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-fast), visibility var(--transition-fast);
+}
+
+.tooltip:hover .tooltip-content {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Tooltip positions */
+.tooltip-top .tooltip-content {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+.tooltip-top .tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--gray-900) transparent transparent transparent;
+}
+
+.tooltip-right .tooltip-content {
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%) translateX(8px);
+}
+
+.tooltip-right .tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent var(--gray-900) transparent transparent;
+}
+
+.tooltip-bottom .tooltip-content {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+}
+
+.tooltip-bottom .tooltip-content::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent var(--gray-900) transparent;
+}
+
+.tooltip-left .tooltip-content {
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%) translateX(-8px);
+}
+
+.tooltip-left .tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent transparent var(--gray-900);
+}
+
+/* Tooltip variations */
+.tooltip-light .tooltip-content {
+  background-color: white;
+  color: var(--gray-900);
+  border: 1px solid var(--gray-200);
+}
+
+.tooltip-light.tooltip-top .tooltip-content::after {
+  border-color: white transparent transparent transparent;
+}
+
+.tooltip-light.tooltip-right .tooltip-content::after {
+  border-color: transparent white transparent transparent;
+}
+
+.tooltip-light.tooltip-bottom .tooltip-content::after {
+  border-color: transparent transparent white transparent;
+}
+
+.tooltip-light.tooltip-left .tooltip-content::after {
+  border-color: transparent transparent transparent white;
+}

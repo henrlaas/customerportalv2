@@ -1,602 +1,402 @@
+
 import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, User, Lock, Bell } from 'lucide-react';
-import FileUploader from '@/components/FileUploader';
-import { PhoneInput } from '@/components/ui/phone-input';
+import { Globe, Moon, Sun, Bell, Shield, User } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const SettingsPage = () => {
-  const { user, profile } = useAuth();
-  const { toast } = useToast();
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const { profile, language, setLanguage } = useAuth();
+  const t = useTranslation();
+  const [activeTab, setActiveTab] = useState('general');
 
-  // Profile form schema
-  const profileSchema = z.object({
-    first_name: z.string().min(1, "First name is required"),
-    last_name: z.string().min(1, "Last name is required"),
-    email: z.string().email().optional(),
-    phone: z.string().optional(),
+  // Theme settings
+  const [theme, setTheme] = useState('light');
+  const [notifications, setNotifications] = useState({
+    email: true,
+    browser: true,
+    mobile: false
   });
 
-  // Password form schema
-  const passwordSchema = z.object({
-    current_password: z.string().min(6, "Password must be at least 6 characters"),
-    new_password: z.string().min(6, "New password must be at least 6 characters"),
-    confirm_password: z.string().min(6, "Confirm password must be at least 6 characters"),
-  }).refine((data) => data.new_password === data.confirm_password, {
-    message: "Passwords don't match",
-    path: ["confirm_password"],
-  });
-
-  // Notifications form schema
-  const notificationsSchema = z.object({
-    email_notifications: z.boolean().default(true),
-    push_notifications: z.boolean().default(false),
-    task_reminders: z.boolean().default(true),
-    weekly_reports: z.boolean().default(true),
-    client_messages: z.boolean().default(true),
-  });
-
-  // Profile form
-  const profileForm = useForm<z.infer<typeof profileSchema>>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      first_name: profile?.first_name || '',
-      last_name: profile?.last_name || '',
-      email: user?.email || '',
-      phone: profile?.phone_number || '',
-    },
-  });
-
-  // Password form
-  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      current_password: '',
-      new_password: '',
-      confirm_password: '',
-    },
-  });
-
-  // Notifications form
-  const notificationsForm = useForm<z.infer<typeof notificationsSchema>>({
-    resolver: zodResolver(notificationsSchema),
-    defaultValues: {
-      email_notifications: true,
-      push_notifications: false,
-      task_reminders: true,
-      weekly_reports: true,
-      client_messages: true,
-    },
-  });
-
-  // Profile mutation
-  const profileMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof profileSchema>) => {
-      if (!user?.id) throw new Error("User not authenticated");
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: values.first_name,
-          last_name: values.last_name,
-          phone_number: values.phone, // Updated to use the new phone_number field
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Profile updated',
-        description: 'Your profile has been updated successfully.',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error updating profile',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Password mutation
-  const passwordMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof passwordSchema>) => {
-      if (!values.new_password) throw new Error("New password is required");
-      
-      const { data, error } = await supabase.auth.updateUser({
-        password: values.new_password,
-      });
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Password updated',
-        description: 'Your password has been updated successfully.',
-        
-      });
-      passwordForm.reset();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error updating password',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Notifications mutation
-  const notificationsMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof notificationsSchema>) => {
-      // Placeholder for future notifications setting API
-      // Just simulate a successful update for now
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return values;
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Notification preferences saved',
-        description: 'Your notification settings have been updated successfully.',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error updating notification preferences',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Avatar upload handler
-  const handleAvatarUpload = async (file: File) => {
-    if (!user?.id) throw new Error("User not authenticated");
-    
-    setUploadingAvatar(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `avatars/${user.id}.${fileExt}`;
-
-      // Upload file to Supabase Storage
-      const { error: uploadError, data } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-          upsert: true,
-          contentType: file.type,
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      if (!urlData?.publicUrl) throw new Error("Failed to get public URL");
-
-      // Update profile with avatar URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: urlData.publicUrl })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      toast({
-        title: 'Avatar updated',
-        description: 'Your profile picture has been updated successfully.',
-      });
-
-      // Return the URL to the component
-      return urlData.publicUrl;
-    } catch (error: any) {
-      toast({
-        title: 'Error uploading avatar',
-        description: error.message,
-        variant: 'destructive',
-      });
-      throw error;
-    } finally {
-      setUploadingAvatar(false);
-    }
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+    // Simulated theme change - in a real app, you'd apply the theme
+    document.documentElement.classList.toggle('dark', theme === 'light');
   };
 
-  // Form submission handlers
-  const handleProfileSubmit = (values: z.infer<typeof profileSchema>) => {
-    profileMutation.mutate(values);
+  const handleLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setLanguage(event.target.value);
   };
-
-  const handlePasswordSubmit = (values: z.infer<typeof passwordSchema>) => {
-    passwordMutation.mutate(values);
-  };
-
-  const handleNotificationsSubmit = (values: z.infer<typeof notificationsSchema>) => {
-    notificationsMutation.mutate(values);
-  };
-
-  // Get user's full name and initials for avatar
-  const fullName = `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'User';
-  const userInitials = fullName
-    .split(' ')
-    .map(name => name[0])
-    .join('')
-    .toUpperCase();
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-2">Your Profile</h1>
-      <h2 className="text-2xl font-bold mb-6">Profile Settings</h2>
+    <div className="page-content">
+      <div className="page-header">
+        <h1 className="page-title">{t('Settings')}</h1>
+        <p className="page-subtitle">{t('Manage your account settings and preferences')}</p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* User Card */}
-        <Card className="md:col-span-1">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile?.avatar_url || ''} alt={fullName} />
-                  <AvatarFallback className="text-xl">{userInitials}</AvatarFallback>
-                </Avatar>
-                <div className="absolute bottom-0 right-0">
-                  <div className="relative">
-                    <input
-                      type="file"
-                      id="avatar-upload"
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          try {
-                            await handleAvatarUpload(file);
-                          } catch (error) {
-                            console.error("Failed to upload avatar:", error);
-                          }
-                        }
-                      }}
-                      accept="image/*"
-                      disabled={uploadingAvatar}
-                    />
-                    <Button size="icon" variant="default" className="rounded-full">
-                      <Plus className="h-4 w-4" />
-                    </Button>
+      <div className="card mb-6 animate-slide-in">
+        <div className="card-header">
+          <div className="card-title">Account Information</div>
+        </div>
+        <div className="card-body">
+          <div className="flex flex-col md:flex-row md:items-center gap-6">
+            <div className="relative">
+              <img 
+                src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.first_name}+${profile?.last_name}&background=random&size=128`}
+                alt={`${profile?.first_name} ${profile?.last_name}`}
+                className="rounded-full w-24 h-24 object-cover border-4 border-white shadow"
+              />
+              <button className="btn btn-icon btn-sm btn-primary absolute bottom-0 right-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
+                  <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
+                  <line x1="2" x2="22" y1="2" y2="22"></line>
+                </svg>
+              </button>
+            </div>
+            <div>
+              <h2 className="text-2xl font-semibold">{profile?.first_name} {profile?.last_name}</h2>
+              <p className="text-gray mb-2">{profile?.email}</p>
+              <div className="flex items-center">
+                <span className="badge badge-success mr-2">{profile?.role}</span>
+                <span className="text-sm text-gray">Joined January 2023</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="tabs mb-6">
+        <div className="tabs-header">
+          <button 
+            className={`tab ${activeTab === 'general' ? 'active' : ''}`}
+            onClick={() => setActiveTab('general')}
+          >
+            General
+          </button>
+          <button 
+            className={`tab ${activeTab === 'appearance' ? 'active' : ''}`}
+            onClick={() => setActiveTab('appearance')}
+          >
+            Appearance
+          </button>
+          <button 
+            className={`tab ${activeTab === 'notifications' ? 'active' : ''}`}
+            onClick={() => setActiveTab('notifications')}
+          >
+            Notifications
+          </button>
+          <button 
+            className={`tab ${activeTab === 'privacy' ? 'active' : ''}`}
+            onClick={() => setActiveTab('privacy')}
+          >
+            Privacy
+          </button>
+        </div>
+        
+        <div className="tab-content active">
+          {/* General Settings Tab */}
+          {activeTab === 'general' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="card">
+                <div className="card-header">
+                  <div className="flex items-center">
+                    <Globe className="mr-2" size={18} />
+                    <div className="card-title">Language Preferences</div>
+                  </div>
+                </div>
+                <div className="card-body">
+                  <div className="form-group">
+                    <label className="form-label">Application Language</label>
+                    <div className="select-container">
+                      <select 
+                        value={language} 
+                        onChange={handleLanguageChange} 
+                        className="form-control"
+                      >
+                        <option value="en">English</option>
+                        <option value="no">Norwegian</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Date Format</label>
+                    <div className="select-container">
+                      <select className="form-control">
+                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
               
-              <h2 className="text-xl font-semibold mt-4">{fullName}</h2>
-              <p className="text-gray-500">{profile?.role}</p>
-
-              <div className="w-full mt-6 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Role:</span>
-                  <span className="font-medium">{profile?.role === 'admin' ? 'Agency Staff' : profile?.role}</span>
+              <div className="card">
+                <div className="card-header">
+                  <div className="flex items-center">
+                    <User className="mr-2" size={18} />
+                    <div className="card-title">Personal Information</div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Email:</span>
-                  <span className="font-medium">{user?.email}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Phone:</span>
-                  <span className="font-medium">{profile?.phone_number || 'Not set'}</span>
+                <div className="card-body">
+                  <div className="form-group">
+                    <label className="form-label">First Name</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={profile?.first_name || ''} 
+                      placeholder="First Name"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Last Name</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={profile?.last_name || ''} 
+                      placeholder="Last Name"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Email Address</label>
+                    <input 
+                      type="email" 
+                      className="form-control" 
+                      value={profile?.email || ''} 
+                      placeholder="Email Address"
+                      disabled
+                    />
+                    <div className="form-text">Your email address is used for important notifications and cannot be changed.</div>
+                  </div>
+                  <button className="btn btn-primary mt-2">Save Changes</button>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Settings Tabs */}
-        <div className="md:col-span-2">
-          <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="mb-4 bg-muted">
-              <TabsTrigger value="personal" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Personal Info
-              </TabsTrigger>
-              <TabsTrigger value="password" className="flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                Password
-              </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex items-center gap-2">
-                <Bell className="h-4 w-4" />
-                Notifications
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Personal Info Tab */}
-            <TabsContent value="personal" className="mt-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Personal Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Form {...profileForm}>
-                    <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={profileForm.control}
-                          name="first_name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>First Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="John" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={profileForm.control}
-                          name="last_name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Last Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Doe" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={profileForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email Address</FormLabel>
-                              <FormControl>
-                                <Input placeholder="john.doe@example.com" {...field} type="email" disabled />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={profileForm.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Phone Number</FormLabel>
-                              <FormControl>
-                                <PhoneInput placeholder="Enter phone number" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <div className="flex justify-end">
-                        <Button type="submit" disabled={profileMutation.isPending}>
-                          {profileMutation.isPending ? 'Saving...' : 'Save Changes'}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Password Tab */}
-            <TabsContent value="password" className="mt-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Change Password</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Form {...passwordForm}>
-                    <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-6">
-                      <FormField
-                        control={passwordForm.control}
-                        name="current_password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Current Password</FormLabel>
-                            <FormControl>
-                              <Input type="password" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+          )}
+          
+          {/* Appearance Tab */}
+          {activeTab === 'appearance' && (
+            <div className="card">
+              <div className="card-header">
+                <div className="flex items-center">
+                  {theme === 'light' ? (
+                    <Sun className="mr-2" size={18} />
+                  ) : (
+                    <Moon className="mr-2" size={18} />
+                  )}
+                  <div className="card-title">Theme Settings</div>
+                </div>
+              </div>
+              <div className="card-body">
+                <div className="form-group">
+                  <label className="form-label">Theme Mode</label>
+                  <div className="flex items-center gap-4 mt-2">
+                    <label className="radio-container">
+                      <input 
+                        type="radio" 
+                        name="theme" 
+                        checked={theme === 'light'} 
+                        onChange={() => setTheme('light')} 
                       />
-                      <FormField
-                        control={passwordForm.control}
-                        name="new_password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>New Password</FormLabel>
-                            <FormControl>
-                              <Input type="password" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                      <span className="radio-mark"></span>
+                      Light Mode
+                    </label>
+                    <label className="radio-container">
+                      <input 
+                        type="radio" 
+                        name="theme" 
+                        checked={theme === 'dark'} 
+                        onChange={() => setTheme('dark')}
                       />
-                      <FormField
-                        control={passwordForm.control}
-                        name="confirm_password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Confirm New Password</FormLabel>
-                            <FormControl>
-                              <Input type="password" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                      <span className="radio-mark"></span>
+                      Dark Mode
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Sidebar Position</label>
+                  <div className="select-container">
+                    <select className="form-control">
+                      <option value="left">Left</option>
+                      <option value="right">Right</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Accent Color</label>
+                  <div className="flex items-center gap-3 mt-2">
+                    <button className="w-8 h-8 rounded-full bg-primary border-2 border-white shadow-md"></button>
+                    <button className="w-8 h-8 rounded-full bg-secondary border-2 border-transparent"></button>
+                    <button className="w-8 h-8 rounded-full bg-success border-2 border-transparent"></button>
+                    <button className="w-8 h-8 rounded-full bg-warning border-2 border-transparent"></button>
+                    <button className="w-8 h-8 rounded-full bg-error border-2 border-transparent"></button>
+                  </div>
+                </div>
+                
+                <button className="btn btn-primary mt-4">Save Appearance Settings</button>
+              </div>
+            </div>
+          )}
+          
+          {/* Notifications Tab */}
+          {activeTab === 'notifications' && (
+            <div className="card">
+              <div className="card-header">
+                <div className="flex items-center">
+                  <Bell className="mr-2" size={18} />
+                  <div className="card-title">Notification Preferences</div>
+                </div>
+              </div>
+              <div className="card-body">
+                <div className="form-group">
+                  <label className="form-label">Email Notifications</label>
+                  <div className="flex items-center justify-between">
+                    <span>Receive email notifications</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={notifications.email}
+                        onChange={() => setNotifications({...notifications, email: !notifications.email})}
                       />
-                      <div className="flex justify-end">
-                        <Button type="submit" disabled={passwordMutation.isPending}>
-                          {passwordMutation.isPending ? 'Updating...' : 'Update Password'}
-                        </Button>
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Browser Notifications</label>
+                  <div className="flex items-center justify-between">
+                    <span>Show browser notifications</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={notifications.browser}
+                        onChange={() => setNotifications({...notifications, browser: !notifications.browser})}
+                      />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Mobile Notifications</label>
+                  <div className="flex items-center justify-between">
+                    <span>Push notifications to mobile device</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={notifications.mobile}
+                        onChange={() => setNotifications({...notifications, mobile: !notifications.mobile})}
+                      />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Notification Types</label>
+                  <div className="mt-2">
+                    <label className="checkbox-container">
+                      <input type="checkbox" checked />
+                      <span className="checkmark"></span>
+                      Task assignments and updates
+                    </label>
+                    <label className="checkbox-container">
+                      <input type="checkbox" checked />
+                      <span className="checkmark"></span>
+                      Campaign status changes
+                    </label>
+                    <label className="checkbox-container">
+                      <input type="checkbox" checked />
+                      <span className="checkmark"></span>
+                      New comments and mentions
+                    </label>
+                    <label className="checkbox-container">
+                      <input type="checkbox" />
+                      <span className="checkmark"></span>
+                      Marketing performance alerts
+                    </label>
+                  </div>
+                </div>
+                
+                <button className="btn btn-primary mt-4">Save Notification Settings</button>
+              </div>
+            </div>
+          )}
+          
+          {/* Privacy Tab */}
+          {activeTab === 'privacy' && (
+            <div className="card">
+              <div className="card-header">
+                <div className="flex items-center">
+                  <Shield className="mr-2" size={18} />
+                  <div className="card-title">Privacy & Security</div>
+                </div>
+              </div>
+              <div className="card-body">
+                <div className="form-group">
+                  <label className="form-label">Password</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="password"
+                      className="form-control"
+                      value="************"
+                      disabled
+                    />
+                    <button className="btn btn-outline">Change Password</button>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Two-Factor Authentication</label>
+                  <div className="flex items-center justify-between">
+                    <span>Enable 2FA for additional security</span>
+                    <label className="switch">
+                      <input type="checkbox" />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Session Management</label>
+                  <p className="form-text mb-2">You are currently signed in on these devices:</p>
+                  
+                  <div className="border rounded-lg p-3 mb-2">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">Current browser</div>
+                        <div className="text-sm text-gray">Chrome on Windows · Oslo, Norway · Active now</div>
                       </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Notifications Tab */}
-            <TabsContent value="notifications" className="mt-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Form {...notificationsForm}>
-                    <form onSubmit={notificationsForm.handleSubmit(handleNotificationsSubmit)} className="space-y-6">
-                      <div className="space-y-4">
-                        <FormField
-                          control={notificationsForm.control}
-                          name="email_notifications"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-md">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="text-base font-semibold">Email Notifications</FormLabel>
-                                <p className="text-sm text-muted-foreground">Receive email updates about your account</p>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={notificationsForm.control}
-                          name="push_notifications"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-md">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="text-base font-semibold">Push Notifications</FormLabel>
-                                <p className="text-sm text-muted-foreground">Receive push notifications on your devices</p>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={notificationsForm.control}
-                          name="task_reminders"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-md">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="text-base font-semibold">Task Reminders</FormLabel>
-                                <p className="text-sm text-muted-foreground">Receive notifications about upcoming task deadlines</p>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={notificationsForm.control}
-                          name="weekly_reports"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-md">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="text-base font-semibold">Weekly Reports</FormLabel>
-                                <p className="text-sm text-muted-foreground">Receive weekly summary reports</p>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={notificationsForm.control}
-                          name="client_messages"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-md">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="text-base font-semibold">Client Messages</FormLabel>
-                                <p className="text-sm text-muted-foreground">Get notified when clients send messages or comments</p>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
+                      <div className="badge badge-success">Current</div>
+                    </div>
+                  </div>
+                  
+                  <div className="border rounded-lg p-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">iPhone 14</div>
+                        <div className="text-sm text-gray">iOS App · Oslo, Norway · 2 days ago</div>
                       </div>
-                      
-                      <div className="flex justify-end">
-                        <Button type="submit" disabled={notificationsMutation.isPending}>
-                          {notificationsMutation.isPending ? 'Saving...' : 'Save Preferences'}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                      <button className="btn btn-ghost btn-sm text-error">Sign out</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Data & Privacy</label>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <button className="btn btn-outline">Download My Data</button>
+                    <button className="btn btn-outline btn-danger">Delete Account</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

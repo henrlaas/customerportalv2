@@ -2,17 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building, Plus } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
+import { Building, Plus, Filter, Grid, List, ChevronRight } from 'lucide-react';
 import { companyService } from '@/services/companyService';
-import { CompanyFilters } from '@/components/Companies/CompanyFilters';
-import { CompanyListView } from '@/components/Companies/CompanyListView';
-import { CompanyCardView } from '@/components/Companies/CompanyCardView';
 import { Company } from '@/types/company';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
+import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
 
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -24,7 +17,7 @@ const CompaniesPage = () => {
   const { isAdmin, isEmployee } = useAuth();
   const navigate = useNavigate();
   
-  // Fetch companies - use fetchCompanies
+  // Fetch companies
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['companies'],
     queryFn: companyService.fetchCompanies,
@@ -64,67 +57,188 @@ const CompaniesPage = () => {
   };
   
   return (
-    <div className="w-full max-w-full px-4 sm:px-6 py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Companies</h1>
-        {canModify && (
-          <Button onClick={() => setIsCreating(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Company
-          </Button>
-        )}
+    <div className="page-content">
+      <div className="page-header">
+        <div className="flex justify-between items-center">
+          <h1 className="page-title">Companies</h1>
+          {canModify && (
+            <button className="btn btn-primary" onClick={() => setIsCreating(true)}>
+              <Plus size={16} />
+              <span>Add Company</span>
+            </button>
+          )}
+        </div>
+        <p className="page-subtitle">Manage all company accounts and their details</p>
       </div>
       
       {/* Search and filters */}
-      <div className="bg-background p-4 rounded-lg">
-        <CompanyFilters 
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          clientTypeFilter={clientTypeFilter}
-          setClientTypeFilter={setClientTypeFilter}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          showSubsidiaries={showSubsidiaries}
-          setShowSubsidiaries={setShowSubsidiaries}
-        />
+      <div className="card mb-6">
+        <div className="card-body">
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="form-group mb-0 flex-1">
+              <label className="form-label">Search Companies</label>
+              <input
+                type="text"
+                placeholder="Search companies..."
+                className="form-control"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <div className="form-group mb-0">
+              <label className="form-label">Company Type</label>
+              <div className="select-container">
+                <select 
+                  value={clientTypeFilter}
+                  onChange={(e) => setClientTypeFilter(e.target.value)}
+                  className="form-control"
+                >
+                  <option value="all">All Types</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Web">Web</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="form-group mb-0">
+              <label className="checkbox-container">
+                <input 
+                  type="checkbox"
+                  checked={showSubsidiaries}
+                  onChange={() => setShowSubsidiaries(!showSubsidiaries)}
+                />
+                <span className="checkmark"></span>
+                Show Subsidiaries
+              </label>
+            </div>
+            
+            <div className="flex gap-2 items-center">
+              <button 
+                className={`btn btn-icon btn-outline ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                aria-label="List view"
+              >
+                <List size={18} />
+              </button>
+              <button 
+                className={`btn btn-icon btn-outline ${viewMode === 'card' ? 'active' : ''}`}
+                onClick={() => setViewMode('card')}
+                aria-label="Card view"
+              >
+                <Grid size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Companies list */}
-      <div className="w-full">
-        {isLoading ? (
-          <CenteredSpinner />
-        ) : filteredCompanies.length === 0 ? (
-          <div className="text-center p-8 bg-muted/10 rounded-lg">
-            <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-600 mb-2">No companies found</p>
-            <p className="text-gray-500 mb-4">Try adjusting your search or filters</p>
+      {isLoading ? (
+        <div className="card-body flex items-center justify-center py-12">
+          <div className="loader"></div>
+          <span className="ml-3">Loading companies...</span>
+        </div>
+      ) : filteredCompanies.length === 0 ? (
+        <div className="card">
+          <div className="card-body flex flex-col items-center justify-center py-12 text-center">
+            <Building size={48} className="text-gray mb-4" />
+            <h3 className="text-lg font-medium text-gray-600 mb-2">No companies found</h3>
+            <p className="text-gray mb-4">Try adjusting your search or filters</p>
             {canModify && (
-              <Button variant="outline" onClick={() => setIsCreating(true)}>
-                <Plus className="mr-2 h-4 w-4" />
+              <button className="btn btn-outline" onClick={() => setIsCreating(true)}>
+                <Plus size={16} className="mr-2" />
                 Add Your First Company
-              </Button>
+              </button>
             )}
           </div>
-        ) : viewMode === 'list' ? (
-          <div className="w-full">
-            <CompanyListView 
-              companies={filteredCompanies} 
-              onCompanyClick={handleCompanyClick} 
-            />
+        </div>
+      ) : viewMode === 'list' ? (
+        <div className="card animate-fade-in">
+          <div className="table-container">
+            <table className="table table-hoverable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Website</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCompanies.map((company) => (
+                  <tr 
+                    key={company.id} 
+                    onClick={() => handleCompanyClick(company)} 
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <td className="font-medium">{company.name}</td>
+                    <td>
+                      {company.is_marketing_client && <span className="badge badge-info mr-1">Marketing</span>}
+                      {company.is_web_client && <span className="badge badge-secondary">Web</span>}
+                    </td>
+                    <td>{company.city || 'N/A'}, {company.country || 'N/A'}</td>
+                    <td>{company.website || 'N/A'}</td>
+                    <td>{company.status === 'active' ? <span className="badge badge-success">Active</span> : <span className="badge">Inactive</span>}</td>
+                    <td>
+                      <button className="btn btn-icon btn-ghost">
+                        <ChevronRight size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ) : (
-          <CompanyCardView 
-            companies={filteredCompanies} 
-            onCompanyClick={handleCompanyClick} 
-          />
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCompanies.map((company) => (
+            <div 
+              key={company.id}
+              className="card card-hover-effect cursor-pointer animate-fade-in"
+              onClick={() => handleCompanyClick(company)}
+            >
+              <div className="card-body">
+                <div className="flex justify-between items-start">
+                  <h3 className="card-title">{company.name}</h3>
+                  {company.parent_id && (
+                    <span className="badge badge-outline-primary">Subsidiary</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 mb-3 mt-2">
+                  {company.is_marketing_client && <span className="badge badge-info">Marketing</span>}
+                  {company.is_web_client && <span className="badge badge-secondary">Web</span>}
+                  {company.status === 'active' ? <span className="badge badge-success">Active</span> : <span className="badge">Inactive</span>}
+                </div>
+                <div className="text-sm text-gray mb-1">
+                  <strong>Location:</strong> {company.city || 'N/A'}, {company.country || 'N/A'}
+                </div>
+                {company.website && (
+                  <div className="text-sm text-gray mb-1">
+                    <strong>Website:</strong> {company.website}
+                  </div>
+                )}
+                <div className="mt-4 flex justify-end">
+                  <button className="btn btn-sm btn-outline">
+                    View Details <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       
       {/* Multi-Stage Company Creation Dialog */}
-      <MultiStageCompanyDialog
-        isOpen={isCreating}
-        onClose={() => setIsCreating(false)}
-      />
+      {isCreating && (
+        <MultiStageCompanyDialog
+          isOpen={isCreating}
+          onClose={() => setIsCreating(false)}
+        />
+      )}
     </div>
   );
 };
