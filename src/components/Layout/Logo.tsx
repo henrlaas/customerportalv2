@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 type LogoProps = {
   className?: string;
@@ -8,13 +9,11 @@ type LogoProps = {
 
 export const Logo: React.FC<LogoProps> = ({ className = '', showText = true }) => {
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
-      <img 
-        src="/lovable-uploads/d7b0c9d2-fac0-45d7-8f1f-0f8977a6ced2.png" 
-        alt="BOX Logo" 
-        className="h-8"
-      />
+    <Link to="/dashboard" className={`flex items-center space-x-2 ${className}`}>
+      <div className="h-8 w-8 bg-primary rounded flex items-center justify-center text-white font-bold text-xl">
+        W
+      </div>
       {showText && <h1 className="text-xl font-bold text-gray-800">Workspace</h1>}
-    </div>
+    </Link>
   );
 };
