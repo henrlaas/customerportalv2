@@ -6,13 +6,15 @@ import { useAuth } from "./contexts/AuthContext";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { ThemeProvider } from "./components/providers/ThemeProvider";
 import Dashboard from "./pages/Dashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 // Create a client for React Query
 const queryClient = new QueryClient();
 
 function App() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, loading } = useAuth();
+  // Define isAuthenticated based on user existence
+  const isAuthenticated = !!user;
 
   // Create a script element to load our custom UI JS
   useEffect(() => {
@@ -34,7 +36,7 @@ function App() {
             <Route
               path="/"
               element={
-                <ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}>
+                <ProtectedRoute isAuthenticated={isAuthenticated} isLoading={loading}>
                   <AppLayout />
                 </ProtectedRoute>
               }

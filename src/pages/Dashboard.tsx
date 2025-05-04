@@ -100,7 +100,8 @@ const Dashboard = () => {
 
   // Initialize tabs after component mounts
   useEffect(() => {
-    if (window.playfulUI && window.playfulUI.initTabs) {
+    // Check if playfulUI exists before trying to access its properties
+    if (typeof window !== 'undefined' && window.playfulUI && window.playfulUI.initTabs) {
       window.playfulUI.initTabs();
     }
   }, []);
