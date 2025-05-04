@@ -25,10 +25,10 @@ export const Sidebar: React.FC = () => {
 
   return (
     <ShadcnSidebar className="border-r bg-[#004743]">
-      <SidebarHeader className="p-6">
+      <SidebarHeader className="p-6 bg-[#004743]">
         <Logo />
       </SidebarHeader>
-      <SidebarContent className="px-4 py-2">
+      <SidebarContent className="px-4 py-2 bg-[#004743]">
         {/* MENU section */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-gray-300 text-xs font-medium mb-3 px-4">MENU</SidebarGroupLabel>
