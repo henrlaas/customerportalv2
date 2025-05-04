@@ -1,195 +1,214 @@
 
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { PlusCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { z } from 'zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { TimeEntry, Task } from '@/types/timeTracking';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { Task } from '@/types/timeTracking';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus } from 'lucide-react';
 
-// Time entry form schema
-const timeEntrySchema = z.object({
+const formSchema = z.object({
+  taskId: z.string().optional(),
   description: z.string().optional(),
-  start_time: z.string().min(1, { message: 'Start time is required' }),
-  end_time: z.string().optional(),
-  task_id: z.string().optional(),
+  date: z.date(),
+  startTime: z.string(),
+  endTime: z.string(),
 });
 
-type TimeEntryFormProps = {
+type FormValues = z.infer<typeof formSchema>;
+
+export type TimeEntryFormProps = {
+  timeEntryId?: string;
+  initialTaskId?: string;
+  onComplete?: () => void;
+  
+  // Add the missing props that were causing TypeScript errors
   isCreating?: boolean;
+  setIsCreating?: React.Dispatch<React.SetStateAction<boolean>>;
   isEditing?: boolean;
-  setIsCreating?: (value: boolean) => void;
-  setIsEditing?: (value: boolean) => void;
-  currentEntry?: TimeEntry | null;
+  setIsEditing?: React.Dispatch<React.SetStateAction<boolean>>;
+  currentEntry?: any;
   onCancelEdit?: () => void;
   tasks?: Task[];
 };
 
 export const TimeEntryForm = ({
-  isCreating = false,
-  isEditing = false,
-  setIsCreating = () => {},
-  setIsEditing = () => {},
-  currentEntry = null,
-  onCancelEdit = () => {},
-  tasks = []
+  timeEntryId,
+  initialTaskId,
+  onComplete,
+  isCreating,
+  setIsCreating,
+  isEditing,
+  setIsEditing,
+  currentEntry,
+  onCancelEdit,
+  tasks: propTasks,
 }: TimeEntryFormProps) => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(isCreating || false);
+  const [tasks, setTasks] = useState<Task[]>(propTasks || []);
+  
+  const closeDialog = () => {
+    if (setIsCreating) setIsCreating(false);
+    if (setIsEditing) setIsEditing(false);
+    setOpen(false);
+  };
 
-  // Form for creating/editing time entries
-  const form = useForm({
-    resolver: zodResolver(timeEntrySchema),
+  useEffect(() => {
+    setOpen(isCreating || isEditing || false);
+  }, [isCreating, isEditing]);
+
+  useEffect(() => {
+    if (!propTasks) {
+      const fetchTasks = async () => {
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('id, title');
+
+        if (error) {
+          toast({
+            title: 'Error fetching tasks',
+            description: error.message,
+            variant: 'destructive',
+          });
+        } else {
+          setTasks(data as Task[]);
+        }
+      };
+
+      fetchTasks();
+    }
+  }, [toast, propTasks]);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      description: currentEntry?.description || '',
-      start_time: currentEntry?.start_time || new Date().toISOString(),
-      end_time: currentEntry?.end_time || '',
-      task_id: currentEntry?.task_id || undefined,
+      taskId: initialTaskId || '',
+      date: new Date(),
+      startTime: '09:00',
+      endTime: '17:00',
     },
   });
 
-  // Create time entry mutation
-  const createMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
-      if (!user) throw new Error('You must be logged in to create time entries');
-      
-      const { data, error } = await supabase
-        .from('time_entries')
-        .insert([{
-          description: values.description || null,
-          start_time: values.start_time,
-          end_time: values.end_time || null,
-          task_id: values.task_id === 'no-task' ? null : values.task_id || null,
-          user_id: user.id,
-        }])
-        .select();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Time entry created',
-        description: 'Your time entry has been created successfully.',
-      });
-      queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
-      setIsCreating(false);
-      form.reset();
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error creating time entry',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
+  const addTimeEntry = useMutation({
+    mutationFn: async (values: FormValues) => {
+      const { taskId, description, date, startTime, endTime } = values;
 
-  // Update time entry mutation
-  const updateMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
-      if (!currentEntry) return null;
-      
+      const startDateTime = new Date(date);
+      const [startHours, startMinutes] = startTime.split(':').map(Number);
+      startDateTime.setHours(startHours, startMinutes, 0, 0);
+
+      const endDateTime = new Date(date);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+      endDateTime.setHours(endHours, endMinutes, 0, 0);
+
+      // Get current user from session instead of currentUser property
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
       const { data, error } = await supabase
         .from('time_entries')
-        .update({
-          description: values.description || null,
-          start_time: values.start_time,
-          end_time: values.end_time || null,
-          task_id: values.task_id === 'no-task' ? null : values.task_id || null,
+        .insert({
+          task_id: taskId || null,
+          description,
+          start_time: startDateTime.toISOString(),
+          end_time: endDateTime.toISOString(),
+          user_id: userId,
         })
-        .eq('id', currentEntry.id)
-        .select();
-      
-      if (error) throw error;
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
       return data;
     },
     onSuccess: () => {
-      toast({
-        title: 'Time entry updated',
-        description: 'Your time entry has been updated successfully.',
-      });
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
-      setIsEditing(false);
-      onCancelEdit();
+      toast({
+        title: 'Time entry added successfully!',
+      });
       form.reset();
+      closeDialog();
+      onComplete?.();
     },
     onError: (error: any) => {
       toast({
-        title: 'Error updating time entry',
+        title: 'Failed to add time entry.',
         description: error.message,
         variant: 'destructive',
       });
     },
   });
 
-  // Submit handler for the form
-  const onSubmit = (values: z.infer<typeof timeEntrySchema>) => {
-    if (isEditing && currentEntry) {
-      updateMutation.mutate(values);
-    } else {
-      createMutation.mutate(values);
-    }
+  const onSubmit = (values: FormValues) => {
+    addTimeEntry.mutate(values);
   };
 
-  // Dialog for creating a new time entry
-  if (isCreating) {
+  // If isCreating/isEditing is provided, use Dialog wrapper
+  if (isCreating !== undefined || isEditing !== undefined) {
     return (
-      <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogTrigger asChild>
-          <Button variant="outline">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Manual Entry
-          </Button>
-        </DialogTrigger>
+      <Dialog open={open} onOpenChange={setOpen}>
+        {!isEditing && (
+          <DialogTrigger asChild>
+            <Button onClick={() => setOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Time Entry
+            </Button>
+          </DialogTrigger>
+        )}
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Time Entry</DialogTitle>
-            <DialogDescription>
-              Add a manual time entry with specific start and end times.
-            </DialogDescription>
+            <DialogTitle>
+              {isEditing ? 'Edit Time Entry' : 'Add Time Entry'}
+            </DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="description"
+                name="taskId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Task</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="What were you working on?" {...field} />
+                      <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" {...field}>
+                        <option value="">Select a task</option>
+                        {tasks.map((task) => (
+                          <option key={task.id} value={task.id}>{task.title}</option>
+                        ))}
+                      </select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -197,140 +216,71 @@ export const TimeEntryForm = ({
               />
               <FormField
                 control={form.control}
-                name="task_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Related Task</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Link to a task (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="no-task">No related task</SelectItem>
-                        {tasks.map(task => (
-                          <SelectItem key={task.id} value={task.id}>
-                            {task.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="start_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Time</FormLabel>
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="end_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Time</FormLabel>
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" onClick={() => form.reset()}>Cancel</Button>
-                </DialogClose>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Creating...' : 'Create Entry'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Dialog for editing an existing time entry
-  if (isEditing) {
-    return (
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Time Entry</DialogTitle>
-            <DialogDescription>
-              Update the details for your time entry.
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="What were you working on?" {...field} />
+                      <Textarea
+                        placeholder="Describe what you worked on"
+                        className="resize-none"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="task_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Related Task</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Link to a task (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="no-task">No related task</SelectItem>
-                        {tasks.map(task => (
-                          <SelectItem key={task.id} value={task.id}>
-                            {task.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
                 <FormField
                   control={form.control}
-                  name="start_time"
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={'outline'}
+                              className={cn(
+                                'w-[240px] pl-3 text-left font-normal',
+                                !field.value && 'text-muted-foreground'
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, 'PPP')
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date('1900-01-01')
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="startTime"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Start Time</FormLabel>
                       <FormControl>
-                        <Input type="datetime-local" {...field} />
+                        <Input type="time" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -338,28 +288,35 @@ export const TimeEntryForm = ({
                 />
                 <FormField
                   control={form.control}
-                  name="end_time"
+                  name="endTime"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>End Time</FormLabel>
                       <FormControl>
-                        <Input type="datetime-local" {...field} />
+                        <Input type="time" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" onClick={onCancelEdit}>
+              <div className="flex justify-end gap-2">
+                {(isEditing || isCreating) && (
+                  <Button type="button" variant="outline" onClick={closeDialog}>
                     Cancel
                   </Button>
-                </DialogClose>
-                <Button type="submit" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                )}
+                <Button type="submit" disabled={addTimeEntry.isPending}>
+                  {addTimeEntry.isPending ? (
+                    <>
+                      <Clock className="mr-2 h-4 w-4 animate-spin" />
+                      Please wait
+                    </>
+                  ) : (
+                    'Add Time Entry'
+                  )}
                 </Button>
-              </DialogFooter>
+              </div>
             </form>
           </Form>
         </DialogContent>
@@ -367,15 +324,127 @@ export const TimeEntryForm = ({
     );
   }
 
-  // Render just the trigger button for normal use
+  // Regular form without Dialog wrapper
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" onClick={() => setIsCreating(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Manual Entry
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="taskId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Task</FormLabel>
+              <FormControl>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" {...field}>
+                  <option value="">Select a task</option>
+                  {tasks.map((task) => (
+                    <option key={task.id} value={task.id}>{task.title}</option>
+                  ))}
+                </select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Describe what you worked on"
+                  className="resize-none"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex items-center space-x-2">
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={'outline'}
+                        className={cn(
+                          'w-[240px] pl-3 text-left font-normal',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, 'PPP')
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date('1900-01-01')
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="startTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Start Time</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="endTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>End Time</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <Button type="submit" disabled={addTimeEntry.isPending}>
+          {addTimeEntry.isPending ? (
+            <>
+              <Clock className="mr-2 h-4 w-4 animate-spin" />
+              Please wait
+            </>
+          ) : (
+            'Add Time Entry'
+          )}
         </Button>
-      </DialogTrigger>
-    </Dialog>
+      </form>
+    </Form>
   );
 };
+
+export default TimeEntryForm;
