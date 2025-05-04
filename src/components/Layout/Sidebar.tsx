@@ -44,7 +44,7 @@ export const Sidebar: React.FC = () => {
                     className={`flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium rounded-lg ${
                       location.pathname === item.href 
                         ? 'bg-[#F2FCE2] text-[#004743]' 
-                        : 'text-gray-200 hover:bg-[#005e59]'
+                        : 'text-gray-200 hover:bg-[#005e59] hover:text-white'
                     }`}
                   >
                     <div className="flex items-center">
