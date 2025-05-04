@@ -41,9 +41,8 @@ export const Sidebar: React.FC = () => {
         </Button>
       </SidebarHeader>
       <SidebarContent className="px-4 py-2 bg-[#004743]">
-        {/* MENU section */}
+        {/* MENU section without the label text */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-300 text-xs font-medium mb-3 px-4">MENU</SidebarGroupLabel>
           <SidebarMenu>
             {menuItems.map((item) => (
               <SidebarMenuItem key={item.href} className="mb-2">
