@@ -90,4 +90,4 @@ export const TableCaption = React.forwardRef<HTMLTableCaptionElement, TableCapti
 
 TableCaption.displayName = "TableCaption";
 
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };
+// Removed duplicate export statement

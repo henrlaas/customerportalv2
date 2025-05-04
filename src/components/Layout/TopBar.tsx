@@ -66,7 +66,8 @@ export const TopBar: React.FC = () => {
                   {profile?.first_name} {profile?.last_name}
                 </div>
                 <div className="dropdown-user-email text-sm text-gray">
-                  {profile?.email}
+                  {/* Accessing email either from user_metadata or directly */}
+                  {profile?.user_metadata?.email || profile?.user_email || ''}
                 </div>
               </div>
               <div className="dropdown-divider"></div>

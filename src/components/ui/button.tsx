@@ -1,63 +1,56 @@
 
 import React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "success" | "danger" | "warning" | "info" | "outline" | "link" | "ghost" | "destructive" | "default";
-  size?: "sm" | "md" | "lg" | "icon";
+// Define the button variants using class-variance-authority
+export const buttonVariants = cva("btn", {
+  variants: {
+    variant: {
+      primary: "btn-primary",
+      secondary: "btn-secondary",
+      success: "btn-success",
+      danger: "btn-danger",
+      warning: "btn-warning",
+      info: "btn-info",
+      outline: "btn-outline",
+      link: "btn-link",
+      ghost: "btn-ghost",
+      destructive: "btn-destructive",
+      default: "btn-default",
+    },
+    size: {
+      sm: "btn-sm",
+      md: "",
+      lg: "btn-lg",
+      icon: "btn-icon",
+    },
+  },
+  defaultVariants: {
+    variant: "primary",
+    size: "md",
+  },
+});
+
+export interface ButtonProps 
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
   icon?: React.ReactNode;
   isLoading?: boolean;
   fullWidth?: boolean;
   asChild?: boolean;
-};
+}
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, children, variant = "primary", size = "md", icon, isLoading, fullWidth, asChild, ...props }, ref) => {
-    const getVariantClass = () => {
-      switch (variant) {
-        case "primary":
-          return "btn-primary";
-        case "secondary":
-          return "btn-secondary";
-        case "success":
-          return "btn-success";
-        case "danger":
-          return "btn-danger";
-        case "warning":
-          return "btn-warning";
-        case "info":
-          return "btn-info";
-        case "outline":
-          return "btn-outline";
-        case "link":
-          return "btn-link";
-        case "ghost":
-          return "btn-ghost";
-        case "destructive":
-          return "btn-destructive";
-        case "default":
-          return "btn-default";
-        default:
-          return "btn-primary";
-      }
-    };
-
-    const getSizeClass = () => {
-      switch (size) {
-        case "sm":
-          return "btn-sm";
-        case "lg":
-          return "btn-lg";
-        case "icon":
-          return "btn-icon";
-        default:
-          return "";
-      }
-    };
-
     // If asChild is true, we need to clone the child element with the proper props
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children, {
-        className: `btn ${getVariantClass()} ${getSizeClass()} ${fullWidth ? "w-100" : ""} ${className || ""}`,
+        className: cn(
+          buttonVariants({ variant, size }),
+          fullWidth ? "w-100" : "",
+          className
+        ),
         ref,
         ...props
       });
@@ -65,7 +58,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <button
-        className={`btn ${getVariantClass()} ${getSizeClass()} ${fullWidth ? "w-100" : ""} ${className || ""}`}
+        className={cn(
+          buttonVariants({ variant, size }),
+          fullWidth ? "w-100" : "",
+          className
+        )}
         ref={ref}
         disabled={isLoading || props.disabled}
         {...props}
