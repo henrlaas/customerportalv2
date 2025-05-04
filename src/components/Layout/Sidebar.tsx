@@ -28,7 +28,13 @@ export const Sidebar: React.FC = () => {
   const menuItems = sidebarItems.filter(item => !item.category || item.category === 'MENU');
 
   return (
-    <ShadcnSidebar className="border-r bg-[#004743]" collapsible="icon">
+    <ShadcnSidebar 
+      className="border-r bg-[#004743]" 
+      collapsible="icon"
+      style={{
+        "--sidebar-width-icon": "4rem", // Increasing the width of collapsed sidebar
+      } as React.CSSProperties}
+    >
       <SidebarHeader className="p-6 bg-[#004743] flex items-center justify-between">
         <Logo />
         <Button 
@@ -60,8 +66,8 @@ export const Sidebar: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center">
-                      <item.icon className={`h-5 w-5 mr-3 ${location.pathname === item.href ? 'text-[#004743]' : 'text-gray-300'}`} />
-                      <span>{item.title}</span>
+                      <item.icon className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-3'} ${location.pathname === item.href ? 'text-[#004743]' : 'text-gray-300'}`} />
+                      {!isCollapsed && <span>{item.title}</span>}
                     </div>
                     {item.hasDropdown && !isCollapsed && (
                       <ChevronDown className={`h-4 w-4 ${location.pathname === item.href ? 'text-[#004743]' : 'text-gray-400'}`} />

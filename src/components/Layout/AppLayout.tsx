@@ -22,7 +22,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex h-screen w-full bg-white">
+      <div className="flex h-screen w-full bg-white" style={{
+        "--sidebar-width-icon": "4rem",
+      } as React.CSSProperties}>
         <Sidebar />
         <SidebarInset className="flex-1">
           <div className="flex-1 overflow-auto">
