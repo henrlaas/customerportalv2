@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -25,7 +26,7 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
+					DEFAULT: '#004743', // Updated primary color
 					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
@@ -41,7 +42,7 @@ export default {
 					foreground: 'hsl(var(--muted-foreground))'
 				},
 				accent: {
-					DEFAULT: 'hsl(var(--accent))',
+					DEFAULT: '#004743', // Updated accent color
 					foreground: 'hsl(var(--accent-foreground))'
 				},
 				popover: {
@@ -55,15 +56,15 @@ export default {
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
+					primary: '#004743', // Updated sidebar primary color
 					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
 					accent: 'hsl(var(--sidebar-accent))',
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-        'evergreen': '#2A9D8F',   // Replacing the hardcoded evergreen color
-        'minty': '#F2FCE2',       // Replacing the hardcoded minty color
+        'evergreen': '#004743',   // Updated evergreen color
+        'minty': '#F2FCE2',       // Keeping minty color as is
       },
 			borderRadius: {
 				lg: 'var(--radius)',
