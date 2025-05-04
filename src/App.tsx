@@ -9,6 +9,14 @@ import Dashboard from "./pages/Dashboard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import TimeTrackingPage from "./pages/TimeTrackingPage";
 import Auth from "./pages/Auth";
+import CompaniesPage from "./pages/CompaniesPage";
+import DealsPage from "./pages/DealsPage";
+import TasksPage from "./pages/TasksPage";
+import ContractsPage from "./pages/ContractsPage";
+import MediaPage from "./pages/MediaPage";
+import FinancePage from "./pages/FinancePage";
+import WorkspaceManagementPage from "./pages/WorkspaceManagementPage";
+import SettingsPage from "./pages/SettingsPage";
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -51,14 +59,14 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/time-tracking" element={<TimeTrackingPage />} />
               <Route path="/campaigns" element={<Dashboard />} />
-              <Route path="/tasks" element={<Dashboard />} />
-              <Route path="/companies" element={<Dashboard />} />
-              <Route path="/deals" element={<Dashboard />} />
-              <Route path="/contracts" element={<Dashboard />} />
-              <Route path="/media" element={<Dashboard />} />
-              <Route path="/finance" element={<Dashboard />} />
-              <Route path="/workspace-management" element={<Dashboard />} />
-              <Route path="/settings" element={<Dashboard />} />
+              <Route path="/tasks" element={<TasksPage />} />
+              <Route path="/companies" element={<CompaniesPage />} />
+              <Route path="/deals" element={<DealsPage />} />
+              <Route path="/contracts" element={<ContractsPage />} />
+              <Route path="/media" element={<MediaPage />} />
+              <Route path="/finance" element={<FinancePage />} />
+              <Route path="/workspace-management" element={<WorkspaceManagementPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

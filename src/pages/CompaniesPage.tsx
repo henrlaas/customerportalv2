@@ -1,130 +1,136 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building, Plus } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Building, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
-import { companyService } from '@/services/companyService';
-import { CompanyFilters } from '@/components/Companies/CompanyFilters';
-import { CompanyListView } from '@/components/Companies/CompanyListView';
-import { CompanyCardView } from '@/components/Companies/CompanyCardView';
-import { Company } from '@/types/company';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const CompaniesPage = () => {
-  const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
-  const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
-  const [showSubsidiaries, setShowSubsidiaries] = useState(false);
+  const { profile } = useAuth();
   
-  const { isAdmin, isEmployee } = useAuth();
-  const navigate = useNavigate();
-  
-  // Fetch companies - use fetchCompanies
-  const { data: companies = [], isLoading } = useQuery({
-    queryKey: ['companies'],
-    queryFn: companyService.fetchCompanies,
-  });
-  
-  // Filter companies by search query, type, and parent status
-  const filteredCompanies = companies.filter(company => {
-    const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (company.address && company.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (company.country && company.country.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    // Handle client type filtering using the boolean fields directly
-    const matchesType = 
-      clientTypeFilter === 'all' || 
-      (clientTypeFilter === 'Marketing' && company.is_marketing_client) ||
-      (clientTypeFilter === 'Web' && company.is_web_client);
-    
-    // Filter subsidiaries (companies with parent_id)
-    const matchesParentStatus = showSubsidiaries || company.parent_id === null;
-    
-    return matchesSearch && matchesType && matchesParentStatus;
-  });
-  
-  // Check if user can modify companies (admin or employee)
-  const canModify = isAdmin || isEmployee;
-  
-  // Handle company click - navigate to details page or parent company if it's a subsidiary
-  const handleCompanyClick = async (company: Company) => {
-    if (company.parent_id) {
-      // If it's a subsidiary, navigate to the parent company
-      navigate(`/companies/${company.parent_id}`);
-    } else {
-      // Otherwise navigate to the company details
-      navigate(`/companies/${company.id}`);
-    }
-  };
-  
+  // Placeholder for companies data
+  const companies = [
+    { id: 1, name: 'Acme Corp', type: 'Marketing', address: '123 Business Ave', city: 'New York', country: 'USA' },
+    { id: 2, name: 'TechGiant', type: 'Web', address: '456 Tech Blvd', city: 'San Francisco', country: 'USA' },
+    { id: 3, name: 'Global Media', type: 'Marketing', address: '789 Media St', city: 'London', country: 'UK' }
+  ];
+
   return (
     <div className="w-full max-w-full px-4 sm:px-6 py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Companies</h1>
-        {canModify && (
-          <Button onClick={() => setIsCreating(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Company
-          </Button>
-        )}
+      <div className="playful-d-flex playful-justify-between playful-items-center">
+        <h1 className="playful-text-2xl playful-font-bold">Companies</h1>
+        <Button 
+          className="playful-btn playful-btn-primary"
+          onClick={() => window?.playfulUI?.showToast('Feature coming soon!', 'info')}
+        >
+          <Plus size={20} className="playful-mr-1" />
+          Add Company
+        </Button>
       </div>
       
       {/* Search and filters */}
-      <div className="bg-background p-4 rounded-lg">
-        <CompanyFilters 
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          clientTypeFilter={clientTypeFilter}
-          setClientTypeFilter={setClientTypeFilter}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          showSubsidiaries={showSubsidiaries}
-          setShowSubsidiaries={setShowSubsidiaries}
-        />
+      <div className="playful-card">
+        <div className="playful-card-content">
+          <div className="playful-d-flex playful-justify-between playful-items-center playful-flex-wrap playful-gap-3">
+            <div className="playful-search" style={{ width: '100%', maxWidth: '400px' }}>
+              <input 
+                className="playful-search-input"
+                placeholder="Search companies..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <span className="playful-search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </span>
+            </div>
+            
+            <div className="playful-d-flex playful-gap-2">
+              <button 
+                className={`playful-btn playful-btn-sm ${viewMode === 'list' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
+                onClick={() => setViewMode('list')}
+              >
+                List
+              </button>
+              <button 
+                className={`playful-btn playful-btn-sm ${viewMode === 'card' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
+                onClick={() => setViewMode('card')}
+              >
+                Cards
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Companies list */}
-      <div className="w-full">
-        {isLoading ? (
-          <CenteredSpinner />
-        ) : filteredCompanies.length === 0 ? (
-          <div className="text-center p-8 bg-muted/10 rounded-lg">
-            <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-600 mb-2">No companies found</p>
-            <p className="text-gray-500 mb-4">Try adjusting your search or filters</p>
-            {canModify && (
-              <Button variant="outline" onClick={() => setIsCreating(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Company
-              </Button>
-            )}
-          </div>
-        ) : viewMode === 'list' ? (
-          <div className="w-full">
-            <CompanyListView 
-              companies={filteredCompanies} 
-              onCompanyClick={handleCompanyClick} 
-            />
-          </div>
-        ) : (
-          <CompanyCardView 
-            companies={filteredCompanies} 
-            onCompanyClick={handleCompanyClick} 
-          />
-        )}
-      </div>
-      
-      {/* Multi-Stage Company Creation Dialog */}
-      <MultiStageCompanyDialog
-        isOpen={isCreating}
-        onClose={() => setIsCreating(false)}
-      />
+      {companies.length === 0 ? (
+        <div className="playful-d-flex playful-flex-column playful-items-center playful-justify-center playful-p-5">
+          <Building size={48} className="playful-text-medium playful-mb-3" />
+          <h3 className="playful-text-lg playful-font-semibold playful-mb-2">No companies found</h3>
+          <p className="playful-text-medium playful-mb-4">Get started by adding your first company</p>
+          <button className="playful-btn playful-btn-primary">
+            <Plus size={20} className="playful-mr-1" /> 
+            Add Company
+          </button>
+        </div>
+      ) : viewMode === 'list' ? (
+        <div className="playful-table-container">
+          <table className="playful-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {companies.map(company => (
+                <tr key={company.id}>
+                  <td>{company.name}</td>
+                  <td>{company.type}</td>
+                  <td>{company.city}, {company.country}</td>
+                  <td className="playful-table-actions">
+                    <button className="playful-btn playful-btn-sm playful-btn-ghost">View</button>
+                    <button className="playful-btn playful-btn-sm playful-btn-ghost">Edit</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="playful-row">
+          {companies.map(company => (
+            <div className="playful-col playful-col-third" key={company.id}>
+              <div className="playful-card">
+                <div className="playful-card-header">
+                  <div className="playful-card-title">{company.name}</div>
+                  <div className="playful-badge playful-badge-primary">{company.type}</div>
+                </div>
+                <div className="playful-card-content">
+                  <p className="playful-mb-2">
+                    <Users size={16} className="playful-mr-1" />
+                    <span className="playful-text-medium">{company.address}</span>
+                  </p>
+                  <p className="playful-text-medium">{company.city}, {company.country}</p>
+                </div>
+                <div className="playful-card-footer">
+                  <button className="playful-btn playful-btn-sm playful-btn-outline playful-mr-2">View</button>
+                  <button className="playful-btn playful-btn-sm playful-btn-ghost">Edit</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
