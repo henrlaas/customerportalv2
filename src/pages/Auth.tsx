@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Logo } from '@/components/Layout/Logo';
+// Import as default since Logo.jsx exports it as default
+import Logo from '@/components/Layout/Logo';
 
 const Auth = () => {
   return (

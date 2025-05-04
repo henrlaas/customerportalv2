@@ -15,4 +15,6 @@ const Logo = ({ showText = true }) => {
   );
 };
 
+// Export as both default and named export
 export default Logo;
+export { Logo };

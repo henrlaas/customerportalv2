@@ -3,7 +3,8 @@ import React, { useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSidebarItems } from './SidebarItems';
-import { Logo } from './Logo';
+// Import as default since Logo.jsx exports it as default
+import Logo from './Logo';
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
