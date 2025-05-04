@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getSidebarItems } from './SidebarItems';
 import { Link } from 'react-router-dom';
 import { Settings, ChevronLeft, ChevronRight } from 'lucide-react';
-import '../styles/custom-ui.css';
+import '@/styles/custom-ui.css';
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();

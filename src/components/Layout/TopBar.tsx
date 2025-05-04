@@ -3,7 +3,7 @@ import React from 'react';
 import { Bell, Globe, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
-import '../styles/custom-ui.css';
+import '@/styles/custom-ui.css';
 
 export const TopBar: React.FC = () => {
   const { signOut, profile, language, setLanguage } = useAuth();

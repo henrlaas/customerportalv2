@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Sidebar } from '@/components/Layout/Sidebar';
 import { TopBar } from '@/components/Layout/TopBar';
 import { Outlet } from 'react-router-dom';
-import '../styles/custom-ui.css';
+import '@/styles/custom-ui.css';
 
 export type AppLayoutProps = {
   children?: React.ReactNode;
