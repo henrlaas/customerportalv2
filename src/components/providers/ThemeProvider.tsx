@@ -18,19 +18,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   attribute = "class"
 }) => {
   return (
-    <>
-      {/* Add Google Fonts link for Nunito */}
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" />
-      
-      <NextThemesProvider 
-        attribute={attribute} 
-        defaultTheme={defaultTheme} 
-        enableSystem={enableSystem}
-        storageKey={storageKey}
-      >
-        {children}
-      </NextThemesProvider>
-    </>
+    <NextThemesProvider 
+      attribute={attribute} 
+      defaultTheme={defaultTheme} 
+      enableSystem={enableSystem}
+      storageKey={storageKey}
+    >
+      {children}
+    </NextThemesProvider>
   );
 };
 

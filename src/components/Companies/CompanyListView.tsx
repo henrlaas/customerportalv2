@@ -40,9 +40,6 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
   const queryClient = useQueryClient();
   const { isAdmin, isEmployee } = useAuth();
   
-  // Add debug logging
-  console.log('CompanyListView rendering with companies:', companies);
-  
   const canModify = isAdmin || isEmployee;
   
   // Fetch users to get advisor information
@@ -100,33 +97,6 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
     if (lastName) initials += lastName.charAt(0).toUpperCase();
     return initials || '??';
   };
-  
-  // If no companies, show message in table
-  if (companies.length === 0) {
-    return (
-      <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[250px]">Company</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Website</TableHead>
-              <TableHead>Partner</TableHead>
-              <TableHead>Advisor</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
-                <p className="text-gray-500">No companies found</p>
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-    );
-  }
   
   return (
     <div className="overflow-x-auto rounded-md border">

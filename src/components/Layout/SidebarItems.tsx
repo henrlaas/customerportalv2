@@ -1,4 +1,3 @@
-
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -45,7 +44,7 @@ export function getSidebarItems() {
       roles: ['admin', 'employee'],
     },
     {
-      title: t('Companies'),
+      title: t('Companies'),  // Changed from 'Clients' to 'Companies'
       href: '/companies',
       icon: Users,
       roles: ['admin', 'employee'],
@@ -75,8 +74,8 @@ export function getSidebarItems() {
       roles: ['admin', 'employee'],
     },
     {
-      title: t('Management'),
-      href: '/workspace',
+      title: t('Workspace Management'),
+      href: '/workspace-management',
       icon: Sliders,
       roles: ['admin'],
     },

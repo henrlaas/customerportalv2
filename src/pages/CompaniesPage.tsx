@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +13,6 @@ import { CompanyCardView } from '@/components/Companies/CompanyCardView';
 import { Company } from '@/types/company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
-import { toast } from '@/components/ui/use-toast';
 
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -26,42 +24,15 @@ const CompaniesPage = () => {
   const { isAdmin, isEmployee } = useAuth();
   const navigate = useNavigate();
   
-  // Fetch companies with improved error handling
-  const { data: companies = [], isLoading, error } = useQuery({
+  // Fetch companies - use fetchCompanies
+  const { data: companies = [], isLoading } = useQuery({
     queryKey: ['companies'],
-    queryFn: async () => {
-      try {
-        console.log("Fetching companies...");
-        const result = await companyService.fetchCompanies();
-        console.log("Companies fetched:", result);
-        return result;
-      } catch (err) {
-        console.error("Error fetching companies:", err);
-        throw err;
-      }
-    },
-    retry: 1,
+    queryFn: companyService.fetchCompanies,
   });
-
-  useEffect(() => {
-    console.log("Companies in state:", companies);
-  }, [companies]);
-
-  // Show error toast if fetching companies fails
-  useEffect(() => {
-    if (error) {
-      console.error("Error loading companies:", error);
-      toast({
-        title: "Error loading companies",
-        description: "There was a problem loading your companies. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [error]);
   
   // Filter companies by search query, type, and parent status
   const filteredCompanies = companies.filter(company => {
-    const matchesSearch = company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (company.address && company.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.country && company.country.toLowerCase().includes(searchQuery.toLowerCase()));

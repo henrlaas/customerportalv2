@@ -17,16 +17,15 @@ export const TopBar: React.FC = () => {
   const today = new Date();
 
   return (
-    <div className="border-b bg-white shadow-sm">
-      <div className="flex items-center justify-between p-6">
-        <div className="animate-fade-in">
-          <h2 className="text-lg font-bold">Hi there, {profile?.first_name}! 👋</h2>
+    <div className="border-b bg-white">
+      <div className="flex items-center justify-between p-4">
+        <div>
+          <h2 className="text-lg font-medium">Hi there, {profile?.first_name}</h2>
           <p className="text-sm text-gray-500">{format(today, 'EEEE, dd MMMM')}</p>
         </div>
         
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="icon" className="text-gray-600 rounded-full relative">
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">2</span>
+          <Button variant="ghost" size="icon" className="text-gray-600 rounded-full">
             <Bell className="h-5 w-5" />
           </Button>
           
@@ -37,19 +36,19 @@ export const TopBar: React.FC = () => {
                 <Globe className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 rounded-xl border border-gray-100 shadow-playful animate-fade-in">
+            <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuLabel>Select Language</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => setLanguage('en')}
-                className={`flex items-center gap-2 rounded-lg transition-all hover:bg-soft-blue/30 ${language === 'en' ? 'bg-soft-blue/50' : ''}`}
+                className={`flex items-center gap-2 ${language === 'en' ? 'bg-accent' : ''}`}
               >
                 <span className="text-lg mr-1">🇺🇸</span>
                 English
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setLanguage('no')}
-                className={`flex items-center gap-2 rounded-lg transition-all hover:bg-soft-blue/30 ${language === 'no' ? 'bg-soft-blue/50' : ''}`}
+                className={`flex items-center gap-2 ${language === 'no' ? 'bg-accent' : ''}`}
               >
                 <span className="text-lg mr-1">🇳🇴</span>
                 Norwegian
@@ -59,39 +58,28 @@ export const TopBar: React.FC = () => {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full overflow-hidden p-0 hover:ring-2 hover:ring-soft-purple/50 transition-all">
+              <Button variant="ghost" size="icon" className="rounded-full overflow-hidden">
                 <img
                   src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.first_name}+${profile?.last_name}&background=random`}
                   alt={`${profile?.first_name} ${profile?.last_name}`}
-                  className="h-9 w-9 rounded-full object-cover"
+                  className="h-8 w-8 rounded-full"
                 />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-xl border border-gray-100 shadow-playful animate-fade-in">
-              <div className="flex items-center gap-2 p-2">
-                <div className="h-10 w-10 rounded-full overflow-hidden">
-                  <img
-                    src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.first_name}+${profile?.last_name}&background=random`}
-                    alt={`${profile?.first_name} ${profile?.last_name}`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div>
-                  <p className="font-semibold">
-                    {profile?.first_name} {profile?.last_name}
-                  </p>
-                  <p className="text-xs text-gray-500">{profile?.role}</p>
-                </div>
-              </div>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>
+                {profile?.first_name} {profile?.last_name}
+                <p className="text-xs text-gray-500 mt-1">{profile?.role}</p>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="rounded-lg transition-all hover:bg-soft-blue/30" onSelect={() => window.location.href = '/profile'}>
+              <DropdownMenuItem onSelect={() => window.location.href = '/profile'}>
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem className="rounded-lg transition-all hover:bg-soft-blue/30" onSelect={() => window.location.href = '/settings'}>
+              <DropdownMenuItem onSelect={() => window.location.href = '/settings'}>
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="rounded-lg transition-all hover:bg-soft-pink/30" onSelect={() => signOut()}>
+              <DropdownMenuItem onSelect={() => signOut()}>
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>

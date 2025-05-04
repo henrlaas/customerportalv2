@@ -5,8 +5,6 @@ import { Company, CompanyContact } from '@/types/company';
 const companyQueryService = {
   fetchCompanies: async (): Promise<Company[]> => {
     try {
-      console.log('Starting fetchCompanies API call');
-      
       const { data, error } = await supabase
         .from('companies')
         .select('*')
@@ -17,7 +15,6 @@ const companyQueryService = {
         throw new Error(error.message);
       }
 
-      console.log('Companies fetched successfully:', data?.length || 0, 'companies');
       return data || [];
     } catch (error: any) {
       console.error('Unexpected error fetching companies:', error);
