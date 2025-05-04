@@ -21,11 +21,11 @@ export const Sidebar: React.FC = () => {
   const sidebarItems = getSidebarItems();
 
   return (
-    <ShadcnSidebar className="border-r bg-white">
-      <SidebarHeader className="p-4">
+    <ShadcnSidebar className="border-r bg-whiter dark:bg-boxdark dark:border-strokedark">
+      <SidebarHeader className="p-5 border-b border-stroke dark:border-strokedark">
         <Logo />
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="p-4">
         <SidebarMenu>
           {sidebarItems.map((item) => (
             <SidebarMenuItem key={item.href}>
@@ -36,13 +36,13 @@ export const Sidebar: React.FC = () => {
               >
                 <Link 
                   to={item.href} 
-                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg ${
+                  className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md ${
                     location.pathname === item.href 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-primary text-white dark:bg-meta-4' 
+                      : 'text-gray-700 dark:text-bodydark hover:bg-primary/10'
                   }`}
                 >
-                  <item.icon className={`h-5 w-5 ${location.pathname === item.href ? 'text-blue-600' : 'text-gray-500'}`} />
+                  <item.icon className={`h-5 w-5 ${location.pathname === item.href ? 'text-white' : 'text-primary dark:text-bodydark'}`} />
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
@@ -50,7 +50,7 @@ export const Sidebar: React.FC = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t p-4 mt-auto">
+      <SidebarFooter className="border-t p-4 mt-auto border-stroke dark:border-strokedark">
         <SidebarMenuButton 
           asChild
           isActive={location.pathname === '/settings'}
@@ -58,13 +58,13 @@ export const Sidebar: React.FC = () => {
         >
           <Link 
             to="/settings" 
-            className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg ${
+            className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md ${
               location.pathname === '/settings' 
-                ? 'bg-blue-50 text-blue-600' 
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-primary text-white dark:bg-meta-4' 
+                : 'text-gray-700 dark:text-bodydark hover:bg-primary/10'
             }`}
           >
-            <Settings className={`h-5 w-5 ${location.pathname === '/settings' ? 'text-blue-600' : 'text-gray-500'}`} />
+            <Settings className={`h-5 w-5 ${location.pathname === '/settings' ? 'text-white' : 'text-primary dark:text-bodydark'}`} />
             <span>Settings</span>
           </Link>
         </SidebarMenuButton>
