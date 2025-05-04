@@ -1,10 +1,19 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  LayoutDashboard,
+  Users,
+  CheckSquare,
+  Clock,
+  FileText,
+  DollarSign,
+} from 'lucide-react';
 
 // Types for our dashboard data
 interface DashboardCounts {
@@ -101,92 +110,155 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">
-        {t('Dashboard')}
-      </h1>
+    <div className="page-content">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">{t('Dashboard')}</h1>
+          <p className="text-gray">Welcome back, {profile?.first_name}</p>
+        </div>
+      </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="stat-grid">
         {/* Welcome Card */}
-        <Card className="col-span-full bg-white border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle>
+        <div className="card card-welcome">
+          <div className="card-content">
+            <h2 className="welcome-title">
               {t('Welcome')}, {profile?.first_name} {profile?.last_name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">
+            </h2>
+            <p className="welcome-message">
               {isAdmin && "You have administrator access to the portal."}
               {isEmployee && "You have employee access to the portal."}
               {isClient && "You have client access to the portal."}
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Admin/Employee specific cards */}
         {(isAdmin || isEmployee) && (
           <>
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Active Tasks')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <CheckSquare size={24} />
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-title">{t('Active Tasks')}</h3>
+                <div className="stat-value">
                   {isLoading ? '...' : dashboardData?.activeTasks || 0}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="stat-desc">
+                  <ArrowUpRight className="stat-indicator-up" size={14} />
+                  <span>5% increase</span>
+                </div>
+              </div>
+            </div>
 
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Active Campaigns')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <Users size={24} />
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-title">{t('Active Campaigns')}</h3>
+                <div className="stat-value">
                   {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="stat-desc">
+                  <ArrowUpRight className="stat-indicator-up" size={14} />
+                  <span>12% increase</span>
+                </div>
+              </div>
+            </div>
 
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Hours Logged This Week')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <Clock size={24} />
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-title">{t('Hours Logged This Week')}</h3>
+                <div className="stat-value">
                   {isLoading ? '...' : dashboardData?.hoursLogged || 0}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="stat-desc">
+                  <ArrowDownRight className="stat-indicator-down" size={14} />
+                  <span>3% decrease</span>
+                </div>
+              </div>
+            </div>
           </>
         )}
 
         {/* Client specific cards */}
         {isClient && (
           <>
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Active Campaigns')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <Users size={24} />
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-title">{t('Active Campaigns')}</h3>
+                <div className="stat-value">
                   {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="stat-desc">
+                  <ArrowUpRight className="stat-indicator-up" size={14} />
+                  <span>8% increase</span>
+                </div>
+              </div>
+            </div>
 
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Contracts')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <FileText size={24} />
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-title">{t('Contracts')}</h3>
+                <div className="stat-value">
                   {isLoading ? '...' : dashboardData?.contracts || 0}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="stat-desc">
+                  <span>No change</span>
+                </div>
+              </div>
+            </div>
           </>
         )}
+      </div>
+
+      {/* Recent Activity */}
+      <div className="card mt-6">
+        <div className="card-header">
+          <h3 className="card-title">Recent Activity</h3>
+        </div>
+        <div className="card-content">
+          <div className="activity-list">
+            <div className="activity-item">
+              <div className="activity-icon">
+                <CheckSquare size={18} />
+              </div>
+              <div className="activity-content">
+                <p className="activity-text">Task "Update Homepage Design" was completed</p>
+                <p className="activity-time">2 hours ago</p>
+              </div>
+            </div>
+            <div className="activity-item">
+              <div className="activity-icon">
+                <Users size={18} />
+              </div>
+              <div className="activity-content">
+                <p className="activity-text">New campaign "Summer Promotion" was created</p>
+                <p className="activity-time">Yesterday</p>
+              </div>
+            </div>
+            <div className="activity-item">
+              <div className="activity-icon">
+                <FileText size={18} />
+              </div>
+              <div className="activity-content">
+                <p className="activity-text">Contract #1234 was signed by the client</p>
+                <p className="activity-time">2 days ago</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
