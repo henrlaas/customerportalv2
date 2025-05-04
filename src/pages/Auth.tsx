@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { Logo } from '@/components/Layout/Logo';
+import Logo from '@/components/Layout/Logo';
 
 // Define form schema for login
 const loginSchema = z.object({
@@ -93,70 +94,100 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
-        <div className="flex justify-center mb-8">
-          <Logo />
+    <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+      <div className="flex min-h-screen flex-wrap items-center">
+        <div className="w-full xl:w-1/2">
+          <div className="px-10 py-12 sm:p-22.5 xl:p-27.5">
+            <div className="mb-12 flex justify-center">
+              <Logo />
+            </div>
+            <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
+              {t('Sign In to Workspace')}
+            </h2>
+
+            <Form {...loginForm}>
+              <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-5">
+                <FormField
+                  control={loginForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="mb-2.5 block font-medium text-black dark:text-white">
+                        {t('Email')}
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="email@example.com" 
+                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage className="text-meta-1" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={loginForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="mb-2.5 block font-medium text-black dark:text-white">
+                        {t('Password')}
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage className="text-meta-1" />
+                    </FormItem>
+                  )}
+                />
+
+                <Button 
+                  type="submit" 
+                  className={`w-full cursor-pointer rounded-md border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90 ${isProcessing ? 'animate-pulse' : ''}`}
+                  disabled={isProcessing}
+                >
+                  <span className={`flex items-center justify-center gap-2 ${isProcessing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
+                    {t('Log In')}
+                  </span>
+                  {isProcessing && (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <LoaderCircle className="animate-spin" size={24} />
+                    </span>
+                  )}
+                </Button>
+              </form>
+            </Form>
+
+            <div className="mt-6 text-center">
+              <p className="text-center text-sm font-medium text-gray-dark">
+                {t('Contact your advisor if you have not received access to Workspace.')}
+              </p>
+            </div>
+          </div>
         </div>
-        
-        <Form {...loginForm}>
-          <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-6">
-            <FormField
-              control={loginForm.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Email')}</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="email@example.com" 
-                      className="rounded-md border-gray-300" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={loginForm.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Password')}</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      className="rounded-md border-gray-300" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button 
-              type="submit" 
-              className={`w-full text-[18px] font-[500] rounded-[15px] px-8 py-[14px] bg-[#0D352A] text-[#85FAA1] hover:bg-[#0D352A]/90 transition-all duration-300 ease-in-out relative ${isProcessing ? 'animate-pulse' : ''}`}
-              disabled={isProcessing}
-            >
-              <span className={`flex items-center justify-center gap-2 ${isProcessing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
-                {t('Log In')}
-              </span>
-              {isProcessing && (
-                <span className="absolute inset-0 flex items-center justify-center">
-                  <LoaderCircle className="animate-spin" size={24} />
-                </span>
-              )}
-            </Button>
-          </form>
-        </Form>
-
-        <p className="mt-6 text-center text-sm text-gray-500">
-          {t('Contact your advisor if you have not received access to Workspace.')}
-        </p>
+        <div className="hidden w-full xl:block xl:w-1/2">
+          <div className="py-17.5 px-26 text-center">
+            <div className="mb-5.5 inline-block">
+              <Logo />
+            </div>
+            <p className="2xl:px-20">
+              {t('Effortlessly manage your workspace with our comprehensive platform.')}
+            </p>
+            <span className="mt-15 inline-block">
+              <img
+                src="/lovable-uploads/c05a2912-ba94-40c9-850b-ac912e18ea1f.png"
+                alt="TailAdmin"
+                className="rounded-md"
+              />
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

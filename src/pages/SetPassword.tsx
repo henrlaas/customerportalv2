@@ -4,8 +4,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { LoaderCircle } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -15,355 +17,219 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/Layout/Logo';
-import { LoaderCircle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import Logo from '@/components/Layout/Logo';
 
-// Define form schema for password setup
-const passwordSetupSchema = z.object({
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
-  confirmPassword: z.string().min(6),
-}).refine(data => data.password === data.confirmPassword, {
+// Define form schema for password setting
+const passwordSchema = z.object({
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ['confirmPassword'],
+  path: ["confirmPassword"],
 });
 
-type PasswordSetupFormValues = z.infer<typeof passwordSetupSchema>;
+type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 const SetPassword = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [token, setToken] = useState<string | null>(null);
+  const [type, setType] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(true);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [inviteType, setInviteType] = useState<string | null>(null);
-  
-  const form = useForm<PasswordSetupFormValues>({
-    resolver: zodResolver(passwordSetupSchema),
+  const t = useTranslation();
+
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordSchema),
     defaultValues: {
       password: '',
       confirmPassword: '',
     },
   });
 
-  // Process token on page load
+  // Parse URL params or hash to get invitation token and type
   useEffect(() => {
-    console.log("SetPassword page loaded with URL:", window.location.href);
-    console.log("Search params:", location.search);
-    
     const searchParams = new URLSearchParams(location.search);
-    const typeParam = searchParams.get('type');
+    const searchToken = searchParams.get('token');
+    const searchType = searchParams.get('type');
     
-    // Get token from any of the possible parameters
-    let token = searchParams.get('token') || searchParams.get('token_hash');
+    // Check URL params first
+    if (searchToken && (searchType === 'invite' || searchType === 'recovery')) {
+      setToken(searchToken);
+      setType(searchType);
+      setLoading(false);
+      return;
+    }
     
-    setInviteType(typeParam);
-    console.log("Invite type:", typeParam);
-    console.log("Token value:", token);
-
-    // Check if we're coming from the auth flow with a token in the URL
-    if (token) {
-      console.log("Found token in URL params:", token);
+    // Fallback to hash format
+    if (location.hash) {
+      const hashParams = new URLSearchParams(location.hash.substring(1));
+      const hashToken = hashParams.get('token');
+      const hashType = hashParams.get('type');
       
-      const handleToken = async () => {
-        try {
-          // This handles both invite and recovery flows
-          const otpType = typeParam === 'recovery' ? 'recovery' : 'invite';
-          console.log("Processing token with type:", otpType);
-          
-          // Direct authentication attempt using the token
-          let { data, error } = await supabase.auth.verifyOtp({
-            token_hash: token as string,
-            type: otpType,
-          });
-          
-          if (error) {
-            console.error('Error processing token:', error);
-            
-            // Fallback: Try to exchange the token for a session
-            console.log("Trying alternative token processing method...");
-            
-            // For Supabase invites, we need to make a direct API call to the verify endpoint
-            const supabaseUrl = process.env.SUPABASE_URL || "https://vjqbgnjeuvuxvuruewyc.supabase.co";
-            const apiKey = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqcWJnbmpldXZ1eHZ1cnVld3ljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5NTA5MDIsImV4cCI6MjA1OTUyNjkwMn0.MvXDNmHq771t4TbZrrnaylqBoTcEONv0qv31sZYmAA8";
-            
-            const authResponse = await fetch(`${supabaseUrl}/auth/v1/verify`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': apiKey
-              },
-              body: JSON.stringify({
-                type: otpType,
-                token: token
-              })
-            });
-            
-            const authResult = await authResponse.json();
-            console.log("Alternative auth result:", authResult);
-            
-            if (authResult.error) {
-              // If still failing, show error to user
-              toast({
-                title: 'Error',
-                description: 'Invalid or expired token. Please request a new invitation or password reset.',
-                variant: 'destructive',
-              });
-              setIsProcessing(false);
-              setTimeout(() => navigate('/auth'), 3000);
-            } else if (authResult.user) {
-              // If successful, use the user data
-              setUserEmail(authResult.user.email);
-              setIsProcessing(false);
-              window.history.replaceState({}, document.title, `/set-password?type=${typeParam}`);
-            }
-          } else if (data?.user) {
-            console.log("Token verified successfully, user:", data.user);
-            setUserEmail(data.user.email);
-            setIsProcessing(false);
-            
-            // Clean up URL but keep the type parameter
-            window.history.replaceState({}, document.title, `/set-password?type=${typeParam}`);
-          }
-        } catch (err) {
-          console.error('Error in token processing:', err);
-          toast({
-            title: 'Error',
-            description: 'An unexpected error occurred. Please try again or contact support.',
-            variant: 'destructive',
-          });
-          setIsProcessing(false);
-          setTimeout(() => navigate('/auth'), 3000);
-        }
-      };
-      
-      handleToken();
-    } 
-    // Handle hash fragment in URL (old style auth flow)
-    else if (location.hash && location.hash.includes('type=')) {
-      console.log("Processing hash fragment:", location.hash);
-      
-      const handleHash = async () => {
-        try {
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error('Error processing hash:', error);
-            toast({
-              title: 'Error',
-              description: 'There was an error processing your request. Please try again.',
-              variant: 'destructive',
-            });
-            setIsProcessing(false);
-            setTimeout(() => navigate('/auth'), 3000);
-          } else if (data?.session?.user) {
-            console.log("User authenticated from hash:", data.session.user);
-            setUserEmail(data.session.user.email);
-            setIsProcessing(false);
-            
-            // Keep the type in the URL but remove the hash
-            window.history.replaceState({}, document.title, `/set-password?type=${typeParam || 'invite'}`);
-          } else {
-            console.log("No session found in hash");
-            toast({
-              title: 'Error',
-              description: 'Invalid or expired link. Please request a new invitation.',
-              variant: 'destructive',
-            });
-            setIsProcessing(false);
-            setTimeout(() => navigate('/auth'), 3000);
-          }
-        } catch (err) {
-          console.error('Error processing hash:', err);
-          toast({
-            title: 'Error',
-            description: 'An unexpected error occurred.',
-            variant: 'destructive',
-          });
-          setIsProcessing(false);
-          setTimeout(() => navigate('/auth'), 3000);
-        }
-      };
-      
-      handleHash();
-    }
-    // If we have a type but no token or hash, check for existing session
-    else if (typeParam) {
-      console.log("Type parameter found but no token/hash, checking for session");
-      
-      const checkSession = async () => {
-        const { data } = await supabase.auth.getSession();
-        
-        if (data?.session?.user) {
-          console.log("Found existing session:", data.session.user);
-          setUserEmail(data.session.user.email);
-        } else {
-          console.log("No session found, redirecting to auth");
-          toast({
-            title: 'Session expired',
-            description: 'Your session has expired. Please request a new invitation.',
-            variant: 'destructive',
-          });
-          setTimeout(() => navigate('/auth'), 1500);
-        }
-        
-        setIsProcessing(false);
-      };
-      
-      checkSession();
-    } 
-    // No parameters at all
-    else {
-      console.log("No parameters found, redirecting to auth");
-      toast({
-        title: 'Invalid access',
-        description: 'Please use the link sent in your invitation email.',
-        variant: 'destructive',
-      });
-      setIsProcessing(false);
-      setTimeout(() => navigate('/auth'), 1500);
-    }
-  }, [location, navigate, toast]);
-
-  const handleSetPassword = async (data: PasswordSetupFormValues) => {
-    try {
-      setIsProcessing(true);
-      console.log("Setting up password for user");
-      
-      const { error } = await supabase.auth.updateUser({
-        password: data.password,
-      });
-
-      if (error) {
-        console.error("Error setting password:", error);
-        toast({
-          title: 'Error',
-          description: error.message,
-          variant: 'destructive',
-        });
-        setIsProcessing(false);
-      } else {
-        console.log("Password set successfully");
-        toast({
-          title: 'Success',
-          description: 'Your password has been set successfully. You will be redirected to the dashboard.',
-        });
-        
-        // Navigate to dashboard as the user is now logged in
-        setTimeout(() => navigate('/dashboard'), 1500);
+      if (hashToken && (hashType === 'invite' || hashType === 'recovery')) {
+        setToken(hashToken);
+        setType(hashType);
+        setLoading(false);
+        return;
       }
-    } catch (error: any) {
-      console.error("Exception setting password:", error);
+    }
+    
+    // If no valid token found, show error and redirect
+    toast({
+      title: t('Invalid invitation'),
+      description: t('This invitation link is invalid or has expired.'),
+      variant: "destructive",
+    });
+    setTimeout(() => navigate('/auth'), 3000);
+  }, [location, navigate, toast, t]);
+
+  const handleSetPassword = async (data: PasswordFormValues) => {
+    if (!token) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      let result;
+      
+      if (type === 'invite') {
+        // Handle invite
+        result = await supabase.auth.updateUser({
+          password: data.password
+        });
+      } else {
+        // Handle recovery
+        result = await supabase.auth.resetPasswordForEmail(token, {
+          password: data.password,
+        });
+      }
+      
+      if (result.error) {
+        throw result.error;
+      }
+      
       toast({
-        title: 'Error',
-        description: error.message || 'An error occurred while setting your password.',
-        variant: 'destructive',
+        title: t('Success'),
+        description: t('Your password has been set. You can now log in.'),
       });
+      
+      navigate('/auth');
+    } catch (error: any) {
+      console.error('Error setting password:', error);
+      toast({
+        title: t('Error'),
+        description: error?.message || t('There was an error setting your password.'),
+        variant: "destructive",
+      });
+    } finally {
       setIsProcessing(false);
     }
   };
 
-  if (isProcessing && !userEmail) {
+  if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="mb-4 animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-          <h2 className="text-xl font-semibold mb-2">Processing your {inviteType === 'recovery' ? 'password reset' : 'invitation'}</h2>
-          <p className="text-gray-600">Please wait a moment...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
-        <div className="flex justify-center mb-8">
-          <Logo />
-        </div>
-        
-        {isProcessing && !userEmail ? (
-          <div className="text-center">
-            <div className="mb-4 animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-            <h2 className="text-xl font-semibold mb-2">
-              Processing your {inviteType === 'recovery' ? 'password reset' : 'invitation'}
+    <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+      <div className="flex min-h-screen flex-wrap items-center">
+        <div className="w-full xl:w-1/2">
+          <div className="px-10 py-12 sm:p-22.5 xl:p-27.5">
+            <div className="mb-12 flex justify-center">
+              <Logo />
+            </div>
+            <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
+              {t('Set your password')}
             </h2>
-            <p className="text-gray-600">Please wait a moment...</p>
-          </div>
-        ) : (
-          <>
-            <h2 className="text-2xl font-bold mb-6 text-center">
-              {inviteType === 'recovery' ? 'Reset Your Password' : 'Set Your Password'}
-            </h2>
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSetPassword)} className="space-y-6">
+            <p className="mb-9 text-base leading-7 text-body-color">
+              {type === 'invite' 
+                ? t('Please set a password to access your account.') 
+                : t('Reset your password.')}
+            </p>
+
+            <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit(handleSetPassword)} className="space-y-5">
                 <FormField
-                  control={form.control}
+                  control={passwordForm.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Password</FormLabel>
+                      <FormLabel className="mb-2.5 block font-medium text-black dark:text-white">
+                        {t('New Password')}
+                      </FormLabel>
                       <FormControl>
                         <Input 
                           type="password" 
-                          className="rounded-md border-gray-300" 
+                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary" 
                           {...field} 
                         />
                       </FormControl>
-                      <FormMessage />
-                      <p className="text-sm text-gray-500">Must be at least 6 characters</p>
+                      <FormMessage className="text-meta-1" />
                     </FormItem>
                   )}
                 />
 
                 <FormField
-                  control={form.control}
+                  control={passwordForm.control}
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
+                      <FormLabel className="mb-2.5 block font-medium text-black dark:text-white">
+                        {t('Confirm Password')}
+                      </FormLabel>
                       <FormControl>
                         <Input 
                           type="password" 
-                          className="rounded-md border-gray-300" 
+                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary" 
                           {...field} 
                         />
                       </FormControl>
-                      <FormMessage />
-                      <p className="text-sm text-gray-500">Both passwords must match</p>
+                      <FormMessage className="text-meta-1" />
                     </FormItem>
                   )}
                 />
 
-                <div className="flex gap-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="flex-1 text-[18px] font-[500] rounded-[15px] px-8 py-[14px] border-[#0D352A] text-[#0D352A] hover:bg-[#0D352A]/10 transition-all duration-300 ease-in-out"
-                    onClick={() => navigate('/auth')}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className={`flex-1 text-[18px] font-[500] rounded-[15px] px-8 py-[14px] bg-[#0D352A] text-[#85FAA1] hover:bg-[#0D352A]/90 transition-all duration-300 ease-in-out relative ${isProcessing ? 'animate-pulse' : ''}`}
-                    disabled={isProcessing}
-                  >
-                    <span className={`flex items-center justify-center gap-2 ${isProcessing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
-                      {inviteType === 'recovery' ? 'Reset Password' : 'Set Password'}
+                <Button 
+                  type="submit" 
+                  className={`w-full cursor-pointer rounded-md border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90 ${isProcessing ? 'animate-pulse' : ''}`}
+                  disabled={isProcessing}
+                >
+                  <span className={`flex items-center justify-center gap-2 ${isProcessing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
+                    {t('Set Password')}
+                  </span>
+                  {isProcessing && (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <LoaderCircle className="animate-spin" size={24} />
                     </span>
-                    {isProcessing && (
-                      <span className="absolute inset-0 flex items-center justify-center">
-                        <LoaderCircle className="animate-spin" size={24} />
-                      </span>
-                    )}
-                  </Button>
-                </div>
+                  )}
+                </Button>
               </form>
             </Form>
-          </>
-        )}
+          </div>
+        </div>
+        <div className="hidden w-full xl:block xl:w-1/2">
+          <div className="py-17.5 px-26 text-center">
+            <div className="mb-5.5 inline-block">
+              <Logo />
+            </div>
+            <p className="2xl:px-20">
+              {t('Welcome to Workspace. Please set your password to continue.')}
+            </p>
+            <span className="mt-15 inline-block">
+              <img
+                src="/lovable-uploads/c05a2912-ba94-40c9-850b-ac912e18ea1f.png"
+                alt="TailAdmin"
+                className="rounded-md"
+              />
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
