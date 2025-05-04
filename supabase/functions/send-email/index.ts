@@ -16,16 +16,16 @@ serve(async (req) => {
   }
   
   try {
-    // Get email configuration from environment variables
-    const SMTP_HOST = Deno.env.get("SMTP_HOST");
-    const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "587");
-    const SMTP_USER = Deno.env.get("SMTP_USER");
+    // Email configuration from environment variables
+    const SMTP_HOST = Deno.env.get("SMTP_HOST") || "smtp.gmail.com";
+    const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
+    const SMTP_USER = Deno.env.get("SMTP_USER") || "noreply@box.no";
     const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD");
-    const EMAIL_FROM = Deno.env.get("EMAIL_FROM");
+    const EMAIL_FROM = Deno.env.get("EMAIL_FROM") || "Box Workspace <noreply@box.no>";
     
-    if (!SMTP_HOST || !SMTP_USER || !SMTP_PASSWORD || !EMAIL_FROM) {
+    if (!SMTP_PASSWORD) {
       return new Response(
-        JSON.stringify({ error: "Email configuration missing" }),
+        JSON.stringify({ error: "Email configuration missing. SMTP_PASSWORD must be provided in environment variables." }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json', ...corsHeaders }
