@@ -4,26 +4,11 @@ import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
-  defaultTheme?: string;
-  storageKey?: string;
-  enableSystem?: boolean;
-  attribute?: string;
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ 
-  children,
-  defaultTheme = "light",
-  storageKey = "theme",
-  enableSystem = true,
-  attribute = "class"
-}) => {
+const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   return (
-    <NextThemesProvider 
-      attribute={attribute} 
-      defaultTheme={defaultTheme} 
-      enableSystem={enableSystem}
-      storageKey={storageKey}
-    >
+    <NextThemesProvider attribute="class" defaultTheme="light" enableSystem>
       {children}
     </NextThemesProvider>
   );

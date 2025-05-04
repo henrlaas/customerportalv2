@@ -1,39 +1,37 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 
-import Auth from './pages/Auth';
-import Index from './pages/Index';
-import Dashboard from './pages/Dashboard';
-import CompaniesPage from './pages/CompaniesPage';
-import CompanyDetailsPage from './pages/CompanyDetailsPage';
-import CampaignsPage from './pages/CampaignsPage';
+import { Auth } from './pages/Auth';
+import { Index } from './pages/Index';
+import { Dashboard } from './pages/Dashboard';
+import { CompaniesPage } from './pages/CompaniesPage';
+import { CompanyDetailsPage } from './pages/CompanyDetailsPage';
+import { CampaignsPage } from './pages/CampaignsPage';
 import { CampaignDetailsPage } from './pages/CampaignDetailsPage';
 import { AdSetDetailsPage } from './pages/AdSetDetailsPage';
-import AdDetailsPage from './pages/AdDetailsPage';
-import DealsPage from './pages/DealsPage';
-import TimeTrackingPage from './pages/TimeTrackingPage';
-import FinancePage from './pages/FinancePage';
-import ContractsPage from './pages/ContractsPage';
-import MediaPage from './pages/MediaPage';
-import SettingsPage from './pages/SettingsPage';
-import UserManagementPage from './pages/UserManagementPage';
-import WorkspaceManagementPage from './pages/WorkspaceManagementPage';
-import ClientDashboardPage from './pages/ClientDashboardPage';
-import ClientCompanyDetailsPage from './pages/ClientCompanyDetailsPage';
-import NotFound from './pages/NotFound';
-import Unauthorized from './pages/Unauthorized';
-import SetPassword from './pages/SetPassword';
+import { AdDetailsPage } from './pages/AdDetailsPage';
+import { DealsPage } from './pages/DealsPage';
+import { TimeTrackingPage } from './pages/TimeTrackingPage';
+import { FinancePage } from './pages/FinancePage';
+import { ContractsPage } from './pages/ContractsPage';
+import { MediaPage } from './pages/MediaPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { UserManagementPage } from './pages/UserManagementPage';
+import { WorkspaceManagementPage } from './pages/WorkspaceManagementPage';
+import { ClientDashboardPage } from './pages/ClientDashboardPage';
+import { ClientCompanyDetailsPage } from './pages/ClientCompanyDetailsPage';
+import { NotFound } from './pages/NotFound';
+import { Unauthorized } from './pages/Unauthorized';
+import { SetPassword } from './pages/SetPassword';
 
-import { ProtectedRoute } from './components/providers/ProtectedRoute';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { ClientProtectedRoute } from './components/ClientProtectedRoute';
-import { AppLayout } from './components/Layout/AppLayout';
+import { AppLayout } from './components/AppLayout';
 import { ClientLayout } from './components/ClientLayout';
-import { AuthProvider } from './contexts/AuthContext';
-import TasksPage from './pages/TasksPage';
+import { AuthProvider } from './context/AuthContext';
 
 // Import TaskDetailSheet for the TaskRedirect component
 import { TaskDetailSheet } from './components/Tasks/TaskDetailSheet';
