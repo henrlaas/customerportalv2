@@ -1,8 +1,9 @@
+
 import React, { useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSidebarItems } from './SidebarItems';
-import Logo from './Logo';
+import { Logo } from './Logo';
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
