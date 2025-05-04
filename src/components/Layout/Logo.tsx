@@ -18,6 +18,3 @@ export const Logo: React.FC<LogoProps> = ({ className = '', showText = true }) =
     </div>
   );
 };
-
-// Also export as default for backward compatibility
-export default Logo;
