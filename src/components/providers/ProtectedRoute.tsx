@@ -11,7 +11,7 @@ export const ProtectedRoute = () => {
   }
 
   if (!user) {
-    return <Navigate to="/sign-in" state={{ from: location }} replace />;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // If there are role restrictions and user role doesn't match
