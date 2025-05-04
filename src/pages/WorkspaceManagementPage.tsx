@@ -5,14 +5,17 @@ import { workspaceService, WorkspaceSetting } from "@/services/workspaceService"
 import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
 import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
 import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
+import { TestEmailButton } from "@/components/WorkspaceManagement/TestEmailButton";
 import {
   Settings,
-  Users
+  Users,
+  Mail
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { EmployeeManagementTab } from "@/components/WorkspaceManagement/EmployeeManagementTab";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Helper to filter settings by category
 const filterSettingsByCategory = (settings: WorkspaceSetting[], category: string) => {
@@ -132,6 +135,10 @@ const WorkspaceManagementPage = () => {
             <Users className="h-4 w-4 mr-2" />
             Users
           </TabsTrigger>
+          <TabsTrigger value="email-tools">
+            <Mail className="h-4 w-4 mr-2" />
+            Email Tools
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all-settings" className="space-y-4">
@@ -173,6 +180,29 @@ const WorkspaceManagementPage = () => {
 
         <TabsContent value="users">
           <UserManagementTab />
+        </TabsContent>
+
+        <TabsContent value="email-tools">
+          <div className="grid gap-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Email Tools
+            </h2>
+            <p className="text-muted-foreground">
+              Test and manage email functionality.
+            </p>
+            <Separator />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Email Testing</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4">Send a test email to verify your email configuration is working correctly.</p>
+              <TestEmailButton recipientEmail="henrik@box.no" />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
