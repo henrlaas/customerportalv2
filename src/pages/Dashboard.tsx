@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,7 +12,7 @@ import { CampaignsSummary } from '@/components/Dashboard/CampaignsSummary';
 import { CompaniesSummary } from '@/components/Dashboard/CompaniesSummary';
 import { DealsSummary } from '@/components/Dashboard/DealsSummary';
 import { MrrChart } from '@/components/Dashboard/MrrChart';
-import { ArrowDownIcon, ArrowUpIcon, CheckIcon, ChartBarIcon, CircleDollarSignIcon, SquareCheckIcon, SquareLoader } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, CheckIcon, ChartBarIcon, CircleDollarSignIcon, SquareCheckIcon, SquareCode } from 'lucide-react';
 
 // Types for our dashboard data
 interface DashboardCounts {
