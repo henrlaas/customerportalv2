@@ -1,10 +1,11 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
+// Types for our dashboard data
 interface DashboardCounts {
   activeTasks: number;
   activeCampaigns: number;
@@ -98,78 +99,95 @@ const Dashboard = () => {
     },
   });
 
-  // Initialize tabs after component mounts
   useEffect(() => {
-    // Check if playfulUI exists before trying to access its properties
-    if (typeof window !== 'undefined' && window.playfulUI && window.playfulUI.initTabs) {
-      window.playfulUI.initTabs();
+    // Initialize charts when data is available and window.PlayfulUI is loaded
+    if (!isLoading && dashboardData && window.PlayfulUI) {
+      const salesData = [
+        { label: '1 Jul', value1: 30, value2: 40 },
+        { label: '2 Jul', value1: 25, value2: 45 },
+        { label: '3 Jul', value1: 40, value2: 60 },
+        { label: '4 Jul', value1: 35, value2: 40 },
+        { label: '5 Jul', value1: 45, value2: 50 },
+        { label: '6 Jul', value1: 20, value2: 30 },
+        { label: '7 Jul', value1: 25, value2: 45 },
+        { label: '8 Jul', value1: 35, value2: 40 },
+        { label: '9 Jul', value1: 30, value2: 35 },
+        { label: '10 Jul', value1: 40, value2: 45 },
+        { label: '11 Jul', value1: 45, value2: 50 },
+        { label: '12 Jul', value1: 55, value2: 45 }
+      ];
+      
+      const chartContainer = document.getElementById('sales-chart');
+      if (chartContainer) {
+        window.PlayfulUI.createBarChart(chartContainer, salesData);
+      }
     }
-  }, []);
+  }, [isLoading, dashboardData]);
 
   return (
-    <div className="playful-container">
-      <h1 className="playful-text-2xl playful-font-bold playful-mb-4">
-        {t('Dashboard')}
-      </h1>
-
-      <div className="playful-row playful-mb-4">
-        {/* Welcome Card */}
-        <div className="playful-col playful-col-full">
-          <div className="playful-card playful-card-gradient">
-            <div className="playful-card-content">
-              <h2 className="playful-text-xl playful-font-bold playful-mb-2">
-                {t('Welcome')}, {profile?.first_name} {profile?.last_name}
-              </h2>
-              <p>
-                {isAdmin && "You have administrator access to the portal."}
-                {isEmployee && "You have employee access to the portal."}
-                {isClient && "You have client access to the portal."}
-              </p>
-            </div>
-          </div>
+    <div className="dashboard-container">
+      <div className="dashboard-welcome">
+        <h1 className="welcome-title">{t('Welcome')}, {profile?.first_name}</h1>
+        <p className="welcome-subtitle">
+          {isAdmin && "You have administrator access to the portal."}
+          {isEmployee && "You have employee access to the portal."}
+          {isClient && "You have client access to the portal."}
+        </p>
+        <div className="quick-actions">
+          <button className="quick-action-btn">View Reports</button>
+          <button className="quick-action-btn">Create Task</button>
+          <button className="quick-action-btn">Manage Users</button>
         </div>
       </div>
 
-      <div className="playful-row">
-        {/* Admin/Employee specific cards */}
+      <div className="dashboard-stats">
         {(isAdmin || isEmployee) && (
           <>
-            <div className="playful-col playful-col-third playful-mb-4">
-              <div className="playful-stat-card playful-card-decorated primary">
-                <div className="playful-stat-header">
-                  <div className="playful-stat-title">{t('Active Tasks')}</div>
-                  <div className="playful-stat-badge playful-stat-badge-up">+5%</div>
+            <div className="stats-card">
+              <div className="stats-card-header">
+                <div className="stats-card-icon icon-customers">
+                  <i className="icon-users"></i>
                 </div>
-                <div className="playful-stat-value">
-                  {isLoading ? '...' : dashboardData?.activeTasks || 0}
+                <div className="stats-card-trend trend-up">
+                  <span>2.5%</span>
+                  <span>↑</span>
                 </div>
-                <div className="playful-stat-desc">Tasks requiring attention</div>
+              </div>
+              <div className="stats-title">{t('Active Tasks')}</div>
+              <div className="stats-value">
+                {isLoading ? '...' : dashboardData?.activeTasks || 0}
               </div>
             </div>
 
-            <div className="playful-col playful-col-third playful-mb-4">
-              <div className="playful-stat-card playful-card-decorated secondary">
-                <div className="playful-stat-header">
-                  <div className="playful-stat-title">{t('Active Campaigns')}</div>
-                  <div className="playful-stat-badge playful-stat-badge-up">+12%</div>
+            <div className="stats-card">
+              <div className="stats-card-header">
+                <div className="stats-card-icon icon-revenue">
+                  <i className="icon-chart"></i>
                 </div>
-                <div className="playful-stat-value">
-                  {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
+                <div className="stats-card-trend trend-up">
+                  <span>0.5%</span>
+                  <span>↑</span>
                 </div>
-                <div className="playful-stat-desc">Running campaigns</div>
+              </div>
+              <div className="stats-title">{t('Active Campaigns')}</div>
+              <div className="stats-value">
+                {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
               </div>
             </div>
 
-            <div className="playful-col playful-col-third playful-mb-4">
-              <div className="playful-stat-card playful-card-decorated">
-                <div className="playful-stat-header">
-                  <div className="playful-stat-title">{t('Hours Logged This Week')}</div>
-                  <div className="playful-stat-badge playful-stat-badge-down">-2%</div>
+            <div className="stats-card">
+              <div className="stats-card-header">
+                <div className="stats-card-icon icon-orders">
+                  <i className="icon-clock"></i>
                 </div>
-                <div className="playful-stat-value">
-                  {isLoading ? '...' : dashboardData?.hoursLogged || 0}
+                <div className="stats-card-trend trend-up">
+                  <span>1.2%</span>
+                  <span>↑</span>
                 </div>
-                <div className="playful-stat-desc">Total hours this week</div>
+              </div>
+              <div className="stats-title">{t('Hours Logged This Week')}</div>
+              <div className="stats-value">
+                {isLoading ? '...' : dashboardData?.hoursLogged || 0}
               </div>
             </div>
           </>
@@ -178,84 +196,104 @@ const Dashboard = () => {
         {/* Client specific cards */}
         {isClient && (
           <>
-            <div className="playful-col playful-col-half playful-mb-4">
-              <div className="playful-stat-card playful-card-decorated secondary">
-                <div className="playful-stat-header">
-                  <div className="playful-stat-title">{t('Active Campaigns')}</div>
-                  <div className="playful-stat-badge playful-stat-badge-up">+8%</div>
+            <div className="stats-card">
+              <div className="stats-card-header">
+                <div className="stats-card-icon icon-revenue">
+                  <i className="icon-chart"></i>
                 </div>
-                <div className="playful-stat-value">
-                  {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
+                <div className="stats-card-trend trend-up">
+                  <span>0.5%</span>
+                  <span>↑</span>
                 </div>
-                <div className="playful-stat-desc">Currently active campaigns</div>
+              </div>
+              <div className="stats-title">{t('Active Campaigns')}</div>
+              <div className="stats-value">
+                {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
               </div>
             </div>
 
-            <div className="playful-col playful-col-half playful-mb-4">
-              <div className="playful-stat-card playful-card-decorated">
-                <div className="playful-stat-header">
-                  <div className="playful-stat-title">{t('Contracts')}</div>
+            <div className="stats-card">
+              <div className="stats-card-header">
+                <div className="stats-card-icon icon-returns">
+                  <i className="icon-file"></i>
                 </div>
-                <div className="playful-stat-value">
-                  {isLoading ? '...' : dashboardData?.contracts || 0}
+                <div className="stats-card-trend trend-up">
+                  <span>0.8%</span>
+                  <span>↑</span>
                 </div>
-                <div className="playful-stat-desc">Active contracts</div>
+              </div>
+              <div className="stats-title">{t('Contracts')}</div>
+              <div className="stats-value">
+                {isLoading ? '...' : dashboardData?.contracts || 0}
               </div>
             </div>
           </>
         )}
       </div>
 
-      <div className="playful-row">
-        <div className="playful-col playful-mb-4">
-          <div className="playful-card">
-            <div className="playful-card-header">
-              <h3 className="playful-card-title">Recent Activity</h3>
+      <div className="dashboard-grid">
+        <div className="chart-container">
+          <div className="chart-header">
+            <h2 className="chart-title">Product sales</h2>
+            <div className="chart-legend">
+              <div className="legend-item">
+                <div className="legend-dot" style={{ backgroundColor: 'var(--secondary)' }}></div>
+                <span className="legend-label">Gross margin</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-dot" style={{ backgroundColor: 'var(--primary)' }}></div>
+                <span className="legend-label">Revenue</span>
+              </div>
             </div>
-            <div className="playful-card-content">
-              <div className="playful-activity-item">
-                <div className="playful-activity-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                </div>
-                <div className="playful-activity-content">
-                  <div className="playful-activity-title">
-                    <span className="playful-activity-name">Jamie Smith</span> updated account settings
-                  </div>
-                  <div className="playful-activity-time">Today, 10:15</div>
-                </div>
+          </div>
+          
+          <div className="metrics-chart">
+            <div id="sales-chart" className="bar-chart"></div>
+            <div className="metric-highlight">
+              <p className="metric-highlight-value">$52,187</p>
+              <p className="metric-highlight-label">2.5% ↑</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="chart-container">
+          <div className="chart-header">
+            <h2 className="chart-title">Sales by product category</h2>
+          </div>
+          
+          <div className="donut-chart">
+            <div className="chart-placeholder">
+              <div style={{ width: '300px', height: '300px', margin: '0 auto', position: 'relative', borderRadius: '50%', background: 'conic-gradient(var(--primary) 0% 25%, var(--secondary) 25% 42%, #FFB83D 42% 54%, #FF5252 54% 64%, #E2D1C3 64% 73%, #C1E5FE 73% 81%, #B5F0DD 81% 87%, #F8D6FF 87% 93%, #FFE29F 93% 100%)' }}>
+                <div style={{ position: 'absolute', width: '150px', height: '150px', background: 'white', borderRadius: '50%', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}></div>
               </div>
-              
-              <div className="playful-activity-item">
-                <div className="playful-activity-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                    <polyline points="10 17 15 12 10 7"></polyline>
-                    <line x1="15" y1="12" x2="3" y2="12"></line>
-                  </svg>
+            </div>
+            
+            <div className="product-categories">
+              <div className="category-list">
+                <div className="category-item">
+                  <span className="category-dot" style={{ backgroundColor: 'var(--primary)' }}></span>
+                  <span className="category-name">Living room</span>
+                  <span className="category-value">25%</span>
                 </div>
-                <div className="playful-activity-content">
-                  <div className="playful-activity-title">
-                    <span className="playful-activity-name">Alex Johnson</span> logged in
-                  </div>
-                  <div className="playful-activity-time">Today, 12:05</div>
+                <div className="category-item">
+                  <span className="category-dot" style={{ backgroundColor: 'var(--secondary)' }}></span>
+                  <span className="category-name">Kids</span>
+                  <span className="category-value">17%</span>
                 </div>
-              </div>
-              
-              <div className="playful-activity-item">
-                <div className="playful-activity-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                  </svg>
+                <div className="category-item">
+                  <span className="category-dot" style={{ backgroundColor: '#FFB83D' }}></span>
+                  <span className="category-name">Office</span>
+                  <span className="category-value">13%</span>
                 </div>
-                <div className="playful-activity-content">
-                  <div className="playful-activity-title">
-                    <span className="playful-activity-name">Morgan Lee</span> added a new savings goal for vacation
-                  </div>
-                  <div className="playful-activity-time">Today, 14:30</div>
+                <div className="category-item">
+                  <span className="category-dot" style={{ backgroundColor: '#FF5252' }}></span>
+                  <span className="category-name">Bedroom</span>
+                  <span className="category-value">12%</span>
+                </div>
+                <div className="category-item">
+                  <span className="category-dot" style={{ backgroundColor: '#E2D1C3' }}></span>
+                  <span className="category-name">Kitchen</span>
+                  <span className="category-value">9%</span>
                 </div>
               </div>
             </div>

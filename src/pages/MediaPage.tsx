@@ -1,172 +1,449 @@
+import React, { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
+import { UploadIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useMediaOperations } from '@/hooks/useMediaOperations';
+import { useMediaData } from '@/hooks/useMediaData';
+import { ViewMode, SortOption, FilterOptions } from '@/types/media';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { MediaHeader } from '@/components/media/MediaHeader';
+import { MediaTabs } from '@/components/media/MediaTabs';
+import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { useMediaDragAndDrop } from '@/hooks/useMediaDragAndDrop';
+import { MediaGridItem } from '@/components/media/MediaGridItem';
 
-import { useState } from 'react';
-import { FolderArchive, Upload, Image, FileText, Film, Grid, List, Filter } from 'lucide-react';
+const MediaPage: React.FC = () => {
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [newFolderName, setNewFolderName] = useState('');
+  const [currentPath, setCurrentPath] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [sortOption, setSortOption] = useState<SortOption>('newest');
+  const [activeTab, setActiveTab] = useState('internal');
+  const { user, session } = useAuth();
+  const [folderToDelete, setFolderToDelete] = useState<{name: string, isFolder: boolean, bucketId?: string} | null>(null);
+  const [folderToRename, setFolderToRename] = useState<string | null>(null);
+  const [newFolderNameForRename, setNewFolderNameForRename] = useState('');
+  const [userNamesCache, setUserNamesCache] = React.useState<{[userId: string]: string}>({});
+  const { toast } = useToast();
+  
+  // Update the filters state definition to include favorites handling
+  const [filters, setFilters] = useState<FilterOptions>({
+    fileTypes: [],
+    dateRange: { start: null, end: null },
+    favorites: false,
+  });
 
-const MediaPage = () => {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [filterType, setFilterType] = useState('all');
-  
-  // Placeholder data for media files
-  const mediaFiles = [
-    { id: 1, name: 'Campaign Banner', type: 'image', format: 'jpg', size: '1.2 MB', uploaded: '2025-05-01', author: 'John Doe' },
-    { id: 2, name: 'Product Brochure', type: 'document', format: 'pdf', size: '3.5 MB', uploaded: '2025-04-28', author: 'Jane Smith' },
-    { id: 3, name: 'Promo Video', type: 'video', format: 'mp4', size: '15.8 MB', uploaded: '2025-04-25', author: 'Mike Johnson' },
-    { id: 4, name: 'Logo Design', type: 'image', format: 'png', size: '0.8 MB', uploaded: '2025-04-22', author: 'Lisa Brown' },
-    { id: 5, name: 'Annual Report', type: 'document', format: 'docx', size: '2.3 MB', uploaded: '2025-04-20', author: 'John Doe' },
-    { id: 6, name: 'Team Photo', type: 'image', format: 'jpg', size: '2.1 MB', uploaded: '2025-04-18', author: 'Jane Smith' }
-  ];
-  
-  const filteredMedia = filterType === 'all' ? mediaFiles : mediaFiles.filter(file => file.type === filterType);
-  
-  const getFileIcon = (type: string) => {
-    switch(type) {
-      case 'image':
-        return <Image size={24} className="playful-text-primary" />;
-      case 'document':
-        return <FileText size={24} className="playful-text-warning" />;
-      case 'video':
-        return <Film size={24} className="playful-text-danger" />;
-      default:
-        return <FolderArchive size={24} className="playful-text-medium" />;
+  const {
+    uploadFileMutation,
+    createFolderMutation,
+    deleteFileMutation,
+    renameFolderMutation,
+    toggleFavoriteMutation,
+  } = useMediaOperations(currentPath, session, activeTab);
+
+  // Setup drag and drop with proper sensors configuration
+  const { 
+    handleDragEnd, 
+    handleDragStart, 
+    isDragging,
+    activeDragItem
+  } = useMediaDragAndDrop(currentPath, activeTab);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Adjust this value as needed - lower makes it easier to start dragging
+      },
+    })
+  );
+
+  // Fetch media for the current tab
+  const { data: mediaData, isLoading: isLoadingMedia } = useMediaData(
+    currentPath,
+    session,
+    filters,
+    activeTab
+  );
+
+  // Navigate to folder
+  const navigateToFolder = (folderName: string) => {
+    setCurrentPath(currentPath ? `${currentPath}/${folderName}` : folderName);
+  };
+
+  // Build breadcrumb from current path
+  const navigateToBreadcrumb = (index: number) => {
+    if (index < 0) {
+      setCurrentPath('');
+    } else {
+      const breadcrumbs = currentPath.split('/').filter(Boolean);
+      setCurrentPath(breadcrumbs.slice(0, index + 1).join('/'));
     }
   };
 
-  return (
-    <div className="w-full max-w-full px-4 sm:px-6 py-6 space-y-6">
-      <div className="playful-d-flex playful-justify-between playful-items-center">
-        <h1 className="playful-text-2xl playful-font-bold">Media</h1>
-        <button className="playful-btn playful-btn-primary">
-          <Upload size={20} className="playful-mr-1" />
-          Upload Files
-        </button>
-      </div>
-      
-      {/* Filters */}
-      <div className="playful-card">
-        <div className="playful-card-content">
-          <div className="playful-d-flex playful-justify-between playful-items-center playful-flex-wrap playful-gap-3">
-            <div className="playful-d-flex playful-items-center playful-gap-2">
-              <button 
-                className={`playful-btn playful-btn-sm ${filterType === 'all' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
-                onClick={() => setFilterType('all')}
-              >
-                All Files
-              </button>
-              <button 
-                className={`playful-btn playful-btn-sm ${filterType === 'image' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
-                onClick={() => setFilterType('image')}
-              >
-                <Image size={16} className="playful-mr-1" />
-                Images
-              </button>
-              <button 
-                className={`playful-btn playful-btn-sm ${filterType === 'document' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
-                onClick={() => setFilterType('document')}
-              >
-                <FileText size={16} className="playful-mr-1" />
-                Documents
-              </button>
-              <button 
-                className={`playful-btn playful-btn-sm ${filterType === 'video' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
-                onClick={() => setFilterType('video')}
-              >
-                <Film size={16} className="playful-mr-1" />
-                Videos
-              </button>
-            </div>
-            
-            <div className="playful-d-flex playful-gap-2">
-              <button 
-                className={`playful-btn playful-btn-sm ${viewMode === 'grid' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid size={16} />
-              </button>
-              <button 
-                className={`playful-btn playful-btn-sm ${viewMode === 'list' ? 'playful-btn-primary' : 'playful-btn-outline'}`}
-                onClick={() => setViewMode('list')}
-              >
-                <List size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+  // Helper for rendering uploader display name with cache
+  const getUploaderDisplayName = useCallback((userId: string): string => {
+    if (!userId) return "Unknown";
+    if (userNamesCache[userId]) return userNamesCache[userId];
+    
+    console.log("Fetching display name for user ID:", userId);
+    
+    // Fetch and cache
+    supabase.rpc('get_user_display_name', { user_id: userId }).then(({ data, error }) => {
+      if (!error && data && typeof data === "string") {
+        console.log(`Got display name for ${userId}:`, data);
+        setUserNamesCache(prev => ({ ...prev, [userId]: data }));
+      } else {
+        console.error("Error fetching user display name:", error);
+      }
+    });
+    
+    return `User ${userId.substring(0, 8)}`;
+  }, [userNamesCache]);
 
-      {/* Media files */}
-      {filteredMedia.length === 0 ? (
-        <div className="playful-d-flex playful-flex-column playful-items-center playful-justify-center playful-p-5">
-          <FolderArchive size={48} className="playful-text-medium playful-mb-3" />
-          <h3 className="playful-text-lg playful-font-semibold playful-mb-2">No media files found</h3>
-          <p className="playful-text-medium playful-mb-4">Upload some files to get started</p>
-          <button className="playful-btn playful-btn-primary">
-            <Upload size={20} className="playful-mr-1" />
-            Upload Files
-          </button>
-        </div>
-      ) : viewMode === 'grid' ? (
-        <div className="playful-row">
-          {filteredMedia.map(file => (
-            <div className="playful-col playful-col-quarter" key={file.id}>
-              <div className="playful-card playful-file-card">
-                <div className="playful-file-icon">
-                  {getFileIcon(file.type)}
-                </div>
-                <div className="playful-file-info">
-                  <div className="playful-file-name">{file.name}</div>
-                  <div className="playful-file-meta">
-                    {file.format.toUpperCase()} • {file.size}
-                  </div>
-                </div>
-                <div className="playful-file-actions">
-                  <button className="playful-btn playful-btn-icon playful-btn-sm playful-btn-ghost">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="1"></circle>
-                      <circle cx="19" cy="12" r="1"></circle>
-                      <circle cx="5" cy="12" r="1"></circle>
-                    </svg>
-                  </button>
-                </div>
-              </div>
+  // Configuring dropzone
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0) {
+        // For company media, ensure we're in a company folder
+        if (activeTab === 'company' && !currentPath) {
+          toast({
+            title: 'Upload failed',
+            description: 'Please navigate into a company folder before uploading files',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        setIsUploading(true);
+        uploadFileMutation.mutate(acceptedFiles[0], {
+          onSettled: () => {
+            setIsUploading(false);
+            setIsUploadDialogOpen(false);
+          }
+        });
+      }
+    },
+    maxFiles: 1
+  });
+
+  // Handle folder creation
+  const handleCreateFolder = () => {
+    if (newFolderName.trim()) {
+      createFolderMutation.mutate(newFolderName);
+      setNewFolderName('');
+      setIsFolderDialogOpen(false);
+    }
+  };
+
+  // Create wrapper function to handle favorites properly
+  const handleFavoriteToggle = (filePath: string, isFavorited: boolean, event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    const bucketId = activeTab === 'company' ? 'companymedia' : 'media';
+    
+    // Get full path for the file
+    const fullPath = currentPath 
+      ? `${currentPath}/${filePath.split('/').pop()}` 
+      : filePath;
+    
+    toggleFavoriteMutation.mutate({ 
+      filePath: fullPath, 
+      isFavorited: isFavorited,
+      bucketId: bucketId
+    });
+  };
+
+  // Handle delete (file or folder)
+  const handleDelete = (name: string, isFolder: boolean, bucketId?: string) => {
+    setFolderToDelete({
+      name,
+      isFolder,
+      bucketId: bucketId || (activeTab === 'company' ? 'companymedia' : 'media')
+    });
+  };
+
+  // Filter and sort the media items
+  const filteredMedia = React.useMemo(() => {
+    let folders = mediaData?.folders || [];
+    let files = mediaData?.files || [];
+
+    // Apply search filter if provided
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      folders = folders.filter(folder => folder.name.toLowerCase().includes(query));
+      files = files.filter(file => file.name.toLowerCase().includes(query));
+    }
+    
+    // Apply sorting
+    const sortItems = (a: any, b: any) => {
+      switch (sortOption) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'size':
+          return a.size - b.size;
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        default:
+          return 0;
+      }
+    };
+    
+    return {
+      folders: [...folders].sort(sortItems),
+      files: [...files].sort(sortItems)
+    };
+  }, [mediaData, searchQuery, sortOption]);
+
+  // Determine if we can add rename functionality
+  // Allow renaming folders for internal tab or inside company folders
+  const canRename = activeTab === 'internal' || (activeTab === 'company' && currentPath);
+  
+  return (
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4 py-8">
+      <DndContext 
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <MediaHeader 
+          onNewFolder={() => setIsFolderDialogOpen(true)}
+          onUpload={() => setIsUploadDialogOpen(true)}
+          activeTab={activeTab}
+          currentPath={currentPath}
+          searchQuery={searchQuery}
+          viewMode={viewMode}
+          filters={filters}
+          onSearchChange={setSearchQuery}
+          onSortChange={setSortOption}
+          onFiltersChange={setFilters}
+          onViewModeChange={setViewMode}
+        />
+        
+        <MediaTabs
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            setCurrentPath(''); // Reset path when changing tabs
+          }}
+          isLoading={isLoadingMedia}
+          viewMode={viewMode}
+          currentPath={currentPath}
+          filteredMedia={filteredMedia}
+          onNavigate={navigateToFolder}
+          onFavorite={handleFavoriteToggle}
+          onDelete={handleDelete}
+          onRename={canRename ? (name) => {
+            setFolderToRename(name);
+            setNewFolderNameForRename(name);
+          } : undefined}
+          onUpload={() => setIsUploadDialogOpen(true)}
+          onNewFolder={() => setIsFolderDialogOpen(true)}
+          getUploaderDisplayName={getUploaderDisplayName}
+          activeDragItem={activeDragItem}
+          onNavigateToBreadcrumb={navigateToBreadcrumb}
+        />
+
+        {/* Drag overlay for visual feedback */}
+        <DragOverlay>
+          {isDragging && activeDragItem && !activeDragItem.isFolder && (
+            <div className="opacity-80 transform scale-95 w-48 pointer-events-none">
+              <MediaGridItem
+                item={activeDragItem}
+                onFavorite={() => {}}
+                onDelete={() => {}}
+                currentPath={currentPath}
+                getUploaderDisplayName={getUploaderDisplayName}
+              />
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="playful-table-container">
-          <table className="playful-table">
-            <thead>
-              <tr>
-                <th>File Name</th>
-                <th>Type</th>
-                <th>Size</th>
-                <th>Uploaded</th>
-                <th>Author</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredMedia.map(file => (
-                <tr key={file.id}>
-                  <td>
-                    <div className="playful-d-flex playful-items-center">
-                      {getFileIcon(file.type)}
-                      <span className="playful-ml-2">{file.name}</span>
-                    </div>
-                  </td>
-                  <td>{file.format.toUpperCase()}</td>
-                  <td>{file.size}</td>
-                  <td>{new Date(file.uploaded).toLocaleDateString()}</td>
-                  <td>{file.author}</td>
-                  <td className="playful-table-actions">
-                    <button className="playful-btn playful-btn-sm playful-btn-ghost">Download</button>
-                    <button className="playful-btn playful-btn-sm playful-btn-ghost">Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+          )}
+        </DragOverlay>
+        
+        {/* Create Folder Dialog */}
+        <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Folder</DialogTitle>
+              <DialogDescription>
+                Enter a name for your new folder.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Input
+              placeholder="Folder name"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              className="mt-2"
+            />
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsFolderDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
+                Create
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Upload Dialog */}
+        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Upload File</DialogTitle>
+              <DialogDescription>
+                {activeTab === 'company' && !currentPath 
+                  ? 'Please select a company folder first before uploading files'
+                  : 'Drag and drop a file or click to select one.'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {activeTab === 'company' && !currentPath ? (
+              <div className="text-center py-4">
+                <p className="text-amber-500">You must navigate into a company folder before uploading files.</p>
+                <Button 
+                  className="mt-4" 
+                  variant="outline" 
+                  onClick={() => setIsUploadDialogOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            ) : (
+              <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                <input {...getInputProps()} />
+                {isDragActive ? (
+                  <p className="text-primary font-medium">Drop the file here...</p>
+                ) : (
+                  <div>
+                    <UploadIcon className="h-10 w-10 mx-auto mb-4 text-gray-400" />
+                    <p>Drag and drop a file here, or click to select a file</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      All file types are supported
+                    </p>
+                  </div>
+                )}
+                {isUploading && (
+                  <div className="mt-4 flex justify-center">
+                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Delete Dialog */}
+        <AlertDialog open={!!folderToDelete} onOpenChange={(open) => !open && setFolderToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {folderToDelete?.isFolder ? 'Folder' : 'File'}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {folderToDelete?.isFolder 
+                  ? 'Are you sure you want to delete this folder? This will permanently delete the folder and all files inside it.'
+                  : 'Are you sure you want to delete this file?'} 
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (folderToDelete) {
+                    deleteFileMutation.mutate({
+                      path: currentPath,
+                      isFolder: folderToDelete.isFolder,
+                      name: folderToDelete.name,
+                      bucketId: folderToDelete.bucketId
+                    });
+                    setFolderToDelete(null);
+                  }
+                }}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        {/* Rename Folder Dialog */}
+        <Dialog open={!!folderToRename} onOpenChange={(open) => !open && setFolderToRename(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rename Folder</DialogTitle>
+              <DialogDescription>
+                Enter a new name for the folder.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Input
+              placeholder="New folder name"
+              value={newFolderNameForRename}
+              onChange={(e) => setNewFolderNameForRename(e.target.value)}
+              className="mt-2"
+            />
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setFolderToRename(null)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (folderToRename && newFolderNameForRename) {
+                    const oldPath = currentPath 
+                      ? `${currentPath}/${folderToRename}`
+                      : folderToRename;
+                    renameFolderMutation.mutate({
+                      oldPath,
+                      newName: newFolderNameForRename
+                    });
+                    setFolderToRename(null);
+                  }
+                }}
+                disabled={!newFolderNameForRename.trim()}>
+                Rename
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </DndContext>
     </div>
   );
 };
