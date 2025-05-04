@@ -1,12 +1,10 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/useTranslation';
-import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-// Types for our dashboard data
 interface DashboardCounts {
   activeTasks: number;
   activeCampaigns: number;
@@ -100,93 +98,168 @@ const Dashboard = () => {
     },
   });
 
+  // Initialize tabs after component mounts
+  useEffect(() => {
+    if (window.playfulUI && window.playfulUI.initTabs) {
+      window.playfulUI.initTabs();
+    }
+  }, []);
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">
+    <div className="playful-container">
+      <h1 className="playful-text-2xl playful-font-bold playful-mb-4">
         {t('Dashboard')}
       </h1>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="playful-row playful-mb-4">
         {/* Welcome Card */}
-        <Card className="col-span-full bg-white border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle>
-              {t('Welcome')}, {profile?.first_name} {profile?.last_name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">
-              {isAdmin && "You have administrator access to the portal."}
-              {isEmployee && "You have employee access to the portal."}
-              {isClient && "You have client access to the portal."}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="playful-col playful-col-full">
+          <div className="playful-card playful-card-gradient">
+            <div className="playful-card-content">
+              <h2 className="playful-text-xl playful-font-bold playful-mb-2">
+                {t('Welcome')}, {profile?.first_name} {profile?.last_name}
+              </h2>
+              <p>
+                {isAdmin && "You have administrator access to the portal."}
+                {isEmployee && "You have employee access to the portal."}
+                {isClient && "You have client access to the portal."}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <div className="playful-row">
         {/* Admin/Employee specific cards */}
         {(isAdmin || isEmployee) && (
           <>
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Active Tasks')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
+            <div className="playful-col playful-col-third playful-mb-4">
+              <div className="playful-stat-card playful-card-decorated primary">
+                <div className="playful-stat-header">
+                  <div className="playful-stat-title">{t('Active Tasks')}</div>
+                  <div className="playful-stat-badge playful-stat-badge-up">+5%</div>
+                </div>
+                <div className="playful-stat-value">
                   {isLoading ? '...' : dashboardData?.activeTasks || 0}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="playful-stat-desc">Tasks requiring attention</div>
+              </div>
+            </div>
 
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Active Campaigns')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
+            <div className="playful-col playful-col-third playful-mb-4">
+              <div className="playful-stat-card playful-card-decorated secondary">
+                <div className="playful-stat-header">
+                  <div className="playful-stat-title">{t('Active Campaigns')}</div>
+                  <div className="playful-stat-badge playful-stat-badge-up">+12%</div>
+                </div>
+                <div className="playful-stat-value">
                   {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="playful-stat-desc">Running campaigns</div>
+              </div>
+            </div>
 
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Hours Logged This Week')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
+            <div className="playful-col playful-col-third playful-mb-4">
+              <div className="playful-stat-card playful-card-decorated">
+                <div className="playful-stat-header">
+                  <div className="playful-stat-title">{t('Hours Logged This Week')}</div>
+                  <div className="playful-stat-badge playful-stat-badge-down">-2%</div>
+                </div>
+                <div className="playful-stat-value">
                   {isLoading ? '...' : dashboardData?.hoursLogged || 0}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="playful-stat-desc">Total hours this week</div>
+              </div>
+            </div>
           </>
         )}
 
         {/* Client specific cards */}
         {isClient && (
           <>
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Active Campaigns')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
+            <div className="playful-col playful-col-half playful-mb-4">
+              <div className="playful-stat-card playful-card-decorated secondary">
+                <div className="playful-stat-header">
+                  <div className="playful-stat-title">{t('Active Campaigns')}</div>
+                  <div className="playful-stat-badge playful-stat-badge-up">+8%</div>
+                </div>
+                <div className="playful-stat-value">
                   {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="playful-stat-desc">Currently active campaigns</div>
+              </div>
+            </div>
 
-            <Card className="bg-white border shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">{t('Contracts')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
+            <div className="playful-col playful-col-half playful-mb-4">
+              <div className="playful-stat-card playful-card-decorated">
+                <div className="playful-stat-header">
+                  <div className="playful-stat-title">{t('Contracts')}</div>
+                </div>
+                <div className="playful-stat-value">
                   {isLoading ? '...' : dashboardData?.contracts || 0}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="playful-stat-desc">Active contracts</div>
+              </div>
+            </div>
           </>
         )}
+      </div>
+
+      <div className="playful-row">
+        <div className="playful-col playful-mb-4">
+          <div className="playful-card">
+            <div className="playful-card-header">
+              <h3 className="playful-card-title">Recent Activity</h3>
+            </div>
+            <div className="playful-card-content">
+              <div className="playful-activity-item">
+                <div className="playful-activity-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+                <div className="playful-activity-content">
+                  <div className="playful-activity-title">
+                    <span className="playful-activity-name">Jamie Smith</span> updated account settings
+                  </div>
+                  <div className="playful-activity-time">Today, 10:15</div>
+                </div>
+              </div>
+              
+              <div className="playful-activity-item">
+                <div className="playful-activity-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <polyline points="10 17 15 12 10 7"></polyline>
+                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                  </svg>
+                </div>
+                <div className="playful-activity-content">
+                  <div className="playful-activity-title">
+                    <span className="playful-activity-name">Alex Johnson</span> logged in
+                  </div>
+                  <div className="playful-activity-time">Today, 12:05</div>
+                </div>
+              </div>
+              
+              <div className="playful-activity-item">
+                <div className="playful-activity-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                  </svg>
+                </div>
+                <div className="playful-activity-content">
+                  <div className="playful-activity-title">
+                    <span className="playful-activity-name">Morgan Lee</span> added a new savings goal for vacation
+                  </div>
+                  <div className="playful-activity-time">Today, 14:30</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
