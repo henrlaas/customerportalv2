@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import Logo from '@/components/Layout/Logo';
+import { Logo } from '@/components/Layout/Logo';
 
 // Define form schema for login
 const loginSchema = z.object({

@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import Logo from '@/components/Layout/Logo';
+import { Logo } from '@/components/Layout/Logo';
 import { LoaderCircle } from 'lucide-react';
 
 // Define form schema for password setup
