@@ -28,23 +28,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X } from 'lucide-react';
+import { Plus, Search, Filter, X } from 'lucide-react';
 import { TaskForm } from '@/components/Tasks/TaskForm';
 import { TaskFilters } from '@/components/Tasks/TaskFilters';
-import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -118,7 +110,6 @@ export const TasksPage = () => {
       if (filters.search) {
         query = query.ilike('title', `%${filters.search}%`);
       }
-      // Filter by assignee from the task_assignees table
       if (filters.assignee && filters.assignee !== 'all') {
         query = query.contains('task_assignees.user_id', [filters.assignee]);
       }
@@ -221,6 +212,13 @@ export const TasksPage = () => {
       : 'Unknown User';
   };
   
+  // Function to get creator job title/role (mocked)
+  const getCreatorRole = (creatorId: string | null) => {
+    // This would ideally come from the database
+    // For now just returning a placeholder
+    return 'Team Member';
+  };
+  
   // Function to get campaign name
   const getCampaignName = (campaignId: string | null) => {
     if (!campaignId) return 'None';
@@ -233,24 +231,21 @@ export const TasksPage = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
+        return <Badge className="bg-green-100 text-green-800 border-green-200 font-medium">Completed</Badge>;
       case 'in_progress':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">In Progress</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 font-medium">In Progress</Badge>;
+      case 'todo':
+        return <Badge className="bg-gray-100 text-gray-800 border-gray-200 font-medium">Todo</Badge>;
       default:
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">Todo</Badge>;
+        return <Badge className="bg-amber-100 text-amber-800 border-amber-200 font-medium">Pending</Badge>;
     }
   };
   
-  // Helper function for priority badge
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">High</Badge>;
-      case 'medium':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Medium</Badge>;
-      default:
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Low</Badge>;
-    }
+  // Function to format budget (mocked) - in a real app this would come from the database
+  const formatBudget = (taskId: string) => {
+    // Mock values based on task ID to simulate different budgets
+    const hash = taskId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return `${(hash % 30 + 1)}.${hash % 9}K`;
   };
 
   return (
@@ -318,23 +313,21 @@ export const TasksPage = () => {
       
       {/* Filter panel */}
       {showFilters && (
-        <Card className="mb-6 w-full">
-          <CardContent className="pt-6">
-            <TaskFilters 
-              filters={filters}
-              setFilters={setFilters}
-              profiles={profiles}
-              campaigns={campaigns}
-            />
-          </CardContent>
-        </Card>
+        <div className="mb-6 w-full border rounded-lg p-4 bg-white">
+          <TaskFilters 
+            filters={filters}
+            setFilters={setFilters}
+            profiles={profiles}
+            campaigns={campaigns}
+          />
+        </div>
       )}
       
       {/* Tasks table */}
       {isLoadingTasks ? (
         <CenteredSpinner />
       ) : tasks.length === 0 ? (
-        <div className="text-center p-12 border rounded-lg bg-muted/50">
+        <div className="text-center p-12 border rounded-lg bg-white">
           <h3 className="text-lg font-medium mb-2">No tasks found</h3>
           <p className="text-muted-foreground mb-4">Create your first task to get started</p>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -343,67 +336,64 @@ export const TasksPage = () => {
           </Button>
         </div>
       ) : (
-        <div className="bg-white rounded-md border shadow-sm overflow-hidden w-full">
+        <div className="bg-white rounded-md border overflow-hidden w-full">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableHead className="w-[250px]">User</TableHead>
+                  <TableHead>Project Name</TableHead>
+                  <TableHead>Team</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Assignees</TableHead>
-                  <TableHead>Creator</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Related To</TableHead>
-                  <TableHead>Client Visible</TableHead>
+                  <TableHead className="text-right">Budget</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tasks.map(task => (
-                  <TableRow 
-                    key={task.id}
-                    className="cursor-pointer hover:bg-muted/60"
-                    onClick={() => handleTaskClick(task.id)}
-                  >
-                    <TableCell className="font-medium">{task.title}</TableCell>
-                    <TableCell>{getStatusBadge(task.status)}</TableCell>
-                    <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                    <TableCell>
-                      <UserAvatarGroup 
-                        users={getTaskAssignees(task)}
-                        size="sm"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {task.creator_id && (
-                        <UserAvatarGroup 
-                          users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
-                          size="sm"
-                        />
-                      )}
-                      {!task.creator_id && 'Unassigned'}
-                    </TableCell>
-                    <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
-                    <TableCell>
-                      {task.campaign_id ? (
-                        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-                          Campaign: {getCampaignName(task.campaign_id)}
-                        </Badge>
-                      ) : task.related_type ? (
-                        <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
-                          {task.related_type}
-                        </Badge>
-                      ) : 'None'}
-                    </TableCell>
-                    <TableCell>
-                      {task.client_visible ? (
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Visible</Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200">Hidden</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {tasks.map(task => {
+                  const creator = profiles.find(p => p.id === task.creator_id);
+                  const assignees = getTaskAssignees(task);
+                  
+                  return (
+                    <TableRow 
+                      key={task.id}
+                      className="cursor-pointer hover:bg-muted/10"
+                      onClick={() => handleTaskClick(task.id)}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={creator?.avatar_url || undefined} />
+                            <AvatarFallback>{creator ? `${creator.first_name?.[0] || ''}${creator.last_name?.[0] || ''}`.toUpperCase() : 'UN'}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">
+                              {creator ? `${creator.first_name || ''} ${creator.last_name || ''}`.trim() || 'Unknown User' : 'Unassigned'}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {getCreatorRole(task.creator_id)}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      
+                      <TableCell className="font-medium">
+                        {task.title}
+                      </TableCell>
+                      
+                      <TableCell>
+                        <UserAvatarGroup users={assignees} max={3} size="sm" />
+                      </TableCell>
+                      
+                      <TableCell>
+                        {getStatusBadge(task.status)}
+                      </TableCell>
+                      
+                      <TableCell className="text-right font-medium">
+                        {formatBudget(task.id)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
