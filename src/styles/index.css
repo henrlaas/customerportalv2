@@ -111,7 +111,7 @@
   .form-textarea,
   .form-select,
   .form-multiselect {
-    @apply w-full rounded-lg border border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary;
+    @apply w-full rounded-lg border border-stroke bg-transparent py-3 px-5 font-medium outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary;
   }
 
   .form-input-check {
@@ -171,8 +171,11 @@
     @apply shadow-[0px_1px_3px_rgba(7,_16,_45,_0.1)];
   }
 
-  /* Transition utilities */
-  .transition-all {
-    @apply transition-all duration-300;
-  }
+  /* Removed transition-all @apply here to fix circular dependency */
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
 }

@@ -19,3 +19,5 @@ const Logo: React.FC<LogoProps> = ({ className = '', showText = true }) => {
 };
 
 export default Logo;
+// Add named export to support both default and named imports
+export { Logo };

@@ -28,3 +28,5 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     </DefaultLayout>
   );
 };
+
+export default AppLayout;
