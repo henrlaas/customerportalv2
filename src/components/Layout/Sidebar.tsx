@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -95,15 +94,14 @@ const SetPassword = () => {
       let result;
       
       if (type === 'invite') {
-        // Handle invite
+        // Handle invite - updateUser accepts password property
         result = await supabase.auth.updateUser({
           password: data.password
         });
       } else {
-        // Handle recovery
-        result = await supabase.auth.resetPasswordForEmail(token, {
-          password: data.password,
-        });
+        // Handle recovery - resetPasswordForEmail doesn't accept password parameter
+        // Corrected to match the API - don't pass password here
+        result = await supabase.auth.resetPasswordForEmail(token);
       }
       
       if (result.error) {
