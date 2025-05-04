@@ -34,7 +34,7 @@ export const DealsSummary: React.FC<DealsSummaryProps> = ({
               <CircleDollarSign className="h-4 w-4 mr-1" />
               <span className="text-sm">Total Value</span>
             </div>
-            <span className="font-semibold text-primary">${value.toLocaleString()}</span>
+            <span className="font-semibold text-primary">kr {value.toLocaleString()}</span>
           </div>
           
           <div className="flex justify-between items-center">

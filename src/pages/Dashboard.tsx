@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -304,7 +305,7 @@ const Dashboard = () => {
               <CardContent>
                 <div className="flex flex-col gap-2">
                   <div className="text-3xl font-bold text-primary">
-                    ${isLoading ? '...' : (dashboardData?.totalMrr || 0).toLocaleString()}
+                    kr {isLoading ? '...' : (dashboardData?.totalMrr || 0).toLocaleString()}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     Monthly Recurring Revenue
