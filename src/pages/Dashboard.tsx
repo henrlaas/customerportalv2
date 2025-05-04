@@ -1,10 +1,10 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { LayoutDashboard, Users, BookOpen, Clock } from 'lucide-react';
 
 // Types for our dashboard data
 interface DashboardCounts {
@@ -101,172 +101,92 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="page-content">
-      <div className="page-header">
-        <h1 className="page-title">{t('Dashboard')}</h1>
-        <p className="page-subtitle">Welcome back, {profile?.first_name}! Here's what's happening today.</p>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold tracking-tight">
+        {t('Dashboard')}
+      </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Welcome Card */}
-        <div className="card animate-slide-in">
-          <div className="card-body">
-            <div className="flex items-center gap-4">
-              <div className="feature-card-icon">
-                <LayoutDashboard size={24} />
-              </div>
-              <div>
-                <h2 className="font-bold mb-1">Welcome, {profile?.first_name}!</h2>
-                <p className="text-gray">
-                  {isAdmin && "You have administrator access to the portal."}
-                  {isEmployee && "You have employee access to the portal."}
-                  {isClient && "You have client access to the portal."}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card className="col-span-full bg-white border shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle>
+              {t('Welcome')}, {profile?.first_name} {profile?.last_name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600">
+              {isAdmin && "You have administrator access to the portal."}
+              {isEmployee && "You have employee access to the portal."}
+              {isClient && "You have client access to the portal."}
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Admin/Employee specific cards */}
         {(isAdmin || isEmployee) && (
           <>
-            <div className="card card-primary animate-slide-in" style={{ animationDelay: '100ms' }}>
-              <div className="card-body">
-                <div className="stat-card">
-                  <div className="stat-card-title">{t('Active Tasks')}</div>
-                  <div className="stat-card-value">
-                    {isLoading ? '...' : dashboardData?.activeTasks || 0}
-                  </div>
-                  <div className="stat-card-change positive">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                      <polyline points="17 6 23 6 23 12"></polyline>
-                    </svg>
-                    <span>12% this week</span>
-                  </div>
+            <Card className="bg-white border shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium">{t('Active Tasks')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {isLoading ? '...' : dashboardData?.activeTasks || 0}
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            <div className="card card-secondary animate-slide-in" style={{ animationDelay: '200ms' }}>
-              <div className="card-body">
-                <div className="stat-card">
-                  <div className="stat-card-title">{t('Active Campaigns')}</div>
-                  <div className="stat-card-value">
-                    {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
-                  </div>
-                  <div className="stat-card-change positive">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                      <polyline points="17 6 23 6 23 12"></polyline>
-                    </svg>
-                    <span>5% this month</span>
-                  </div>
+            <Card className="bg-white border shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium">{t('Active Campaigns')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium">{t('Hours Logged This Week')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {isLoading ? '...' : dashboardData?.hoursLogged || 0}
+                </div>
+              </CardContent>
+            </Card>
           </>
         )}
-      </div>
 
-      {/* Quick shortcuts section */}
-      <h2 className="text-xl font-semibold mb-4">Quick Shortcuts</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <a href="/campaigns" className="card card-hover-effect">
-          <div className="card-body">
-            <div className="flex flex-col items-center text-center p-4">
-              <div className="feature-card-icon animate-bounce">
-                <BookOpen size={20} />
-              </div>
-              <h3 className="mt-3 font-medium">Campaigns</h3>
-            </div>
-          </div>
-        </a>
-        
-        <a href="/tasks" className="card card-hover-effect">
-          <div className="card-body">
-            <div className="flex flex-col items-center text-center p-4">
-              <div className="feature-card-icon animate-bounce" style={{ animationDelay: '0.1s' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 12H3"></path>
-                  <path d="m16 6-4 4 4 4"></path>
-                  <path d="M21 12h-5"></path>
-                </svg>
-              </div>
-              <h3 className="mt-3 font-medium">Tasks</h3>
-            </div>
-          </div>
-        </a>
-        
-        <a href="/time-tracking" className="card card-hover-effect">
-          <div className="card-body">
-            <div className="flex flex-col items-center text-center p-4">
-              <div className="feature-card-icon animate-bounce" style={{ animationDelay: '0.2s' }}>
-                <Clock size={20} />
-              </div>
-              <h3 className="mt-3 font-medium">Time Tracking</h3>
-            </div>
-          </div>
-        </a>
-        
-        <a href="/companies" className="card card-hover-effect">
-          <div className="card-body">
-            <div className="flex flex-col items-center text-center p-4">
-              <div className="feature-card-icon animate-bounce" style={{ animationDelay: '0.3s' }}>
-                <Users size={20} />
-              </div>
-              <h3 className="mt-3 font-medium">Companies</h3>
-            </div>
-          </div>
-        </a>
-      </div>
+        {/* Client specific cards */}
+        {isClient && (
+          <>
+            <Card className="bg-white border shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium">{t('Active Campaigns')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {isLoading ? '...' : dashboardData?.activeCampaigns || 0}
+                </div>
+              </CardContent>
+            </Card>
 
-      {/* Recent activity - simulated data */}
-      <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">Latest Updates</h3>
-        </div>
-        <div className="card-body p-0">
-          <div className="table-container">
-            <table className="table table-hoverable">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span className="badge badge-primary">Task</span></td>
-                  <td>Update campaign analytics dashboard</td>
-                  <td>Today, 10:30 AM</td>
-                  <td><span className="badge badge-warning">In Progress</span></td>
-                </tr>
-                <tr>
-                  <td><span className="badge badge-secondary">Campaign</span></td>
-                  <td>Summer Sale Facebook Ad Campaign</td>
-                  <td>Yesterday</td>
-                  <td><span className="badge badge-success">Active</span></td>
-                </tr>
-                <tr>
-                  <td><span className="badge badge-info">Meeting</span></td>
-                  <td>Client onboarding call</td>
-                  <td>Yesterday</td>
-                  <td><span className="badge badge-success">Completed</span></td>
-                </tr>
-                <tr>
-                  <td><span className="badge badge-danger">Contract</span></td>
-                  <td>New service agreement with Acme Corp</td>
-                  <td>June 2, 2025</td>
-                  <td><span className="badge badge-info">Draft</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+            <Card className="bg-white border shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium">{t('Contracts')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {isLoading ? '...' : dashboardData?.contracts || 0}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,10 +1,10 @@
 
 import { useEffect } from 'react';
-import { Navigate, useLocation, Outlet } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 type ProtectedRouteProps = {
-  children?: React.ReactNode;
+  children: React.ReactNode;
   allowedRoles?: Array<'admin' | 'employee' | 'client'>;
 };
 
@@ -19,12 +19,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   }, [loading, user]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="loader"></div>
-        <span className="ml-3">Loading...</span>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   if (!user) {
@@ -49,5 +44,5 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/unauthorized" replace />;
   }
 
-  return <>{children || <Outlet />}</>;
+  return <>{children}</>;
 };

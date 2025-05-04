@@ -1,54 +1,28 @@
 
-// Updated file to avoid import conflicts with src/components/ProtectedRoute.tsx
-import { useEffect } from 'react';
-import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
-type ProtectedRouteProps = {
-  children?: React.ReactNode;
-  allowedRoles?: Array<'admin' | 'employee' | 'client'>;
-};
-
-export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+export const ProtectedRoute = () => {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      console.log('User not authenticated, redirecting to login');
-    }
-  }, [loading, user]);
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="loader"></div>
-        <span className="ml-3">Loading...</span>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
 
   // If there are role restrictions and user role doesn't match
-  if (allowedRoles && profile && !allowedRoles.includes(profile.role as any)) {
-    console.log(`Access denied: User has role ${profile?.role} but needs one of ${allowedRoles.join(', ')}`);
-    
+  if (profile && profile.role === 'client') {
     // Redirect client users to client dashboard when they try to access restricted routes
-    if (profile.role === 'client') {
+    if (!location.pathname.startsWith('/client-')) {
       return <Navigate to="/client-dashboard" replace />;
     }
-    
-    // Admin and employee users should access the agency dashboard
-    if (profile.role === 'admin' || profile.role === 'employee') {
-      return <Navigate to="/dashboard" replace />;
-    }
-    
-    // Redirect other unauthorized users to the unauthorized page
-    return <Navigate to="/unauthorized" replace />;
   }
 
-  return <>{children || <Outlet />}</>;
+  return <Outlet />;
 };
+
+export default ProtectedRoute;
