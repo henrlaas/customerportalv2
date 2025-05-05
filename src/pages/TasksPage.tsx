@@ -38,13 +38,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X } from 'lucide-react';
+import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X, ViewIcon, List, KanbanSquare } from 'lucide-react';
 import { TaskForm } from '@/components/Tasks/TaskForm';
 import { TaskFilters } from '@/components/Tasks/TaskFilters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
+import { Switch } from '@/components/ui/switch';
+import { TaskListView } from '@/components/Tasks/TaskListView';
+import { TaskKanbanView } from '@/components/Tasks/TaskKanbanView';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -98,6 +101,9 @@ export const TasksPage = () => {
   // State for task detail sheet
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
+  
+  // State for view toggle (list or kanban)
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   
   // Fetch tasks with filtering
   const { data: tasks = [], isLoading: isLoadingTasks } = useQuery({
@@ -184,11 +190,44 @@ export const TasksPage = () => {
       return data as Campaign[];
     },
   });
+
+  // Mutation for updating task status (for Kanban drag and drop)
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ taskId, status }: { taskId: string; status: string }) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ status })
+        .eq('id', taskId)
+        .select();
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast({
+        title: 'Task updated',
+        description: 'Task status has been updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error updating task',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
   
   // Function to handle task click to show detail sheet
   const handleTaskClick = (taskId: string) => {
     setSelectedTaskId(taskId);
     setIsTaskSheetOpen(true);
+  };
+
+  // Function to handle task status change (for Kanban view)
+  const handleTaskStatusChange = (taskId: string, newStatus: string) => {
+    updateTaskMutation.mutate({ taskId, status: newStatus });
   };
   
   // Function to reset all filters
@@ -253,6 +292,13 @@ export const TasksPage = () => {
     }
   };
 
+  // Group tasks by status for Kanban view
+  const tasksByStatus = {
+    todo: tasks.filter(task => task.status === 'todo'),
+    in_progress: tasks.filter(task => task.status === 'in_progress'),
+    completed: tasks.filter(task => task.status === 'completed'),
+  };
+
   return (
     <div className="w-full max-w-full px-4 sm:px-6 py-6 overflow-x-hidden">
       <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
@@ -262,6 +308,24 @@ export const TasksPage = () => {
         </div>
         
         <div className="flex items-center gap-2">
+          {/* View toggle switch */}
+          <div className="flex items-center mr-2 bg-muted rounded-md p-1">
+            <div 
+              className={`flex items-center gap-1 px-3 py-1.5 rounded cursor-pointer ${viewMode === 'list' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4" />
+              <span className="text-sm hidden sm:inline">List</span>
+            </div>
+            <div 
+              className={`flex items-center gap-1 px-3 py-1.5 rounded cursor-pointer ${viewMode === 'kanban' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
+              onClick={() => setViewMode('kanban')}
+            >
+              <KanbanSquare className="h-4 w-4" />
+              <span className="text-sm hidden sm:inline">Kanban</span>
+            </div>
+          </div>
+
           <Button 
             variant="outline" 
             size="icon" 
@@ -330,7 +394,7 @@ export const TasksPage = () => {
         </Card>
       )}
       
-      {/* Tasks table */}
+      {/* Tasks content based on view mode */}
       {isLoadingTasks ? (
         <CenteredSpinner />
       ) : tasks.length === 0 ? (
@@ -342,72 +406,26 @@ export const TasksPage = () => {
             Add Task
           </Button>
         </div>
+      ) : viewMode === 'list' ? (
+        <TaskListView 
+          tasks={tasks}
+          getStatusBadge={getStatusBadge}
+          getPriorityBadge={getPriorityBadge}
+          getTaskAssignees={getTaskAssignees}
+          getCampaignName={getCampaignName}
+          profiles={profiles}
+          onTaskClick={handleTaskClick}
+        />
       ) : (
-        <div className="bg-white rounded-md border shadow-sm overflow-hidden w-full">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Assignees</TableHead>
-                  <TableHead>Creator</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Related To</TableHead>
-                  <TableHead>Client Visible</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tasks.map(task => (
-                  <TableRow 
-                    key={task.id}
-                    className="cursor-pointer hover:bg-muted/60"
-                    onClick={() => handleTaskClick(task.id)}
-                  >
-                    <TableCell className="font-medium">{task.title}</TableCell>
-                    <TableCell>{getStatusBadge(task.status)}</TableCell>
-                    <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                    <TableCell>
-                      <UserAvatarGroup 
-                        users={getTaskAssignees(task)}
-                        size="sm"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {task.creator_id && (
-                        <UserAvatarGroup 
-                          users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
-                          size="sm"
-                        />
-                      )}
-                      {!task.creator_id && 'Unassigned'}
-                    </TableCell>
-                    <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
-                    <TableCell>
-                      {task.campaign_id ? (
-                        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-                          Campaign: {getCampaignName(task.campaign_id)}
-                        </Badge>
-                      ) : task.related_type ? (
-                        <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
-                          {task.related_type}
-                        </Badge>
-                      ) : 'None'}
-                    </TableCell>
-                    <TableCell>
-                      {task.client_visible ? (
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Visible</Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200">Hidden</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+        <TaskKanbanView 
+          tasksByStatus={tasksByStatus}
+          getStatusBadge={getStatusBadge}
+          getPriorityBadge={getPriorityBadge}
+          getTaskAssignees={getTaskAssignees}
+          profiles={profiles}
+          onTaskClick={handleTaskClick}
+          onTaskMove={handleTaskStatusChange}
+        />
       )}
       
       {/* Task Detail Sheet */}
