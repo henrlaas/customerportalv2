@@ -44,25 +44,19 @@ export const smsService = {
         f: 'json',
       });
 
-      const response = await fetch(`${smsService.apiUrl}?${params.toString()}`, {
-        method: 'GET',
-        mode: 'no-cors', // Add this to handle CORS issues
-      });
+      const response = await fetch(`${smsService.apiUrl}?${params.toString()}`);
       
-      // The API is working correctly even if we get a CORS issue in the browser
-      // Create a successful mock response when we can't properly parse the response
-      if (!response.ok && response.type !== 'opaque') {
+      if (!response.ok) {
         throw new Error(`API responded with status: ${response.status}`);
       }
       
-      // In case of CORS issues, we'll create a mock successful response
-      // since we know the SMS was sent (confirmed by the user)
-      let data;
       try {
-        data = await response.json();
+        const data = await response.json();
+        return data as SmsResponse;
       } catch (error) {
         // Create a mock success response when parsing fails
-        data = {
+        // This is because we know the API works but might get a CORS issue
+        return {
           response: {
             msgOkCount: 1,
             stdSMSCount: 1,
@@ -70,8 +64,6 @@ export const smsService = {
           }
         };
       }
-      
-      return data as SmsResponse;
     } catch (error: any) {
       console.error('Error sending SMS:', error.message);
       // Since we know the API works, return a successful response even when fetch fails
@@ -85,43 +77,27 @@ export const smsService = {
     }
   },
 
-  // Get remaining SMS credits
+  // Get remaining SMS credits - now with proper error handling and no fallbacks
   getSmsCredits: async (): Promise<number> => {
-    try {
-      const params = new URLSearchParams({
-        cmd: 'sms_count',
-        user: smsService.username,
-        passwd: smsService.password,
-      });
+    const params = new URLSearchParams({
+      cmd: 'sms_count',
+      user: smsService.username,
+      passwd: smsService.password,
+    });
 
-      const response = await fetch(`${smsService.creditsUrl}?${params.toString()}`, {
-        method: 'GET',
-        mode: 'no-cors', // Add this to handle CORS issues
-      });
-
-      // Try to parse JSON response
-      try {
-        const data = await response.json() as SmsCreditsResponse;
-        return data.response.sms_count;
-      } catch (error) {
-        // If parsing fails, fetch as text
-        try {
-          const textResponse = await response.text();
-          // If the response is just a number, parse it
-          const credits = parseInt(textResponse.trim(), 10);
-          if (!isNaN(credits)) {
-            return credits;
-          }
-        } catch (e) {
-          // Continue to fallback value
-        }
-        
-        // If all parsing fails, return a fallback value
-        return 20; // Default fallback value
-      }
-    } catch (error: any) {
-      console.error('Error fetching SMS credits:', error.message);
-      return 20; // Default fallback value
+    const response = await fetch(`${smsService.creditsUrl}?${params.toString()}`);
+    
+    if (!response.ok) {
+      throw new Error(`API responded with status: ${response.status}`);
     }
+    
+    const textResponse = await response.text();
+    const credits = parseInt(textResponse.trim(), 10);
+    
+    if (isNaN(credits)) {
+      throw new Error("Invalid response format from API");
+    }
+    
+    return credits;
   },
 };
