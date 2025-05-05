@@ -82,7 +82,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
         <UserAvatarGroup 
           users={getTaskAssignees(task)}
-          size="xs"
+          size="sm"
         />
       </CardFooter>
     </Card>
