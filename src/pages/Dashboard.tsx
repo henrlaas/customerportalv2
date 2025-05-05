@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -220,7 +221,7 @@ const Dashboard = () => {
       </div>
 
       {/* Welcome Card */}
-      <Card className="bg-white border shadow-sm overflow-hidden">
+      <Card className="bg-white overflow-hidden">
         <div className="md:flex">
           <div className="p-6 flex-1">
             <h2 className="text-2xl font-bold mb-2">
@@ -260,7 +261,7 @@ const Dashboard = () => {
           {/* Overview Key Metrics */}
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             {/* Tasks Overview */}
-            <Card className="bg-white border shadow-sm hover:shadow-md transition-shadow">
+            <Card className="bg-white hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center">
                   <CheckIcon className="mr-2 h-5 w-5 text-primary" />
@@ -280,7 +281,7 @@ const Dashboard = () => {
             </Card>
 
             {/* Campaigns Overview */}
-            <Card className="bg-white border shadow-sm hover:shadow-md transition-shadow">
+            <Card className="bg-white hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center">
                   <ChartBarIcon className="mr-2 h-5 w-5 text-primary" />
@@ -300,7 +301,7 @@ const Dashboard = () => {
             </Card>
 
             {/* Companies Overview */}
-            <Card className="bg-white border shadow-sm hover:shadow-md transition-shadow">
+            <Card className="bg-white hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center">
                   <CircleDollarSignIcon className="mr-2 h-5 w-5 text-primary" />
@@ -320,7 +321,7 @@ const Dashboard = () => {
             </Card>
 
             {/* Deals Overview */}
-            <Card className="bg-white border shadow-sm hover:shadow-md transition-shadow">
+            <Card className="bg-white hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center">
                   <CheckIcon className="mr-2 h-5 w-5 text-primary" />
@@ -342,7 +343,7 @@ const Dashboard = () => {
 
           {/* Charts */}
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-            <Card className="bg-white border shadow-sm">
+            <Card className="bg-white">
               <CardHeader>
                 <CardTitle>Companies Breakdown</CardTitle>
                 <CardDescription>Marketing vs Web Client Distribution</CardDescription>
@@ -357,7 +358,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-white border shadow-sm">
+            <Card className="bg-white">
               <CardHeader>
                 <CardTitle>MRR Trends</CardTitle>
                 <CardDescription>Monthly recurring revenue over time</CardDescription>
