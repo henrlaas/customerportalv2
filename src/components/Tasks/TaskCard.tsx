@@ -46,14 +46,20 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 1,
   };
 
   return (
     <Card
       ref={setNodeRef}
       style={style}
-      className="cursor-pointer hover:shadow-md transition-shadow"
-      onClick={onClick}
+      className="cursor-pointer hover:shadow-md transition-shadow bg-background"
+      onClick={(e) => {
+        // Only trigger onClick if we're not dragging
+        if (!isDragging) {
+          onClick();
+        }
+      }}
       {...attributes}
       {...listeners}
     >

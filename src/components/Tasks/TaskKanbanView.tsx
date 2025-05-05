@@ -134,6 +134,8 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
     ].find(task => task.id === activeId);
   };
 
+  const activeTask = getActiveTask();
+
   return (
     <DndContext 
       sensors={sensors}
@@ -236,6 +238,22 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
           </SortableContext>
         </div>
       </div>
+      
+      {/* Add a DragOverlay component to show the task being dragged */}
+      <DragOverlay>
+        {activeTask ? (
+          <div className="opacity-80 w-full max-w-[300px]">
+            <TaskCard 
+              task={activeTask}
+              getStatusBadge={getStatusBadge}
+              getPriorityBadge={getPriorityBadge}
+              getTaskAssignees={getTaskAssignees}
+              onClick={() => {}}
+              isDragging={true}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 };
