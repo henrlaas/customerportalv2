@@ -37,6 +37,7 @@ export const useCompanies = (includeSubsidiaries: boolean = false) => {
           id: company.id,
           name: company.name,
           parent_id: company.parent_id,
+          // Fix: Access parent name properly - parent is an object, not an array
           parent_name: company.parent ? company.parent.name : undefined
         })) as CompanyWithParentName[];
       } else {
