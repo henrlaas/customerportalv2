@@ -394,13 +394,43 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
             <>
               <SheetHeader className="space-y-2 pb-4 pt-2">
                 <div className="flex justify-between items-start">
-                  <SheetTitle className="text-2xl mr-8">{task.title}</SheetTitle>
-                  <SheetClose asChild>
-                    <Button variant="ghost" size="icon">
-                      <X className="h-4 w-4" />
+                  <div className="flex-1 mr-2">
+                    <SheetTitle className="text-2xl">{task.title}</SheetTitle>
+                  </div>
+                  
+                  {/* Action buttons moved to top row */}
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} title="Edit">
+                      <Edit className="h-4 w-4" />
                     </Button>
-                  </SheetClose>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => toggleVisibilityMutation.mutate()}
+                      title={task.client_visible ? "Visible to client" : "Hidden from client"}
+                    >
+                      {task.client_visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => setIsShareDialogOpen(true)} title="Share">
+                      <Share className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-red-500 hover:text-red-700" 
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <SheetClose asChild>
+                      <Button variant="ghost" size="icon" title="Close">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </SheetClose>
+                  </div>
                 </div>
+                
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="outline" className={getStatusColor(task.status)}>
                     {task.status === 'in_progress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
@@ -444,35 +474,6 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                   >
                     <CheckCircle className="mr-1 h-4 w-4" />
                     Complete
-                  </Button>
-                </div>
-                
-                {/* Action buttons */}
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}>
-                    <Edit className="mr-1 h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => toggleVisibilityMutation.mutate()}>
-                    {task.client_visible ? (
-                      <>
-                        <Eye className="mr-1 h-4 w-4" />
-                        Visible
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="mr-1 h-4 w-4" />
-                        Hidden
-                      </>
-                    )}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setIsShareDialogOpen(true)}>
-                    <Share className="mr-1 h-4 w-4" />
-                    Share
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-red-500 hover:text-red-700" onClick={() => setIsDeleteDialogOpen(true)}>
-                    <Trash2 className="mr-1 h-4 w-4" />
-                    Delete
                   </Button>
                 </div>
                 
