@@ -320,31 +320,9 @@ const SettingsPage = () => {
                   <AvatarImage src={profile?.avatar_url || ''} alt={fullName} />
                   <AvatarFallback className="text-xl">{userInitials}</AvatarFallback>
                 </Avatar>
-                <div className="absolute bottom-0 right-0 flex space-x-1">
-                  <div className="relative">
-                    <input
-                      type="file"
-                      id="avatar-upload"
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          try {
-                            await handleAvatarUpload(file);
-                          } catch (error) {
-                            console.error("Failed to upload avatar:", error);
-                          }
-                        }
-                      }}
-                      accept="image/*"
-                      disabled={uploadingAvatar || deletingAvatar}
-                    />
-                    <Button size="icon" variant="default" className="rounded-full" disabled={uploadingAvatar || deletingAvatar}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  {profile?.avatar_url && (
+                <div className="absolute bottom-0 right-0">
+                  {profile?.avatar_url ? (
+                    // Show delete button if avatar exists
                     <Button 
                       size="icon" 
                       variant="destructive" 
@@ -354,6 +332,30 @@ const SettingsPage = () => {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                  ) : (
+                    // Show upload button if no avatar
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="avatar-upload"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              await handleAvatarUpload(file);
+                            } catch (error) {
+                              console.error("Failed to upload avatar:", error);
+                            }
+                          }
+                        }}
+                        accept="image/*"
+                        disabled={uploadingAvatar || deletingAvatar}
+                      />
+                      <Button size="icon" variant="default" className="rounded-full" disabled={uploadingAvatar || deletingAvatar}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
