@@ -304,6 +304,14 @@ const SettingsPage = () => {
     .map(name => name[0])
     .join('')
     .toUpperCase();
+    
+  // Capitalize the first letter of the role
+  const capitalizedRole = profile?.role 
+    ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1)
+    : '';
+  
+  // Replace 'admin' with 'Agency Staff' in the display
+  const displayRole = capitalizedRole === 'Admin' ? 'Agency Staff' : capitalizedRole;
 
   return (
     <div className="container mx-auto p-6">
@@ -361,12 +369,11 @@ const SettingsPage = () => {
               </div>
               
               <h2 className="text-xl font-semibold mt-4">{fullName}</h2>
-              <p className="text-gray-500">{profile?.role}</p>
 
               <div className="w-full mt-6 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Role:</span>
-                  <span className="font-medium">{profile?.role === 'admin' ? 'Agency Staff' : profile?.role}</span>
+                  <span className="font-medium">{displayRole}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Email:</span>
@@ -384,7 +391,7 @@ const SettingsPage = () => {
         {/* Settings Tabs */}
         <div className="md:col-span-2">
           <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="mb-4 bg-muted">
+            <TabsList className="mb-4">
               <TabsTrigger value="personal" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Personal Info
