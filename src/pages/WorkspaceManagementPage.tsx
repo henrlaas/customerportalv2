@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
@@ -5,12 +6,14 @@ import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
 import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
 import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
 import { EmailForm } from "@/components/WorkspaceManagement/EmailForm";
+import { SmsToolsTab } from "@/components/WorkspaceManagement/SmsToolsTab";
 import {
   Settings,
   Users,
   Mail,
   UserCog,
-  Cog
+  Cog,
+  MessageSquare
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -140,6 +143,10 @@ const WorkspaceManagementPage = () => {
             <Mail className="h-4 w-4 mr-2" />
             Email Tools
           </TabsTrigger>
+          <TabsTrigger value="sms-tools">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            SMS Tools
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all-settings" className="space-y-4">
@@ -203,6 +210,10 @@ const WorkspaceManagementPage = () => {
               <EmailForm />
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="sms-tools">
+          <SmsToolsTab />
         </TabsContent>
       </Tabs>
     </div>
