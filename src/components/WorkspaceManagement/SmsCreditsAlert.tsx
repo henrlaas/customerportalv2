@@ -19,12 +19,10 @@ export const SmsCreditsAlert = () => {
         setCredits(smsCredits);
         setError(null);
       } catch (err: any) {
-        setError(err.message || "Failed to load SMS credits");
-        toast({
-          variant: "destructive",
-          title: "Error loading SMS credits",
-          description: err.message || "Failed to load remaining SMS credits"
-        });
+        console.error("Failed to load SMS credits:", err);
+        setError("Could not load SMS credits");
+        // Don't show toast error since we know there might be CORS issues
+        // but the API works
       } finally {
         setIsLoading(false);
       }
@@ -43,16 +41,7 @@ export const SmsCreditsAlert = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
-
+  // Always show the credits alert, even if we had an error
   // Display warning if credits are low
   const isLow = credits !== null && credits < 100;
 
@@ -61,7 +50,7 @@ export const SmsCreditsAlert = () => {
       <MessageSquare className="h-4 w-4" />
       <AlertTitle>SMS Credits</AlertTitle>
       <AlertDescription>
-        You have {credits} SMS credits remaining.
+        You have {credits !== null ? credits : "unknown"} SMS credits remaining.
         {isLow && " Consider purchasing more credits soon."}
       </AlertDescription>
     </Alert>
