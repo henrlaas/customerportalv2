@@ -37,9 +37,11 @@ export const Sidebar: React.FC = () => {
     >
       <SidebarHeader className="p-4 bg-[#004743] flex flex-col items-center pt-8">
         <div className="flex items-center">
-          <div className={`${isCollapsed ? '' : 'mr-4'}`}>
-            <Logo />
-          </div>
+          {!isCollapsed && (
+            <div className="mr-4">
+              <Logo />
+            </div>
+          )}
           <Button 
             variant="ghost" 
             size="icon" 
