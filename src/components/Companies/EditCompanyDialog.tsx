@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { useToast } from '@/components/ui/use-toast';
@@ -28,7 +27,7 @@ const companyFormSchema = z.object({
   name: z.string().min(1, { message: 'Company name is required' }),
   website: z.string().url().or(z.literal('')).optional(),
   phone: z.string().optional(),
-  street_address: z.string().optional(), // Changed from address to street_address
+  address: z.string().optional(),
   logo_url: z.string().url().or(z.literal('')).optional(),
 });
 
@@ -54,7 +53,7 @@ export const EditCompanyDialog = ({
       name: '',
       website: '',
       phone: '',
-      street_address: '',
+      address: '',
       logo_url: '',
     },
   });
@@ -73,7 +72,7 @@ export const EditCompanyDialog = ({
         name: company.name,
         website: company.website || '',
         phone: company.phone || '',
-        street_address: company.street_address || '',
+        address: company.address || '',
         logo_url: company.logo_url || '',
       });
     }
@@ -158,7 +157,7 @@ export const EditCompanyDialog = ({
             
             <FormField
               control={form.control}
-              name="street_address"
+              name="address"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Address</FormLabel>

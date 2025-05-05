@@ -95,7 +95,9 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   
   const canModify = isAdmin || isEmployee;
   
+  // ... keep the rest of the component code unchanged
   return (
+    // ... keep existing JSX code
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Company Contacts</h2>

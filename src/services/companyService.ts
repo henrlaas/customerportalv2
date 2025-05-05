@@ -125,26 +125,14 @@ const companyQueryService = {
         }
       }
 
-      // Combine the data and ensure all required fields are present
-      return contactsData.map(contact => {
-        // Explicitly cast the contact object with required CompanyContact fields
-        const contactWithDetails: CompanyContact = {
-          id: contact.id,
-          company_id: contact.company_id,
-          user_id: contact.user_id,
-          position: contact.position,
-          is_primary: contact.is_primary || false,
-          is_admin: contact.is_admin || false,
-          created_at: contact.created_at,
-          updated_at: contact.updated_at,
-          first_name: profilesMap[contact.user_id]?.first_name || null,
-          last_name: profilesMap[contact.user_id]?.last_name || null,
-          email: emailsMap[contact.user_id] || null,
-          phone: null, // Add missing required field with default value
-          avatar_url: profilesMap[contact.user_id]?.avatar_url || null
-        };
-        return contactWithDetails;
-      });
+      // Combine the data
+      return contactsData.map(contact => ({
+        ...contact,
+        email: emailsMap[contact.user_id] || '',
+        first_name: profilesMap[contact.user_id]?.first_name || '',
+        last_name: profilesMap[contact.user_id]?.last_name || '',
+        avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
+      }));
     } catch (error: any) {
       console.error('Unexpected error fetching company contacts:', error);
       throw error;
@@ -250,25 +238,7 @@ const companyMutationService = {
         .single();
       
       if (error) throw error;
-      
-      // Create a CompanyContact object with all required fields
-      const contactWithRequiredFields: CompanyContact = {
-        id: data.id,
-        company_id: data.company_id,
-        user_id: data.user_id,
-        position: data.position || null,
-        is_primary: data.is_primary || false,
-        is_admin: data.is_admin || false,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-        first_name: null,
-        last_name: null,
-        email: null,
-        phone: null,
-        avatar_url: null,
-      };
-      
-      return contactWithRequiredFields;
+      return data as CompanyContact;
     } catch (error: any) {
       console.error('Unexpected error creating contact:', error);
       throw error;
@@ -289,27 +259,7 @@ const companyMutationService = {
         throw new Error(error.message);
       }
 
-      // Add required fields with defaults
-      if (data) {
-        const contactWithRequiredFields: CompanyContact = {
-          id: data.id,
-          company_id: data.company_id,
-          user_id: data.user_id,
-          position: data.position,
-          is_primary: data.is_primary || false,
-          is_admin: data.is_admin || false,
-          created_at: data.created_at,
-          updated_at: data.updated_at,
-          first_name: null,
-          last_name: null,
-          email: null,
-          phone: null,
-          avatar_url: null,
-        };
-        return contactWithRequiredFields;
-      }
-      
-      return null;
+      return data || null;
     } catch (error: any) {
       console.error('Unexpected error updating contact:', error);
       throw error;

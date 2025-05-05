@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
 import {
   Form,
   FormControl,
@@ -18,7 +17,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -29,8 +27,6 @@ import {
 } from '@/components/ui/select';
 import { MultiAssigneeSelect } from './MultiAssigneeSelect';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCompanies } from '@/hooks/useCompanies';
-import { Building } from 'lucide-react';
 
 // Define types
 type Contact = {
@@ -61,7 +57,6 @@ const taskSchema = z.object({
   status: z.enum(['todo', 'in_progress', 'completed']),
   due_date: z.string().optional(),
   assignees: z.array(z.string()).optional(),
-  company_id: z.string().optional(),
   campaign_id: z.string().optional(),
   client_visible: z.boolean().default(false),
   related_type: z.enum(['none', 'campaign', 'project']).default('none'),
@@ -79,8 +74,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const { user } = useAuth(); // Get current user from auth context
   const isEditing = !!taskId;
   const [loadingAssignees, setLoadingAssignees] = useState(isEditing);
-  const [showSubsidiaries, setShowSubsidiaries] = useState(false);
-  const { companies, isLoading: loadingCompanies } = useCompanies(showSubsidiaries);
 
   // Fetch existing task assignees if editing
   const [existingAssignees, setExistingAssignees] = useState<string[]>([]);
@@ -123,7 +116,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       status: initialData?.status || 'todo',
       due_date: initialData?.due_date || '',
       assignees: loadingAssignees ? [] : existingAssignees,
-      company_id: initialData?.company_id || '',
       campaign_id: initialData?.campaign_id || '',
       client_visible: initialData?.client_visible || false,
       related_type: initialData?.related_type || 'none',
@@ -140,80 +132,69 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   // Create or update task mutation
   const taskMutation = useMutation({
     mutationFn: async (data: z.infer<typeof taskSchema>) => {
-      try {
-        // Prepare the data for insertion
-        const taskData = {
-          title: data.title,
-          description: data.description || null,
-          priority: data.priority,
-          status: data.status,
-          due_date: data.due_date || null,
-          creator_id: user?.id || null, // Set creator_id to current user ID
-          company_id: data.company_id || null,
-          campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
-          client_visible: data.client_visible,
-          related_type: data.related_type === 'none' ? null : data.related_type,
-        };
+      // Prepare the data for insertion
+      const taskData = {
+        title: data.title,
+        description: data.description || null,
+        priority: data.priority,
+        status: data.status,
+        due_date: data.due_date || null,
+        creator_id: user?.id || null, // Set creator_id to current user ID
+        campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
+        client_visible: data.client_visible,
+        related_type: data.related_type === 'none' ? null : data.related_type,
+      };
+      
+      let taskResult;
+      
+      // Create or update the task
+      if (isEditing) {
+        const { data: result, error } = await supabase
+          .from('tasks')
+          .update(taskData)
+          .eq('id', taskId)
+          .select()
+          .single();
         
-        console.log("Task data to be inserted/updated:", taskData);
+        if (error) throw error;
+        taskResult = result;
+      } else {
+        // Use regular insert instead of insertWithUser if you're setting the creator manually
+        const { data: result, error } = await supabase
+          .from('tasks')
+          .insert(taskData)
+          .select()
+          .single();
         
-        let taskResult;
-        
-        // Create or update the task
-        if (isEditing) {
-          const { data: result, error } = await supabase
-            .from('tasks')
-            .update(taskData)
-            .eq('id', taskId)
-            .select()
-            .single();
-          
-          if (error) throw error;
-          taskResult = result;
-        } else {
-          // Use regular insert instead of insertWithUser if you're setting the creator manually
-          const { data: result, error } = await supabase
-            .from('tasks')
-            .insert(taskData)
-            .select()
-            .single();
-          
-          if (error) {
-            console.error("Error inserting task:", error);
-            throw error;
-          }
-          taskResult = result;
-        }
-        
-        // Now handle assignees - first remove existing assignees if updating
-        if (isEditing && taskId) {
-          const { error: deleteError } = await supabase
-            .from('task_assignees')
-            .delete()
-            .eq('task_id', taskId);
-          
-          if (deleteError) throw deleteError;
-        }
-        
-        // Insert new assignees
-        if (data.assignees && data.assignees.length > 0 && taskResult && taskResult.id) {
-          const assigneesData = data.assignees.map(userId => ({
-            task_id: isEditing ? taskId : taskResult.id,
-            user_id: userId
-          }));
-          
-          const { error: assignError } = await supabase
-            .from('task_assignees')
-            .insert(assigneesData);
-          
-          if (assignError) throw assignError;
-        }
-        
-        return taskResult;
-      } catch (error) {
-        console.error("Task creation/update failed:", error);
-        throw error;
+        if (error) throw error;
+        taskResult = result;
       }
+      
+      // Now handle assignees - first remove existing assignees if updating
+      if (isEditing && taskId) {
+        const { error: deleteError } = await supabase
+          .from('task_assignees')
+          .delete()
+          .eq('task_id', taskId);
+        
+        if (deleteError) throw deleteError;
+      }
+      
+      // Insert new assignees
+      if (data.assignees && data.assignees.length > 0 && taskResult && taskResult.id) {
+        const assigneesData = data.assignees.map(userId => ({
+          task_id: isEditing ? taskId : taskResult.id,
+          user_id: userId
+        }));
+        
+        const { error: assignError } = await supabase
+          .from('task_assignees')
+          .insert(assigneesData);
+        
+        if (assignError) throw assignError;
+      }
+      
+      return taskResult;
     },
     onSuccess: () => {
       toast({
@@ -244,15 +225,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   if (loadingAssignees) {
     return <div>Loading task details...</div>;
   }
-
-  // Helper function to display company name with parent indication
-  const getCompanyDisplayName = (company: { id: string; name: string; parent_id: string | null; parent_name?: string }) => {
-    if (!company.parent_id) {
-      return company.name;
-    }
-    
-    return company.parent_name ? `${company.name} (${company.parent_name})` : company.name;
-  };
 
   return (
     <Form {...form}>
@@ -359,48 +331,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             )}
           />
 
-          {/* Company field */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <FormLabel>Company</FormLabel>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">Show subsidiaries</span>
-                <Switch 
-                  checked={showSubsidiaries} 
-                  onCheckedChange={setShowSubsidiaries} 
-                />
-              </div>
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="company_id"
-              render={({ field }) => (
-                <FormItem>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value || ""}
-                    disabled={loadingCompanies}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select company" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {companies.map((company) => (
-                        <SelectItem key={company.id} value={company.id}>
-                          {getCompanyDisplayName(company)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          {/* Creator field removed */}
         </div>
 
         <FormField
@@ -457,7 +388,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 <FormLabel>Campaign</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
-                  value={field.value || ""}
+                  defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -465,6 +396,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    {/* If there are no campaigns, provide a default option */}
                     {campaigns.length === 0 && (
                       <SelectItem value="no-campaigns">No campaigns available</SelectItem>
                     )}

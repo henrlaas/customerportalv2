@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { useToast } from '@/components/ui/use-toast';
@@ -93,6 +94,7 @@ export const CreateCompanyDialog = ({
         logo_url: logo,
         // Copy values from parent company
         phone: parentCompany?.phone,
+        address: parentCompany?.address,
         street_address: parentCompany?.street_address,
         city: parentCompany?.city,
         postal_code: parentCompany?.postal_code,

@@ -1004,7 +1004,6 @@ export type Database = {
           assigned_to: string | null
           campaign_id: string | null
           client_visible: boolean | null
-          company_id: string | null
           created_at: string
           created_by: string | null
           creator_id: string | null
@@ -1024,7 +1023,6 @@ export type Database = {
           assigned_to?: string | null
           campaign_id?: string | null
           client_visible?: boolean | null
-          company_id?: string | null
           created_at?: string
           created_by?: string | null
           creator_id?: string | null
@@ -1044,7 +1042,6 @@ export type Database = {
           assigned_to?: string | null
           campaign_id?: string | null
           client_visible?: boolean | null
-          company_id?: string | null
           created_at?: string
           created_by?: string | null
           creator_id?: string | null
@@ -1066,13 +1063,6 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]

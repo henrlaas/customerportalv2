@@ -33,7 +33,7 @@ const CompaniesPage = () => {
   // Filter companies by search query, type, and parent status
   const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (company.street_address && company.street_address.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (company.address && company.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (company.country && company.country.toLowerCase().includes(searchQuery.toLowerCase()));
     

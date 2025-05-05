@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,8 +36,7 @@ import {
   CheckCircle,
   Info,
   Timer,
-  Paperclip,
-  Building
+  Paperclip
 } from "lucide-react";
 import { TaskForm } from "@/components/Tasks/TaskForm";
 import { TaskAttachments } from "@/components/Tasks/TaskAttachments";
@@ -66,7 +66,6 @@ type Task = {
   updated_at: string;
   client_visible: boolean | null;
   related_type: string | null;
-  company_id: string | null; // Explicitly define company_id field
   assignees?: {
     id: string;
     user_id: string;
@@ -83,14 +82,6 @@ type Contact = {
 type Campaign = {
   id: string;
   name: string;
-};
-
-// Define a type for the company with parent_name
-type Company = {
-  id: string;
-  name: string;
-  parent_id: string | null;
-  parent_name?: string;
 };
 
 export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailSheetProps) => {
@@ -170,44 +161,6 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
     },
   });
   
-  // Fetch company if task has company_id
-  const { data: company } = useQuery<Company>({
-    queryKey: ['company', task?.company_id],
-    queryFn: async () => {
-      if (!task?.company_id) return null;
-      
-      const { data, error } = await supabase
-        .from('companies')
-        .select('id, name, parent_id')
-        .eq('id', task.company_id)
-        .single();
-        
-      if (error) {
-        console.error('Error fetching company:', error);
-        return null;
-      }
-      
-      // If it's a subsidiary, fetch the parent company
-      if (data.parent_id) {
-        const { data: parentData, error: parentError } = await supabase
-          .from('companies')
-          .select('id, name')
-          .eq('id', data.parent_id)
-          .single();
-          
-        if (!parentError && parentData) {
-          return {
-            ...data,
-            parent_name: parentData.name
-          } as Company;
-        }
-      }
-      
-      return data as Company;
-    },
-    enabled: !!task?.company_id && isOpen,
-  });
-  
   // Delete task mutation
   const deleteTaskMutation = useMutation({
     mutationFn: async () => {
@@ -272,7 +225,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
     },
   });
   
-  // Update task status mutation - Fixed to handle the array response properly
+  // Update task status mutation - Fixed to use eq instead of single
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: 'todo' | 'in_progress' | 'completed') => {
       if (!taskId) throw new Error('Task ID is missing');
@@ -285,8 +238,8 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
         
       if (error) throw error;
       
-      // Return the first item in the array or the original task if no data
-      return Array.isArray(data) && data.length > 0 ? data[0] as unknown as Task : task as Task;
+      // Return the first item in the array
+      return data[0] as Task;
     },
     onSuccess: (updatedTask) => {
       queryClient.setQueryData(['task', taskId], updatedTask);
@@ -560,21 +513,6 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                             )}
                           </span>
                         </div>
-                        
-                        {/* Company information */}
-                        {task.company_id && company && (
-                          <div className="flex items-center">
-                            <Building className="h-4 w-4 text-muted-foreground mr-2" />
-                            <span>
-                              Company: {company.name}
-                              {company.parent_id && company.parent_name && (
-                                <span className="text-muted-foreground ml-1">
-                                  (Subsidiary of {company.parent_name})
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                        )}
                         
                         {task.campaign_id && (
                           <div className="flex items-center">
