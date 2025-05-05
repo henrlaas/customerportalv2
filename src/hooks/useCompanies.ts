@@ -4,6 +4,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/types/company';
 
+export type CompanyWithParentName = {
+  id: string;
+  name: string;
+  parent_id: string | null;
+  parent_name?: string;
+};
+
 export const useCompanies = (includeSubsidiaries: boolean = false) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['companies', { includeSubsidiaries }],
