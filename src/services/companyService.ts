@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Company, CompanyContact } from '@/types/company';
 
@@ -124,15 +125,17 @@ const companyQueryService = {
         }
       }
 
-      // Combine the data and ensure proper type casting
-      return contactsData.map(contact => ({
-        ...contact,
-        email: emailsMap[contact.user_id] || null,
-        first_name: profilesMap[contact.user_id]?.first_name || null,
-        last_name: profilesMap[contact.user_id]?.last_name || null,
-        avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
-        phone: null, // Add missing required field with default value
-      })) as CompanyContact[];
+      // Combine the data and ensure all required fields are present
+      return contactsData.map(contact => {
+        return {
+          ...contact,
+          first_name: profilesMap[contact.user_id]?.first_name || null,
+          last_name: profilesMap[contact.user_id]?.last_name || null,
+          email: emailsMap[contact.user_id] || null,
+          phone: null, // Add missing required field with default value
+          avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
+        } as CompanyContact;
+      });
     } catch (error: any) {
       console.error('Unexpected error fetching company contacts:', error);
       throw error;
@@ -268,7 +271,7 @@ const companyMutationService = {
         throw new Error(error.message);
       }
 
-      // Add required fields with defaults if needed
+      // Add required fields with defaults
       if (data) {
         return {
           ...data,
