@@ -30,7 +30,7 @@ export const useCompanies = (includeSubsidiaries: boolean = false) => {
       
       if (error) throw error;
       
-      return data as Pick<Company, 'id' | 'name' | 'parent_id'>[];
+      return data as CompanyWithParentName[];
     }
   });
 
