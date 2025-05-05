@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -478,89 +479,6 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                   </div>
                 </div>
                 
-                {/* Task meta information in a card */}
-                <div className="bg-gray-50 p-4 rounded-lg border">
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Due date */}
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">DUE DATE</p>
-                      <div className="flex items-center text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-                        <span>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Creation date */}
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">CREATED</p>
-                      <div className="flex items-center text-sm">
-                        <Clock3 className="h-4 w-4 text-muted-foreground mr-2" />
-                        <span>{new Date(task.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Assignees */}
-                    <div className="space-y-1 col-span-2">
-                      <p className="text-xs text-muted-foreground font-medium">ASSIGNED TO</p>
-                      <div className="flex items-center text-sm">
-                        <User className="h-4 w-4 text-muted-foreground mr-2" />
-                        {task.assignees && task.assignees.length > 0 ? (
-                          <UserAvatarGroup 
-                            users={getTaskAssignees(task)}
-                            size="sm"
-                            max={5}
-                          />
-                        ) : (
-                          <span className="text-muted-foreground">Unassigned</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Creator */}
-                    <div className="space-y-1 col-span-2">
-                      <p className="text-xs text-muted-foreground font-medium">CREATED BY</p>
-                      <div className="flex items-center text-sm">
-                        <User className="h-4 w-4 text-muted-foreground mr-2" />
-                        {task.creator_id ? (
-                          <UserAvatarGroup 
-                            users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
-                            size="sm"
-                          />
-                        ) : (
-                          <span className="text-muted-foreground">Unassigned</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Company information if available */}
-                    {company && (
-                      <div className="space-y-1 col-span-2">
-                        <p className="text-xs text-muted-foreground font-medium">COMPANY</p>
-                        <div className="flex items-center text-sm">
-                          <Building className="h-4 w-4 text-muted-foreground mr-2" />
-                          <span>{company.name}</span>
-                          {company.parent_id && (
-                            <Badge variant="outline" className="ml-2 text-xs bg-gray-100">
-                              Subsidiary
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Campaign relation if available */}
-                    {task.campaign_id && (
-                      <div className="space-y-1 col-span-2">
-                        <p className="text-xs text-muted-foreground font-medium">CAMPAIGN</p>
-                        <div className="flex items-center text-sm">
-                          <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                          <span>{getCampaignName(task.campaign_id)}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
                 {/* Description - always visible with clear styling */}
                 {task.description && (
                   <div className="bg-white p-4 rounded-lg border space-y-2">
@@ -574,6 +492,10 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                 {/* Tab selector for additional functionality */}
                 <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="w-full">
+                    <TabsTrigger value="details">
+                      <Info className="h-4 w-4 mr-2" />
+                      Details
+                    </TabsTrigger>
                     <TabsTrigger value="timeTracking">
                       <Timer className="h-4 w-4 mr-2" />
                       Time Tracking
@@ -584,13 +506,98 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                     </TabsTrigger>
                   </TabsList>
                   
+                  {/* Details Tab */}
+                  <TabsContent value="details" className="space-y-4 pt-4">
+                    <div className="bg-gray-50 p-4 rounded-lg border">
+                      <div className="grid grid-cols-2 gap-6">
+                        {/* Due date */}
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">DUE DATE</p>
+                          <div className="flex items-center text-sm">
+                            <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
+                            <span>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Creation date */}
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">CREATED</p>
+                          <div className="flex items-center text-sm">
+                            <Clock3 className="h-4 w-4 text-muted-foreground mr-2" />
+                            <span>{new Date(task.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Assignees */}
+                        <div className="space-y-1 col-span-2">
+                          <p className="text-xs text-muted-foreground font-medium">ASSIGNED TO</p>
+                          <div className="flex items-center text-sm">
+                            <User className="h-4 w-4 text-muted-foreground mr-2" />
+                            {task.assignees && task.assignees.length > 0 ? (
+                              <UserAvatarGroup 
+                                users={getTaskAssignees(task)}
+                                size="sm"
+                                max={5}
+                              />
+                            ) : (
+                              <span className="text-muted-foreground">Unassigned</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Creator */}
+                        <div className="space-y-1 col-span-2">
+                          <p className="text-xs text-muted-foreground font-medium">CREATED BY</p>
+                          <div className="flex items-center text-sm">
+                            <User className="h-4 w-4 text-muted-foreground mr-2" />
+                            {task.creator_id ? (
+                              <UserAvatarGroup 
+                                users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
+                                size="sm"
+                              />
+                            ) : (
+                              <span className="text-muted-foreground">Unassigned</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Company information if available */}
+                        {company && (
+                          <div className="space-y-1 col-span-2">
+                            <p className="text-xs text-muted-foreground font-medium">COMPANY</p>
+                            <div className="flex items-center text-sm">
+                              <Building className="h-4 w-4 text-muted-foreground mr-2" />
+                              <span>{company.name}</span>
+                              {company.parent_id && (
+                                <Badge variant="outline" className="ml-2 text-xs bg-gray-100">
+                                  Subsidiary
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Campaign relation if available */}
+                        {task.campaign_id && (
+                          <div className="space-y-1 col-span-2">
+                            <p className="text-xs text-muted-foreground font-medium">CAMPAIGN</p>
+                            <div className="flex items-center text-sm">
+                              <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
+                              <span>{getCampaignName(task.campaign_id)}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
                   {/* Time Tracking Tab */}
-                  <TabsContent value="timeTracking" className="space-y-4 pt-4 bg-white p-4 rounded-lg border mt-4">
+                  <TabsContent value="timeTracking" className="space-y-4 pt-4">
                     <TaskTimer taskId={task.id} />
                   </TabsContent>
                   
                   {/* Attachments Tab */}
-                  <TabsContent value="attachments" className="space-y-4 pt-4 bg-white p-4 rounded-lg border mt-4">
+                  <TabsContent value="attachments" className="space-y-4 pt-4">
                     <TaskAttachments taskId={task.id} />
                   </TabsContent>
                 </Tabs>
