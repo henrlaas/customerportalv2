@@ -50,7 +50,7 @@ export const TimeEntryCard = ({ entry, tasks, onEdit }: TimeEntryCardProps) => {
   };
 
   return (
-    <Card key={entry.id}>
+    <Card key={entry.id} className="bg-white shadow-md">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg">

@@ -33,7 +33,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 181 100% 13%; /* #004743 in HSL for the ring color */
 
-    --radius: 0.5rem;
+    --radius: 0.75rem; /* Increased border radius for smoother edges */
 
     --sidebar-background: 0 0% 98%;
 
@@ -99,4 +99,9 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Add custom card shadow styling */
+.shadow-card {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }

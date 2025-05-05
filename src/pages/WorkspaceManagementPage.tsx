@@ -102,7 +102,7 @@ const WorkspaceManagementPage = () => {
 
   if (error) {
     return (
-      <Alert variant="destructive" className="max-w-xl mx-auto mt-8">
+      <Alert variant="destructive" className="max-w-xl mx-auto mt-8 shadow-md rounded-xl">
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
@@ -155,7 +155,7 @@ const WorkspaceManagementPage = () => {
           </div>
 
           {allSettings.length === 0 ? (
-            <div className="text-center p-4 bg-muted rounded-lg">
+            <div className="text-center p-4 bg-muted rounded-xl shadow-sm">
               No settings found.
             </div>
           ) : (
@@ -195,7 +195,7 @@ const WorkspaceManagementPage = () => {
             <Separator />
           </div>
 
-          <Card>
+          <Card className="bg-white shadow-md">
             <CardHeader>
               <CardTitle>Send Email</CardTitle>
             </CardHeader>

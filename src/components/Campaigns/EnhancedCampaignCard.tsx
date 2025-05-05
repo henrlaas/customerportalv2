@@ -59,7 +59,7 @@ export const EnhancedCampaignCard = ({ campaign }: EnhancedCampaignCardProps) =>
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden shadow-md bg-white">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">

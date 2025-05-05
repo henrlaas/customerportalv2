@@ -22,7 +22,7 @@ export function AdCard({ ad, disableModifications }: Props) {
 
   return (
     <Card
-      className="overflow-hidden cursor-pointer relative transition-shadow hover:shadow-lg group"
+      className="overflow-hidden cursor-pointer relative transition-all hover:shadow-lg group shadow-md bg-white"
       onClick={() => navigate(`/ads/${ad.id}`)}
       tabIndex={0}
       aria-label={`View details for ad ${ad.name}`}
@@ -51,7 +51,7 @@ export function AdCard({ ad, disableModifications }: Props) {
           )}
         </div>
       )}
-      <div className="px-4 py-3 flex items-center justify-between border-t bg-background">
+      <div className="px-4 py-3 flex items-center justify-between">
         <div className="truncate font-medium text-base">{ad.name}</div>
         <Badge variant="outline">{fileType}</Badge>
       </div>

@@ -91,7 +91,7 @@ export const DealCard = ({
   return (
     <>
       <Card 
-        className="bg-white shadow-sm hover:bg-gray-50 cursor-pointer"
+        className="bg-white shadow-md hover:bg-gray-50/80 cursor-pointer"
         ref={setNodeRef}
         {...attributes}
         {...listeners}
