@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase, insertWithUser } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,9 @@ import {
 } from '@/components/ui/select';
 import { MultiAssigneeSelect } from './MultiAssigneeSelect';
 import { useAuth } from '@/contexts/AuthContext';
+import { CompanySelector } from './CompanySelector';
+import { useCompanyList } from '@/hooks/useCompanyList';
+import { Company } from '@/types/company';
 
 // Define types
 type Contact = {
@@ -60,6 +63,7 @@ const taskSchema = z.object({
   campaign_id: z.string().optional(),
   client_visible: z.boolean().default(false),
   related_type: z.enum(['none', 'campaign', 'project']).default('none'),
+  company_id: z.string().nullable().optional(),
 });
 
 export const TaskForm: React.FC<TaskFormProps> = ({
@@ -71,9 +75,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth(); // Get current user from auth context
+  const { user } = useAuth();
   const isEditing = !!taskId;
   const [loadingAssignees, setLoadingAssignees] = useState(isEditing);
+  const [showSubsidiaries, setShowSubsidiaries] = useState(false);
+
+  // Fetch companies
+  const { companies, isLoading: isLoadingCompanies } = useCompanyList(showSubsidiaries);
 
   // Fetch existing task assignees if editing
   const [existingAssignees, setExistingAssignees] = useState<string[]>([]);
@@ -119,6 +127,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       campaign_id: initialData?.campaign_id || '',
       client_visible: initialData?.client_visible || false,
       related_type: initialData?.related_type || 'none',
+      company_id: initialData?.company_id || null,
     },
   });
 
@@ -143,6 +152,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
         client_visible: data.client_visible,
         related_type: data.related_type === 'none' ? null : data.related_type,
+        company_id: data.company_id || null, // Add company_id field
       };
       
       let taskResult;
@@ -331,7 +341,26 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             )}
           />
 
-          {/* Creator field removed */}
+          <FormField
+            control={form.control}
+            name="company_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Company</FormLabel>
+                <FormControl>
+                  <CompanySelector
+                    companies={companies}
+                    selectedCompanyId={field.value || null}
+                    onSelect={(companyId) => field.onChange(companyId)}
+                    showSubsidiaries={showSubsidiaries}
+                    onToggleSubsidiaries={setShowSubsidiaries}
+                    isLoading={isLoadingCompanies}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <FormField

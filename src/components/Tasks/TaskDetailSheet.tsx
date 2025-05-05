@@ -36,7 +36,8 @@ import {
   CheckCircle,
   Info,
   Timer,
-  Paperclip
+  Paperclip,
+  Building
 } from "lucide-react";
 import { TaskForm } from "@/components/Tasks/TaskForm";
 import { TaskAttachments } from "@/components/Tasks/TaskAttachments";
@@ -60,6 +61,7 @@ type Task = {
   due_date: string | null;
   campaign_id: string | null;
   assigned_to: string | null;
+  company_id: string | null; // Added company_id
   created_by: string | null;
   creator_id: string | null;
   created_at: string;
@@ -82,6 +84,12 @@ type Contact = {
 type Campaign = {
   id: string;
   name: string;
+};
+
+type Company = {
+  id: string;
+  name: string;
+  parent_id: string | null;
 };
 
 export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailSheetProps) => {
@@ -159,6 +167,28 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
       
       return data as Campaign[];
     },
+  });
+
+  // Fetch company if task has company_id
+  const { data: company } = useQuery({
+    queryKey: ['company', task?.company_id],
+    queryFn: async () => {
+      if (!task?.company_id) return null;
+      
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name, parent_id')
+        .eq('id', task.company_id)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching company:', error);
+        return null;
+      }
+      
+      return data as Company;
+    },
+    enabled: !!task?.company_id,
   });
   
   // Delete task mutation
@@ -498,6 +528,19 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                             )}
                           </span>
                         </div>
+                        
+                        {/* Company information */}
+                        {company && (
+                          <div className="flex items-center">
+                            <Building className="h-4 w-4 text-muted-foreground mr-2" />
+                            <span>Company: {company.name}</span>
+                            {company.parent_id && (
+                              <Badge variant="outline" className="ml-2 text-xs bg-gray-100">
+                                Subsidiary
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                         
                         <div className="flex items-center">
                           <User className="h-4 w-4 text-muted-foreground mr-2" />
