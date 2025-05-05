@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
@@ -6,14 +5,12 @@ import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
 import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
 import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
 import { EmailForm } from "@/components/WorkspaceManagement/EmailForm";
-import { SmsForm } from "@/components/WorkspaceManagement/SmsForm";
 import {
   Settings,
   Users,
   Mail,
   UserCog,
-  Cog,
-  MessageSquare
+  Cog
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -143,10 +140,6 @@ const WorkspaceManagementPage = () => {
             <Mail className="h-4 w-4 mr-2" />
             Email Tools
           </TabsTrigger>
-          <TabsTrigger value="sms-tools">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            SMS Tools
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all-settings" className="space-y-4">
@@ -208,28 +201,6 @@ const WorkspaceManagementPage = () => {
             </CardHeader>
             <CardContent>
               <EmailForm />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="sms-tools">
-          <div className="grid gap-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              SMS Tools
-            </h2>
-            <p className="text-muted-foreground">
-              Send SMS messages directly from your workspace.
-            </p>
-            <Separator />
-          </div>
-
-          <Card className="bg-white shadow-md">
-            <CardHeader>
-              <CardTitle>Send SMS</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SmsForm />
             </CardContent>
           </Card>
         </TabsContent>
