@@ -225,7 +225,7 @@ const Dashboard = () => {
         <div className="md:flex">
           <div className="p-6 flex-1">
             <h2 className="text-2xl font-bold mb-2">
-              {t('Welcome')}, {profile?.first_name} {profile?.last_name}
+              Welcome back, {profile?.first_name}
             </h2>
             <p className="text-gray-600">
               {isAdmin && "You have administrator access to the portal. Here's a snapshot of your organization's performance."}
