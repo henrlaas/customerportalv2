@@ -276,6 +276,7 @@ const companyMutationService = {
           last_name: data.last_name || null,
           email: data.email || null,
           phone: data.phone || null,
+          avatar_url: data.avatar_url || null,
         } as CompanyContact;
       }
       

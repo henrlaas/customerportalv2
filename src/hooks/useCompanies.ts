@@ -51,7 +51,12 @@ export const useCompanies = (includeSubsidiaries: boolean = false) => {
         
         if (error) throw error;
         
-        return data as CompanyWithParentName[];
+        // Make sure we return objects with the correct shape
+        return (data || []).map(item => ({
+          id: item.id,
+          name: item.name,
+          parent_id: item.parent_id
+        })) as CompanyWithParentName[];
       }
     }
   });

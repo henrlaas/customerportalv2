@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Company, CompanyContact } from '@/types/company';
 import { formatCompanyResponse, prepareCompanyData } from './companyHelpers';
@@ -92,8 +91,16 @@ export const companyMutationService = {
       .single();
     
     if (error) throw error;
-    // Since the database data doesn't include all CompanyContact fields, cast as unknown first
-    return data as unknown as CompanyContact;
+    
+    // Add required fields that might not be in the database response
+    return {
+      ...data,
+      first_name: null,
+      last_name: null,
+      email: null,
+      phone: null,
+      avatar_url: null,
+    } as CompanyContact;
   },
   
   // Update company contact
@@ -106,8 +113,16 @@ export const companyMutationService = {
       .single();
     
     if (error) throw error;
-    // Since the database data doesn't include all CompanyContact fields, cast as unknown first
-    return data as unknown as CompanyContact;
+    
+    // Add required fields with defaults
+    return {
+      ...data,
+      first_name: null,
+      last_name: null,
+      email: null,
+      phone: null,
+      avatar_url: null,
+    } as CompanyContact;
   },
   
   // Delete company contact
