@@ -35,17 +35,22 @@ export const Sidebar: React.FC = () => {
         "--sidebar-width-icon": "4.5rem", // Increased width for collapsed sidebar
       } as React.CSSProperties}
     >
-      <SidebarHeader className="p-4 bg-[#004743] flex items-center justify-between">
-        {!isCollapsed && <div className="pl-2"><Logo /></div>}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleSidebar}
-          className={`text-white hover:text-[#F2FCE2] hover:bg-gray-500/20 ${isCollapsed ? 'mx-auto' : 'ml-auto'}`}
-        >
-          {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
-        </Button>
+      <SidebarHeader className="p-4 bg-[#004743] flex flex-col items-center pt-8">
+        <div className="flex items-center">
+          <div className={`${isCollapsed ? '' : 'mr-4'}`}>
+            <Logo />
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar}
+            className="text-white hover:text-[#F2FCE2] hover:bg-gray-500/20"
+          >
+            {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          </Button>
+        </div>
       </SidebarHeader>
+      
       <SidebarContent className="px-4 py-2 bg-[#004743]">
         {/* MENU section without the label text */}
         <SidebarGroup>
