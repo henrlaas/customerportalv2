@@ -15,22 +15,44 @@ export const useCompanies = (includeSubsidiaries: boolean = false) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['companies', { includeSubsidiaries }],
     queryFn: async () => {
-      const query = supabase
-        .from('companies')
-        .select('id, name, parent_id');
-      
-      // Only get parent companies when not including subsidiaries
-      if (!includeSubsidiaries) {
-        query.is('parent_id', null);
+      // If we need parent names, use a more complex query with a join
+      if (includeSubsidiaries) {
+        const query = supabase
+          .from('companies')
+          .select(`
+            id, 
+            name, 
+            parent_id, 
+            parent:companies!companies_parent_id_fkey (name)
+          `);
+        
+        query.order('name');
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        // Transform the data to include parent_name
+        return data.map(company => ({
+          id: company.id,
+          name: company.name,
+          parent_id: company.parent_id,
+          parent_name: company.parent?.name
+        })) as CompanyWithParentName[];
+      } else {
+        // Simple query for parent companies only
+        const query = supabase
+          .from('companies')
+          .select('id, name, parent_id')
+          .is('parent_id', null)
+          .order('name');
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        return data as CompanyWithParentName[];
       }
-      
-      query.order('name');
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      return data as CompanyWithParentName[];
     }
   });
 

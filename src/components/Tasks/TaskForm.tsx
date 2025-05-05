@@ -140,70 +140,80 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   // Create or update task mutation
   const taskMutation = useMutation({
     mutationFn: async (data: z.infer<typeof taskSchema>) => {
-      // Prepare the data for insertion
-      const taskData = {
-        title: data.title,
-        description: data.description || null,
-        priority: data.priority,
-        status: data.status,
-        due_date: data.due_date || null,
-        creator_id: user?.id || null, // Set creator_id to current user ID
-        company_id: data.company_id || null,
-        campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
-        client_visible: data.client_visible,
-        related_type: data.related_type === 'none' ? null : data.related_type,
-      };
-      
-      let taskResult;
-      
-      // Create or update the task
-      if (isEditing) {
-        const { data: result, error } = await supabase
-          .from('tasks')
-          .update(taskData)
-          .eq('id', taskId)
-          .select()
-          .single();
+      try {
+        // Prepare the data for insertion
+        const taskData = {
+          title: data.title,
+          description: data.description || null,
+          priority: data.priority,
+          status: data.status,
+          due_date: data.due_date || null,
+          creator_id: user?.id || null, // Set creator_id to current user ID
+          company_id: data.company_id || null,
+          campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
+          client_visible: data.client_visible,
+          related_type: data.related_type === 'none' ? null : data.related_type,
+        };
         
-        if (error) throw error;
-        taskResult = result;
-      } else {
-        // Use regular insert instead of insertWithUser if you're setting the creator manually
-        const { data: result, error } = await supabase
-          .from('tasks')
-          .insert(taskData)
-          .select()
-          .single();
+        console.log("Task data to be inserted/updated:", taskData);
         
-        if (error) throw error;
-        taskResult = result;
+        let taskResult;
+        
+        // Create or update the task
+        if (isEditing) {
+          const { data: result, error } = await supabase
+            .from('tasks')
+            .update(taskData)
+            .eq('id', taskId)
+            .select()
+            .single();
+          
+          if (error) throw error;
+          taskResult = result;
+        } else {
+          // Use regular insert instead of insertWithUser if you're setting the creator manually
+          const { data: result, error } = await supabase
+            .from('tasks')
+            .insert(taskData)
+            .select()
+            .single();
+          
+          if (error) {
+            console.error("Error inserting task:", error);
+            throw error;
+          }
+          taskResult = result;
+        }
+        
+        // Now handle assignees - first remove existing assignees if updating
+        if (isEditing && taskId) {
+          const { error: deleteError } = await supabase
+            .from('task_assignees')
+            .delete()
+            .eq('task_id', taskId);
+          
+          if (deleteError) throw deleteError;
+        }
+        
+        // Insert new assignees
+        if (data.assignees && data.assignees.length > 0 && taskResult && taskResult.id) {
+          const assigneesData = data.assignees.map(userId => ({
+            task_id: isEditing ? taskId : taskResult.id,
+            user_id: userId
+          }));
+          
+          const { error: assignError } = await supabase
+            .from('task_assignees')
+            .insert(assigneesData);
+          
+          if (assignError) throw assignError;
+        }
+        
+        return taskResult;
+      } catch (error) {
+        console.error("Task creation/update failed:", error);
+        throw error;
       }
-      
-      // Now handle assignees - first remove existing assignees if updating
-      if (isEditing && taskId) {
-        const { error: deleteError } = await supabase
-          .from('task_assignees')
-          .delete()
-          .eq('task_id', taskId);
-        
-        if (deleteError) throw deleteError;
-      }
-      
-      // Insert new assignees
-      if (data.assignees && data.assignees.length > 0 && taskResult && taskResult.id) {
-        const assigneesData = data.assignees.map(userId => ({
-          task_id: isEditing ? taskId : taskResult.id,
-          user_id: userId
-        }));
-        
-        const { error: assignError } = await supabase
-          .from('task_assignees')
-          .insert(assigneesData);
-        
-        if (assignError) throw assignError;
-      }
-      
-      return taskResult;
     },
     onSuccess: () => {
       toast({
@@ -236,13 +246,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   }
 
   // Helper function to display company name with parent indication
-  const getCompanyDisplayName = (company: { id: string; name: string; parent_id: string | null }) => {
+  const getCompanyDisplayName = (company: { id: string; name: string; parent_id: string | null; parent_name?: string }) => {
     if (!company.parent_id) {
       return company.name;
     }
     
-    const parentCompany = companies.find(c => c.id === company.parent_id);
-    return parentCompany ? `${company.name} (${parentCompany.name})` : company.name;
+    return company.parent_name ? `${company.name} (${company.parent_name})` : company.name;
   };
 
   return (
@@ -448,7 +457,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 <FormLabel>Campaign</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
-                  defaultValue={field.value}
+                  value={field.value || ""}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -456,7 +465,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {/* If there are no campaigns, provide a default option */}
                     {campaigns.length === 0 && (
                       <SelectItem value="no-campaigns">No campaigns available</SelectItem>
                     )}
