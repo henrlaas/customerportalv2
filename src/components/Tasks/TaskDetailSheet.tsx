@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +67,7 @@ type Task = {
   updated_at: string;
   client_visible: boolean | null;
   related_type: string | null;
+  company_id: string | null; // Add company_id property to the Task type
   assignees?: {
     id: string;
     user_id: string;
@@ -82,6 +84,14 @@ type Contact = {
 type Campaign = {
   id: string;
   name: string;
+};
+
+// Define a type for the company with parent_name
+type Company = {
+  id: string;
+  name: string;
+  parent_id: string | null;
+  parent_name?: string; // Make parent_name optional
 };
 
 export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailSheetProps) => {
@@ -162,7 +172,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
   });
   
   // Fetch company if task has company_id
-  const { data: company } = useQuery({
+  const { data: company } = useQuery<Company>({
     queryKey: ['company', task?.company_id],
     queryFn: async () => {
       if (!task?.company_id) return null;
@@ -194,7 +204,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
         }
       }
       
-      return data;
+      return data as Company;
     },
     enabled: !!task?.company_id && isOpen,
   });
@@ -263,7 +273,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
     },
   });
   
-  // Update task status mutation - Fixed to use eq instead of single
+  // Update task status mutation - Fixed to handle the array response properly
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: 'todo' | 'in_progress' | 'completed') => {
       if (!taskId) throw new Error('Task ID is missing');
@@ -277,7 +287,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
       if (error) throw error;
       
       // Return the first item in the array
-      return data[0] as Task;
+      return Array.isArray(data) && data.length > 0 ? data[0] as Task : task;
     },
     onSuccess: (updatedTask) => {
       queryClient.setQueryData(['task', taskId], updatedTask);
