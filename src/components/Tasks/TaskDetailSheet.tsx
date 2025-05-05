@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +27,6 @@ import {
   Trash2,
   Share,
   Clock3,
-  FileText,
   Link as LinkIcon,
   Eye,
   EyeOff,
@@ -398,7 +396,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                     <SheetTitle className="text-2xl">{task.title}</SheetTitle>
                   </div>
                   
-                  {/* Action buttons moved to top row */}
+                  {/* Action buttons at the top */}
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} title="Edit">
                       <Edit className="h-4 w-4" />
@@ -431,7 +429,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                   </div>
                 </div>
                 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                   <Badge variant="outline" className={getStatusColor(task.status)}>
                     {task.status === 'in_progress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
                   </Badge>
@@ -447,53 +445,135 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
               </SheetHeader>
               
               <div className="space-y-6">
-                {/* Status toggle buttons */}
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={task.status === 'todo' ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => updateStatusMutation.mutate('todo')}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    Todo
-                  </Button>
-                  <Button
-                    variant={task.status === 'in_progress' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => updateStatusMutation.mutate('in_progress')}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    In Progress
-                  </Button>
-                  <Button
-                    variant={task.status === 'completed' ? "default" : "outline"}
-                    size="sm"
-                    className={task.status === 'completed' ? "bg-green-600 hover:bg-green-700" : ""}
-                    onClick={() => updateStatusMutation.mutate('completed')}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    <CheckCircle className="mr-1 h-4 w-4" />
-                    Complete
-                  </Button>
+                {/* Status toggle buttons in a card-like container */}
+                <div className="bg-gray-50 p-3 rounded-lg border">
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">TASK STATUS</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={task.status === 'todo' ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => updateStatusMutation.mutate('todo')}
+                      disabled={updateStatusMutation.isPending}
+                    >
+                      Todo
+                    </Button>
+                    <Button
+                      variant={task.status === 'in_progress' ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => updateStatusMutation.mutate('in_progress')}
+                      disabled={updateStatusMutation.isPending}
+                    >
+                      In Progress
+                    </Button>
+                    <Button
+                      variant={task.status === 'completed' ? "default" : "outline"}
+                      size="sm"
+                      className={task.status === 'completed' ? "bg-green-600 hover:bg-green-700" : ""}
+                      onClick={() => updateStatusMutation.mutate('completed')}
+                      disabled={updateStatusMutation.isPending}
+                    >
+                      <CheckCircle className="mr-1 h-4 w-4" />
+                      Complete
+                    </Button>
+                  </div>
                 </div>
                 
-                {/* Description - always visible above tabs */}
+                {/* Task meta information in a card */}
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Due date */}
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground font-medium">DUE DATE</p>
+                      <div className="flex items-center text-sm">
+                        <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
+                        <span>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Creation date */}
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground font-medium">CREATED</p>
+                      <div className="flex items-center text-sm">
+                        <Clock3 className="h-4 w-4 text-muted-foreground mr-2" />
+                        <span>{new Date(task.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Assignees */}
+                    <div className="space-y-1 col-span-2">
+                      <p className="text-xs text-muted-foreground font-medium">ASSIGNED TO</p>
+                      <div className="flex items-center text-sm">
+                        <User className="h-4 w-4 text-muted-foreground mr-2" />
+                        {task.assignees && task.assignees.length > 0 ? (
+                          <UserAvatarGroup 
+                            users={getTaskAssignees(task)}
+                            size="sm"
+                            max={5}
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">Unassigned</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Creator */}
+                    <div className="space-y-1 col-span-2">
+                      <p className="text-xs text-muted-foreground font-medium">CREATED BY</p>
+                      <div className="flex items-center text-sm">
+                        <User className="h-4 w-4 text-muted-foreground mr-2" />
+                        {task.creator_id ? (
+                          <UserAvatarGroup 
+                            users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
+                            size="sm"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">Unassigned</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Company information if available */}
+                    {company && (
+                      <div className="space-y-1 col-span-2">
+                        <p className="text-xs text-muted-foreground font-medium">COMPANY</p>
+                        <div className="flex items-center text-sm">
+                          <Building className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span>{company.name}</span>
+                          {company.parent_id && (
+                            <Badge variant="outline" className="ml-2 text-xs bg-gray-100">
+                              Subsidiary
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Campaign relation if available */}
+                    {task.campaign_id && (
+                      <div className="space-y-1 col-span-2">
+                        <p className="text-xs text-muted-foreground font-medium">CAMPAIGN</p>
+                        <div className="flex items-center text-sm">
+                          <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span>{getCampaignName(task.campaign_id)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Description - always visible with clear styling */}
                 {task.description && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
+                  <div className="bg-white p-4 rounded-lg border space-y-2">
+                    <h3 className="text-sm font-medium">Description</h3>
                     <div className="prose max-w-none text-sm">
-                      <p className="whitespace-pre-wrap">{task.description}</p>
+                      <p className="whitespace-pre-wrap text-muted-foreground">{task.description}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Tab selector */}
+                {/* Tab selector for additional functionality */}
                 <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="w-full">
-                    <TabsTrigger value="details">
-                      <Info className="h-4 w-4 mr-2" />
-                      Details
-                    </TabsTrigger>
                     <TabsTrigger value="timeTracking">
                       <Timer className="h-4 w-4 mr-2" />
                       Time Tracking
@@ -504,96 +584,14 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                     </TabsTrigger>
                   </TabsList>
                   
-                  {/* Details Tab */}
-                  <TabsContent value="details" className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium text-muted-foreground">Details</h3>
-                      <div className="grid grid-cols-1 gap-2 text-sm">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-                          <span>Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</span>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <User className="h-4 w-4 text-muted-foreground mr-2" />
-                          <span className="flex items-center gap-2">
-                            Assigned to: 
-                            {task.assignees && task.assignees.length > 0 ? (
-                              <UserAvatarGroup 
-                                users={getTaskAssignees(task)}
-                                size="sm"
-                                max={5}
-                              />
-                            ) : (
-                              'Unassigned'
-                            )}
-                          </span>
-                        </div>
-                        
-                        {/* Company information */}
-                        {company && (
-                          <div className="flex items-center">
-                            <Building className="h-4 w-4 text-muted-foreground mr-2" />
-                            <span>Company: {company.name}</span>
-                            {company.parent_id && (
-                              <Badge variant="outline" className="ml-2 text-xs bg-gray-100">
-                                Subsidiary
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center">
-                          <User className="h-4 w-4 text-muted-foreground mr-2" />
-                          <span className="flex items-center gap-2">
-                            Created by:
-                            {task.creator_id ? (
-                              <UserAvatarGroup 
-                                users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
-                                size="sm"
-                              />
-                            ) : (
-                              'Unassigned'
-                            )}
-                          </span>
-                        </div>
-                        
-                        {task.campaign_id && (
-                          <div className="flex items-center">
-                            <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                            <span>Related to campaign: {getCampaignName(task.campaign_id)}</span>
-                          </div>
-                        )}
-                        
-                        {task.related_type && task.related_type !== 'campaign' && (
-                          <div className="flex items-center">
-                            <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                            <span>Related to: {task.related_type}</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center">
-                          <Clock3 className="h-4 w-4 text-muted-foreground mr-2" />
-                          <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  
                   {/* Time Tracking Tab */}
-                  <TabsContent value="timeTracking" className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium">Time Tracking</h3>
-                      <TaskTimer taskId={task.id} />
-                    </div>
+                  <TabsContent value="timeTracking" className="space-y-4 pt-4 bg-white p-4 rounded-lg border mt-4">
+                    <TaskTimer taskId={task.id} />
                   </TabsContent>
                   
                   {/* Attachments Tab */}
-                  <TabsContent value="attachments" className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium">Attachments</h3>
-                      <TaskAttachments taskId={task.id} />
-                    </div>
+                  <TabsContent value="attachments" className="space-y-4 pt-4 bg-white p-4 rounded-lg border mt-4">
+                    <TaskAttachments taskId={task.id} />
                   </TabsContent>
                 </Tabs>
               </div>
