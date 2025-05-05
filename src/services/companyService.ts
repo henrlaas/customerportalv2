@@ -127,14 +127,15 @@ const companyQueryService = {
 
       // Combine the data and ensure all required fields are present
       return contactsData.map(contact => {
-        return {
+        const contactWithDetails: CompanyContact = {
           ...contact,
           first_name: profilesMap[contact.user_id]?.first_name || null,
           last_name: profilesMap[contact.user_id]?.last_name || null,
           email: emailsMap[contact.user_id] || null,
           phone: null, // Add missing required field with default value
-          avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
-        } as CompanyContact;
+          avatar_url: profilesMap[contact.user_id]?.avatar_url || null
+        };
+        return contactWithDetails;
       });
     } catch (error: any) {
       console.error('Unexpected error fetching company contacts:', error);
@@ -242,15 +243,17 @@ const companyMutationService = {
       
       if (error) throw error;
       
-      // Add required fields that might not be in the database response
-      return {
+      // Create a CompanyContact object with all required fields
+      const contactWithRequiredFields: CompanyContact = {
         ...data,
         first_name: null,
         last_name: null,
         email: null,
         phone: null,
         avatar_url: null,
-      } as CompanyContact;
+      };
+      
+      return contactWithRequiredFields;
     } catch (error: any) {
       console.error('Unexpected error creating contact:', error);
       throw error;
@@ -273,14 +276,15 @@ const companyMutationService = {
 
       // Add required fields with defaults
       if (data) {
-        return {
+        const contactWithRequiredFields: CompanyContact = {
           ...data,
           first_name: data.first_name || null,
           last_name: data.last_name || null,
           email: data.email || null,
           phone: data.phone || null,
           avatar_url: data.avatar_url || null,
-        } as CompanyContact;
+        };
+        return contactWithRequiredFields;
       }
       
       return null;
