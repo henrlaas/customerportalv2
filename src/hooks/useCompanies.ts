@@ -33,13 +33,25 @@ export const useCompanies = (includeSubsidiaries: boolean = false) => {
         if (error) throw error;
         
         // Transform the data to include parent_name
-        return (data || []).map(company => ({
-          id: company.id,
-          name: company.name,
-          parent_id: company.parent_id,
-          // Fix: Access parent name properly - parent is an object, not an array
-          parent_name: company.parent ? company.parent.name : undefined
-        })) as CompanyWithParentName[];
+        return (data || []).map(company => {
+          // Fix: Check the structure of parent and access name properly
+          // The parent property from Supabase is an object with a name field, not an array
+          let parentName: string | undefined = undefined;
+          
+          if (company.parent) {
+            // Check if parent is an object with name or something else
+            if (typeof company.parent === 'object' && company.parent !== null) {
+              parentName = company.parent.name;
+            }
+          }
+          
+          return {
+            id: company.id,
+            name: company.name,
+            parent_id: company.parent_id,
+            parent_name: parentName
+          };
+        }) as CompanyWithParentName[];
       } else {
         // Simple query for parent companies only
         const query = supabase
