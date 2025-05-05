@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +43,7 @@ import { TaskAttachments } from "@/components/Tasks/TaskAttachments";
 import { TaskTimer } from "@/components/Tasks/TaskTimer";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { UserAvatarGroup } from "@/components/Tasks/UserAvatarGroup";
 
 type TaskDetailSheetProps = {
   isOpen: boolean;
@@ -64,12 +66,17 @@ type Task = {
   updated_at: string;
   client_visible: boolean | null;
   related_type: string | null;
+  assignees?: {
+    id: string;
+    user_id: string;
+  }[];
 };
 
 type Contact = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  avatar_url?: string | null;
 };
 
 type Campaign = {
@@ -86,7 +93,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
   
-  // Fetch task details
+  // Fetch task details with assignees
   const { data: task, isLoading: isLoadingTask } = useQuery({
     queryKey: ['task', taskId],
     queryFn: async () => {
@@ -94,7 +101,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
       
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select('*, assignees:task_assignees(id, user_id)')
         .eq('id', taskId)
         .single();
         
@@ -118,7 +125,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name');
+        .select('id, first_name, last_name, avatar_url');
       
       if (error) {
         toast({
@@ -218,7 +225,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
     },
   });
   
-  // Update task status mutation
+  // Update task status mutation - Fixed to use eq instead of single
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: 'todo' | 'in_progress' | 'completed') => {
       if (!taskId) throw new Error('Task ID is missing');
@@ -227,12 +234,12 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
         .from('tasks')
         .update({ status: newStatus })
         .eq('id', taskId)
-        .select()
-        .single();
+        .select();
         
       if (error) throw error;
       
-      return data as Task;
+      // Return the first item in the array
+      return data[0] as Task;
     },
     onSuccess: (updatedTask) => {
       queryClient.setQueryData(['task', taskId], updatedTask);
@@ -260,6 +267,15 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
       description: 'Task link copied to clipboard',
     });
     setIsShareDialogOpen(false);
+  };
+  
+  // Helper function to get task assignees
+  const getTaskAssignees = (task: Task) => {
+    if (!task.assignees) return [];
+    
+    return task.assignees
+      .map(assignee => profiles.find(p => p.id === assignee.user_id))
+      .filter((profile): profile is Contact => !!profile);
   };
   
   // Helper function to get assignee name
@@ -469,12 +485,33 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                         
                         <div className="flex items-center">
                           <User className="h-4 w-4 text-muted-foreground mr-2" />
-                          <span>Assigned to: {getAssigneeName(task.assigned_to)}</span>
+                          <span className="flex items-center gap-2">
+                            Assigned to: 
+                            {task.assignees && task.assignees.length > 0 ? (
+                              <UserAvatarGroup 
+                                users={getTaskAssignees(task)}
+                                size="sm"
+                                max={5}
+                              />
+                            ) : (
+                              'Unassigned'
+                            )}
+                          </span>
                         </div>
                         
                         <div className="flex items-center">
                           <User className="h-4 w-4 text-muted-foreground mr-2" />
-                          <span>Created by: {getCreatorName(task.creator_id)}</span>
+                          <span className="flex items-center gap-2">
+                            Created by:
+                            {task.creator_id ? (
+                              <UserAvatarGroup 
+                                users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
+                                size="sm"
+                              />
+                            ) : (
+                              'Unassigned'
+                            )}
+                          </span>
                         </div>
                         
                         {task.campaign_id && (
