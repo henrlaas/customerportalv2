@@ -125,14 +125,15 @@ const companyQueryService = {
         }
       }
 
-      // Combine the data
+      // Combine the data and ensure proper type casting
       return contactsData.map(contact => ({
         ...contact,
-        email: emailsMap[contact.user_id] || '',
-        first_name: profilesMap[contact.user_id]?.first_name || '',
-        last_name: profilesMap[contact.user_id]?.last_name || '',
+        email: emailsMap[contact.user_id] || null,
+        first_name: profilesMap[contact.user_id]?.first_name || null,
+        last_name: profilesMap[contact.user_id]?.last_name || null,
         avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
-      }));
+        phone: null, // Add missing required field with default value
+      })) as CompanyContact[];
     } catch (error: any) {
       console.error('Unexpected error fetching company contacts:', error);
       throw error;
@@ -238,7 +239,15 @@ const companyMutationService = {
         .single();
       
       if (error) throw error;
-      return data as CompanyContact;
+      
+      // Add required fields that might not be in the database response
+      return {
+        ...data,
+        first_name: null,
+        last_name: null,
+        email: null,
+        phone: null,
+      } as CompanyContact;
     } catch (error: any) {
       console.error('Unexpected error creating contact:', error);
       throw error;
@@ -259,7 +268,18 @@ const companyMutationService = {
         throw new Error(error.message);
       }
 
-      return data || null;
+      // Add required fields with defaults if needed
+      if (data) {
+        return {
+          ...data,
+          first_name: data.first_name || null,
+          last_name: data.last_name || null,
+          email: data.email || null,
+          phone: data.phone || null,
+        } as CompanyContact;
+      }
+      
+      return null;
     } catch (error: any) {
       console.error('Unexpected error updating contact:', error);
       throw error;

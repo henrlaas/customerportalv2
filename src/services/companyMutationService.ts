@@ -92,7 +92,8 @@ export const companyMutationService = {
       .single();
     
     if (error) throw error;
-    return data as CompanyContact;
+    // Since the database data doesn't include all CompanyContact fields, cast as unknown first
+    return data as unknown as CompanyContact;
   },
   
   // Update company contact
@@ -105,7 +106,8 @@ export const companyMutationService = {
       .single();
     
     if (error) throw error;
-    return data as CompanyContact;
+    // Since the database data doesn't include all CompanyContact fields, cast as unknown first
+    return data as unknown as CompanyContact;
   },
   
   // Delete company contact

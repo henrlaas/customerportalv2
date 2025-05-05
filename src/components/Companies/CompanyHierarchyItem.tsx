@@ -104,6 +104,28 @@ export const CompanyHierarchyItem = ({
     setIsExpanded(!isExpanded);
   };
 
+  // Helper function to format address
+  const getFormattedAddress = (company: Company) => {
+    const addressParts = [];
+    
+    if (company.street_address) {
+      addressParts.push(company.street_address);
+    }
+    
+    if (company.city) {
+      addressParts.push(company.city);
+      if (company.postal_code) {
+        addressParts[addressParts.length - 1] += `, ${company.postal_code}`;
+      }
+    }
+    
+    if (company.country) {
+      addressParts.push(company.country);
+    }
+    
+    return addressParts.length > 0 ? addressParts : null;
+  };
+
   return (
     <div className={`relative ${depth > 0 ? 'pl-4 border-l-2 border-gray-100 ml-3 mt-1' : ''}`}>
       {/* Company Row - Always visible */}
@@ -252,13 +274,16 @@ export const CompanyHierarchyItem = ({
             </div>
           </div>
           
-          {company.address && (
+          {/* Address Section */}
+          {(company.street_address || company.city || company.postal_code || company.country) && (
             <div className="mt-4">
               <h4 className="text-sm font-medium text-muted-foreground mb-1">Address</h4>
-              <p className="text-sm">{company.address}</p>
-              {company.city && (
+              {company.street_address && (
+                <p className="text-sm">{company.street_address}</p>
+              )}
+              {(company.city || company.postal_code || company.country) && (
                 <p className="text-sm mt-1">
-                  {company.city}
+                  {company.city && company.city}
                   {company.postal_code && `, ${company.postal_code}`}
                   {company.country && `, ${company.country}`}
                 </p>

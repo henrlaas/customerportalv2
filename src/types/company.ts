@@ -22,6 +22,8 @@ export interface Company {
   advisor_id?: string | null;
   created_at?: string;
   updated_at?: string;
+  // Add address as a virtual field that components are using
+  address?: string | null;
 }
 
 export type CompanyContact = {
@@ -35,4 +37,8 @@ export type CompanyContact = {
   phone: string | null;
   is_primary: boolean;
   is_admin: boolean;
+  // Add avatar_url which is being used in CompanyContactsList
+  avatar_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
 };
