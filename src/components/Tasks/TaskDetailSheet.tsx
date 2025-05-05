@@ -506,11 +506,11 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                     </TabsTrigger>
                   </TabsList>
                   
-                  {/* Details Tab */}
+                  {/* Details Tab - Improved layout */}
                   <TabsContent value="details" className="space-y-4 pt-4">
                     <div className="bg-gray-50 p-4 rounded-lg border">
-                      <div className="grid grid-cols-2 gap-6">
-                        {/* Due date */}
+                      {/* Due date and Created date - Side by side */}
+                      <div className="grid grid-cols-2 gap-6 mb-6">
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground font-medium">DUE DATE</p>
                           <div className="flex items-center text-sm">
@@ -519,7 +519,6 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                           </div>
                         </div>
                         
-                        {/* Creation date */}
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground font-medium">CREATED</p>
                           <div className="flex items-center text-sm">
@@ -527,9 +526,11 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                             <span>{new Date(task.created_at).toLocaleDateString()}</span>
                           </div>
                         </div>
-                        
-                        {/* Assignees */}
-                        <div className="space-y-1 col-span-2">
+                      </div>
+                      
+                      {/* Assignees and Creator - Side by side */}
+                      <div className="grid grid-cols-2 gap-6 mb-6">
+                        <div className="space-y-1">
                           <p className="text-xs text-muted-foreground font-medium">ASSIGNED TO</p>
                           <div className="flex items-center text-sm">
                             <User className="h-4 w-4 text-muted-foreground mr-2" />
@@ -545,8 +546,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                           </div>
                         </div>
                         
-                        {/* Creator */}
-                        <div className="space-y-1 col-span-2">
+                        <div className="space-y-1">
                           <p className="text-xs text-muted-foreground font-medium">CREATED BY</p>
                           <div className="flex items-center text-sm">
                             <User className="h-4 w-4 text-muted-foreground mr-2" />
@@ -560,34 +560,34 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                             )}
                           </div>
                         </div>
-                        
-                        {/* Company information if available */}
-                        {company && (
-                          <div className="space-y-1 col-span-2">
-                            <p className="text-xs text-muted-foreground font-medium">COMPANY</p>
-                            <div className="flex items-center text-sm">
-                              <Building className="h-4 w-4 text-muted-foreground mr-2" />
-                              <span>{company.name}</span>
-                              {company.parent_id && (
-                                <Badge variant="outline" className="ml-2 text-xs bg-gray-100">
-                                  Subsidiary
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Campaign relation if available */}
-                        {task.campaign_id && (
-                          <div className="space-y-1 col-span-2">
-                            <p className="text-xs text-muted-foreground font-medium">CAMPAIGN</p>
-                            <div className="flex items-center text-sm">
-                              <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                              <span>{getCampaignName(task.campaign_id)}</span>
-                            </div>
-                          </div>
-                        )}
                       </div>
+                      
+                      {/* Company information if available */}
+                      {company && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">COMPANY</p>
+                          <div className="flex items-center text-sm">
+                            <Building className="h-4 w-4 text-muted-foreground mr-2" />
+                            <span>{company.name}</span>
+                            {company.parent_id && (
+                              <Badge variant="outline" className="ml-2 text-xs bg-gray-100">
+                                Subsidiary
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Campaign relation if available */}
+                      {task.campaign_id && (
+                        <div className="space-y-1 mt-6">
+                          <p className="text-xs text-muted-foreground font-medium">CAMPAIGN</p>
+                          <div className="flex items-center text-sm">
+                            <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
+                            <span>{getCampaignName(task.campaign_id)}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                   
