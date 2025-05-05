@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { MultiAssigneeSelect } from './MultiAssigneeSelect';
-import { UserSelect } from './UserSelect';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Define types
 type Contact = {
@@ -57,7 +57,6 @@ const taskSchema = z.object({
   status: z.enum(['todo', 'in_progress', 'completed']),
   due_date: z.string().optional(),
   assignees: z.array(z.string()).optional(),
-  creator_id: z.string().nullable().optional(),
   campaign_id: z.string().optional(),
   client_visible: z.boolean().default(false),
   related_type: z.enum(['none', 'campaign', 'project']).default('none'),
@@ -72,22 +71,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth(); // Get current user from auth context
   const isEditing = !!taskId;
   const [loadingAssignees, setLoadingAssignees] = useState(isEditing);
-
-  // Get the current user's id for the creator field
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setCurrentUserId(session.user.id);
-      }
-    };
-    
-    getUser();
-  }, []);
 
   // Fetch existing task assignees if editing
   const [existingAssignees, setExistingAssignees] = useState<string[]>([]);
@@ -129,7 +115,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       priority: initialData?.priority || 'medium',
       status: initialData?.status || 'todo',
       due_date: initialData?.due_date || '',
-      creator_id: initialData?.creator_id || currentUserId || null,
       assignees: loadingAssignees ? [] : existingAssignees,
       campaign_id: initialData?.campaign_id || '',
       client_visible: initialData?.client_visible || false,
@@ -144,13 +129,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     }
   }, [loadingAssignees, existingAssignees, form]);
 
-  // Update creator field when currentUserId is set
-  useEffect(() => {
-    if (currentUserId && !isEditing) {
-      form.setValue('creator_id', currentUserId);
-    }
-  }, [currentUserId, form, isEditing]);
-
   // Create or update task mutation
   const taskMutation = useMutation({
     mutationFn: async (data: z.infer<typeof taskSchema>) => {
@@ -161,7 +139,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         priority: data.priority,
         status: data.status,
         due_date: data.due_date || null,
-        creator_id: data.creator_id || null,
+        creator_id: user?.id || null, // Set creator_id to current user ID
         campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
         client_visible: data.client_visible,
         related_type: data.related_type === 'none' ? null : data.related_type,
@@ -353,24 +331,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="creator_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Creator</FormLabel>
-                <FormControl>
-                  <UserSelect
-                    users={profiles}
-                    selectedUserId={field.value || null}
-                    onChange={field.onChange}
-                    placeholder="Select creator"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Creator field removed */}
         </div>
 
         <FormField
