@@ -32,7 +32,7 @@ export const Sidebar: React.FC = () => {
       className="border-r bg-[#004743]" 
       collapsible="icon"
       style={{
-        "--sidebar-width-icon": "4rem", // Increasing the width of collapsed sidebar
+        "--sidebar-width-icon": "4.5rem", // Increased width for collapsed sidebar
       } as React.CSSProperties}
     >
       <SidebarHeader className="p-4 bg-[#004743] flex items-center justify-between">
@@ -66,7 +66,7 @@ export const Sidebar: React.FC = () => {
                     }`}
                   >
                     <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : ''}`}>
-                      <item.icon className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'} ${location.pathname === item.href ? 'text-[#004743]' : 'text-white'}`} />
+                      <item.icon className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-3'} ${location.pathname === item.href ? 'text-[#004743]' : 'text-white'}`} />
                       {!isCollapsed && <span>{item.title}</span>}
                     </div>
                     {item.hasDropdown && !isCollapsed && (
