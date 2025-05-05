@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { Building, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
-import { companyService } from '@/services/companyService';
 import { CompanyFilters } from '@/components/Companies/CompanyFilters';
 import { CompanyListView } from '@/components/Companies/CompanyListView';
 import { CompanyCardView } from '@/components/Companies/CompanyCardView';
 import { Company } from '@/types/company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
+import { useCompanyList } from '@/hooks/useCompanyList';
 
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -24,13 +23,10 @@ const CompaniesPage = () => {
   const { isAdmin, isEmployee } = useAuth();
   const navigate = useNavigate();
   
-  // Fetch companies - use fetchCompanies
-  const { data: companies = [], isLoading } = useQuery({
-    queryKey: ['companies'],
-    queryFn: companyService.fetchCompanies,
-  });
+  // Use the proper hook for fetching companies with subsidiary filtering
+  const { companies, isLoading } = useCompanyList(showSubsidiaries);
   
-  // Filter companies by search query, type, and parent status
+  // Filter companies by search query and type
   const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (company.address && company.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -43,10 +39,7 @@ const CompaniesPage = () => {
       (clientTypeFilter === 'Marketing' && company.is_marketing_client) ||
       (clientTypeFilter === 'Web' && company.is_web_client);
     
-    // Filter subsidiaries (companies with parent_id)
-    const matchesParentStatus = showSubsidiaries || company.parent_id === null;
-    
-    return matchesSearch && matchesType && matchesParentStatus;
+    return matchesSearch && matchesType;
   });
   
   // Check if user can modify companies (admin or employee)
