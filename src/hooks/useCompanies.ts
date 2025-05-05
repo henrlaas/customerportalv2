@@ -39,9 +39,12 @@ export const useCompanies = (includeSubsidiaries: boolean = false) => {
           let parentName: string | undefined = undefined;
           
           if (company.parent) {
-            // Check if parent is an object with name or something else
+            // Check if parent is an object with name property
             if (typeof company.parent === 'object' && company.parent !== null) {
-              parentName = company.parent.name;
+              // TypeScript doesn't know the exact shape of company.parent
+              // Cast it to any first to access the name property safely
+              const parentObj = company.parent as any;
+              parentName = parentObj.name;
             }
           }
           
