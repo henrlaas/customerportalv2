@@ -309,9 +309,6 @@ const SettingsPage = () => {
   const capitalizedRole = profile?.role 
     ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1)
     : '';
-  
-  // Replace 'admin' with 'Agency Staff' in the display
-  const displayRole = capitalizedRole === 'Admin' ? 'Agency Staff' : capitalizedRole;
 
   return (
     <div className="container mx-auto p-6">
@@ -373,7 +370,7 @@ const SettingsPage = () => {
               <div className="w-full mt-6 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Role:</span>
-                  <span className="font-medium">{displayRole}</span>
+                  <span className="font-medium">{capitalizedRole}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Email:</span>
