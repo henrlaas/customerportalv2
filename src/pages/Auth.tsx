@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -139,7 +140,7 @@ const Auth = () => {
 
             <Button 
               type="submit" 
-              className={`w-full text-[18px] font-[500] rounded-[15px] px-8 py-[14px] bg-[#0D352A] text-[#85FAA1] hover:bg-[#0D352A]/90 transition-all duration-300 ease-in-out relative ${isProcessing ? 'animate-pulse' : ''}`}
+              className={`w-full text-[18px] font-[500] rounded-[15px] px-8 py-[14px] bg-[#004743] text-[#E4EDED] hover:bg-[#004743]/90 transition-all duration-300 ease-in-out relative ${isProcessing ? 'animate-pulse' : ''}`}
               disabled={isProcessing}
             >
               <span className={`flex items-center justify-center gap-2 ${isProcessing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
