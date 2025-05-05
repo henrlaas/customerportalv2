@@ -10,6 +10,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -80,7 +81,18 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    // No need to implement for this simple kanban
+    const { active, over } = event;
+    
+    if (!over) return;
+    
+    const activeId = active.id;
+    const overId = over.id;
+    
+    // If the task is dragged over a container (status column)
+    if (overId === 'todo' || overId === 'in_progress' || overId === 'completed') {
+      // We don't need to do any additional processing here as we'll handle the actual
+      // status update in handleDragEnd
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -93,23 +105,12 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
     
     // Extract task ID and container ID
     const taskId = active.id as string;
-    const containerId = over.id as string;
+    const overId = over.id;
     
-    // Only update if dropping in a different container
-    if (containerId !== 'todo' && containerId !== 'in_progress' && containerId !== 'completed') {
-      setActiveId(null);
-      return;
-    }
-    
-    // Get the task
-    const task = [
-      ...tasksByStatus.todo,
-      ...tasksByStatus.in_progress,
-      ...tasksByStatus.completed
-    ].find(t => t.id === taskId);
-    
-    if (task && task.status !== containerId) {
-      onTaskMove(taskId, containerId);
+    // Only update if dropping in a valid container
+    if (overId === 'todo' || overId === 'in_progress' || overId === 'completed') {
+      // Update task status in the database
+      onTaskMove(taskId, overId as string);
     }
     
     setActiveId(null);
@@ -121,6 +122,17 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
       {count}
     </Badge>
   );
+
+  // Find the active task across all status categories
+  const getActiveTask = () => {
+    if (!activeId) return null;
+    
+    return [
+      ...tasksByStatus.todo,
+      ...tasksByStatus.in_progress,
+      ...tasksByStatus.completed
+    ].find(task => task.id === activeId);
+  };
 
   return (
     <DndContext 
