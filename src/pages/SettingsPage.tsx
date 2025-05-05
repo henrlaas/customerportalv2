@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -196,7 +197,7 @@ const SettingsPage = () => {
     setUploadingAvatar(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const filePath = `avatars/${user.id}.${fileExt}`;
+      const filePath = `${user.id}.${fileExt}`;
 
       // Upload file to Supabase Storage
       const { error: uploadError, data } = await supabase.storage
