@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Globe } from 'lucide-react';
 
 export const Languages = () => {
   const { user, profile } = useAuth();
@@ -53,7 +54,10 @@ export const Languages = () => {
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="language">Language</Label>
+        <Label htmlFor="language" className="flex items-center mb-2">
+          <Globe className="h-4 w-4 mr-2 text-[#004743]" />
+          Language
+        </Label>
         <Select
           value={language}
           onValueChange={handleLanguageChange}

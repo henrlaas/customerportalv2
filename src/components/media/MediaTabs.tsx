@@ -3,7 +3,7 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MediaContent } from './MediaContent';
 import { MediaFile } from '@/types/media';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, FolderIcon, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MediaTabsProps {
@@ -52,8 +52,14 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={onTabChange}>
         <TabsList className="grid grid-cols-2 w-full max-w-md">
-          <TabsTrigger value="internal">Internal Media</TabsTrigger>
-          <TabsTrigger value="company">Company Media</TabsTrigger>
+          <TabsTrigger value="internal">
+            <FolderIcon className="h-4 w-4 mr-2" />
+            Internal Media
+          </TabsTrigger>
+          <TabsTrigger value="company">
+            <Building className="h-4 w-4 mr-2" />
+            Company Media
+          </TabsTrigger>
         </TabsList>
 
         <div className="flex items-center gap-2 mt-4 mb-2">
@@ -110,4 +116,3 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
     </div>
   );
 };
-

@@ -1,3 +1,4 @@
+
 import { 
   Card,
   CardContent,
@@ -6,6 +7,8 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Company } from '@/types/company';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ClipboardList, Building, Phone, Globe, Mail, MapPin } from 'lucide-react';
 
 interface CompanyOverviewTabProps {
   company: Company;
@@ -30,20 +33,29 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="grid grid-cols-3 gap-1">
-              <div className="font-medium">Name:</div>
+              <div className="font-medium flex items-center">
+                <Building className="h-4 w-4 mr-2 text-muted-foreground" />
+                Name:
+              </div>
               <div className="col-span-2">{company.name}</div>
             </div>
             
             {company.organization_number && (
               <div className="grid grid-cols-3 gap-1">
-                <div className="font-medium">Org.nr:</div>
+                <div className="font-medium flex items-center">
+                  <ClipboardList className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Org.nr:
+                </div>
                 <div className="col-span-2">{company.organization_number}</div>
               </div>
             )}
             
             {company.website && (
               <div className="grid grid-cols-3 gap-1">
-                <div className="font-medium">Website:</div>
+                <div className="font-medium flex items-center">
+                  <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Website:
+                </div>
                 <div className="col-span-2">
                   <a 
                     href={company.website} 
@@ -59,21 +71,30 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
             
             {company.phone && (
               <div className="grid grid-cols-3 gap-1">
-                <div className="font-medium">Phone:</div>
+                <div className="font-medium flex items-center">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Phone:
+                </div>
                 <div className="col-span-2">{company.phone}</div>
               </div>
             )}
             
             {company.invoice_email && (
               <div className="grid grid-cols-3 gap-1">
-                <div className="font-medium">Invoice Email:</div>
+                <div className="font-medium flex items-center">
+                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Invoice Email:
+                </div>
                 <div className="col-span-2">{company.invoice_email}</div>
               </div>
             )}
             
             {company.street_address && (
               <div className="grid grid-cols-3 gap-1">
-                <div className="font-medium">Address:</div>
+                <div className="font-medium flex items-center">
+                  <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Address:
+                </div>
                 <div className="col-span-2">
                   {company.street_address}<br />
                   {company.city && company.city}

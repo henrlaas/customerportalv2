@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,7 +12,7 @@ import { CampaignsSummary } from '@/components/Dashboard/CampaignsSummary';
 import { CompaniesSummary } from '@/components/Dashboard/CompaniesSummary';
 import { DealsSummary } from '@/components/Dashboard/DealsSummary';
 import { MrrChart } from '@/components/Dashboard/MrrChart';
-import { ArrowDownIcon, ArrowUpIcon, CheckIcon, ChartBarIcon, CircleDollarSignIcon, SquareCheckIcon, SquareCode } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, BarChart3, CheckIcon, ChartBarIcon, CircleDollarSignIcon, LayoutDashboard, SquareCheckIcon, SquareCode } from 'lucide-react';
 
 // Types for our dashboard data
 interface DashboardCounts {
@@ -247,8 +246,14 @@ const Dashboard = () => {
       {/* Main Dashboard Content */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="overview">
+            <LayoutDashboard className="h-4 w-4 mr-2" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="performance">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Performance
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">

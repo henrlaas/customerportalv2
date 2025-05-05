@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +32,10 @@ import {
   Eye,
   EyeOff,
   X,
-  CheckCircle
+  CheckCircle,
+  Info,
+  Timer,
+  Paperclip
 } from "lucide-react";
 import { TaskForm } from "@/components/Tasks/TaskForm";
 import { TaskAttachments } from "@/components/Tasks/TaskAttachments";
@@ -440,10 +442,19 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
 
                 {/* Tab selector */}
                 <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid grid-cols-3 w-full">
-                    <TabsTrigger value="details">Details</TabsTrigger>
-                    <TabsTrigger value="timeTracking">Time Tracking</TabsTrigger>
-                    <TabsTrigger value="attachments">Attachments</TabsTrigger>
+                  <TabsList className="w-full">
+                    <TabsTrigger value="details">
+                      <Info className="h-4 w-4 mr-2" />
+                      Details
+                    </TabsTrigger>
+                    <TabsTrigger value="timeTracking">
+                      <Timer className="h-4 w-4 mr-2" />
+                      Time Tracking
+                    </TabsTrigger>
+                    <TabsTrigger value="attachments">
+                      <Paperclip className="h-4 w-4 mr-2" />
+                      Attachments
+                    </TabsTrigger>
                   </TabsList>
                   
                   {/* Details Tab */}

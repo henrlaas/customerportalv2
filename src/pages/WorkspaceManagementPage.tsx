@@ -8,7 +8,9 @@ import { EmailForm } from "@/components/WorkspaceManagement/EmailForm";
 import {
   Settings,
   Users,
-  Mail
+  Mail,
+  UserCog,
+  Cog
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -123,7 +125,7 @@ const WorkspaceManagementPage = () => {
       <Tabs defaultValue="all-settings" className="space-y-4">
         <TabsList>
           <TabsTrigger value="all-settings">
-            <Settings className="h-4 w-4 mr-2" />
+            <Cog className="h-4 w-4 mr-2" />
             All Settings
           </TabsTrigger>
           <TabsTrigger value="employees">
@@ -131,7 +133,7 @@ const WorkspaceManagementPage = () => {
             Employees
           </TabsTrigger>
           <TabsTrigger value="users">
-            <Users className="h-4 w-4 mr-2" />
+            <UserCog className="h-4 w-4 mr-2" />
             Users
           </TabsTrigger>
           <TabsTrigger value="email-tools">
