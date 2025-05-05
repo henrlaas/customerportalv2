@@ -37,7 +37,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, User, Lock, Bell } from 'lucide-react';
+import { Plus, User, Lock, Bell, Trash2 } from 'lucide-react';
 import FileUploader from '@/components/FileUploader';
 import { PhoneInput } from '@/components/ui/phone-input';
 
@@ -45,6 +45,7 @@ const SettingsPage = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [deletingAvatar, setDeletingAvatar] = useState(false);
 
   // Profile form schema
   const profileSchema = z.object({
@@ -243,6 +244,46 @@ const SettingsPage = () => {
     }
   };
 
+  // Avatar deletion handler
+  const handleAvatarDelete = async () => {
+    if (!user?.id || !profile?.avatar_url) return;
+    
+    setDeletingAvatar(true);
+    try {
+      // Extract filename from avatar_url
+      const urlParts = profile.avatar_url.split('/');
+      const filename = urlParts[urlParts.length - 1];
+      
+      // Delete the file from storage
+      const { error: deleteError } = await supabase.storage
+        .from('avatars')
+        .remove([`${user.id}.${filename.split('.').pop()}`]);
+
+      if (deleteError) throw deleteError;
+
+      // Update profile to remove avatar_url
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: null })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: 'Avatar removed',
+        description: 'Your profile picture has been removed successfully.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error removing avatar',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingAvatar(false);
+    }
+  };
+
   // Form submission handlers
   const handleProfileSubmit = (values: z.infer<typeof profileSchema>) => {
     profileMutation.mutate(values);
@@ -279,7 +320,7 @@ const SettingsPage = () => {
                   <AvatarImage src={profile?.avatar_url || ''} alt={fullName} />
                   <AvatarFallback className="text-xl">{userInitials}</AvatarFallback>
                 </Avatar>
-                <div className="absolute bottom-0 right-0">
+                <div className="absolute bottom-0 right-0 flex space-x-1">
                   <div className="relative">
                     <input
                       type="file"
@@ -296,12 +337,24 @@ const SettingsPage = () => {
                         }
                       }}
                       accept="image/*"
-                      disabled={uploadingAvatar}
+                      disabled={uploadingAvatar || deletingAvatar}
                     />
-                    <Button size="icon" variant="default" className="rounded-full">
+                    <Button size="icon" variant="default" className="rounded-full" disabled={uploadingAvatar || deletingAvatar}>
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
+                  
+                  {profile?.avatar_url && (
+                    <Button 
+                      size="icon" 
+                      variant="destructive" 
+                      className="rounded-full" 
+                      onClick={handleAvatarDelete}
+                      disabled={uploadingAvatar || deletingAvatar}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
               
