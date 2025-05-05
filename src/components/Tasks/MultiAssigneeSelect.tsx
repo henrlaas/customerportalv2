@@ -117,14 +117,75 @@ export function MultiAssigneeSelect({
           control: (baseStyles) => ({
             ...baseStyles,
             borderColor: 'hsl(var(--input))',
+            backgroundColor: 'hsl(var(--background))',
+            borderRadius: 'var(--radius)',
             boxShadow: 'none',
             '&:hover': {
               borderColor: 'hsl(var(--input))'
-            }
+            },
+            padding: '1px',
+            minHeight: '40px'
+          }),
+          placeholder: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--muted-foreground))'
           }),
           menu: (baseStyles) => ({
             ...baseStyles,
+            backgroundColor: 'hsl(var(--background))',
+            borderColor: 'hsl(var(--border))',
             zIndex: 50
+          }),
+          option: (baseStyles, { isFocused, isSelected }) => ({
+            ...baseStyles,
+            backgroundColor: isFocused 
+              ? 'hsl(var(--accent) / 0.1)' 
+              : isSelected 
+                ? 'hsl(var(--accent) / 0.2)'
+                : undefined,
+            color: 'hsl(var(--foreground))'
+          }),
+          multiValue: (baseStyles) => ({
+            ...baseStyles,
+            backgroundColor: 'hsl(var(--accent) / 0.2)',
+          }),
+          multiValueLabel: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--accent-foreground))',
+          }),
+          multiValueRemove: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--accent-foreground))',
+            '&:hover': {
+              backgroundColor: 'hsl(var(--accent) / 0.3)',
+              color: 'hsl(var(--accent-foreground))',
+            },
+          }),
+          input: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--foreground))'
+          }),
+          indicatorsContainer: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--foreground) / 0.5)'
+          }),
+          dropdownIndicator: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--foreground) / 0.5)',
+            '&:hover': {
+              color: 'hsl(var(--foreground) / 0.8)'
+            }
+          }),
+          clearIndicator: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--foreground) / 0.5)',
+            '&:hover': {
+              color: 'hsl(var(--foreground) / 0.8)'
+            }
+          }),
+          valueContainer: (baseStyles) => ({
+            ...baseStyles,
+            padding: '2px 8px'
           })
         }}
       />
