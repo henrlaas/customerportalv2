@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Company, CompanyContact } from '@/types/company';
 
@@ -247,6 +246,7 @@ const companyMutationService = {
         last_name: null,
         email: null,
         phone: null,
+        avatar_url: null,
       } as CompanyContact;
     } catch (error: any) {
       console.error('Unexpected error creating contact:', error);

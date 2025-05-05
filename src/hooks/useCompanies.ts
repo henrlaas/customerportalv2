@@ -33,7 +33,7 @@ export const useCompanies = (includeSubsidiaries: boolean = false) => {
         if (error) throw error;
         
         // Transform the data to include parent_name
-        return data.map(company => ({
+        return (data || []).map(company => ({
           id: company.id,
           name: company.name,
           parent_id: company.parent_id,
