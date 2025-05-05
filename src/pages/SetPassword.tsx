@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/Layout/Logo';
+import { AuthLogo } from '@/components/Layout/AuthLogo';
 import { LoaderCircle } from 'lucide-react';
 
 // Define form schema for password setup
@@ -279,7 +279,7 @@ const SetPassword = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
         <div className="flex justify-center mb-8">
-          <Logo />
+          <AuthLogo />
         </div>
         
         {isProcessing && !userEmail ? (
