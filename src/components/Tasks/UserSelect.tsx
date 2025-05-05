@@ -101,6 +101,15 @@ export function UserSelect({
           menu: (baseStyles) => ({
             ...baseStyles,
             zIndex: 50
+          }),
+          option: (baseStyles, { isFocused, isSelected }) => ({
+            ...baseStyles,
+            backgroundColor: isFocused 
+              ? '#f3f3f3' // Light gray for hover/focus
+              : isSelected 
+                ? 'hsl(var(--accent) / 0.2)'
+                : undefined,
+            color: 'hsl(var(--foreground))'
           })
         }}
       />

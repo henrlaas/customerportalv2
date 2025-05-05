@@ -139,7 +139,7 @@ export function MultiAssigneeSelect({
           option: (baseStyles, { isFocused, isSelected }) => ({
             ...baseStyles,
             backgroundColor: isFocused 
-              ? 'hsl(var(--accent) / 0.1)' 
+              ? '#f3f3f3' // Light gray for hover/focus
               : isSelected 
                 ? 'hsl(var(--accent) / 0.2)'
                 : undefined,
@@ -157,7 +157,7 @@ export function MultiAssigneeSelect({
             ...baseStyles,
             color: 'hsl(var(--accent-foreground))',
             '&:hover': {
-              backgroundColor: 'hsl(var(--accent) / 0.3)',
+              backgroundColor: '#f3f3f3', // Light gray hover instead of green
               color: 'hsl(var(--accent-foreground))',
             },
           }),

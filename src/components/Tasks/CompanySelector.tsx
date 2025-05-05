@@ -79,7 +79,7 @@ export function CompanySelector({
             option: (baseStyles, { isFocused, isSelected }) => ({
               ...baseStyles,
               backgroundColor: isFocused 
-                ? 'hsl(var(--accent) / 0.1)' 
+                ? '#f3f3f3' // Light gray for hover/focus
                 : isSelected 
                   ? 'hsl(var(--accent) / 0.2)'
                   : undefined,

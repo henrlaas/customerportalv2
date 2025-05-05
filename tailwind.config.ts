@@ -26,7 +26,7 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: '#004743', // Updated primary color
+					DEFAULT: '#004743', // Primary color
 					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
@@ -42,7 +42,7 @@ export default {
 					foreground: 'hsl(var(--muted-foreground))'
 				},
 				accent: {
-					DEFAULT: '#004743', // Updated accent color
+					DEFAULT: '#f3f3f3', // Changed to light gray instead of green
 					foreground: 'hsl(var(--accent-foreground))'
 				},
 				popover: {
@@ -56,14 +56,14 @@ export default {
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: '#004743', // Updated sidebar primary color
+					primary: '#004743', // Sidebar primary color
 					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
+					accent: '#f3f3f3', // Changed to light gray
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+					ring: '#f3f3f3' // Changed to light gray
 				},
-        'evergreen': '#004743',   // Updated evergreen color
+        'evergreen': '#004743',   // Keeping for consistency 
         'minty': '#F2FCE2',       // Keeping minty color as is
       },
 			borderRadius: {
