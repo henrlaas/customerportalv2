@@ -15,12 +15,18 @@ import { format } from 'date-fns';
 export const TopBar: React.FC = () => {
   const { signOut, profile, isAdmin, isEmployee, language, setLanguage } = useAuth();
   const today = new Date();
+  
+  // Determine greeting based on time of day
+  const getGreeting = () => {
+    const currentHour = today.getHours();
+    return currentHour < 12 ? "Good morning" : "Good afternoon";
+  };
 
   return (
     <div className="border-b bg-white">
       <div className="flex items-center justify-between p-4">
         <div>
-          <h2 className="text-lg font-medium">Hi there, {profile?.first_name}</h2>
+          <h2 className="text-lg font-medium">{getGreeting()}, {profile?.first_name} 👋</h2>
           <p className="text-sm text-gray-500">{format(today, 'EEEE, dd MMMM')}</p>
         </div>
         
