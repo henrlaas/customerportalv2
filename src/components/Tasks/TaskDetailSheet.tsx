@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +35,8 @@ import {
   CheckCircle,
   Info,
   Timer,
-  Paperclip
+  Paperclip,
+  Building
 } from "lucide-react";
 import { TaskForm } from "@/components/Tasks/TaskForm";
 import { TaskAttachments } from "@/components/Tasks/TaskAttachments";
@@ -159,6 +159,44 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
       
       return data as Campaign[];
     },
+  });
+  
+  // Fetch company if task has company_id
+  const { data: company } = useQuery({
+    queryKey: ['company', task?.company_id],
+    queryFn: async () => {
+      if (!task?.company_id) return null;
+      
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name, parent_id')
+        .eq('id', task.company_id)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching company:', error);
+        return null;
+      }
+      
+      // If it's a subsidiary, fetch the parent company
+      if (data.parent_id) {
+        const { data: parentData, error: parentError } = await supabase
+          .from('companies')
+          .select('id, name')
+          .eq('id', data.parent_id)
+          .single();
+          
+        if (!parentError && parentData) {
+          return {
+            ...data,
+            parent_name: parentData.name
+          };
+        }
+      }
+      
+      return data;
+    },
+    enabled: !!task?.company_id && isOpen,
   });
   
   // Delete task mutation
@@ -513,6 +551,21 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                             )}
                           </span>
                         </div>
+                        
+                        {/* Company information */}
+                        {task.company_id && company && (
+                          <div className="flex items-center">
+                            <Building className="h-4 w-4 text-muted-foreground mr-2" />
+                            <span>
+                              Company: {company.name}
+                              {company.parent_id && company.parent_name && (
+                                <span className="text-muted-foreground ml-1">
+                                  (Subsidiary of {company.parent_name})
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        )}
                         
                         {task.campaign_id && (
                           <div className="flex items-center">

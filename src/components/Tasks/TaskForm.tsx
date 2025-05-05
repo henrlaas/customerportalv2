@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import {
   Form,
   FormControl,
@@ -17,6 +18,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -27,6 +29,8 @@ import {
 } from '@/components/ui/select';
 import { MultiAssigneeSelect } from './MultiAssigneeSelect';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompanies } from '@/hooks/useCompanies';
+import { Building } from 'lucide-react';
 
 // Define types
 type Contact = {
@@ -57,6 +61,7 @@ const taskSchema = z.object({
   status: z.enum(['todo', 'in_progress', 'completed']),
   due_date: z.string().optional(),
   assignees: z.array(z.string()).optional(),
+  company_id: z.string().optional(),
   campaign_id: z.string().optional(),
   client_visible: z.boolean().default(false),
   related_type: z.enum(['none', 'campaign', 'project']).default('none'),
@@ -74,6 +79,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const { user } = useAuth(); // Get current user from auth context
   const isEditing = !!taskId;
   const [loadingAssignees, setLoadingAssignees] = useState(isEditing);
+  const [showSubsidiaries, setShowSubsidiaries] = useState(false);
+  const { companies, isLoading: loadingCompanies } = useCompanies(showSubsidiaries);
 
   // Fetch existing task assignees if editing
   const [existingAssignees, setExistingAssignees] = useState<string[]>([]);
@@ -116,6 +123,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       status: initialData?.status || 'todo',
       due_date: initialData?.due_date || '',
       assignees: loadingAssignees ? [] : existingAssignees,
+      company_id: initialData?.company_id || '',
       campaign_id: initialData?.campaign_id || '',
       client_visible: initialData?.client_visible || false,
       related_type: initialData?.related_type || 'none',
@@ -140,6 +148,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         status: data.status,
         due_date: data.due_date || null,
         creator_id: user?.id || null, // Set creator_id to current user ID
+        company_id: data.company_id || null,
         campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
         client_visible: data.client_visible,
         related_type: data.related_type === 'none' ? null : data.related_type,
@@ -225,6 +234,16 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   if (loadingAssignees) {
     return <div>Loading task details...</div>;
   }
+
+  // Helper function to display company name with parent indication
+  const getCompanyDisplayName = (company: { id: string; name: string; parent_id: string | null }) => {
+    if (!company.parent_id) {
+      return company.name;
+    }
+    
+    const parentCompany = companies.find(c => c.id === company.parent_id);
+    return parentCompany ? `${company.name} (${parentCompany.name})` : company.name;
+  };
 
   return (
     <Form {...form}>
@@ -331,7 +350,48 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             )}
           />
 
-          {/* Creator field removed */}
+          {/* Company field */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <FormLabel>Company</FormLabel>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Show subsidiaries</span>
+                <Switch 
+                  checked={showSubsidiaries} 
+                  onCheckedChange={setShowSubsidiaries} 
+                />
+              </div>
+            </div>
+            
+            <FormField
+              control={form.control}
+              name="company_id"
+              render={({ field }) => (
+                <FormItem>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value || ""}
+                    disabled={loadingCompanies}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select company" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {companies.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {getCompanyDisplayName(company)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <FormField
