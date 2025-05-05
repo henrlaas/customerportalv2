@@ -41,14 +41,14 @@ export const TopBar: React.FC = () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => setLanguage('en')}
-                className={`flex items-center gap-2 ${language === 'en' ? 'bg-accent' : ''}`}
+                className={`flex items-center gap-2 ${language === 'en' ? 'bg-gray-100' : ''} hover:bg-gray-100`}
               >
                 <span className="text-lg mr-1">🇺🇸</span>
                 English
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setLanguage('no')}
-                className={`flex items-center gap-2 ${language === 'no' ? 'bg-accent' : ''}`}
+                className={`flex items-center gap-2 ${language === 'no' ? 'bg-gray-100' : ''} hover:bg-gray-100`}
               >
                 <span className="text-lg mr-1">🇳🇴</span>
                 Norwegian

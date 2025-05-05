@@ -1,3 +1,4 @@
+
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSidebarItems } from './SidebarItems';
@@ -40,7 +41,7 @@ export const Sidebar: React.FC = () => {
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar}
-          className={`text-white hover:text-gray-200 hover:bg-[#005a55] ${isCollapsed ? 'mx-auto' : 'ml-auto'}`}
+          className={`text-white hover:text-gray-200 hover:bg-[#006a64] ${isCollapsed ? 'mx-auto' : 'ml-auto'}`}
         >
           {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
         </Button>
@@ -61,7 +62,7 @@ export const Sidebar: React.FC = () => {
                     className={`flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium rounded-lg ${
                       location.pathname === item.href 
                         ? 'bg-[#F2FCE2] text-[#004743]' 
-                        : 'text-white hover:bg-[#005a55] hover:text-white'
+                        : 'text-white hover:bg-[#006a64] hover:text-white'
                     }`}
                   >
                     <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : ''}`}>

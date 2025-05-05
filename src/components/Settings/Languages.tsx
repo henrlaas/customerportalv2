@@ -61,11 +61,23 @@ export const Languages = () => {
           <SelectTrigger id="language" className="w-full">
             <SelectValue placeholder="Select Language" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="en">English</SelectItem>
-            <SelectItem value="es">Español</SelectItem>
-            <SelectItem value="fr">Français</SelectItem>
-            <SelectItem value="de">Deutsch</SelectItem>
+          <SelectContent className="[&_[data-radix-select-item]]:hover:bg-gray-100">
+            <SelectItem value="en" className="flex items-center gap-2">
+              <span className="text-lg mr-1">🇺🇸</span>
+              English
+            </SelectItem>
+            <SelectItem value="es" className="flex items-center gap-2">
+              <span className="text-lg mr-1">🇪🇸</span>
+              Español
+            </SelectItem>
+            <SelectItem value="fr" className="flex items-center gap-2">
+              <span className="text-lg mr-1">🇫🇷</span>
+              Français
+            </SelectItem>
+            <SelectItem value="de" className="flex items-center gap-2">
+              <span className="text-lg mr-1">🇩🇪</span>
+              Deutsch
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
