@@ -77,15 +77,11 @@ export const smsService = {
     }
   },
 
-  // Get remaining SMS credits - now with proper error handling and no fallbacks
+  // Get remaining SMS credits - with direct GET request approach
   getSmsCredits: async (): Promise<number> => {
-    const params = new URLSearchParams({
-      cmd: 'sms_count',
-      user: smsService.username,
-      passwd: smsService.password,
-    });
-
-    const response = await fetch(`${smsService.creditsUrl}?${params.toString()}`);
+    const url = `${smsService.creditsUrl}?cmd=sms_count&user=${smsService.username}&passwd=${smsService.password}`;
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`API responded with status: ${response.status}`);

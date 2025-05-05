@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MessageSquare, AlertTriangle } from "lucide-react";
+import { smsService } from "@/services/smsService";
 
 export const SmsCreditsAlert = () => {
   const [credits, setCredits] = useState<number | null>(null);
@@ -12,6 +13,7 @@ export const SmsCreditsAlert = () => {
     const fetchCredits = async () => {
       try {
         setIsLoading(true);
+        // Direct GET request without any headers or body
         const response = await fetch('https://sveve.no/SMS/AccountAdm?cmd=sms_count&user=box&passwd=4bbc3a48af044f74');
         
         if (!response.ok) {
