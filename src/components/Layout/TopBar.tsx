@@ -73,12 +73,6 @@ export const TopBar: React.FC = () => {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                onSelect={() => window.location.href = '/profile'}
-                className="hover:bg-gray-100"
-              >
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem 
                 onSelect={() => window.location.href = '/settings'}
                 className="hover:bg-gray-100"
               >
