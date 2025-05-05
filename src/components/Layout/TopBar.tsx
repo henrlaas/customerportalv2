@@ -75,7 +75,6 @@ export const TopBar: React.FC = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>
                 {profile?.first_name} {profile?.last_name}
-                <p className="text-xs text-gray-500 mt-1">{profile?.role}</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
