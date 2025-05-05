@@ -41,7 +41,7 @@ export const Sidebar: React.FC = () => {
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar}
-          className={`text-white hover:text-[#F2FCE2] hover:bg-[#006a64] ${isCollapsed ? 'mx-auto' : 'ml-auto'}`}
+          className={`text-white hover:text-[#F2FCE2] hover:bg-gray-500/20 ${isCollapsed ? 'mx-auto' : 'ml-auto'}`}
         >
           {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
         </Button>
@@ -62,7 +62,7 @@ export const Sidebar: React.FC = () => {
                     className={`flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium rounded-lg ${
                       location.pathname === item.href 
                         ? 'bg-[#F2FCE2] text-[#004743]' 
-                        : 'text-white hover:bg-[#006a64] hover:text-[#F2FCE2]'
+                        : 'text-white hover:bg-gray-500/20 hover:text-[#F2FCE2]'
                     }`}
                   >
                     <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : ''}`}>

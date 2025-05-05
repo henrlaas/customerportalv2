@@ -72,14 +72,23 @@ export const TopBar: React.FC = () => {
                 <p className="text-xs text-gray-500 mt-1">{profile?.role}</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => window.location.href = '/profile'}>
+              <DropdownMenuItem 
+                onSelect={() => window.location.href = '/profile'}
+                className="hover:bg-gray-100"
+              >
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => window.location.href = '/settings'}>
+              <DropdownMenuItem 
+                onSelect={() => window.location.href = '/settings'}
+                className="hover:bg-gray-100"
+              >
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => signOut()}>
+              <DropdownMenuItem 
+                onSelect={() => signOut()}
+                className="hover:bg-gray-100"
+              >
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
