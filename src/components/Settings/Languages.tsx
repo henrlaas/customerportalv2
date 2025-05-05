@@ -65,7 +65,7 @@ export const Languages = () => {
           <SelectTrigger id="language" className="w-full">
             <SelectValue placeholder="Select Language" />
           </SelectTrigger>
-          <SelectContent className="[&_[data-radix-select-item]]:hover:bg-gray-100 rounded-xl shadow-md border-0">
+          <SelectContent className="rounded-xl shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px] border-0">
             <SelectItem value="en" className="flex items-center gap-2">
               <span className="text-lg mr-1">🇺🇸</span>
               English

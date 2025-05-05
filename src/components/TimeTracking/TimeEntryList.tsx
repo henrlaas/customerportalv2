@@ -25,7 +25,7 @@ export const TimeEntryList = ({
 
   if (timeEntries.length === 0) {
     return (
-      <div className="text-center p-8 text-gray-500">
+      <div className="text-center p-8 text-gray-500 rounded-xl bg-muted/50 shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px]">
         No time entries found. Start tracking your time or add a manual entry.
       </div>
     );

@@ -91,7 +91,7 @@ export const DealCard = ({
   return (
     <>
       <Card 
-        className="bg-white shadow-md hover:bg-gray-50/80 cursor-pointer"
+        className="bg-white hover:bg-gray-50/80 cursor-pointer"
         ref={setNodeRef}
         {...attributes}
         {...listeners}
@@ -112,7 +112,7 @@ export const DealCard = ({
                       <CircleDollarSign className="h-4 w-4 text-green-500" aria-label="One-time deal" />
                     )}
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="rounded-xl shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px] border-0">
                     <p>{deal.deal_type === 'recurring' ? 'Recurring Deal' : 'One-time Deal'}</p>
                   </TooltipContent>
                 </Tooltip>
@@ -128,7 +128,7 @@ export const DealCard = ({
                       <Megaphone className="h-4 w-4 text-orange-500" aria-label="Marketing deal" />
                     )}
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="rounded-xl shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px] border-0">
                     <p>{deal.client_deal_type === 'web' ? 'Web Development Deal' : 'Marketing Deal'}</p>
                   </TooltipContent>
                 </Tooltip>
@@ -141,7 +141,7 @@ export const DealCard = ({
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="rounded-xl shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px] border-0">
                     <DropdownMenuItem onClick={(e) => {
                       e.stopPropagation();
                       onEdit(deal);

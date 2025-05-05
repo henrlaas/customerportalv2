@@ -22,7 +22,7 @@ export function AdCard({ ad, disableModifications }: Props) {
 
   return (
     <Card
-      className="overflow-hidden cursor-pointer relative transition-all hover:shadow-lg group shadow-md bg-white"
+      className="overflow-hidden cursor-pointer relative transition-all hover:bg-gray-50/80 group bg-white"
       onClick={() => navigate(`/ads/${ad.id}`)}
       tabIndex={0}
       aria-label={`View details for ad ${ad.name}`}

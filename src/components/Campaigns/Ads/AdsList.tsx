@@ -11,7 +11,7 @@ interface Props {
 export function AdsList({ ads, campaignPlatform, onAdUpdate, disableModifications = false }: Props) {
   if (ads.length === 0) {
     return (
-      <div className="text-center p-8 rounded-xl bg-muted/50 shadow-sm">
+      <div className="text-center p-8 rounded-xl bg-muted/50 shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px]">
         <h3 className="text-lg font-medium mb-2">No Ads Yet</h3>
         <p className="text-muted-foreground">Create your first ad to get started.</p>
       </div>

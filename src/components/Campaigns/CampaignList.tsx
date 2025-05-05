@@ -2,7 +2,7 @@
 import React from 'react';
 import { Campaign } from './types/campaign';
 import { EmptyState } from './EmptyState';
-import { CampaignCardEnhanced } from './CampaignCardEnhanced';
+import { EnhancedCampaignCard } from './EnhancedCampaignCard';
 import { motion } from 'framer-motion';
 
 interface CampaignListProps {
@@ -41,7 +41,7 @@ export const CampaignList: React.FC<CampaignListProps> = ({
             ease: [0.25, 0.1, 0.25, 1]
           }}
         >
-          <CampaignCardEnhanced campaign={campaign} />
+          <EnhancedCampaignCard campaign={campaign} />
         </motion.div>
       ))}
     </div>

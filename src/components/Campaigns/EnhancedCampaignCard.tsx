@@ -59,7 +59,7 @@ export const EnhancedCampaignCard = ({ campaign }: EnhancedCampaignCardProps) =>
   };
 
   return (
-    <Card className="overflow-hidden shadow-md bg-white">
+    <Card className="overflow-hidden bg-white">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
@@ -106,7 +106,7 @@ export const EnhancedCampaignCard = ({ campaign }: EnhancedCampaignCardProps) =>
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="rounded-xl shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px] border-0">
                 <DropdownMenuItem asChild>
                   <EditCampaignDialog campaign={campaign} trigger={<Button variant="ghost" className="w-full justify-start">Edit Campaign</Button>} />
                 </DropdownMenuItem>
