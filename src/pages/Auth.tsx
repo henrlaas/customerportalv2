@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { AuthLogo } from '@/components/Layout/AuthLogo';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Define form schema for login
 const loginSchema = z.object({
@@ -35,6 +36,7 @@ const Auth = () => {
   const { toast } = useToast();
   const t = useTranslation();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   
   // Check if user is coming with an invitation token
   useEffect(() => {
@@ -85,10 +87,15 @@ const Auth = () => {
 
   const handleLogin = async (data: LoginFormValues) => {
     setIsProcessing(true);
+    setLoginError(null); // Clear any previous errors
+    
     const { error } = await signIn(data.email, data.password);
     setIsProcessing(false);
     
-    if (!error) {
+    if (error) {
+      console.log("Login error:", error);
+      setLoginError("Invalid details");
+    } else {
       navigate('/dashboard');
     }
   };
@@ -99,6 +106,12 @@ const Auth = () => {
         <div className="flex justify-center mb-8">
           <AuthLogo />
         </div>
+        
+        {loginError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{loginError}</AlertDescription>
+          </Alert>
+        )}
         
         <Form {...loginForm}>
           <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-6">
