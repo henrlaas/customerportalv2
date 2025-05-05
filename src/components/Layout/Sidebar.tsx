@@ -59,7 +59,7 @@ export const Sidebar: React.FC = () => {
                 >
                   <Link 
                     to={item.href} 
-                    className={`flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium rounded-lg ${
+                    className={`sidebar-menu-link flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium rounded-lg ${
                       location.pathname === item.href 
                         ? 'bg-[#F2FCE2] text-[#004743]' 
                         : 'text-white hover:bg-gray-500/20 hover:text-[#F2FCE2]'
