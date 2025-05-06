@@ -4,7 +4,6 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescripti
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { CountrySelect } from '@/components/ui/country-select';
 import { CLIENT_TYPES } from './ClientTypes';
 
 export function AddressAndSettingsStage({ form, users, hasMarketingType }: { form: any; users: any[]; hasMarketingType: boolean }) {
@@ -57,15 +56,13 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
           <FormField
             control={form.control}
             name="country"
-            render={({ field }: any) => (
+            render={() => (
               <FormItem>
                 <FormLabel>Country</FormLabel>
                 <FormControl>
-                  <CountrySelect
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder="Select a country"
-                  />
+                  <div className="flex items-center gap-2 h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
+                    🇳🇴 Norge
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
