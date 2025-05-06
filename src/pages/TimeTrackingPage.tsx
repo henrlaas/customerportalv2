@@ -64,7 +64,7 @@ const TimeTrackingPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tasks')
-        .select('id, title')
+        .select('id, title, company_id')
         .order('created_at', { ascending: false });
       
       if (error) {

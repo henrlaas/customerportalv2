@@ -29,6 +29,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { CompanySelector } from '@/components/Tasks/CompanySelector';
 import {
   Form,
   FormControl,
@@ -78,6 +79,30 @@ export const TimeEntryForm = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+  const [showSubsidiaries, setShowSubsidiaries] = useState(false);
+
+  // Fetch all companies including subsidiaries when needed
+  const { data: allCompanies = [], isLoading: isLoadingCompanies } = useQuery({
+    queryKey: ['companyList', { showSubsidiaries }],
+    queryFn: async () => {
+      let query = supabase.from('companies').select('*').order('name');
+
+      // If not showing subsidiaries, only get parent companies
+      if (!showSubsidiaries) {
+        query = query.is('parent_id', null);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching companies:', error);
+        throw error;
+      }
+
+      return data as Company[];
+    },
+  });
 
   // Form for creating/editing time entries
   const form = useForm({
@@ -93,11 +118,12 @@ export const TimeEntryForm = ({
     },
   });
 
-  // Watch company_id to filter campaigns
+  // Watch company_id to filter campaigns and tasks
   const selectedCompanyId = form.watch('company_id');
   
+  // Filter campaigns based on selected company
   useEffect(() => {
-    if (selectedCompanyId) {
+    if (selectedCompanyId && selectedCompanyId !== 'no-company') {
       const filtered = campaigns.filter(campaign => campaign.company_id === selectedCompanyId);
       setFilteredCampaigns(filtered);
       
@@ -106,9 +132,36 @@ export const TimeEntryForm = ({
       if (currentCampaignId && !filtered.some(c => c.id === currentCampaignId)) {
         form.setValue('campaign_id', undefined);
       }
+
+      // Fetch and filter tasks for the selected company
+      const fetchTasks = async () => {
+        try {
+          const { data: companyTasks, error } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('company_id', selectedCompanyId);
+            
+          if (error) throw error;
+          
+          setFilteredTasks(companyTasks || []);
+          
+          // Reset task if not associated with this company
+          const currentTaskId = form.getValues('task_id');
+          if (currentTaskId && !companyTasks?.some(t => t.id === currentTaskId)) {
+            form.setValue('task_id', undefined);
+          }
+        } catch (error) {
+          console.error('Error fetching tasks by company:', error);
+          setFilteredTasks([]);
+        }
+      };
+
+      fetchTasks();
     } else {
       setFilteredCampaigns([]);
+      setFilteredTasks([]);
       form.setValue('campaign_id', undefined);
+      form.setValue('task_id', undefined);
     }
   }, [selectedCompanyId, campaigns, form]);
 
@@ -126,8 +179,8 @@ export const TimeEntryForm = ({
           task_id: values.task_id === 'no-task' ? null : values.task_id || null,
           user_id: user.id,
           is_billable: values.is_billable,
-          company_id: values.company_id || null,
-          campaign_id: values.campaign_id || null,
+          company_id: values.company_id === 'no-company' ? null : values.company_id || null,
+          campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
         }])
         .select();
       
@@ -166,8 +219,8 @@ export const TimeEntryForm = ({
           end_time: values.end_time || null,
           task_id: values.task_id === 'no-task' ? null : values.task_id || null,
           is_billable: values.is_billable,
-          company_id: values.company_id || null,
-          campaign_id: values.campaign_id || null,
+          company_id: values.company_id === 'no-company' ? null : values.company_id || null,
+          campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
         })
         .eq('id', currentEntry.id)
         .select();
@@ -208,12 +261,6 @@ export const TimeEntryForm = ({
   if (isCreating) {
     return (
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogTrigger asChild>
-          <Button variant="outline">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Manual Entry
-          </Button>
-        </DialogTrigger>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Create Time Entry</DialogTitle>
@@ -293,25 +340,16 @@ export const TimeEntryForm = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a company (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="no-company">No company</SelectItem>
-                        {companies.map(company => (
-                          <SelectItem key={company.id} value={company.id}>
-                            {company.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <CompanySelector
+                        companies={allCompanies}
+                        selectedCompanyId={field.value || null}
+                        onSelect={(companyId) => field.onChange(companyId)}
+                        showSubsidiaries={showSubsidiaries}
+                        onToggleSubsidiaries={setShowSubsidiaries}
+                        isLoading={isLoadingCompanies}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -358,6 +396,7 @@ export const TimeEntryForm = ({
                       onValueChange={field.onChange}
                       value={field.value}
                       defaultValue={field.value}
+                      disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -366,7 +405,12 @@ export const TimeEntryForm = ({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="no-task">No related task</SelectItem>
-                        {tasks.map(task => (
+                        {selectedCompanyId && filteredTasks.map(task => (
+                          <SelectItem key={task.id} value={task.id}>
+                            {task.title}
+                          </SelectItem>
+                        ))}
+                        {!selectedCompanyId && tasks.map(task => (
                           <SelectItem key={task.id} value={task.id}>
                             {task.title}
                           </SelectItem>
@@ -476,25 +520,16 @@ export const TimeEntryForm = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a company (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="no-company">No company</SelectItem>
-                        {companies.map(company => (
-                          <SelectItem key={company.id} value={company.id}>
-                            {company.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <CompanySelector
+                        companies={allCompanies}
+                        selectedCompanyId={field.value || null}
+                        onSelect={(companyId) => field.onChange(companyId)}
+                        showSubsidiaries={showSubsidiaries}
+                        onToggleSubsidiaries={setShowSubsidiaries}
+                        isLoading={isLoadingCompanies}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -541,6 +576,7 @@ export const TimeEntryForm = ({
                       onValueChange={field.onChange}
                       value={field.value}
                       defaultValue={field.value}
+                      disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -549,7 +585,12 @@ export const TimeEntryForm = ({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="no-task">No related task</SelectItem>
-                        {tasks.map(task => (
+                        {selectedCompanyId && filteredTasks.map(task => (
+                          <SelectItem key={task.id} value={task.id}>
+                            {task.title}
+                          </SelectItem>
+                        ))}
+                        {!selectedCompanyId && tasks.map(task => (
                           <SelectItem key={task.id} value={task.id}>
                             {task.title}
                           </SelectItem>
@@ -578,15 +619,5 @@ export const TimeEntryForm = ({
     );
   }
 
-  // Render just the trigger button for normal use
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" onClick={() => setIsCreating(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Manual Entry
-        </Button>
-      </DialogTrigger>
-    </Dialog>
-  );
+  return null;
 };
