@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -79,7 +79,7 @@ type Contact = {
   avatar_url?: string | null;
 };
 
-// Updated Campaign type to include company_id
+// Ensure we use the same Campaign type with company_id
 type Campaign = {
   id: string;
   name: string;

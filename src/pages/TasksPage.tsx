@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +48,7 @@ import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
 import { Switch } from '@/components/ui/switch';
 import { TaskListView } from '@/components/Tasks/TaskListView';
 import { TaskKanbanView } from '@/components/Tasks/TaskKanbanView';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -87,6 +89,7 @@ type Campaign = {
 export const TasksPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [filters, setFilters] = useState({
@@ -95,6 +98,7 @@ export const TasksPage = () => {
     search: '',
     assignee: 'all',
     campaign: 'all',
+    showOnlyMyTasks: true, // Default to showing only the current user's tasks
   });
   const [showFilters, setShowFilters] = useState(false);
   
@@ -104,9 +108,12 @@ export const TasksPage = () => {
   
   // State for view toggle (list or kanban)
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+
+  // Current user ID for task filtering
+  const currentUserId = user?.id || '';
   
   // Fetch tasks with filtering
-  const { data: tasks = [], isLoading: isLoadingTasks } = useQuery({
+  const { data: allTasks = [], isLoading: isLoadingTasks } = useQuery({
     queryKey: ['tasks', filters],
     queryFn: async () => {
       let query = supabase
@@ -145,6 +152,17 @@ export const TasksPage = () => {
       
       return data as Task[];
     },
+  });
+
+  // Filter tasks based on the showOnlyMyTasks filter
+  const tasks = allTasks.filter(task => {
+    // If showing all tasks, return true
+    if (!filters.showOnlyMyTasks) {
+      return true;
+    }
+    
+    // If showing only my tasks, check if the current user is assigned to this task
+    return task.assignees?.some(assignee => assignee.user_id === currentUserId);
   });
 
   // Fetch profiles for assignees and creator
@@ -246,6 +264,7 @@ export const TasksPage = () => {
       search: '',
       assignee: 'all',
       campaign: 'all',
+      showOnlyMyTasks: true,
     });
   };
   
@@ -397,6 +416,7 @@ export const TasksPage = () => {
               setFilters={setFilters}
               profiles={profiles}
               campaigns={campaigns}
+              currentUserId={currentUserId}
             />
           </CardContent>
         </Card>
@@ -408,7 +428,11 @@ export const TasksPage = () => {
       ) : tasks.length === 0 ? (
         <div className="text-center p-12 border rounded-lg bg-muted/50">
           <h3 className="text-lg font-medium mb-2">No tasks found</h3>
-          <p className="text-muted-foreground mb-4">Create your first task to get started</p>
+          <p className="text-muted-foreground mb-4">
+            {filters.showOnlyMyTasks 
+              ? "You don't have any assigned tasks"
+              : "No tasks match your filters"}
+          </p>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Task
