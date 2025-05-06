@@ -3,31 +3,38 @@ import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MessageSquare, AlertTriangle } from "lucide-react";
 import { smsService } from "@/services/smsService";
+import { useToast } from "@/components/ui/use-toast";
 
 export const SmsCreditsAlert = () => {
   const [credits, setCredits] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchCredits = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         
-        // Use the getSmsCredits method from smsService
         const creditsValue = await smsService.getSmsCredits();
         setCredits(creditsValue);
-        setError(null);
       } catch (err: any) {
         console.error("Failed to load SMS credits:", err);
         setError("Could not load SMS credits");
+        
+        toast({
+          title: "API Error",
+          description: "Failed to load SMS credits. This might be due to CORS restrictions.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchCredits();
-  }, []);
+  }, [toast]);
 
   if (isLoading) {
     return (

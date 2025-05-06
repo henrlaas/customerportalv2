@@ -77,33 +77,35 @@ export const smsService = {
     }
   },
 
-  // Get remaining SMS credits - with mock data fallback
+  // Get remaining SMS credits
   getSmsCredits: async (): Promise<number> => {
     try {
-      // First try to get from API directly
-      try {
-        const url = `${smsService.creditsUrl}?cmd=sms_count&user=${smsService.username}&passwd=${smsService.password}`;
-        
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-          throw new Error(`API responded with status: ${response.status}`);
+      // Create the URL with query parameters
+      const url = `${smsService.creditsUrl}?cmd=sms_count&user=${smsService.username}&passwd=${smsService.password}`;
+      
+      // Make API call with CORS mode set to no-cors to bypass CORS restrictions
+      const response = await fetch(url, {
+        method: 'GET',
+        mode: 'cors', // Try with standard CORS mode
+        cache: 'no-cache',
+        credentials: 'omit',
+        headers: {
+          'Accept': 'text/plain'
         }
-        
-        const textResponse = await response.text();
-        const credits = parseInt(textResponse.trim(), 10);
-        
-        if (isNaN(credits)) {
-          throw new Error("Invalid response format from API");
-        }
-        
-        return credits;
-      } catch (directApiError) {
-        console.log("Direct API call failed, using mock/fallback:", directApiError);
-        // If direct call fails due to CORS, return a mock value
-        // In a production app, you'd implement a proxy server or backend API for this
-        return 18; // This is the example value you mentioned from Postman
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
       }
+      
+      const textResponse = await response.text();
+      const credits = parseInt(textResponse.trim(), 10);
+      
+      if (isNaN(credits)) {
+        throw new Error("Invalid response format from API");
+      }
+      
+      return credits;
     } catch (error: any) {
       console.error('Error getting SMS credits:', error.message);
       throw error;
