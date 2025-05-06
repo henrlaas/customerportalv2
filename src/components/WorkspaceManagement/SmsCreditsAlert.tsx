@@ -17,7 +17,7 @@ export const SmsCreditsAlert = () => {
         setIsLoading(true);
         setError(null);
         
-        // Get credits using the server endpoint that uses https module
+        // Get credits from the API endpoint that returns a plain number
         const creditsValue = await smsService.getSmsCredits();
         setCredits(creditsValue);
       } catch (err: any) {

@@ -15,12 +15,6 @@ export interface SmsResponse {
   };
 }
 
-export interface SmsCreditsResponse {
-  response: {
-    sms_count: number;
-  };
-}
-
 export const smsService = {
   // Configuration
   apiUrl: 'https://sveve.no/SMS/SendMessage',
@@ -87,7 +81,7 @@ export const smsService = {
         throw new Error(`API responded with status: ${response.status}`);
       }
       
-      // The response should be the plain number as text
+      // The response is just a plain number as text
       const textResponse = await response.text();
       const credits = parseInt(textResponse.trim(), 10);
       

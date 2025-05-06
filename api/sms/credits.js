@@ -3,7 +3,7 @@
 
 export default async function handler(req, res) {
   try {
-    // Use https module instead of axios to have more control over the response
+    // Use https module to fetch the SMS count
     const https = require('https');
     
     const fetchSMSCount = () => {
@@ -26,14 +26,9 @@ export default async function handler(req, res) {
       });
     };
     
-    try {
-      const count = await fetchSMSCount();
-      // Return the data from the external API as plain text
-      res.status(200).send(count);
-    } catch (error) {
-      console.error('Error fetching SMS count:', error.message);
-      res.status(500).send('Error fetching SMS count');
-    }
+    const count = await fetchSMSCount();
+    // Return the data from the external API as plain text
+    res.status(200).send(count);
   } catch (error) {
     console.error('Error in SMS count handler:', error.message);
     res.status(500).send('Error processing SMS count request');
