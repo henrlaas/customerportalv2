@@ -20,16 +20,23 @@ const handleCors = (req: Request) => {
 
 // Create a nodemailer transport
 const createTransport = () => {
-  const host = Deno.env.get("EMAIL_HOST") || "smtp.gmail.com";
-  const port = parseInt(Deno.env.get("EMAIL_PORT") || "465");
-  const secure = Deno.env.get("EMAIL_SECURE") === "false" ? false : true;
-  const user = Deno.env.get("EMAIL_USER") || "noreply@box.no";
-  const pass = Deno.env.get("EMAIL_PASSWORD") || "";
+  // Get email settings from environment variables
+  const host = Deno.env.get("EMAIL_HOST");
+  const port = parseInt(Deno.env.get("EMAIL_PORT") || "587"); // Default to 587 if not specified
+  const secure = Deno.env.get("EMAIL_SECURE") === "true"; // Parse boolean
+  const user = Deno.env.get("EMAIL_USER");
+  const pass = Deno.env.get("EMAIL_PASSWORD");
+
+  console.log(`Creating transport with: ${host}:${port}, secure: ${secure}, user: ${user}, pass: ${pass ? "provided" : "missing"}`);
+
+  if (!host || !user || !pass) {
+    throw new Error(`Missing email configuration. Host: ${host}, User: ${user}, Pass: ${pass ? "provided" : "missing"}`);
+  }
 
   return nodemailer.createTransport({
     host,
     port,
-    secure,
+    secure, // true for 465, false for other ports
     auth: { user, pass },
   });
 };
@@ -56,7 +63,12 @@ serve(async (req) => {
       attachments: emailData.attachments,
     };
 
-    console.log("Sending email with options:", JSON.stringify(mailOptions));
+    console.log("Sending email with options:", JSON.stringify({
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      from: mailOptions.from,
+    }));
+    
     const info = await transporter.sendMail(mailOptions);
     console.log("Email sent successfully:", info.messageId);
 

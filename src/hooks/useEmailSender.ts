@@ -29,19 +29,26 @@ export const useEmailSender = (options?: UseEmailSenderOptions) => {
     mutationFn: async (emailData: EmailData) => {
       // Ensure content type is properly set for HTML emails
       const payload = {
-        ...emailData,
-        contentType: 'text/html',
+        ...emailData
       };
 
-      const { data, error } = await supabase.functions.invoke('send-email', {
-        body: payload,
-      });
-      
-      if (error) {
+      try {
+        console.log('Sending email with payload:', JSON.stringify(payload));
+        
+        const { data, error } = await supabase.functions.invoke('send-email', {
+          body: payload,
+        });
+        
+        if (error) {
+          console.error('Error invoking send-email function:', error);
+          throw new Error(`Failed to send email: ${error.message}`);
+        }
+        
+        return data;
+      } catch (error: any) {
+        console.error('Error in useEmailSender:', error);
         throw new Error(`Failed to send email: ${error.message}`);
       }
-      
-      return data;
     },
     onSuccess: () => {
       toast({
