@@ -27,8 +27,14 @@ export const useEmailSender = (options?: UseEmailSenderOptions) => {
   
   return useMutation({
     mutationFn: async (emailData: EmailData) => {
+      // Ensure content type is properly set for HTML emails
+      const payload = {
+        ...emailData,
+        contentType: 'text/html',
+      };
+
       const { data, error } = await supabase.functions.invoke('send-email', {
-        body: emailData,
+        body: payload,
       });
       
       if (error) {

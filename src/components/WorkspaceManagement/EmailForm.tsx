@@ -40,7 +40,7 @@ export const EmailForm = () => {
     setIsSending(true);
     
     // Create HTML email using the template
-    const htmlTemplate = `
+    const htmlTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -181,13 +181,16 @@ export const EmailForm = () => {
         </div>
     </div>
 </body>
-</html>
-    `;
+</html>`;
+
+    // Create a plain text version for email clients that don't support HTML
+    const textVersion = `Hello 👋\n\n${data.message}\n\nThank you,\nThe Box Team\n\nThis email was sent to you because you have an association with Box Marketing AS.\n© 2025 Box Marketing AS. All rights reserved.`;
 
     const emailData: EmailData = {
       to: data.to,
       subject: data.subject,
-      html: htmlTemplate
+      html: htmlTemplate,
+      text: textVersion // Adding plain text fallback
     };
 
     console.log("Sending email to:", data.to);

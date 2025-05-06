@@ -1,97 +1,81 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import nodemailer from "npm:nodemailer";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
-  // Handle CORS preflight request
-  if (req.method === 'OPTIONS') {
+// Handle CORS preflight requests
+const handleCors = (req: Request) => {
+  if (req.method === "OPTIONS") {
     return new Response(null, {
-      headers: corsHeaders
+      status: 204,
+      headers: corsHeaders,
     });
   }
-  
+  return null;
+};
+
+// Create a nodemailer transport
+const createTransport = () => {
+  const host = Deno.env.get("EMAIL_HOST") || "smtp.gmail.com";
+  const port = parseInt(Deno.env.get("EMAIL_PORT") || "465");
+  const secure = Deno.env.get("EMAIL_SECURE") === "false" ? false : true;
+  const user = Deno.env.get("EMAIL_USER") || "noreply@box.no";
+  const pass = Deno.env.get("EMAIL_PASSWORD") || "";
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass },
+  });
+};
+
+serve(async (req) => {
+  // Handle CORS
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
   try {
-    // Email configuration from environment variables
-    const SMTP_HOST = Deno.env.get("SMTP_HOST") || "smtp.gmail.com";
-    const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
-    const SMTP_USER = Deno.env.get("SMTP_USER") || "noreply@box.no";
-    const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD");
-    const EMAIL_FROM_NAME = Deno.env.get("EMAIL_FROM_NAME") || "Box Workspace";
-    const EMAIL_FROM_ADDRESS = Deno.env.get("EMAIL_FROM_ADDRESS") || "noreply@box.no";
-    
-    if (!SMTP_PASSWORD) {
-      return new Response(
-        JSON.stringify({ error: "Email configuration missing. SMTP_PASSWORD must be provided in environment variables." }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders }
-        }
-      );
-    }
+    const emailData = await req.json();
+    console.log("Received email request:", JSON.stringify(emailData));
 
-    const { to, subject, text, html, cc, bcc, attachments } = await req.json();
+    const transporter = createTransport();
     
-    if (!to || !subject || (!text && !html)) {
-      return new Response(
-        JSON.stringify({ error: "Missing required email fields: to, subject, and either text or html" }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders }
-        }
-      );
-    }
+    const mailOptions = {
+      from: Deno.env.get("EMAIL_FROM") || 'Box Workspace <noreply@box.no>',
+      to: Array.isArray(emailData.to) ? emailData.to.join(',') : emailData.to,
+      subject: emailData.subject,
+      html: emailData.html, // Use HTML content
+      text: emailData.text, // Plain text fallback
+      cc: emailData.cc ? (Array.isArray(emailData.cc) ? emailData.cc.join(',') : emailData.cc) : undefined,
+      bcc: emailData.bcc ? (Array.isArray(emailData.bcc) ? emailData.bcc.join(',') : emailData.bcc) : undefined,
+      attachments: emailData.attachments,
+    };
 
-    // Create SMTP client
-    const client = new SMTPClient({
-      connection: {
-        hostname: SMTP_HOST,
-        port: SMTP_PORT,
-        tls: true,
-        auth: {
-          username: SMTP_USER,
-          password: SMTP_PASSWORD,
-        },
-      },
+    console.log("Sending email with options:", JSON.stringify(mailOptions));
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", info.messageId);
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      messageId: info.messageId 
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
 
-    // Format the FROM field properly to avoid email address validation errors
-    const formattedFrom = `${EMAIL_FROM_NAME} <${EMAIL_FROM_ADDRESS}>`;
-
-    // Send email
-    await client.send({
-      from: formattedFrom,
-      to: Array.isArray(to) ? to : [to],
-      cc: cc ? (Array.isArray(cc) ? cc : [cc]) : undefined,
-      bcc: bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined,
-      subject: subject,
-      content: html || undefined,
-      html: html || undefined,
-      text: text || undefined,
-      attachments: attachments || undefined,
-    });
-
-    await client.close();
-
-    return new Response(
-      JSON.stringify({ success: true, message: "Email sent successfully" }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders }
-      }
-    );
   } catch (error) {
     console.error("Error sending email:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders }
-      }
-    );
+    
+    return new Response(JSON.stringify({ 
+      error: error.message || "Failed to send email" 
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
   }
 });
