@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,6 +42,7 @@ type Contact = {
 type Campaign = {
   id: string;
   name: string;
+  company_id: string;
 };
 
 type TaskFormProps = {
@@ -131,12 +132,29 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     },
   });
 
+  // Watch for company_id changes to filter campaigns
+  const selectedCompanyId = form.watch('company_id');
+  const relatedType = form.watch('related_type');
+
+  // Filter campaigns based on selected company
+  const filteredCampaigns = campaigns.filter(campaign => 
+    !selectedCompanyId || campaign.company_id === selectedCompanyId
+  );
+
   // Update assignees when they're loaded
   useEffect(() => {
     if (!loadingAssignees) {
       form.setValue('assignees', existingAssignees);
     }
   }, [loadingAssignees, existingAssignees, form]);
+
+  // Reset related fields when company changes
+  useEffect(() => {
+    if (form.getValues('related_type') === 'campaign') {
+      form.setValue('campaign_id', '');
+      form.setValue('related_type', 'none');
+    }
+  }, [selectedCompanyId, form]);
 
   // Create or update task mutation
   const taskMutation = useMutation({
@@ -228,9 +246,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     console.log("Submitting form with data:", data);
     taskMutation.mutate(data);
   };
-
-  // Watch the related type to show/hide campaign selector
-  const relatedType = form.watch('related_type');
 
   if (loadingAssignees) {
     return <div>Loading task details...</div>;
@@ -382,33 +397,37 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="related_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Related To</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select relation" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="none">Not Related</SelectItem>
-                  <SelectItem value="campaign">Campaign</SelectItem>
-                  <SelectItem value="project">Project (Coming Soon)</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Only show Related To field when a company is selected */}
+        {selectedCompanyId && (
+          <FormField
+            control={form.control}
+            name="related_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Related To</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select relation" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">Not Related</SelectItem>
+                    <SelectItem value="campaign">Campaign</SelectItem>
+                    <SelectItem value="project">Project (Coming Soon)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
-        {relatedType === 'campaign' && (
+        {/* Only show Campaign selector when related_type is 'campaign' and a company is selected */}
+        {selectedCompanyId && relatedType === 'campaign' && (
           <FormField
             control={form.control}
             name="campaign_id"
@@ -425,11 +444,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {/* If there are no campaigns, provide a default option */}
-                    {campaigns.length === 0 && (
-                      <SelectItem value="no-campaigns">No campaigns available</SelectItem>
+                    {/* If there are no filtered campaigns, provide a default option */}
+                    {filteredCampaigns.length === 0 && (
+                      <SelectItem value="no-campaigns">No campaigns available for this company</SelectItem>
                     )}
-                    {campaigns.map((campaign) => (
+                    {filteredCampaigns.map((campaign) => (
                       <SelectItem key={campaign.id} value={campaign.id}>
                         {campaign.name}
                       </SelectItem>

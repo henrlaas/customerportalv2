@@ -81,6 +81,7 @@ type Contact = {
 type Campaign = {
   id: string;
   name: string;
+  company_id: string;
 };
 
 export const TasksPage = () => {
@@ -168,13 +169,13 @@ export const TasksPage = () => {
     },
   });
 
-  // Fetch campaigns for filtering
+  // Updated: Fetch campaigns for filtering, include company_id
   const { data: campaigns = [] } = useQuery({
     queryKey: ['campaigns'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('campaigns')
-        .select('id, name')
+        .select('id, name, company_id')
         .order('name');
       
       if (error) {
