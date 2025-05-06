@@ -57,6 +57,7 @@ export default async function handler(req, res) {
               const num = parseInt(trimmed, 10);
               
               if (!isNaN(num)) {
+                console.log(num);
                 resolve(num);
               } else {
                 console.log('Not a number response:', trimmed);
