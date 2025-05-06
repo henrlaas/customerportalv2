@@ -1,12 +1,13 @@
 
 import { TimeEntryCard } from './TimeEntryCard';
-import { TimeEntry, Task, Company, Campaign } from '@/types/timeTracking';
+import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
+import { Company } from '@/types/company'; // Import the full Company type
 
 type TimeEntryListProps = {
   timeEntries: TimeEntry[];
   isLoading: boolean;
   tasks: Task[];
-  companies: Company[];
+  companies: Company[]; // Update to use the full Company type
   campaigns: Campaign[];
   onEdit: (entry: TimeEntry) => void;
 };

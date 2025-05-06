@@ -39,7 +39,9 @@ import {
   FormMessage,
   FormDescription,
 } from '@/components/ui/form';
-import { TimeEntry, Task, Company, Campaign } from '@/types/timeTracking';
+import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
+import { Company as CompanyType } from '@/types/company'; // Import the full Company type
+import { useCompanyList } from '@/hooks/useCompanyList'; // Import the hook to fetch companies with the right type
 
 // Time entry form schema
 const timeEntrySchema = z.object({
@@ -60,7 +62,7 @@ type TimeEntryFormProps = {
   currentEntry?: TimeEntry | null;
   onCancelEdit?: () => void;
   tasks?: Task[];
-  companies?: Company[];
+  companies?: CompanyType[]; // Update to use the full Company type
   campaigns?: Campaign[];
 };
 
@@ -82,7 +84,7 @@ export const TimeEntryForm = ({
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
 
-  // Fetch all companies including subsidiaries when needed
+  // Use the useCompanyList hook directly which returns the right Company type
   const { data: allCompanies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companyList', { showSubsidiaries }],
     queryFn: async () => {
@@ -100,7 +102,7 @@ export const TimeEntryForm = ({
         throw error;
       }
 
-      return data as Company[];
+      return data as CompanyType[];
     },
   });
 

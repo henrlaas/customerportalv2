@@ -1,9 +1,10 @@
 
 import { useState } from 'react';
+import { format, isSameDay, isToday, parseISO } from 'date-fns';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { format, isSameDay, parseISO, differenceInHours, differenceInMinutes } from 'date-fns';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { TimeEntry } from '@/types/timeTracking';
 
 type CalendarViewProps = {
@@ -13,104 +14,165 @@ type CalendarViewProps = {
 
 export const CalendarView = ({ timeEntries, onEditEntry }: CalendarViewProps) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
-
-  const getDayEntries = (day: Date) => {
-    return timeEntries.filter(entry => 
-      isSameDay(parseISO(entry.start_time), day)
+  
+  // Group entries by date
+  const entriesByDate = timeEntries.reduce((acc, entry) => {
+    const date = format(parseISO(entry.start_time), 'yyyy-MM-dd');
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(entry);
+    return acc;
+  }, {} as Record<string, TimeEntry[]>);
+  
+  // Custom renderer for days with entries
+  const renderDay = (day: Date, modifiers: any) => {
+    const formattedDate = format(day, 'yyyy-MM-dd');
+    const hasEntries = !!entriesByDate[formattedDate];
+    const dayEntries = entriesByDate[formattedDate] || [];
+    const totalHours = dayEntries.reduce((total, entry) => {
+      if (!entry.end_time) return total;
+      const start = parseISO(entry.start_time);
+      const end = parseISO(entry.end_time);
+      const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      return total + durationHours;
+    }, 0);
+    
+    return (
+      <div className="relative w-full h-full flex items-center justify-center">
+        <div
+          className={`flex h-8 w-8 items-center justify-center rounded-full text-sm ${
+            isToday(day)
+              ? "bg-primary text-primary-foreground"
+              : hasEntries
+              ? "border border-primary"
+              : ""
+          }`}
+        >
+          {format(day, 'd')}
+        </div>
+        {hasEntries && (
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+            <div className="h-1 w-1 rounded-full bg-primary" />
+            {totalHours >= 4 && <div className="h-1 w-1 rounded-full bg-primary" />}
+            {totalHours >= 8 && <div className="h-1 w-1 rounded-full bg-primary" />}
+          </div>
+        )}
+      </div>
     );
   };
-
-  const getTotalHoursForDay = (day: Date): string => {
-    const entries = getDayEntries(day);
-    if (entries.length === 0) return '';
-    
-    let totalMinutes = 0;
-    
-    entries.forEach(entry => {
-      const start = parseISO(entry.start_time);
-      const end = entry.end_time ? parseISO(entry.end_time) : new Date();
-      totalMinutes += differenceInMinutes(end, start);
-    });
-    
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    
-    return `${hours}h ${minutes}m`;
-  };
-
+  
+  // Show entries for selected date
+  const selectedDateStr = date ? format(date, 'yyyy-MM-dd') : '';
+  const selectedEntries = date ? (entriesByDate[selectedDateStr] || []) : [];
+  
   return (
     <div className="space-y-6">
-      <div className="bg-white p-4 rounded-lg shadow">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={setDate}
-          className="w-full"
-          modifiers={{
-            hasEntries: (date) => getDayEntries(date).length > 0
-          }}
-          modifiersStyles={{
-            hasEntries: { backgroundColor: '#f0f9ff', fontWeight: 'bold' }
-          }}
-          components={{
-            DayContent: (props) => (
-              <div className="flex flex-col items-center">
-                <span>{props.date.getDate()}</span>
-                {getTotalHoursForDay(props.date) && (
-                  <Badge variant="secondary" className="mt-1 text-xs">
-                    {getTotalHoursForDay(props.date)}
-                  </Badge>
+      <div className="flex flex-col md:flex-row gap-6">
+        <Card className="w-full md:w-auto md:min-w-[320px]">
+          <CardContent className="p-4">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              className="border-none"
+              components={{
+                DayContent: ({ date: currentDate }) => renderDay(currentDate, {})
+              }}
+            />
+          </CardContent>
+        </Card>
+        
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5" />
+              <span>
+                {date && (
+                  isToday(date) ? "Today" : format(date, 'MMMM d, yyyy')
                 )}
-              </div>
-            ),
-          }}
-        />
-      </div>
-
-      {date && (
-        <div>
-          <h3 className="text-lg font-medium mb-4">
-            Entries for {format(date, 'MMMM d, yyyy')}
-          </h3>
-          
-          <div className="space-y-4">
-            {getDayEntries(date).length === 0 ? (
-              <div className="text-center p-8 text-gray-500 rounded-xl bg-muted/50">
-                No entries for this date.
-              </div>
-            ) : (
-              getDayEntries(date).map(entry => {
-                const start = parseISO(entry.start_time);
-                const end = entry.end_time ? parseISO(entry.end_time) : new Date();
-                const hours = differenceInHours(end, start);
-                const minutes = differenceInMinutes(end, start) % 60;
-                
-                return (
-                  <Card 
-                    key={entry.id} 
-                    className="bg-white cursor-pointer hover:bg-gray-50"
-                    onClick={() => onEditEntry(entry)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">{entry.description || 'Time entry'}</h4>
-                          <div className="text-sm text-gray-500">
-                            {format(start, 'HH:mm')} - {entry.end_time ? format(end, 'HH:mm') : 'In progress'}
-                          </div>
-                        </div>
-                        <Badge variant={entry.is_billable ? "default" : "outline"}>
-                          {hours}h {minutes}m
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
+              </span>
+            </h3>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  if (date) {
+                    const prevDay = new Date(date);
+                    prevDay.setDate(prevDay.getDate() - 1);
+                    setDate(prevDay);
+                  }
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  if (date) {
+                    const nextDay = new Date(date);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    setDate(nextDay);
+                  }
+                }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setDate(new Date())}
+              >
+                Today
+              </Button>
+            </div>
           </div>
+          
+          {selectedEntries.length === 0 ? (
+            <div className="text-center p-8 text-gray-500 rounded-xl bg-muted/50 shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px]">
+              No time entries for this date
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {selectedEntries.map(entry => (
+                <div 
+                  key={entry.id}
+                  className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition"
+                  onClick={() => onEditEntry(entry)}
+                >
+                  <div className="font-medium mb-1">
+                    {entry.description || 'No description'}
+                  </div>
+                  <div className="text-sm text-gray-500 flex items-center justify-between">
+                    <div>
+                      {format(parseISO(entry.start_time), 'HH:mm')} - {
+                        entry.end_time 
+                          ? format(parseISO(entry.end_time), 'HH:mm')
+                          : 'ongoing'
+                      }
+                    </div>
+                    <div className="font-mono">
+                      {entry.end_time ? (
+                        (() => {
+                          const start = parseISO(entry.start_time);
+                          const end = parseISO(entry.end_time);
+                          const durationMs = end.getTime() - start.getTime();
+                          const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                          const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                          return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                        })()
+                      ) : (
+                        'In progress'
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
