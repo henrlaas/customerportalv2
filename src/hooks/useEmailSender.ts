@@ -27,28 +27,15 @@ export const useEmailSender = (options?: UseEmailSenderOptions) => {
   
   return useMutation({
     mutationFn: async (emailData: EmailData) => {
-      // Ensure content type is properly set for HTML emails
-      const payload = {
-        ...emailData
-      };
-
-      try {
-        console.log('Sending email with payload:', JSON.stringify(payload));
-        
-        const { data, error } = await supabase.functions.invoke('send-email', {
-          body: payload,
-        });
-        
-        if (error) {
-          console.error('Error invoking send-email function:', error);
-          throw new Error(`Failed to send email: ${error.message}`);
-        }
-        
-        return data;
-      } catch (error: any) {
-        console.error('Error in useEmailSender:', error);
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: emailData,
+      });
+      
+      if (error) {
         throw new Error(`Failed to send email: ${error.message}`);
       }
+      
+      return data;
     },
     onSuccess: () => {
       toast({
