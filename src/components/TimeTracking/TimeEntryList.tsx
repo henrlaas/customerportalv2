@@ -1,6 +1,6 @@
 
 import { useMemo } from 'react';
-import { format, startOfWeek, parseISO, isThisWeek, isToday, differenceInWeeks } from 'date-fns';
+import { format, startOfWeek, parseISO, isThisWeek, differenceInWeeks } from 'date-fns';
 import { TimeEntryCard } from './TimeEntryCard';
 import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
 import { Company } from '@/types/company';
@@ -94,20 +94,16 @@ export const TimeEntryList = ({
               <h3 className="text-sm font-medium">{weekTitle}</h3>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
-              {weekGroup.entries.map(entry => {
-                const isEntryToday = isToday(parseISO(entry.start_time));
-                return (
-                  <TimeEntryCard 
-                    key={entry.id} 
-                    entry={entry} 
-                    tasks={tasks}
-                    companies={companies}
-                    campaigns={campaigns}
-                    onEdit={onEdit} 
-                    highlighted={isEntryToday}
-                  />
-                );
-              })}
+              {weekGroup.entries.map(entry => (
+                <TimeEntryCard 
+                  key={entry.id} 
+                  entry={entry} 
+                  tasks={tasks}
+                  companies={companies}
+                  campaigns={campaigns}
+                  onEdit={onEdit} 
+                />
+              ))}
             </CardContent>
           </Card>
         );

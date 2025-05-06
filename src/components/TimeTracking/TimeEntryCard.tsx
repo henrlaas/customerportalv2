@@ -45,7 +45,7 @@ export const TimeEntryCard = ({
   }
   
   return (
-    <Card className={`shadow-sm ${highlighted ? "border-primary border-2" : ""}`}>
+    <Card className="shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1">
