@@ -30,6 +30,12 @@ interface Task {
   status: 'todo' | 'in_progress' | 'completed';
   priority: string;
   due_date: string | null;
+  company_id: string | null;
+  campaign_id: string | null;
+  project_id: string | null;
+  creator_id: string | null;
+  client_visible: boolean | null;
+  related_type: string | null;
   assignees?: { id: string; user_id: string }[];
 }
 
@@ -52,6 +58,10 @@ interface TaskKanbanViewProps {
   profiles: Contact[];
   onTaskClick: (taskId: string) => void;
   onTaskMove: (taskId: string, newStatus: string) => void;
+  getCreatorInfo: (creatorId: string | null) => Contact | null;
+  getCompanyName: (companyId: string | null) => string | null;
+  getCampaignName: (campaignId: string | null) => string | null;
+  getProjectName: (projectId: string | null) => string | null;
 }
 
 export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
@@ -62,6 +72,10 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   profiles,
   onTaskClick,
   onTaskMove,
+  getCreatorInfo,
+  getCompanyName,
+  getCampaignName,
+  getProjectName
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [localTasks, setLocalTasks] = useState<{
@@ -198,11 +212,14 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
           title="Todo"
           tasks={localTasks.todo}
           getCountBadge={getCountBadge}
-          getStatusBadge={getStatusBadge}
           getPriorityBadge={getPriorityBadge}
           getTaskAssignees={getTaskAssignees}
           onTaskClick={onTaskClick}
           activeId={activeId}
+          getCreatorInfo={getCreatorInfo}
+          getCompanyName={getCompanyName}
+          getCampaignName={getCampaignName}
+          getProjectName={getProjectName}
         />
         
         {/* In Progress column */}
@@ -211,11 +228,14 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
           title="In Progress"
           tasks={localTasks.in_progress}
           getCountBadge={getCountBadge}
-          getStatusBadge={getStatusBadge}
           getPriorityBadge={getPriorityBadge}
           getTaskAssignees={getTaskAssignees}
           onTaskClick={onTaskClick}
           activeId={activeId}
+          getCreatorInfo={getCreatorInfo}
+          getCompanyName={getCompanyName}
+          getCampaignName={getCampaignName}
+          getProjectName={getProjectName}
         />
         
         {/* Completed column */}
@@ -224,11 +244,14 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
           title="Completed"
           tasks={localTasks.completed}
           getCountBadge={getCountBadge}
-          getStatusBadge={getStatusBadge}
           getPriorityBadge={getPriorityBadge}
           getTaskAssignees={getTaskAssignees}
           onTaskClick={onTaskClick}
           activeId={activeId}
+          getCreatorInfo={getCreatorInfo}
+          getCompanyName={getCompanyName}
+          getCampaignName={getCampaignName}
+          getProjectName={getProjectName}
         />
       </div>
       
@@ -238,11 +261,14 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
           <div className="opacity-80 w-full max-w-[300px]">
             <TaskCard 
               task={activeTask}
-              getStatusBadge={getStatusBadge}
               getPriorityBadge={getPriorityBadge}
               getTaskAssignees={getTaskAssignees}
               onClick={() => {}}
               isDragging={true}
+              getCreatorInfo={getCreatorInfo}
+              getCompanyName={getCompanyName}
+              getCampaignName={getCampaignName}
+              getProjectName={getProjectName}
             />
           </div>
         ) : null}
@@ -256,11 +282,14 @@ interface TaskStatusColumnProps {
   title: string;
   tasks: Task[];
   getCountBadge: (count: number) => React.ReactNode;
-  getStatusBadge: (status: string) => React.ReactNode;
   getPriorityBadge: (priority: string) => React.ReactNode;
   getTaskAssignees: (task: Task) => Contact[];
   onTaskClick: (taskId: string) => void;
   activeId: string | null;
+  getCreatorInfo: (creatorId: string | null) => Contact | null;
+  getCompanyName: (companyId: string | null) => string | null;
+  getCampaignName: (campaignId: string | null) => string | null;
+  getProjectName: (projectId: string | null) => string | null;
 }
 
 const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
@@ -268,11 +297,14 @@ const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
   title,
   tasks,
   getCountBadge,
-  getStatusBadge,
   getPriorityBadge,
   getTaskAssignees,
   onTaskClick,
-  activeId
+  activeId,
+  getCreatorInfo,
+  getCompanyName,
+  getCampaignName,
+  getProjectName
 }) => {
   // Set up droppable container for this status column
   const { setNodeRef } = useDroppable({ id });
@@ -296,11 +328,14 @@ const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
               <TaskCard 
                 key={task.id}
                 task={task}
-                getStatusBadge={getStatusBadge}
                 getPriorityBadge={getPriorityBadge}
                 getTaskAssignees={getTaskAssignees}
                 onClick={() => onTaskClick(task.id)}
                 isDragging={activeId === task.id}
+                getCreatorInfo={getCreatorInfo}
+                getCompanyName={getCompanyName}
+                getCampaignName={getCampaignName}
+                getProjectName={getProjectName}
               />
             ))}
             {tasks.length === 0 && (

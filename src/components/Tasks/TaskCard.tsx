@@ -4,8 +4,9 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, AlertCircle, Eye, EyeOff, Building2, Link } from 'lucide-react';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Task {
   id: string;
@@ -14,25 +15,44 @@ interface Task {
   status: string;
   priority: string;
   due_date: string | null;
+  client_visible: boolean | null;
+  creator_id: string | null;
+  company_id: string | null;
+  campaign_id: string | null;
+  project_id: string | null;
+  related_type: string | null;
   assignees?: { id: string; user_id: string }[];
+}
+
+interface Contact {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url?: string | null;
 }
 
 interface TaskCardProps {
   task: Task;
-  getStatusBadge: (status: string) => React.ReactNode;
   getPriorityBadge: (priority: string) => React.ReactNode;
-  getTaskAssignees: (task: Task) => any[];
+  getTaskAssignees: (task: Task) => Contact[];
   onClick: () => void;
   isDragging: boolean;
+  getCreatorInfo: (creatorId: string | null) => Contact | null;
+  getCompanyName: (companyId: string | null) => string | null;
+  getCampaignName: (campaignId: string | null) => string | null;
+  getProjectName: (projectId: string | null) => string | null;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({
   task,
-  getStatusBadge,
   getPriorityBadge,
   getTaskAssignees,
   onClick,
-  isDragging
+  isDragging,
+  getCreatorInfo,
+  getCompanyName,
+  getCampaignName,
+  getProjectName
 }) => {
   const {
     attributes,
@@ -54,6 +74,29 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   // Get the assignees
   const assignees = getTaskAssignees(task);
+  
+  // Get creator info
+  const creator = getCreatorInfo(task.creator_id);
+  
+  // Get company name
+  const companyName = getCompanyName(task.company_id);
+  
+  // Get related item name based on related_type
+  const getRelatedItemName = () => {
+    if (task.related_type === 'campaign' && task.campaign_id) {
+      return getCampaignName(task.campaign_id);
+    } else if (task.related_type === 'project' && task.project_id) {
+      return getProjectName(task.project_id);
+    }
+    return null;
+  };
+  
+  const relatedItemName = getRelatedItemName();
+  
+  // Truncate description to 40 characters
+  const truncatedDescription = task.description && task.description.length > 40
+    ? `${task.description.substring(0, 40)}...`
+    : task.description;
 
   return (
     <Card
@@ -83,37 +126,81 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             )}>
               {task.title}
             </h4>
-            {getPriorityBadge(task.priority)}
+            <div className="flex items-center gap-1">
+              {/* Client visibility indicator */}
+              {task.client_visible ? (
+                <Eye className="h-3 w-3 text-blue-500" />
+              ) : (
+                <EyeOff className="h-3 w-3 text-gray-400" />
+              )}
+              {getPriorityBadge(task.priority)}
+            </div>
           </div>
           
-          {task.description && (
+          {truncatedDescription && (
             <p className="text-xs text-muted-foreground line-clamp-2">
-              {task.description}
+              {truncatedDescription}
             </p>
           )}
           
-          {task.due_date && (
-            <div className={cn(
-              "flex items-center gap-1 text-xs",
-              isOverdue ? "text-red-700" : "text-muted-foreground"
-            )}>
-              {isOverdue ? (
-                <AlertCircle className="h-3 w-3" />
-              ) : (
-                <Calendar className="h-3 w-3" />
+          <div className="flex items-center justify-between mt-1 gap-2">
+            {/* Due date and Company name next to each other */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {task.due_date && (
+                <div className={cn(
+                  "flex items-center gap-1",
+                  isOverdue ? "text-red-700" : "text-muted-foreground"
+                )}>
+                  {isOverdue ? (
+                    <AlertCircle className="h-3 w-3" />
+                  ) : (
+                    <Calendar className="h-3 w-3" />
+                  )}
+                  <span>{new Date(task.due_date).toLocaleDateString()}</span>
+                </div>
               )}
-              <span>{new Date(task.due_date).toLocaleDateString()}</span>
-              {isOverdue && <span className="text-red-700 font-medium">Overdue</span>}
+              
+              {companyName && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Building2 className="h-3 w-3" />
+                  <span className="truncate max-w-[120px]">{companyName}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Related item (campaign or project) */}
+          {relatedItemName && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Link className="h-3 w-3" />
+              <span className="truncate max-w-[180px]">
+                {task.related_type === 'campaign' ? 'Campaign: ' : 'Project: '}
+                {relatedItemName}
+              </span>
             </div>
           )}
         </div>
       </CardContent>
       
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
+        {/* Assignees */}
         <UserAvatarGroup 
           users={assignees}
           size="sm"
         />
+        
+        {/* Creator avatar */}
+        {creator && (
+          <Avatar className="h-6 w-6" title={`Created by: ${creator.first_name || ''} ${creator.last_name || ''}`}>
+            {creator.avatar_url ? (
+              <AvatarImage src={creator.avatar_url} />
+            ) : (
+              <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                {getInitials(creator)}
+              </AvatarFallback>
+            )}
+          </Avatar>
+        )}
       </CardFooter>
     </Card>
   );
@@ -122,4 +209,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 // Helper function to conditionally join classNames
 function cn(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(' ');
+}
+
+// Helper function to get initials from name
+function getInitials(user: Contact): string {
+  return `${(user.first_name?.[0] || '').toUpperCase()}${(user.last_name?.[0] || '').toUpperCase()}` || '?';
 }
