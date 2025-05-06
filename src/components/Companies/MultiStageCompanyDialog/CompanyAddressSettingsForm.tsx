@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { CountrySelect } from '@/components/ui/country-select';
+import { DEFAULT_COUNTRY } from '@/lib/countries';
 import { CompanyFormValues } from './types';
 import React from 'react';
 
@@ -35,7 +37,9 @@ export const CompanyAddressSettingsForm = ({
 }: CompanyAddressSettingsFormProps) => {
   // Set Norway as default country when form loads
   React.useEffect(() => {
-    form.setValue('country', 'Norge');
+    if (!form.getValues('country')) {
+      form.setValue('country', DEFAULT_COUNTRY.name);
+    }
   }, []);
 
   return (
@@ -94,9 +98,11 @@ export const CompanyAddressSettingsForm = ({
               <FormItem>
                 <FormLabel>Country</FormLabel>
                 <FormControl>
-                  <div className="flex items-center gap-2 h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
-                    🇳🇴 Norge
-                  </div>
+                  <CountrySelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select a country"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

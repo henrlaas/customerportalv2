@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { countries } from '@/lib/countries';
+import { CountrySelect } from '@/components/ui/country-select';
+import { DEFAULT_COUNTRY } from '@/lib/countries';
 import { Globe } from 'lucide-react';
 
 interface EmploymentDetailsStepProps {
@@ -33,7 +34,7 @@ export function EmploymentDetailsStep({
 
   // Set default country to Norway if not already set
   if (!formData.country) {
-    onUpdate({ country: 'Norway' });
+    onUpdate({ country: DEFAULT_COUNTRY.name });
   }
 
   const validateForm = () => {
@@ -106,30 +107,14 @@ export function EmploymentDetailsStep({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="country">Country *</Label>
-          <div className="relative">
-            <Select 
-              value={formData.country}
-              onValueChange={(value) => onUpdate({ country: value })}
-            >
-              <SelectTrigger 
-                className={`${errors.country ? 'border-red-500' : ''} pl-10`}
-              >
-                <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <SelectValue placeholder="Select a country" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {countries.map((country) => (
-                  <SelectItem key={country.code} value={country.name}>
-                    {country.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {errors.country && <p className="text-sm text-red-500">{errors.country}</p>}
+          <CountrySelect
+            id="country"
+            label="Country *"
+            value={formData.country}
+            onChange={(value) => onUpdate({ country: value })}
+            error={errors.country}
+            required
+          />
         </div>
 
         <div className="space-y-2">
