@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -536,6 +537,8 @@ export const TasksPage = () => {
       
       {/* Task Detail Sheet */}
       <TaskDetailSheet 
+        isOpen={isTaskSheetOpen} 
+        onOpenChange={setIsTaskSheetOpen} 
         taskId={selectedTaskId} 
       />
     </div>
