@@ -1,3 +1,4 @@
+
 /**
  * Service for interacting with the Sveve SMS API
  */
@@ -26,7 +27,7 @@ export const smsService = {
   creditsUrl: 'https://sveve.no/SMS/AccountAdm',
   username: 'box',
   password: '4bbc3a48af044f74',
-  
+
   // Send SMS
   sendSMS: async (
     to: string,
@@ -42,6 +43,7 @@ export const smsService = {
         from,
         f: 'json',
       });
+
       const response = await fetch(`${smsService.apiUrl}?${params.toString()}`);
       
       if (!response.ok) {
@@ -74,7 +76,7 @@ export const smsService = {
       };
     }
   },
-  
+
   // Get remaining SMS credits using the server API endpoint
   getSmsCredits: async (): Promise<number> => {
     try {
@@ -85,45 +87,15 @@ export const smsService = {
         throw new Error(`API responded with status: ${response.status}`);
       }
       
-      // Try to parse response in multiple ways
+      // The response should be the plain number as text
       const textResponse = await response.text();
-      console.log('SMS credits raw response:', textResponse);
-      
-      // Try to parse as JSON first
-      try {
-        const jsonData = JSON.parse(textResponse);
-        console.log('SMS credits parsed as JSON:', jsonData);
-        
-        // Check if it's in the expected format
-        if (jsonData && jsonData.response && jsonData.response.sms_count !== undefined) {
-          return jsonData.response.sms_count;
-        } else if (jsonData && typeof jsonData === 'number') {
-          return jsonData;
-        } else if (jsonData && typeof jsonData === 'object') {
-          // Try to find a number property
-          const numericKey = Object.keys(jsonData).find(key => 
-            typeof jsonData[key] === 'number' || 
-            (typeof jsonData[key] === 'string' && !isNaN(parseInt(jsonData[key], 10)))
-          );
-          
-          if (numericKey) {
-            const value = jsonData[numericKey];
-            return typeof value === 'number' ? value : parseInt(value, 10);
-          }
-        }
-      } catch (e) {
-        // Not JSON, so continue to try as plain text
-        console.log('Response is not JSON, trying as plain text');
-      }
-      
-      // Try to parse as plain number
       const credits = parseInt(textResponse.trim(), 10);
       
-      if (!isNaN(credits)) {
-        return credits;
+      if (isNaN(credits)) {
+        throw new Error("Invalid response format from API");
       }
       
-      throw new Error("Invalid response format from API: " + textResponse);
+      return credits;
     } catch (error: any) {
       console.error('Error getting SMS credits:', error.message);
       throw error; 
