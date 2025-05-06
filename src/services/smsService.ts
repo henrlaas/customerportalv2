@@ -77,51 +77,28 @@ export const smsService = {
     }
   },
 
-  // Get remaining SMS credits with CORS-friendly implementation
+  // Get remaining SMS credits using the server API endpoint
   getSmsCredits: async (): Promise<number> => {
     try {
-      // Try the direct API call first, with a timeout
-      const fetchWithTimeout = (url: string, options: RequestInit = {}, timeout = 3000) => {
-        return Promise.race([
-          fetch(url, options),
-          new Promise<Response>((_, reject) => 
-            setTimeout(() => reject(new Error('Request timed out')), timeout)
-          )
-        ]) as Promise<Response>;
-      };
-      
-      // Create the URL with query parameters
-      const url = `${smsService.creditsUrl}?cmd=sms_count&user=${smsService.username}&passwd=${smsService.password}`;
-      
-      // Make API call
-      const response = await fetchWithTimeout(url, {
-        method: 'GET',
-        mode: 'cors',
-        cache: 'no-cache',
-        headers: {
-          'Accept': 'text/plain'
-        }
-      });
+      // Call our server API route that uses node's https module
+      const response = await fetch('/api/sms/credits');
       
       if (!response.ok) {
         throw new Error(`API responded with status: ${response.status}`);
       }
       
+      // The response should be the plain number as text
       const textResponse = await response.text();
       const credits = parseInt(textResponse.trim(), 10);
       
       if (isNaN(credits)) {
-        // If parsing fails, use hardcoded fallback
-        return 150;
+        throw new Error("Invalid response format from API");
       }
       
       return credits;
     } catch (error: any) {
       console.error('Error getting SMS credits:', error.message);
-      
-      // For demo/development purposes, return a static value
-      // In production, this should be handled differently
-      return 150;
+      throw error; 
     }
   },
 };

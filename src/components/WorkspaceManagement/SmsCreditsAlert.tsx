@@ -17,17 +17,17 @@ export const SmsCreditsAlert = () => {
         setIsLoading(true);
         setError(null);
         
-        // Try to get credits with fallback for CORS issues
+        // Get credits using the server endpoint that uses https module
         const creditsValue = await smsService.getSmsCredits();
         setCredits(creditsValue);
       } catch (err: any) {
         console.error("Failed to load SMS credits:", err);
-        // Instead of showing error, use a default value
-        setCredits(150); // Default fallback value
+        setError("Failed to load SMS credits");
+        
         toast({
-          title: "Notice",
-          description: "Using estimated SMS credits due to API connection limitations.",
-          variant: "default"
+          title: "Error",
+          description: "Could not retrieve SMS credits. Please try again later.",
+          variant: "destructive"
         });
       } finally {
         setIsLoading(false);
@@ -43,6 +43,16 @@ export const SmsCreditsAlert = () => {
         <MessageSquare className="h-4 w-4" />
         <AlertTitle>SMS Credits</AlertTitle>
         <AlertDescription>Loading remaining SMS credits...</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
   }
