@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { TimeEntry, Task, Campaign, ViewType } from '@/types/timeTracking';
-import { Company } from '@/types/company'; // Import the correct Company type
+import { Company } from '@/types/company';
 import { TimeTrackerHeader } from '@/components/TimeTracking/TimeTrackerHeader';
 import { TimeEntrySearch } from '@/components/TimeTracking/TimeEntrySearch';
 import { TimeEntryList } from '@/components/TimeTracking/TimeEntryList';
@@ -86,7 +86,7 @@ const TimeTrackingPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('companies')
-        .select('*') // Select all fields to get the full Company type
+        .select('*')
         .order('name');
       
       if (error) {

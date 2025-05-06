@@ -1,13 +1,16 @@
 
+import { useMemo } from 'react';
+import { format, startOfWeek, parseISO, isThisWeek, isToday, differenceInWeeks } from 'date-fns';
 import { TimeEntryCard } from './TimeEntryCard';
 import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
-import { Company } from '@/types/company'; // Import the full Company type
+import { Company } from '@/types/company';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 type TimeEntryListProps = {
   timeEntries: TimeEntry[];
   isLoading: boolean;
   tasks: Task[];
-  companies: Company[]; // Update to use the full Company type
+  companies: Company[];
   campaigns: Campaign[];
   onEdit: (entry: TimeEntry) => void;
 };
@@ -20,6 +23,38 @@ export const TimeEntryList = ({
   campaigns,
   onEdit
 }: TimeEntryListProps) => {
+  // Group entries by week
+  const entriesByWeek = useMemo(() => {
+    const now = new Date();
+    const grouped: Record<string, { 
+      entries: TimeEntry[], 
+      startDate: Date,
+      isCurrentWeek: boolean,
+      weekNumber: number
+    }> = {};
+    
+    timeEntries.forEach(entry => {
+      const entryDate = parseISO(entry.start_time);
+      const weekStart = startOfWeek(entryDate, { weekStartsOn: 1 });
+      const weekKey = format(weekStart, 'yyyy-MM-dd');
+      const weekDiff = differenceInWeeks(now, weekStart);
+      
+      if (!grouped[weekKey]) {
+        grouped[weekKey] = {
+          entries: [],
+          startDate: weekStart,
+          isCurrentWeek: isThisWeek(entryDate, { weekStartsOn: 1 }),
+          weekNumber: weekDiff
+        };
+      }
+      
+      grouped[weekKey].entries.push(entry);
+    });
+    
+    // Sort the weeks
+    return Object.values(grouped).sort((a, b) => a.startDate > b.startDate ? -1 : 1);
+  }, [timeEntries]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center p-8">
@@ -37,17 +72,46 @@ export const TimeEntryList = ({
   }
 
   return (
-    <div className="space-y-4">
-      {timeEntries.map(entry => (
-        <TimeEntryCard 
-          key={entry.id} 
-          entry={entry} 
-          tasks={tasks}
-          companies={companies}
-          campaigns={campaigns}
-          onEdit={onEdit} 
-        />
-      ))}
+    <div className="space-y-8">
+      {entriesByWeek.map((weekGroup, index) => {
+        const weekNumber = weekGroup.weekNumber;
+        let weekTitle;
+        
+        if (weekGroup.isCurrentWeek) {
+          weekTitle = "This week";
+        } else if (weekNumber === 1) {
+          weekTitle = "Last week";
+        } else {
+          weekTitle = `${format(weekGroup.startDate, 'MMMM d')} - ${format(
+            new Date(weekGroup.startDate.getTime() + 6 * 24 * 60 * 60 * 1000),
+            'MMMM d'
+          )}`;
+        }
+        
+        return (
+          <Card key={index} className="shadow-sm">
+            <CardHeader className="py-3 px-6 bg-muted/30">
+              <h3 className="text-sm font-medium">{weekTitle}</h3>
+            </CardHeader>
+            <CardContent className="p-4 space-y-4">
+              {weekGroup.entries.map(entry => {
+                const isEntryToday = isToday(parseISO(entry.start_time));
+                return (
+                  <TimeEntryCard 
+                    key={entry.id} 
+                    entry={entry} 
+                    tasks={tasks}
+                    companies={companies}
+                    campaigns={campaigns}
+                    onEdit={onEdit} 
+                    highlighted={isEntryToday}
+                  />
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };

@@ -13,9 +13,17 @@ type TimeEntryCardProps = {
   companies: Company[]; // Update to use the full Company type
   campaigns: Campaign[];
   onEdit: (entry: TimeEntry) => void;
+  highlighted?: boolean;
 };
 
-export const TimeEntryCard = ({ entry, tasks, companies, campaigns, onEdit }: TimeEntryCardProps) => {
+export const TimeEntryCard = ({ 
+  entry, 
+  tasks, 
+  companies, 
+  campaigns, 
+  onEdit, 
+  highlighted = false
+}: TimeEntryCardProps) => {
   // Find related data
   const task = entry.task_id ? tasks.find(t => t.id === entry.task_id) : null;
   const company = entry.company_id ? companies.find(c => c.id === entry.company_id) : null;
@@ -37,7 +45,7 @@ export const TimeEntryCard = ({ entry, tasks, companies, campaigns, onEdit }: Ti
   }
   
   return (
-    <Card className="shadow-sm">
+    <Card className={`shadow-sm ${highlighted ? "border-primary border-2" : ""}`}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1">

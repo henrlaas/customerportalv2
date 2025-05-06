@@ -6,6 +6,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { TimeEntry } from '@/types/timeTracking';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type CalendarViewProps = {
   timeEntries: TimeEntry[];
@@ -83,7 +84,7 @@ export const CalendarView = ({ timeEntries, onEditEntry }: CalendarViewProps) =>
           </CardContent>
         </Card>
         
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium flex items-center gap-2">
               <CalendarIcon className="h-5 w-5" />
@@ -129,48 +130,54 @@ export const CalendarView = ({ timeEntries, onEditEntry }: CalendarViewProps) =>
             </div>
           </div>
           
-          {selectedEntries.length === 0 ? (
-            <div className="text-center p-8 text-gray-500 rounded-xl bg-muted/50 shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px]">
-              No time entries for this date
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {selectedEntries.map(entry => (
-                <div 
-                  key={entry.id}
-                  className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition"
-                  onClick={() => onEditEntry(entry)}
-                >
-                  <div className="font-medium mb-1">
-                    {entry.description || 'No description'}
+          <Card className="flex-grow">
+            <CardContent className="p-0">
+              <ScrollArea className="h-[460px] p-4">
+                {selectedEntries.length === 0 ? (
+                  <div className="text-center p-8 text-gray-500">
+                    No time entries for this date
                   </div>
-                  <div className="text-sm text-gray-500 flex items-center justify-between">
-                    <div>
-                      {format(parseISO(entry.start_time), 'HH:mm')} - {
-                        entry.end_time 
-                          ? format(parseISO(entry.end_time), 'HH:mm')
-                          : 'ongoing'
-                      }
-                    </div>
-                    <div className="font-mono">
-                      {entry.end_time ? (
-                        (() => {
-                          const start = parseISO(entry.start_time);
-                          const end = parseISO(entry.end_time);
-                          const durationMs = end.getTime() - start.getTime();
-                          const hours = Math.floor(durationMs / (1000 * 60 * 60));
-                          const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-                          return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                        })()
-                      ) : (
-                        'In progress'
-                      )}
-                    </div>
+                ) : (
+                  <div className="space-y-4">
+                    {selectedEntries.map(entry => (
+                      <div 
+                        key={entry.id}
+                        className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition"
+                        onClick={() => onEditEntry(entry)}
+                      >
+                        <div className="font-medium mb-1">
+                          {entry.description || 'No description'}
+                        </div>
+                        <div className="text-sm text-gray-500 flex items-center justify-between">
+                          <div>
+                            {format(parseISO(entry.start_time), 'HH:mm')} - {
+                              entry.end_time 
+                                ? format(parseISO(entry.end_time), 'HH:mm')
+                                : 'ongoing'
+                            }
+                          </div>
+                          <div className="font-mono">
+                            {entry.end_time ? (
+                              (() => {
+                                const start = parseISO(entry.start_time);
+                                const end = parseISO(entry.end_time);
+                                const durationMs = end.getTime() - start.getTime();
+                                const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                              })()
+                            ) : (
+                              'In progress'
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
