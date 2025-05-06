@@ -39,6 +39,7 @@ type Contact = {
   avatar_url?: string | null;
 };
 
+// Ensure Campaign type includes the company_id property
 type Campaign = {
   id: string;
   name: string;

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,9 +79,11 @@ type Contact = {
   avatar_url?: string | null;
 };
 
+// Updated Campaign type to include company_id
 type Campaign = {
   id: string;
   name: string;
+  company_id: string;
 };
 
 type Company = {
@@ -153,7 +154,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
     queryFn: async () => {
       const { data, error } = await supabase
         .from('campaigns')
-        .select('id, name');
+        .select('id, name, company_id'); // Make sure to select company_id
       
       if (error) {
         toast({

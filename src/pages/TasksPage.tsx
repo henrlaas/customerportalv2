@@ -77,7 +77,7 @@ type Contact = {
   avatar_url?: string | null;
 };
 
-// Define the Campaign type for related campaigns
+// Updated Campaign type to include company_id property
 type Campaign = {
   id: string;
   name: string;
