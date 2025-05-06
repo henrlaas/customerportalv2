@@ -14,25 +14,35 @@ export const MonthlyHoursSummary = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const formattedMonth = format(selectedMonth, 'yyyy-MM');
 
-  const { data: monthlyHours } = useQuery({
+  const { data: monthlyHours, isLoading: isLoadingHours } = useQuery({
     queryKey: ['monthlyHours', user?.id, formattedMonth],
     queryFn: async () => {
       if (!user) return 0;
 
-      // Use the database function to get monthly hours
-      const { data, error } = await supabase.rpc('get_monthly_hours', {
-        user_id_param: user.id,
-        year_month: formattedMonth
-      });
-      
-      if (error) {
-        console.error('Error fetching monthly hours:', error);
+      try {
+        console.log(`Fetching monthly hours for user ${user.id} and month ${formattedMonth}`);
+        
+        // Use the database function to get monthly hours
+        const { data, error } = await supabase.rpc('get_monthly_hours', {
+          user_id_param: user.id,
+          year_month: formattedMonth
+        });
+        
+        if (error) {
+          console.error('Error fetching monthly hours:', error);
+          return 0;
+        }
+        
+        console.log(`Retrieved monthly hours for ${formattedMonth}:`, data);
+        return data || 0;
+      } catch (error) {
+        console.error('Exception in monthly hours fetch:', error);
         return 0;
       }
-      
-      return data || 0;
     },
     enabled: !!user,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   useEffect(() => {
@@ -101,8 +111,16 @@ export const MonthlyHoursSummary = () => {
             </div>
           </div>
           <div className="text-right">
-            <h2 className="text-3xl font-bold">{totalHours.toFixed(2)} hours</h2>
-            <p className="text-muted-foreground">Total hours this month</p>
+            {isLoadingHours ? (
+              <div className="h-[3.75rem] flex items-center justify-end">
+                <div className="animate-pulse bg-muted rounded-md w-24 h-10"></div>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-3xl font-bold">{totalHours.toFixed(2)} hours</h2>
+                <p className="text-muted-foreground">Total hours this month</p>
+              </>
+            )}
           </div>
         </div>
       </CardContent>

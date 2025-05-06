@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -89,6 +90,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const isEditing = !!taskId;
   const [loadingAssignees, setLoadingAssignees] = useState(isEditing);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
+  const [timeoutId, setTimeoutId] = useState<number | null>(null);
 
   // Fetch companies
   const { companies, isLoading: isLoadingCompanies } = useCompanyList(showSubsidiaries);
@@ -168,6 +170,22 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   // Create or update task mutation
   const taskMutation = useMutation({
     mutationFn: async (data: z.infer<typeof taskSchema>) => {
+      console.log("Starting task mutation with data:", data);
+      
+      // Clear any previous timeout
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        setTimeoutId(null);
+      }
+      
+      // Set a timeout to abort if the operation takes too long
+      const timeoutPromise = new Promise((_, reject) => {
+        const id = window.setTimeout(() => {
+          reject(new Error('Operation timed out after 15 seconds'));
+        }, 15000);
+        setTimeoutId(Number(id));
+      });
+      
       // Prepare the data for insertion
       const taskData = {
         title: data.title,
@@ -184,64 +202,81 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       
       let taskResult;
       
-      // Create or update the task
-      if (isEditing) {
-        const { data: result, error } = await supabase
-          .from('tasks')
-          .update(taskData)
-          .eq('id', taskId)
-          .select()
-          .single();
+      try {
+        // Create or update the task
+        if (isEditing) {
+          console.log(`Updating task with ID: ${taskId}`);
+          const { data: result, error } = await supabase
+            .from('tasks')
+            .update(taskData)
+            .eq('id', taskId)
+            .select()
+            .single();
+          
+          if (error) throw error;
+          taskResult = result;
+          console.log("Task updated successfully:", taskResult);
+        } else {
+          console.log("Creating new task");
+          const { data: result, error } = await supabase
+            .from('tasks')
+            .insert(taskData)
+            .select()
+            .single();
+          
+          if (error) throw error;
+          taskResult = result;
+          console.log("Task created successfully:", taskResult);
+        }
         
-        if (error) throw error;
-        taskResult = result;
-      } else {
-        // Use regular insert instead of insertWithUser if you're setting the creator manually
-        const { data: result, error } = await supabase
-          .from('tasks')
-          .insert(taskData)
-          .select()
-          .single();
+        // Now handle assignees - first remove existing assignees if updating
+        if (isEditing && taskId) {
+          console.log(`Removing existing assignees for task: ${taskId}`);
+          const { error: deleteError } = await supabase
+            .from('task_assignees')
+            .delete()
+            .eq('task_id', taskId);
+          
+          if (deleteError) throw deleteError;
+        }
         
-        if (error) throw error;
-        taskResult = result;
+        // Insert new assignees
+        if (data.assignees && data.assignees.length > 0 && taskResult && taskResult.id) {
+          const assigneesData = data.assignees.map(userId => ({
+            task_id: isEditing ? taskId : taskResult.id,
+            user_id: userId
+          }));
+          
+          console.log(`Adding ${assigneesData.length} assignees`);
+          const { error: assignError } = await supabase
+            .from('task_assignees')
+            .insert(assigneesData);
+          
+          if (assignError) throw assignError;
+        }
+        
+        if (timeoutId !== null) {
+          window.clearTimeout(timeoutId);
+          setTimeoutId(null);
+        }
+        
+        return taskResult;
+      } catch (error) {
+        console.error("Error in task mutation:", error);
+        throw error;
       }
-      
-      // Now handle assignees - first remove existing assignees if updating
-      if (isEditing && taskId) {
-        const { error: deleteError } = await supabase
-          .from('task_assignees')
-          .delete()
-          .eq('task_id', taskId);
-        
-        if (deleteError) throw deleteError;
-      }
-      
-      // Insert new assignees
-      if (data.assignees && data.assignees.length > 0 && taskResult && taskResult.id) {
-        const assigneesData = data.assignees.map(userId => ({
-          task_id: isEditing ? taskId : taskResult.id,
-          user_id: userId
-        }));
-        
-        const { error: assignError } = await supabase
-          .from('task_assignees')
-          .insert(assigneesData);
-        
-        if (assignError) throw assignError;
-      }
-      
-      return taskResult;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast({
         title: isEditing ? 'Task updated' : 'Task created',
         description: isEditing ? 'Your task has been updated' : 'Your task has been created',
       });
+      console.log("Task mutation completed successfully", result);
       onSuccess();
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Task mutation error:", error);
       toast({
         title: 'Error',
         description: `Failed to ${isEditing ? 'update' : 'create'} task: ${error.message}`,
@@ -253,6 +288,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   // Submit handler
   const onSubmit = (data: z.infer<typeof taskSchema>) => {
     console.log("Submitting form with data:", data);
+    // Show immediate feedback to the user
+    toast({
+      title: isEditing ? 'Updating Task...' : 'Creating Task...',
+      description: 'Please wait while we save your changes...',
+    });
     taskMutation.mutate(data);
   };
 
