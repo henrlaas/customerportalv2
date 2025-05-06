@@ -7,10 +7,16 @@ import {
   PointerSensor,
   DragEndEvent,
   useDroppable,
+  DragStartEvent,
+  DragOverEvent,
+  KeyboardSensor,
+  closestCorners,
+  DragOverlay
 } from '@dnd-kit/core';
 import { 
   SortableContext, 
-  verticalListSortingStrategy 
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates 
 } from '@dnd-kit/sortable';
 import ReactConfetti from 'react-confetti';
 import { Deal, Stage, Company, Profile } from '@/components/Deals/types/deal';
@@ -46,6 +52,9 @@ export function DealKanbanView({
       activationConstraint: {
         distance: 8,
       },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
@@ -54,6 +63,7 @@ export function DealKanbanView({
   const [showConvertDialog, setShowConvertDialog] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [tempCompanyData, setTempCompanyData] = useState<any>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   
   // Update local deals when props change
   React.useEffect(() => {
@@ -73,11 +83,19 @@ export function DealKanbanView({
     },
   });
 
-  const handleDragStart = (event: any) => {
+  const handleDragStart = (event: DragStartEvent) => {
     console.log("Drag started:", event.active.id);
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    // This can be used for visual feedback during dragging
+    // Or for more complex logic like sorting within columns
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+    
     if (!canModify) return;
     
     const { active, over } = event;
@@ -130,11 +148,16 @@ export function DealKanbanView({
     }
   };
 
+  // Find active deal for the drag overlay
+  const activeDeal = activeId ? localDeals.find(deal => deal.id === activeId) : null;
+
   return (
     <DndContext 
       sensors={sensors} 
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      collisionDetection={closestCorners}
     >
       {showConfetti && (
         <ReactConfetti
@@ -162,10 +185,29 @@ export function DealKanbanView({
               onEdit={onEdit}
               onDelete={onDelete}
               onMove={onMove}
+              activeId={activeId}
             />
           );
         })}
       </div>
+      
+      {/* Add DragOverlay component for a better dragging experience */}
+      <DragOverlay>
+        {activeDeal ? (
+          <div className="opacity-80 w-full max-w-[250px]">
+            <DealCard
+              deal={activeDeal}
+              companies={companies}
+              stages={stages}
+              profiles={profiles}
+              canModify={false} // Disable interactions while dragging
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onMove={() => {}} // No-op for the overlay
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
       
       {showConvertDialog && selectedDeal && tempCompanyData && (
         <ConvertTempCompanyDialog
@@ -195,6 +237,7 @@ interface StageColumnProps {
   onEdit: (deal: Deal) => void;
   onDelete: (id: string) => void;
   onMove: (dealId: string, newStageId: string) => void;
+  activeId: string | null;
 }
 
 function StageColumn({
@@ -206,7 +249,8 @@ function StageColumn({
   canModify,
   onEdit,
   onDelete,
-  onMove
+  onMove,
+  activeId
 }: StageColumnProps) {
   // Setup the drop area for this stage column
   const { setNodeRef } = useDroppable({
@@ -238,6 +282,11 @@ function StageColumn({
                 onMove={() => {}} // This is handled by DragEnd
               />
             ))}
+            {deals.length === 0 && (
+              <div className="bg-background p-4 rounded-md border border-dashed border-border text-center text-muted-foreground">
+                No deals in this stage
+              </div>
+            )}
           </div>
         </SortableContext>
       </div>
