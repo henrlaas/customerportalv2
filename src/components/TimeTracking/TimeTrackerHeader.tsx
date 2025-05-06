@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { TimeEntry, ViewType } from '@/types/timeTracking';
 import { TimeEntryForm } from './TimeEntryForm';
+import { Input } from '@/components/ui/input';
 
 type TimeTrackerHeaderProps = {
   isTracking: boolean;
@@ -52,13 +53,14 @@ export const TimeTrackerHeader = ({
     mutationFn: async () => {
       if (!user) return null;
       
-      // Create a new time entry
+      // Create a new time entry - explicitly set is_billable to false by default
       const { data, error } = await supabase
         .from('time_entries')
         .insert([{ 
           user_id: user.id, 
           start_time: new Date().toISOString(),
-          description: description || null
+          description: description || null,
+          is_billable: false // Explicitly set to false by default
         }])
         .select();
       
@@ -151,18 +153,20 @@ export const TimeTrackerHeader = ({
   return (
     <div className="mb-6 bg-white p-4 rounded-lg shadow">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="w-full sm:w-auto">
+        <div className="w-full">
           <h2 className="text-xl font-bold mb-2">Time Tracker</h2>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="What are you working on?"
-              className={`w-full border rounded px-3 py-2 ${isTracking ? '' : 'border-primary'}`}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              disabled={isTracking}
-              required
-            />
+          <div className="flex gap-2 items-center">
+            <div className="relative flex-grow">
+              <Input
+                type="text"
+                placeholder="What are you working on?"
+                className="w-full pr-4 py-2"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={isTracking}
+                required
+              />
+            </div>
             <Button
               onClick={handleToggleTracking}
               variant={isTracking ? "destructive" : "default"}
@@ -182,7 +186,7 @@ export const TimeTrackerHeader = ({
           </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="flex gap-4 items-center">
             {isTracking && (
               <div className="text-center flex items-center">
