@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -193,6 +192,9 @@ const TimeTrackingPage = () => {
         <CalendarView 
           timeEntries={timeEntries}
           onEditEntry={handleEdit}
+          tasks={tasks}
+          companies={companies}
+          campaigns={campaigns}
         />
       )}
       

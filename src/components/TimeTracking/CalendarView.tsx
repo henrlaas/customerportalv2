@@ -1,19 +1,24 @@
 
 import { useState } from 'react';
 import { format, isSameDay, isToday, parseISO } from 'date-fns';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Building, Briefcase, Tag, DollarSign, Pencil } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { TimeEntry } from '@/types/timeTracking';
+import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Company } from '@/types/company';
 
 type CalendarViewProps = {
   timeEntries: TimeEntry[];
   onEditEntry: (entry: TimeEntry) => void;
+  tasks: Task[];
+  companies: Company[];
+  campaigns: Campaign[];
 };
 
-export const CalendarView = ({ timeEntries, onEditEntry }: CalendarViewProps) => {
+export const CalendarView = ({ timeEntries, onEditEntry, tasks, companies, campaigns }: CalendarViewProps) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   
   // Group entries by date
@@ -139,40 +144,91 @@ export const CalendarView = ({ timeEntries, onEditEntry }: CalendarViewProps) =>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {selectedEntries.map(entry => (
-                      <div 
-                        key={entry.id}
-                        className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition"
-                        onClick={() => onEditEntry(entry)}
-                      >
-                        <div className="font-medium mb-1">
-                          {entry.description || 'No description'}
-                        </div>
-                        <div className="text-sm text-gray-500 flex items-center justify-between">
-                          <div>
-                            {format(parseISO(entry.start_time), 'HH:mm')} - {
-                              entry.end_time 
-                                ? format(parseISO(entry.end_time), 'HH:mm')
-                                : 'ongoing'
-                            }
+                    {selectedEntries.map(entry => {
+                      // Find related data
+                      const task = entry.task_id ? tasks.find(t => t.id === entry.task_id) : null;
+                      const company = entry.company_id ? companies.find(c => c.id === entry.company_id) : null;
+                      const campaign = entry.campaign_id ? campaigns.find(c => c.id === entry.campaign_id) : null;
+                      
+                      return (
+                        <div 
+                          key={entry.id}
+                          className="p-4 border rounded-lg hover:bg-muted/50 transition"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="font-medium mb-1">
+                              {entry.description || 'No description'}
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 -mt-1 -mr-2"
+                              onClick={() => onEditEntry(entry)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                           </div>
-                          <div className="font-mono">
-                            {entry.end_time ? (
-                              (() => {
-                                const start = parseISO(entry.start_time);
-                                const end = parseISO(entry.end_time);
-                                const durationMs = end.getTime() - start.getTime();
-                                const hours = Math.floor(durationMs / (1000 * 60 * 60));
-                                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-                                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                              })()
-                            ) : (
-                              'In progress'
-                            )}
+                          
+                          <div className="mt-2 space-y-2">
+                            {/* Company, Campaign and Task information */}
+                            <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                              {company && (
+                                <div className="flex items-center gap-1">
+                                  <Building className="h-3 w-3" />
+                                  <span>{company.name}</span>
+                                </div>
+                              )}
+                              
+                              {campaign && (
+                                <div className="flex items-center gap-1">
+                                  <Tag className="h-3 w-3" />
+                                  <span>{campaign.name}</span>
+                                </div>
+                              )}
+                              
+                              {task && (
+                                <div className="flex items-center gap-1">
+                                  <Briefcase className="h-3 w-3" />
+                                  <span>{task.title}</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm text-gray-500">
+                                {format(parseISO(entry.start_time), 'HH:mm')} - {
+                                  entry.end_time 
+                                    ? format(parseISO(entry.end_time), 'HH:mm')
+                                    : 'ongoing'
+                                }
+                              </div>
+                              <div className="font-mono text-xs">
+                                {entry.end_time ? (
+                                  (() => {
+                                    const start = parseISO(entry.start_time);
+                                    const end = parseISO(entry.end_time);
+                                    const durationMs = end.getTime() - start.getTime();
+                                    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                                    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                                    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                                  })()
+                                ) : (
+                                  'In progress'
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Billable badge */}
+                            <div className="flex justify-end mt-1">
+                              <Badge variant={entry.is_billable ? "default" : "outline"} className="flex items-center gap-1 text-xs">
+                                <DollarSign className="h-3 w-3" />
+                                {entry.is_billable ? 'Billable' : 'Non-billable'}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </ScrollArea>
