@@ -61,18 +61,25 @@ serve(async (req) => {
 
     // Format the FROM field properly to avoid email address validation errors
     const formattedFrom = `${EMAIL_FROM_NAME} <${EMAIL_FROM_ADDRESS}>`;
+    
+    // Log email details for debugging
+    console.log("Sending email to:", to);
+    console.log("Email subject:", subject);
+    console.log("HTML content length:", html ? html.length : 0);
 
-    // Send email
+    // Send email with proper content type headers
     await client.send({
       from: formattedFrom,
       to: Array.isArray(to) ? to : [to],
       cc: cc ? (Array.isArray(cc) ? cc : [cc]) : undefined,
       bcc: bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined,
       subject: subject,
-      content: html || undefined,
+      content: text || "Please view this email with an HTML-compatible email client.",
       html: html || undefined,
-      text: text || undefined,
-      attachments: attachments || undefined,
+      // Explicitly set content headers
+      headers: {
+        "Content-Type": "text/html; charset=UTF-8",
+      },
     });
 
     await client.close();

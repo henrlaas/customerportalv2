@@ -27,11 +27,18 @@ export const useEmailSender = (options?: UseEmailSenderOptions) => {
   
   return useMutation({
     mutationFn: async (emailData: EmailData) => {
+      console.log("Sending email with data:", {
+        to: emailData.to,
+        subject: emailData.subject,
+        htmlLength: emailData.html ? emailData.html.length : 0,
+      });
+      
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: emailData,
       });
       
       if (error) {
+        console.error("Supabase function error:", error);
         throw new Error(`Failed to send email: ${error.message}`);
       }
       
@@ -48,6 +55,7 @@ export const useEmailSender = (options?: UseEmailSenderOptions) => {
       }
     },
     onError: (error: Error) => {
+      console.error("Email sending error:", error);
       toast({
         title: "Email Failed",
         description: error.message,
