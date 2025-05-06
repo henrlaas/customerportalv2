@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { calculateDuration } from '@/utils/timeUtils';
 
 export const MonthlyHoursSummary = () => {
   const { user } = useAuth();
@@ -17,10 +16,11 @@ export const MonthlyHoursSummary = () => {
     queryFn: async () => {
       if (!user) return 0;
 
-      const { data, error } = await supabase.rpc('get_monthly_hours', {
-        user_id_param: user.id,
-        year_month: currentMonth
-      });
+      const { data, error } = await supabase
+        .rpc('get_monthly_hours', {
+          user_id_param: user.id,
+          year_month: currentMonth
+        });
       
       if (error) {
         console.error('Error fetching monthly hours:', error);

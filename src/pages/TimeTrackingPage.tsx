@@ -50,10 +50,23 @@ const TimeTrackingPage = () => {
       const active = data.find(entry => !entry.end_time);
       if (active) {
         setIsTracking(true);
-        setActiveEntry(active);
+        // Need to cast the entry to include the new fields
+        const activeWithRequiredFields = {
+          ...active,
+          is_billable: active.is_billable ?? true,
+          company_id: active.company_id ?? null,
+          campaign_id: active.campaign_id ?? null
+        } as TimeEntry;
+        setActiveEntry(activeWithRequiredFields);
       }
       
-      return data as TimeEntry[];
+      // Make sure to cast all entries to include the new fields
+      return data.map(entry => ({
+        ...entry,
+        is_billable: entry.is_billable ?? true,
+        company_id: entry.company_id ?? null,
+        campaign_id: entry.campaign_id ?? null
+      })) as TimeEntry[];
     },
     enabled: !!user,
   });
