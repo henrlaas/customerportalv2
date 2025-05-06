@@ -1,18 +1,19 @@
 
 import { format, formatDistance } from 'date-fns';
-import { Calendar, Clock, Pencil, Building, Tag, Briefcase, DollarSign } from 'lucide-react';
+import { Calendar, Clock, Pencil, Building, Tag, Briefcase, DollarSign, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
-import { Company } from '@/types/company'; // Import the full Company type
+import { Company } from '@/types/company';
 
 type TimeEntryCardProps = {
   entry: TimeEntry;
   tasks: Task[];
-  companies: Company[]; // Update to use the full Company type
+  companies: Company[];
   campaigns: Campaign[];
   onEdit: (entry: TimeEntry) => void;
+  onDelete: (entry: TimeEntry) => void;
   highlighted?: boolean;
 };
 
@@ -21,7 +22,8 @@ export const TimeEntryCard = ({
   tasks, 
   companies, 
   campaigns, 
-  onEdit, 
+  onEdit,
+  onDelete,
   highlighted = false
 }: TimeEntryCardProps) => {
   // Find related data
@@ -77,9 +79,14 @@ export const TimeEntryCard = ({
             </div>
           </div>
           
-          <Button variant="ghost" size="icon" onClick={() => onEdit(entry)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon" onClick={() => onEdit(entry)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => onDelete(entry)} className="text-destructive hover:text-destructive">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       

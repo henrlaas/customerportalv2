@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { format, isSameDay, isToday, parseISO } from 'date-fns';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Building, Briefcase, Tag, DollarSign, Pencil } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Building, Briefcase, Tag, DollarSign, Pencil, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,12 +13,20 @@ import { Company } from '@/types/company';
 type CalendarViewProps = {
   timeEntries: TimeEntry[];
   onEditEntry: (entry: TimeEntry) => void;
+  onDeleteEntry: (entry: TimeEntry) => void;
   tasks: Task[];
   companies: Company[];
   campaigns: Campaign[];
 };
 
-export const CalendarView = ({ timeEntries, onEditEntry, tasks, companies, campaigns }: CalendarViewProps) => {
+export const CalendarView = ({ 
+  timeEntries, 
+  onEditEntry,
+  onDeleteEntry,
+  tasks, 
+  companies, 
+  campaigns 
+}: CalendarViewProps) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   
   // Group entries by date
@@ -159,14 +167,24 @@ export const CalendarView = ({ timeEntries, onEditEntry, tasks, companies, campa
                             <div className="font-medium mb-1">
                               {entry.description || 'No description'}
                             </div>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 -mt-1 -mr-2"
-                              onClick={() => onEditEntry(entry)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
+                            <div className="flex gap-1 -mt-1 -mr-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={() => onEditEntry(entry)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => onDeleteEntry(entry)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                           
                           <div className="mt-2 space-y-2">

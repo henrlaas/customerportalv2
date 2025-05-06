@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,6 +12,7 @@ import { TimeEntryList } from '@/components/TimeTracking/TimeEntryList';
 import { TimeEntryForm } from '@/components/TimeTracking/TimeEntryForm';
 import { MonthlyHoursSummary } from '@/components/TimeTracking/MonthlyHoursSummary';
 import { CalendarView } from '@/components/TimeTracking/CalendarView';
+import { DeleteTimeEntryDialog } from '@/components/TimeTracking/DeleteTimeEntryDialog';
 
 const TimeTrackingPage = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -20,9 +22,12 @@ const TimeTrackingPage = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState<ViewType>("list");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<TimeEntry | null>(null);
   
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   
   // Fetch time entries
   const { data: timeEntries = [], isLoading } = useQuery({
@@ -55,6 +60,47 @@ const TimeTrackingPage = () => {
       return data as TimeEntry[];
     },
     enabled: !!user,
+  });
+  
+  // Delete time entry mutation
+  const deleteTimeEntryMutation = useMutation({
+    mutationFn: async (entryId: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      const { error } = await supabase
+        .from('time_entries')
+        .delete()
+        .eq('id', entryId)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      return entryId;
+    },
+    onSuccess: (deletedEntryId) => {
+      // Invalidate and refetch time entries
+      queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
+      
+      // Show success toast
+      toast({
+        title: 'Time entry deleted',
+        description: 'The time entry was successfully deleted.',
+      });
+      
+      // If the deleted entry was the active one, reset tracking state
+      if (activeEntry && activeEntry.id === deletedEntryId) {
+        setIsTracking(false);
+        setActiveEntry(null);
+        setElapsedTime(0);
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error deleting time entry',
+        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        variant: 'destructive',
+      });
+    },
   });
   
   // Fetch tasks for the dropdown
@@ -135,6 +181,27 @@ const TimeTrackingPage = () => {
     setCurrentEntry(null);
   };
 
+  // Handle delete time entry
+  const handleDelete = (entry: TimeEntry) => {
+    setEntryToDelete(entry);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Confirm delete time entry
+  const confirmDelete = () => {
+    if (entryToDelete) {
+      deleteTimeEntryMutation.mutate(entryToDelete.id);
+    }
+    setIsDeleteDialogOpen(false);
+    setEntryToDelete(null);
+  };
+  
+  // Cancel delete
+  const cancelDelete = () => {
+    setIsDeleteDialogOpen(false);
+    setEntryToDelete(null);
+  };
+
   // Update elapsed time for active time entry
   useEffect(() => {
     if (!isTracking || !activeEntry) return;
@@ -184,6 +251,7 @@ const TimeTrackingPage = () => {
             companies={companies}
             campaigns={campaigns}
             onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         </>
       )}
@@ -192,6 +260,7 @@ const TimeTrackingPage = () => {
         <CalendarView 
           timeEntries={timeEntries}
           onEditEntry={handleEdit}
+          onDeleteEntry={handleDelete}
           tasks={tasks}
           companies={companies}
           campaigns={campaigns}
@@ -210,6 +279,14 @@ const TimeTrackingPage = () => {
           campaigns={campaigns}
         />
       )}
+      
+      {/* Delete Time Entry Dialog */}
+      <DeleteTimeEntryDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        timeEntry={entryToDelete}
+      />
     </div>
   );
 };

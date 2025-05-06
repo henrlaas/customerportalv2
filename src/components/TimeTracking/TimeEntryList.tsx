@@ -13,6 +13,7 @@ type TimeEntryListProps = {
   companies: Company[];
   campaigns: Campaign[];
   onEdit: (entry: TimeEntry) => void;
+  onDelete: (entry: TimeEntry) => void;
 };
 
 export const TimeEntryList = ({ 
@@ -21,7 +22,8 @@ export const TimeEntryList = ({
   tasks,
   companies,
   campaigns,
-  onEdit
+  onEdit,
+  onDelete
 }: TimeEntryListProps) => {
   // Group entries by week
   const entriesByWeek = useMemo(() => {
@@ -102,6 +104,7 @@ export const TimeEntryList = ({
                   companies={companies}
                   campaigns={campaigns}
                   onEdit={onEdit} 
+                  onDelete={onDelete}
                 />
               ))}
             </CardContent>
