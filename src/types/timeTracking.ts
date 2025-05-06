@@ -9,6 +9,9 @@ export type TimeEntry = {
   task_id: string | null;
   created_at: string;
   updated_at: string;
+  is_billable: boolean;
+  company_id: string | null;
+  campaign_id: string | null;
 };
 
 // Task type for selecting related tasks
@@ -16,3 +19,19 @@ export type Task = {
   id: string;
   title: string;
 };
+
+// Company type for selecting related companies
+export type Company = {
+  id: string;
+  name: string;
+};
+
+// Campaign type for selecting related campaigns
+export type Campaign = {
+  id: string;
+  name: string;
+  company_id: string;
+};
+
+// View type for toggling between list and calendar views
+export type ViewType = "list" | "calendar";

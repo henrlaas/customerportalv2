@@ -1,11 +1,13 @@
 
 import { TimeEntryCard } from './TimeEntryCard';
-import { TimeEntry, Task } from '@/types/timeTracking';
+import { TimeEntry, Task, Company, Campaign } from '@/types/timeTracking';
 
 type TimeEntryListProps = {
   timeEntries: TimeEntry[];
   isLoading: boolean;
   tasks: Task[];
+  companies: Company[];
+  campaigns: Campaign[];
   onEdit: (entry: TimeEntry) => void;
 };
 
@@ -13,6 +15,8 @@ export const TimeEntryList = ({
   timeEntries, 
   isLoading, 
   tasks,
+  companies,
+  campaigns,
   onEdit
 }: TimeEntryListProps) => {
   if (isLoading) {
@@ -37,7 +41,9 @@ export const TimeEntryList = ({
         <TimeEntryCard 
           key={entry.id} 
           entry={entry} 
-          tasks={tasks} 
+          tasks={tasks}
+          companies={companies}
+          campaigns={campaigns}
           onEdit={onEdit} 
         />
       ))}

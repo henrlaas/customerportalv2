@@ -1,27 +1,36 @@
 
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Edit, Trash2, Calendar, Clock } from 'lucide-react';
+import { Edit, Trash2, Calendar, Clock, Tag, Briefcase } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Task, TimeEntry } from '@/types/timeTracking';
+import { Task, TimeEntry, Company, Campaign } from '@/types/timeTracking';
 import { calculateDuration } from '@/utils/timeUtils';
 
 type TimeEntryCardProps = {
   entry: TimeEntry;
   tasks: Task[];
+  companies: Company[];
+  campaigns: Campaign[];
   onEdit: (entry: TimeEntry) => void;
 };
 
-export const TimeEntryCard = ({ entry, tasks, onEdit }: TimeEntryCardProps) => {
+export const TimeEntryCard = ({ 
+  entry, 
+  tasks, 
+  companies,
+  campaigns,
+  onEdit 
+}: TimeEntryCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -48,6 +57,12 @@ export const TimeEntryCard = ({ entry, tasks, onEdit }: TimeEntryCardProps) => {
       });
     }
   };
+
+  // Get company name
+  const company = entry.company_id ? companies.find(c => c.id === entry.company_id) : null;
+  
+  // Get campaign name
+  const campaign = entry.campaign_id ? campaigns.find(c => c.id === entry.campaign_id) : null;
 
   return (
     <Card key={entry.id} className="bg-white">
@@ -96,14 +111,31 @@ export const TimeEntryCard = ({ entry, tasks, onEdit }: TimeEntryCardProps) => {
           </div>
         </div>
         
-        {entry.task_id && (
-          <div className="mt-4 text-sm">
-            <span className="text-gray-500">Task: </span>
-            <span className="font-medium">
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Badge variant={entry.is_billable ? "default" : "outline"}>
+            {entry.is_billable ? 'Billable' : 'Non-Billable'}
+          </Badge>
+          
+          {company && (
+            <Badge variant="secondary" className="flex items-center">
+              <Briefcase className="h-3 w-3 mr-1" />
+              {company.name}
+            </Badge>
+          )}
+          
+          {campaign && (
+            <Badge variant="secondary" className="flex items-center">
+              <Tag className="h-3 w-3 mr-1" />
+              {campaign.name}
+            </Badge>
+          )}
+          
+          {entry.task_id && (
+            <Badge variant="secondary">
               {tasks.find(task => task.id === entry.task_id)?.title || 'Unknown task'}
-            </span>
-          </div>
-        )}
+            </Badge>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

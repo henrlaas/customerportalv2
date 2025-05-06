@@ -1,6 +1,7 @@
 
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -27,6 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Form,
   FormControl,
@@ -34,8 +36,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
-import { TimeEntry, Task } from '@/types/timeTracking';
+import { TimeEntry, Task, Company, Campaign } from '@/types/timeTracking';
 
 // Time entry form schema
 const timeEntrySchema = z.object({
@@ -43,6 +46,9 @@ const timeEntrySchema = z.object({
   start_time: z.string().min(1, { message: 'Start time is required' }),
   end_time: z.string().optional(),
   task_id: z.string().optional(),
+  is_billable: z.boolean().default(true),
+  company_id: z.string().optional(),
+  campaign_id: z.string().optional(),
 });
 
 type TimeEntryFormProps = {
@@ -53,6 +59,8 @@ type TimeEntryFormProps = {
   currentEntry?: TimeEntry | null;
   onCancelEdit?: () => void;
   tasks?: Task[];
+  companies?: Company[];
+  campaigns?: Campaign[];
 };
 
 export const TimeEntryForm = ({
@@ -62,22 +70,47 @@ export const TimeEntryForm = ({
   setIsEditing = () => {},
   currentEntry = null,
   onCancelEdit = () => {},
-  tasks = []
+  tasks = [],
+  companies = [],
+  campaigns = []
 }: TimeEntryFormProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([]);
 
   // Form for creating/editing time entries
   const form = useForm({
     resolver: zodResolver(timeEntrySchema),
     defaultValues: {
       description: currentEntry?.description || '',
-      start_time: currentEntry?.start_time || new Date().toISOString(),
-      end_time: currentEntry?.end_time || '',
+      start_time: currentEntry?.start_time || new Date().toISOString().substring(0, 16),
+      end_time: currentEntry?.end_time ? currentEntry.end_time.substring(0, 16) : '',
       task_id: currentEntry?.task_id || undefined,
+      is_billable: currentEntry?.is_billable !== undefined ? currentEntry.is_billable : true,
+      company_id: currentEntry?.company_id || undefined,
+      campaign_id: currentEntry?.campaign_id || undefined,
     },
   });
+
+  // Watch company_id to filter campaigns
+  const selectedCompanyId = form.watch('company_id');
+  
+  useEffect(() => {
+    if (selectedCompanyId) {
+      const filtered = campaigns.filter(campaign => campaign.company_id === selectedCompanyId);
+      setFilteredCampaigns(filtered);
+      
+      // If the current campaign is not for this company, reset it
+      const currentCampaignId = form.getValues('campaign_id');
+      if (currentCampaignId && !filtered.some(c => c.id === currentCampaignId)) {
+        form.setValue('campaign_id', undefined);
+      }
+    } else {
+      setFilteredCampaigns([]);
+      form.setValue('campaign_id', undefined);
+    }
+  }, [selectedCompanyId, campaigns, form]);
 
   // Create time entry mutation
   const createMutation = useMutation({
@@ -92,6 +125,9 @@ export const TimeEntryForm = ({
           end_time: values.end_time || null,
           task_id: values.task_id === 'no-task' ? null : values.task_id || null,
           user_id: user.id,
+          is_billable: values.is_billable,
+          company_id: values.company_id || null,
+          campaign_id: values.campaign_id || null,
         }])
         .select();
       
@@ -104,6 +140,7 @@ export const TimeEntryForm = ({
         description: 'Your time entry has been created successfully.',
       });
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
+      queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
       setIsCreating(false);
       form.reset();
     },
@@ -128,6 +165,9 @@ export const TimeEntryForm = ({
           start_time: values.start_time,
           end_time: values.end_time || null,
           task_id: values.task_id === 'no-task' ? null : values.task_id || null,
+          is_billable: values.is_billable,
+          company_id: values.company_id || null,
+          campaign_id: values.campaign_id || null,
         })
         .eq('id', currentEntry.id)
         .select();
@@ -141,6 +181,7 @@ export const TimeEntryForm = ({
         description: 'Your time entry has been updated successfully.',
       });
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
+      queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
       setIsEditing(false);
       onCancelEdit();
       form.reset();
@@ -173,7 +214,7 @@ export const TimeEntryForm = ({
             Manual Entry
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Create Time Entry</DialogTitle>
             <DialogDescription>
@@ -195,6 +236,118 @@ export const TimeEntryForm = ({
                   </FormItem>
                 )}
               />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="start_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Time</FormLabel>
+                      <FormControl>
+                        <Input type="datetime-local" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="end_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Time</FormLabel>
+                      <FormControl>
+                        <Input type="datetime-local" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="is_billable"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Billable</FormLabel>
+                      <FormDescription>
+                        Mark this time entry as billable
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="company_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a company (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="no-company">No company</SelectItem>
+                        {companies.map(company => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="campaign_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Campaign</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                      disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a campaign (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="no-campaign">No campaign</SelectItem>
+                        {filteredCampaigns.map(campaign => (
+                          <SelectItem key={campaign.id} value={campaign.id}>
+                            {campaign.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="task_id"
@@ -224,34 +377,7 @@ export const TimeEntryForm = ({
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="start_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Time</FormLabel>
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="end_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Time</FormLabel>
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+
               <DialogFooter>
                 <DialogClose asChild>
                   <Button variant="outline" onClick={() => form.reset()}>Cancel</Button>
@@ -271,7 +397,7 @@ export const TimeEntryForm = ({
   if (isEditing) {
     return (
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Time Entry</DialogTitle>
             <DialogDescription>
@@ -293,6 +419,118 @@ export const TimeEntryForm = ({
                   </FormItem>
                 )}
               />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="start_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Time</FormLabel>
+                      <FormControl>
+                        <Input type="datetime-local" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="end_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Time</FormLabel>
+                      <FormControl>
+                        <Input type="datetime-local" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="is_billable"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Billable</FormLabel>
+                      <FormDescription>
+                        Mark this time entry as billable
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="company_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a company (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="no-company">No company</SelectItem>
+                        {companies.map(company => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="campaign_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Campaign</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                      disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a campaign (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="no-campaign">No campaign</SelectItem>
+                        {filteredCampaigns.map(campaign => (
+                          <SelectItem key={campaign.id} value={campaign.id}>
+                            {campaign.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="task_id"
@@ -322,34 +560,7 @@ export const TimeEntryForm = ({
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="start_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Time</FormLabel>
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="end_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Time</FormLabel>
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+
               <DialogFooter>
                 <DialogClose asChild>
                   <Button variant="outline" onClick={onCancelEdit}>
