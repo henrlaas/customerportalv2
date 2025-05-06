@@ -65,6 +65,8 @@ type Task = {
   updated_at: string;
   client_visible: boolean | null;
   related_type: string | null;
+  company_id: string | null;
+  project_id: string | null;
   assignees?: {
     id: string;
     user_id: string;
@@ -84,6 +86,18 @@ type Campaign = {
   id: string;
   name: string;
   company_id: string;
+};
+
+// Define Project type
+type Project = {
+  id: string;
+  name: string;
+};
+
+// Define Company type
+type Company = {
+  id: string;
+  name: string;
 };
 
 export const TasksPage = () => {
@@ -106,8 +120,8 @@ export const TasksPage = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
   
-  // State for view toggle (list or kanban)
-  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  // State for view toggle (list or kanban) - changed to kanban as default
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
 
   // Current user ID for task filtering
   const currentUserId = user?.id || '';
@@ -209,6 +223,50 @@ export const TasksPage = () => {
     },
   });
 
+  // Fetch projects for task related info
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .order('name');
+      
+      if (error) {
+        toast({
+          title: 'Error fetching projects',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return [];
+      }
+      
+      return data as Project[];
+    },
+  });
+
+  // Fetch companies for task related info
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name')
+        .order('name');
+      
+      if (error) {
+        toast({
+          title: 'Error fetching companies',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return [];
+      }
+      
+      return data as Company[];
+    },
+  });
+
   // Mutation for updating task status (for Kanban drag and drop)
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, status }: { taskId: string; status: string }) => {
@@ -277,6 +335,13 @@ export const TasksPage = () => {
       .filter((profile): profile is Contact => !!profile);
   };
 
+  // Function to get creator info
+  const getCreator = (creatorId: string | null) => {
+    if (!creatorId) return null;
+    
+    return profiles.find(p => p.id === creatorId) || null;
+  };
+
   // Function to get creator name
   const getCreatorName = (creatorId: string | null) => {
     if (!creatorId) return 'Unassigned';
@@ -289,10 +354,26 @@ export const TasksPage = () => {
   
   // Function to get campaign name
   const getCampaignName = (campaignId: string | null) => {
-    if (!campaignId) return 'None';
+    if (!campaignId) return null;
     
     const campaign = campaigns.find(c => c.id === campaignId);
-    return campaign ? campaign.name : 'Unknown Campaign';
+    return campaign ? campaign.name : null;
+  };
+
+  // Function to get project name
+  const getProjectName = (projectId: string | null) => {
+    if (!projectId) return null;
+    
+    const project = projects.find(p => p.id === projectId);
+    return project ? project.name : null;
+  };
+
+  // Function to get company name
+  const getCompanyName = (companyId: string | null) => {
+    if (!companyId) return null;
+    
+    const company = companies.find(c => c.id === companyId);
+    return company ? company.name : null;
   };
   
   // Helper function for status badge
@@ -335,21 +416,21 @@ export const TasksPage = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* View toggle switch */}
+          {/* View toggle switch - Order changed to Kanban first, then List */}
           <div className="flex items-center mr-2 bg-muted rounded-md p-1">
-            <div 
-              className={`flex items-center gap-1 px-3 py-1.5 rounded cursor-pointer ${viewMode === 'list' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4" />
-              <span className="text-sm hidden sm:inline">List</span>
-            </div>
             <div 
               className={`flex items-center gap-1 px-3 py-1.5 rounded cursor-pointer ${viewMode === 'kanban' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
               onClick={() => setViewMode('kanban')}
             >
               <KanbanSquare className="h-4 w-4" />
               <span className="text-sm hidden sm:inline">Kanban</span>
+            </div>
+            <div 
+              className={`flex items-center gap-1 px-3 py-1.5 rounded cursor-pointer ${viewMode === 'list' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4" />
+              <span className="text-sm hidden sm:inline">List</span>
             </div>
           </div>
 
@@ -379,6 +460,8 @@ export const TasksPage = () => {
                 }}
                 profiles={profiles}
                 campaigns={campaigns}
+                projects={projects}
+                companies={companies}
               />
             </DialogContent>
           </Dialog>
@@ -454,6 +537,10 @@ export const TasksPage = () => {
           getStatusBadge={getStatusBadge}
           getPriorityBadge={getPriorityBadge}
           getTaskAssignees={getTaskAssignees}
+          getCreator={getCreator}
+          getCompanyName={getCompanyName}
+          getCampaignName={getCampaignName}
+          getProjectName={getProjectName}
           profiles={profiles}
           onTaskClick={handleTaskClick}
           onTaskMove={handleTaskStatusChange}
