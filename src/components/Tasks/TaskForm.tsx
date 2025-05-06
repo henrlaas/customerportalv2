@@ -54,36 +54,12 @@ type Campaign = {
   company_id: string;
 };
 
-// Define Project type if it's missing
-interface Project {
-  id: string;
-  name: string;
-}
-
-// Define Task type for editing
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  status: 'todo' | 'in_progress' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-  due_date: string | null;
-  campaign_id: string | null;
-  project_id: string | null;
-  client_visible: boolean | null;
-  company_id: string | null;
-  creator_id: string | null;
-  related_type: string | null;
-  assignees?: { id: string; user_id: string }[];
-}
-
 type TaskFormProps = {
   onSuccess: () => void;
+  taskId?: string;
+  initialData?: any;
   profiles: Contact[];
   campaigns: Campaign[];
-  projects?: Project[];
-  companies?: Company[];
-  initialData?: Task;
 };
 
 // Define the task schema for form validation
@@ -102,33 +78,32 @@ const taskSchema = z.object({
 
 export const TaskForm: React.FC<TaskFormProps> = ({
   onSuccess,
+  taskId,
+  initialData,
   profiles,
   campaigns,
-  projects = [],
-  companies = [],
-  initialData,
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isEditing = !!initialData;
+  const isEditing = !!taskId;
   const [loadingAssignees, setLoadingAssignees] = useState(isEditing);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
 
   // Fetch companies
-  const { companies: companiesList, isLoading: isLoadingCompanies } = useCompanyList(showSubsidiaries);
+  const { companies, isLoading: isLoadingCompanies } = useCompanyList(showSubsidiaries);
 
   // Fetch existing task assignees if editing
   const [existingAssignees, setExistingAssignees] = useState<string[]>([]);
 
   useEffect(() => {
-    if (isEditing && initialData) {
+    if (isEditing && taskId) {
       const fetchTaskAssignees = async () => {
         try {
           const { data, error } = await supabase
             .from('task_assignees')
             .select('user_id')
-            .eq('task_id', initialData.id);
+            .eq('task_id', taskId);
 
           if (error) throw error;
           
@@ -147,7 +122,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     } else {
       setLoadingAssignees(false);
     }
-  }, [isEditing, initialData]);
+  }, [isEditing, taskId]);
 
   // Set up the form
   const form = useForm<z.infer<typeof taskSchema>>({
@@ -214,7 +189,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         const { data: result, error } = await supabase
           .from('tasks')
           .update(taskData)
-          .eq('id', initialData.id)
+          .eq('id', taskId)
           .select()
           .single();
         
@@ -233,11 +208,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       }
       
       // Now handle assignees - first remove existing assignees if updating
-      if (isEditing && initialData) {
+      if (isEditing && taskId) {
         const { error: deleteError } = await supabase
           .from('task_assignees')
           .delete()
-          .eq('task_id', initialData.id);
+          .eq('task_id', taskId);
         
         if (deleteError) throw deleteError;
       }
@@ -245,7 +220,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       // Insert new assignees
       if (data.assignees && data.assignees.length > 0 && taskResult && taskResult.id) {
         const assigneesData = data.assignees.map(userId => ({
-          task_id: isEditing ? initialData.id : taskResult.id,
+          task_id: isEditing ? taskId : taskResult.id,
           user_id: userId
         }));
         
@@ -425,7 +400,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 <FormLabel>Company</FormLabel>
                 <FormControl>
                   <CompanySelector
-                    companies={companiesList}
+                    companies={companies}
                     selectedCompanyId={field.value || null}
                     onSelect={(companyId) => field.onChange(companyId)}
                     showSubsidiaries={showSubsidiaries}

@@ -30,12 +30,6 @@ interface Task {
   status: 'todo' | 'in_progress' | 'completed';
   priority: string;
   due_date: string | null;
-  campaign_id: string | null;
-  project_id: string | null;
-  company_id: string | null;
-  creator_id: string | null;
-  client_visible: boolean | null;
-  related_type: string | null;
   assignees?: { id: string; user_id: string }[];
 }
 
@@ -55,10 +49,6 @@ interface TaskKanbanViewProps {
   getStatusBadge: (status: string) => React.ReactNode;
   getPriorityBadge: (priority: string) => React.ReactNode;
   getTaskAssignees: (task: Task) => Contact[];
-  getCreator: (creatorId: string | null) => Contact | null;
-  getCompanyName: (companyId: string | null) => string | null;
-  getCampaignName: (campaignId: string | null) => string | null;
-  getProjectName: (projectId: string | null) => string | null;
   profiles: Contact[];
   onTaskClick: (taskId: string) => void;
   onTaskMove: (taskId: string, newStatus: string) => void;
@@ -69,10 +59,6 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   getStatusBadge,
   getPriorityBadge,
   getTaskAssignees,
-  getCreator,
-  getCompanyName,
-  getCampaignName,
-  getProjectName,
   profiles,
   onTaskClick,
   onTaskMove,
@@ -215,10 +201,6 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
           getStatusBadge={getStatusBadge}
           getPriorityBadge={getPriorityBadge}
           getTaskAssignees={getTaskAssignees}
-          getCreator={getCreator}
-          getCompanyName={getCompanyName}
-          getCampaignName={getCampaignName}
-          getProjectName={getProjectName}
           onTaskClick={onTaskClick}
           activeId={activeId}
         />
@@ -232,10 +214,6 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
           getStatusBadge={getStatusBadge}
           getPriorityBadge={getPriorityBadge}
           getTaskAssignees={getTaskAssignees}
-          getCreator={getCreator}
-          getCompanyName={getCompanyName}
-          getCampaignName={getCampaignName}
-          getProjectName={getProjectName}
           onTaskClick={onTaskClick}
           activeId={activeId}
         />
@@ -249,10 +227,6 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
           getStatusBadge={getStatusBadge}
           getPriorityBadge={getPriorityBadge}
           getTaskAssignees={getTaskAssignees}
-          getCreator={getCreator}
-          getCompanyName={getCompanyName}
-          getCampaignName={getCampaignName} 
-          getProjectName={getProjectName}
           onTaskClick={onTaskClick}
           activeId={activeId}
         />
@@ -267,10 +241,6 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
               getStatusBadge={getStatusBadge}
               getPriorityBadge={getPriorityBadge}
               getTaskAssignees={getTaskAssignees}
-              getCreator={getCreator}
-              getCompanyName={getCompanyName}
-              getCampaignName={getCampaignName}
-              getProjectName={getProjectName}
               onClick={() => {}}
               isDragging={true}
             />
@@ -289,10 +259,6 @@ interface TaskStatusColumnProps {
   getStatusBadge: (status: string) => React.ReactNode;
   getPriorityBadge: (priority: string) => React.ReactNode;
   getTaskAssignees: (task: Task) => Contact[];
-  getCreator: (creatorId: string | null) => Contact | null;
-  getCompanyName: (companyId: string | null) => string | null;
-  getCampaignName: (campaignId: string | null) => string | null;
-  getProjectName: (projectId: string | null) => string | null;
   onTaskClick: (taskId: string) => void;
   activeId: string | null;
 }
@@ -305,10 +271,6 @@ const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
   getStatusBadge,
   getPriorityBadge,
   getTaskAssignees,
-  getCreator,
-  getCompanyName,
-  getCampaignName,
-  getProjectName,
   onTaskClick,
   activeId
 }) => {
@@ -337,10 +299,6 @@ const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
                 getStatusBadge={getStatusBadge}
                 getPriorityBadge={getPriorityBadge}
                 getTaskAssignees={getTaskAssignees}
-                getCreator={getCreator}
-                getCompanyName={getCompanyName}
-                getCampaignName={getCampaignName}
-                getProjectName={getProjectName}
                 onClick={() => onTaskClick(task.id)}
                 isDragging={activeId === task.id}
               />
