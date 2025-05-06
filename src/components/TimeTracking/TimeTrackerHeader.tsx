@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Play, Square, Clock, ListIcon, Calendar } from 'lucide-react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
@@ -155,7 +156,7 @@ export const TimeTrackerHeader = ({
         <div className="w-full">
           <h2 className="text-xl font-bold mb-2">Time Tracker</h2>
           <div className="flex gap-2 items-center">
-            <div className="relative flex-grow">
+            <div className="relative w-3/4">
               <Input
                 type="text"
                 placeholder="What are you working on?"

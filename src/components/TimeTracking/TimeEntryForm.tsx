@@ -89,6 +89,14 @@ export const TimeEntryForm = ({
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   const [canBeBillable, setCanBeBillable] = useState(false);
 
+  // Format dates properly for input fields
+  const formatDateForInput = (dateString: string | null) => {
+    if (!dateString) return '';
+    // Format date to yyyy-MM-ddThh:mm format for datetime-local input
+    const date = new Date(dateString);
+    return date.toISOString().substring(0, 16);
+  };
+
   // Use the useCompanyList hook directly which returns the right Company type
   const { data: allCompanies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companyList', { showSubsidiaries }],
@@ -116,8 +124,8 @@ export const TimeEntryForm = ({
     resolver: zodResolver(timeEntrySchema),
     defaultValues: {
       description: currentEntry?.description || '',
-      start_time: currentEntry?.start_time || new Date().toISOString().substring(0, 16),
-      end_time: currentEntry?.end_time ? currentEntry.end_time.substring(0, 16) : '',
+      start_time: formatDateForInput(currentEntry?.start_time) || new Date().toISOString().substring(0, 16),
+      end_time: formatDateForInput(currentEntry?.end_time) || '',
       task_id: currentEntry?.task_id || undefined,
       is_billable: currentEntry?.is_billable !== undefined ? currentEntry.is_billable : false,
       company_id: currentEntry?.company_id || undefined,
