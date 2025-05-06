@@ -590,8 +590,8 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                             <span>
                               {task.related_type === 'campaign' && task.campaign_id 
                                 ? getCampaignName(task.campaign_id) 
-                                : task.related_type === 'project' && task.project_id
-                                  ? getProjectName(task.project_id)
+                                : task.related_type === 'project'
+                                  ? 'Unknown Project' // Previously trying to access task.project_id which doesn't exist
                                   : 'None'}
                             </span>
                           </div>
