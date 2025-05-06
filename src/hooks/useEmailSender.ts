@@ -31,10 +31,22 @@ export const useEmailSender = (options?: UseEmailSenderOptions) => {
         to: emailData.to,
         subject: emailData.subject,
         htmlLength: emailData.html ? emailData.html.length : 0,
+        textLength: emailData.text ? emailData.text.length : 0
       });
       
+      // Make sure we're sending properly structured data to the edge function
+      const cleanedData = {
+        to: emailData.to,
+        subject: emailData.subject,
+        text: emailData.text || undefined,
+        html: emailData.html || undefined,
+        cc: emailData.cc || undefined,
+        bcc: emailData.bcc || undefined,
+        attachments: emailData.attachments || undefined,
+      };
+      
       const { data, error } = await supabase.functions.invoke('send-email', {
-        body: emailData,
+        body: cleanedData,
       });
       
       if (error) {

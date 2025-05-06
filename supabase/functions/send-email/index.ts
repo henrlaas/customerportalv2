@@ -67,7 +67,7 @@ serve(async (req) => {
     console.log("Email subject:", subject);
     console.log("HTML content length:", html ? html.length : 0);
 
-    // Send email with proper content type headers
+    // Send email without forcing transfer encoding to ensure proper HTML rendering
     await client.send({
       from: formattedFrom,
       to: Array.isArray(to) ? to : [to],
@@ -76,10 +76,9 @@ serve(async (req) => {
       subject: subject,
       content: text || "Please view this email with an HTML-compatible email client.",
       html: html || undefined,
-      // Explicitly set content headers
-      headers: {
-        "Content-Type": "text/html; charset=UTF-8",
-      },
+      // Set the HTML content type but do not specify a transfer encoding
+      // This allows the email client to determine the best encoding
+      contentType: "text/html; charset=utf-8",
     });
 
     await client.close();

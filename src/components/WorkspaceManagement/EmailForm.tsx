@@ -59,77 +59,42 @@ export const EmailForm = () => {
   const onSubmit = (data: EmailFormValues) => {
     setIsSending(true);
     
-    // Create HTML email using the template from settings or fallback to default
-    let htmlTemplate = emailTemplate;
+    // Create HTML email using the template from settings or fallback to a basic template
+    let htmlContent = '';
     
-    if (!htmlTemplate) {
-      // Default template as fallback
-      htmlTemplate = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email from Box Workspace</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333333;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-        }
-        .logo {
-            text-align: center;
-            padding: 20px 0;
-        }
-        .content {
-            padding: 20px;
-        }
-        .footer {
-            text-align: center;
-            padding: 20px;
-            font-size: 12px;
-            color: #999999;
-            border-top: 1px solid #eeeeee;
-            margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="logo">
-            <img src="https://shorturl.at/7WV73" alt="Box Marketing AS" width="150" />
-        </div>
-        <div class="content">
-            <h2>Hello 👋</h2>
-            <p>${data.message}</p>
-            <p>Thank you,<br>The Box Team</p>
-        </div>
-        <div class="footer">
-            <p>This email was sent to you because you have an association with Box Marketing AS.</p>
-            <p>© 2025 Box Marketing AS. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>
-      `;
-    } else {
-      // Properly replace placeholders in the template
-      // Use regex to ensure all instances are replaced
-      htmlTemplate = htmlTemplate
-        .replace(/\${data\.message}/g, data.message)
+    if (emailTemplate) {
+      // Replace template variables with actual content
+      htmlContent = emailTemplate
+        .replace(/\${data\.message}/g, data.message.replace(/\n/g, '<br>'))
         .replace(/\${data\.subject}/g, data.subject);
+    } else {
+      // Simple fallback template
+      htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>${data.subject}</title>
+        </head>
+        <body>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2>Hello 👋</h2>
+                <div style="margin: 20px 0;">
+                    ${data.message.replace(/\n/g, '<br>')}
+                </div>
+                <p>Thank you,<br>The Box Team</p>
+                <hr style="margin-top: 20px; border: 0; border-top: 1px solid #eee;">
+                <p style="font-size: 12px; color: #666;">
+                    This email was sent to you because you have an association with Box Marketing AS.<br>
+                    © 2025 Box Marketing AS. All rights reserved.
+                </p>
+            </div>
+        </body>
+        </html>
+      `.trim();
     }
 
-    // Generate a clean plain text version without HTML tags
+    // Generate a clean plain text version
     const plainTextMessage = `
 Hello 👋
 
@@ -145,12 +110,12 @@ This email was sent to you because you have an association with Box Marketing AS
     const emailData: EmailData = {
       to: data.to,
       subject: data.subject,
-      html: htmlTemplate,
+      html: htmlContent,
       text: plainTextMessage
     };
 
     console.log("Sending email to:", data.to);
-    console.log("Using template:", htmlTemplate.substring(0, 100) + "...");
+    console.log("Email template being used:", htmlContent.substring(0, 100) + "...");
     sendEmail(emailData);
   };
 
