@@ -1,9 +1,6 @@
 
 // API route that fetches SMS credits from the external service
 
-// Use https module as recommended
-const https = require('https');
-
 export default function handler(req, res) {
      // Use https module instead of axios to have more control over the response
     const https = require('https');
@@ -38,4 +35,4 @@ export default function handler(req, res) {
     res.status(500).send('Error fetching SMS count');
   }
 });
-}
+
