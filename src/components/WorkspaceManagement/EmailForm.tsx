@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Mail } from "lucide-react";
 import { useEmailSender, EmailData } from "@/hooks/useEmailSender";
+import { workspaceService } from "@/services/workspaceService";
 
 interface EmailFormValues {
   to: string;
@@ -16,6 +17,8 @@ interface EmailFormValues {
 
 export const EmailForm = () => {
   const [isSending, setIsSending] = useState(false);
+  const [emailTemplate, setEmailTemplate] = useState<string | null>(null);
+  
   const form = useForm<EmailFormValues>({
     defaultValues: {
       to: "",
@@ -23,6 +26,23 @@ export const EmailForm = () => {
       message: ""
     }
   });
+
+  // Fetch the email template from workspace settings
+  useEffect(() => {
+    const fetchTemplate = async () => {
+      try {
+        const settings = await workspaceService.getSettings();
+        const templateSetting = settings.find(s => s.setting_key === 'email.template.default');
+        if (templateSetting) {
+          setEmailTemplate(templateSetting.setting_value);
+        }
+      } catch (error) {
+        console.error("Failed to load email template:", error);
+      }
+    };
+
+    fetchTemplate();
+  }, []);
 
   const { mutate: sendEmail } = useEmailSender({
     onSuccess: () => {
@@ -39,8 +59,12 @@ export const EmailForm = () => {
   const onSubmit = (data: EmailFormValues) => {
     setIsSending(true);
     
-    // Create HTML email using the template
-    const htmlTemplate = `
+    // Create HTML email using the template from settings or fallback to default
+    let htmlTemplate = emailTemplate;
+    
+    if (!htmlTemplate) {
+      // Default template as fallback
+      htmlTemplate = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -183,7 +207,12 @@ export const EmailForm = () => {
     </div>
 </body>
 </html>
-    `;
+      `;
+    } else {
+      // Replace placeholders in the template
+      htmlTemplate = htmlTemplate.replace(/\${data\.message}/g, data.message)
+                                .replace(/\${data\.subject}/g, data.subject);
+    }
 
     const emailData: EmailData = {
       to: data.to,

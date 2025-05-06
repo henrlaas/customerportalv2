@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
 import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
 import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
 import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
-import { EmailForm } from "@/components/WorkspaceManagement/EmailForm";
+import { EmailToolsTab } from "@/components/WorkspaceManagement/EmailToolsTab";
 import { SmsToolsTab } from "@/components/WorkspaceManagement/SmsToolsTab";
 import {
   Settings,
@@ -191,25 +190,7 @@ const WorkspaceManagementPage = () => {
         </TabsContent>
 
         <TabsContent value="email-tools">
-          <div className="grid gap-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Email Tools
-            </h2>
-            <p className="text-muted-foreground">
-              Send emails directly from your workspace.
-            </p>
-            <Separator />
-          </div>
-
-          <Card className="bg-white shadow-md">
-            <CardHeader>
-              <CardTitle>Send Email</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <EmailForm />
-            </CardContent>
-          </Card>
+          <EmailToolsTab />
         </TabsContent>
         
         <TabsContent value="sms-tools">
