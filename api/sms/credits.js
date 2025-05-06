@@ -2,7 +2,8 @@
 // API route that fetches SMS credits from the external service
 
 export default function handler(req, res) {
-     // Use https module instead of axios to have more control over the response
+  try {
+    // Use https module instead of axios to have more control over the response
     const https = require('https');
     
     // Create a promise to handle the request
@@ -26,13 +27,18 @@ export default function handler(req, res) {
       });
     };
     
-    const count = await fetchSMSCount();
-    
-    // Return the data from the external API as plain text
-    res.send(count);
+    // Use async/await with the fetchSMSCount function
+    fetchSMSCount()
+      .then(count => {
+        // Return the data from the external API as plain text
+        res.send(count);
+      })
+      .catch(error => {
+        console.error('Error fetching SMS count:', error.message);
+        res.status(500).send('Error fetching SMS count');
+      });
   } catch (error) {
-    console.error('Error fetching SMS count:', error.message);
-    res.status(500).send('Error fetching SMS count');
+    console.error('Error in SMS count handler:', error.message);
+    res.status(500).send('Error processing SMS count request');
   }
-});
-
+}
