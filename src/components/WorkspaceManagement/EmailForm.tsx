@@ -41,7 +41,6 @@ export const EmailForm = () => {
     
     // Create HTML email using the template
     const htmlTemplate = `
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
