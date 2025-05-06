@@ -507,7 +507,7 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                     </TabsTrigger>
                   </TabsList>
                   
-                  {/* Details Tab - Improved layout */}
+                  {/* Details Tab - Modified layout */}
                   <TabsContent value="details" className="space-y-4 pt-4">
                     <div className="bg-gray-50 p-4 rounded-lg border">
                       {/* Due date and Created date - Side by side */}
@@ -563,32 +563,40 @@ export const TaskDetailSheet = ({ isOpen, onOpenChange, taskId }: TaskDetailShee
                         </div>
                       </div>
                       
-                      {/* Company information if available */}
-                      {company && (
+                      {/* Company and Campaign/Project - Side by side */}
+                      <div className="grid grid-cols-2 gap-6 mb-6">
+                        {/* Company information */}
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground font-medium">COMPANY</p>
                           <div className="flex items-center text-sm">
                             <Building className="h-4 w-4 text-muted-foreground mr-2" />
-                            <span>{company.name}</span>
-                            {company.parent_id && (
+                            <span>{company ? company.name : 'No company'}</span>
+                            {company && company.parent_id && (
                               <Badge variant="outline" className="ml-2 text-xs bg-gray-100">
                                 Subsidiary
                               </Badge>
                             )}
                           </div>
                         </div>
-                      )}
-                      
-                      {/* Campaign relation if available */}
-                      {task.campaign_id && (
-                        <div className="space-y-1 mt-6">
-                          <p className="text-xs text-muted-foreground font-medium">CAMPAIGN</p>
+                        
+                        {/* Campaign or Project relation */}
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">
+                            {task.related_type === 'campaign' ? 'CAMPAIGN' : 
+                             task.related_type === 'project' ? 'PROJECT' : 'RELATED TO'}
+                          </p>
                           <div className="flex items-center text-sm">
                             <LinkIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                            <span>{getCampaignName(task.campaign_id)}</span>
+                            <span>
+                              {task.related_type === 'campaign' && task.campaign_id 
+                                ? getCampaignName(task.campaign_id) 
+                                : task.related_type === 'project' && task.project_id
+                                  ? getProjectName(task.project_id)
+                                  : 'None'}
+                            </span>
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </TabsContent>
                   

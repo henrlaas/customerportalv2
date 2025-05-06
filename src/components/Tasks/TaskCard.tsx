@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, AlertCircle, Eye, EyeOff, Building2, Link } from 'lucide-react';
+import { Calendar, Clock, AlertCircle, Eye, EyeOff, Building, Link } from 'lucide-react';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -162,7 +162,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               
               {companyName && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Building2 className="h-3 w-3" />
+                  <Building className="h-3 w-3" />
                   <span className="truncate max-w-[120px]">{companyName}</span>
                 </div>
               )}
