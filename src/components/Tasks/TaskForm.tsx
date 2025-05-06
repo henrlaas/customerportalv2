@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Form,
   FormControl,
@@ -30,6 +37,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CompanySelector } from './CompanySelector';
 import { useCompanyList } from '@/hooks/useCompanyList';
 import { Company } from '@/types/company';
+import { cn } from '@/lib/utils';
 
 // Define types
 type Contact = {
@@ -350,7 +358,34 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               <FormItem>
                 <FormLabel>Due Date</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} value={field.value || ''} />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          "flex h-10 rounded-md border border-input bg-background px-3 py-2",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-70" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 shadow-md border border-input rounded-md bg-background" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value ? new Date(field.value) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            field.onChange(format(date, "yyyy-MM-dd"));
+                          }
+                        }}
+                        initialFocus
+                        className="p-3 pointer-events-auto rounded-md"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </FormControl>
                 <FormMessage />
               </FormItem>
