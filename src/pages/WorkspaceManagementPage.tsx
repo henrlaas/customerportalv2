@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
@@ -95,8 +96,8 @@ const WorkspaceManagementPage = () => {
     }
   };
 
-  // Get settings by category
-  const allSettings = settings;
+  // Get settings by category, filtering out the email.template.default
+  const allSettings = settings.filter(setting => setting.setting_key !== 'email.template.default');
 
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading workspace settings...</div>;
