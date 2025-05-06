@@ -193,13 +193,20 @@ export const TasksPage = () => {
   // Mutation for updating task status (for Kanban drag and drop)
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, status }: { taskId: string; status: string }) => {
+      console.log(`Updating task ${taskId} to status: ${status}`);
+      
       const { data, error } = await supabase
         .from('tasks')
-        .update({ status })
+        .update({ status, updated_at: new Date().toISOString() })
         .eq('id', taskId)
         .select();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating task status:', error);
+        throw error;
+      }
+      
+      console.log('Task updated successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -226,6 +233,7 @@ export const TasksPage = () => {
 
   // Function to handle task status change (for Kanban view)
   const handleTaskStatusChange = (taskId: string, newStatus: string) => {
+    console.log(`TasksPage: Moving task ${taskId} to status: ${newStatus}`);
     updateTaskMutation.mutate({ taskId, status: newStatus });
   };
   

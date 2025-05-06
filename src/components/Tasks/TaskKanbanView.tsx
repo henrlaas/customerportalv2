@@ -11,6 +11,7 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
+  useDroppable
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -63,6 +64,16 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   onTaskMove,
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [localTasks, setLocalTasks] = useState<{
+    todo: Task[];
+    in_progress: Task[];
+    completed: Task[];
+  }>(tasksByStatus);
+  
+  // Update local tasks when props change
+  React.useEffect(() => {
+    setLocalTasks(tasksByStatus);
+  }, [tasksByStatus]);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -90,8 +101,8 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
     
     // If the task is dragged over a container (status column)
     if (overId === 'todo' || overId === 'in_progress' || overId === 'completed') {
-      // We don't need to do any additional processing here as we'll handle the actual
-      // status update in handleDragEnd
+      // We'll handle the actual status update in handleDragEnd
+      console.log(`Task ${activeId} dragged over ${overId} status column`);
     }
   };
 
@@ -107,10 +118,46 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
     const taskId = active.id as string;
     const overId = over.id;
     
-    // Only update if dropping in a valid container
+    // Only update if dropping in a valid status container
     if (overId === 'todo' || overId === 'in_progress' || overId === 'completed') {
-      // Update task status in the database
-      onTaskMove(taskId, overId as string);
+      // Find the task in our local state
+      const findTaskStatus = Object.entries(localTasks).find(([status, tasks]) => 
+        tasks.some(task => task.id === taskId)
+      );
+      
+      if (findTaskStatus) {
+        const [currentStatus] = findTaskStatus;
+        
+        // Only proceed if the status has changed
+        if (currentStatus !== overId) {
+          console.log(`Moving task ${taskId} from ${currentStatus} to ${overId}`);
+          
+          // Get the task object
+          const task = localTasks[currentStatus as keyof typeof localTasks].find(t => t.id === taskId);
+          
+          if (task) {
+            // Update local state for immediate UI feedback (optimistic update)
+            setLocalTasks(prev => {
+              // Remove from current status
+              const updatedPrev = {
+                ...prev,
+                [currentStatus]: prev[currentStatus as keyof typeof prev].filter(t => t.id !== taskId)
+              };
+              
+              // Add to new status with updated status property
+              updatedPrev[overId as keyof typeof updatedPrev] = [
+                ...updatedPrev[overId as keyof typeof updatedPrev],
+                { ...task, status: overId as 'todo' | 'in_progress' | 'completed' }
+              ];
+              
+              return updatedPrev;
+            });
+            
+            // Call the prop to update in the database
+            onTaskMove(taskId, overId as string);
+          }
+        }
+      }
     }
     
     setActiveId(null);
@@ -128,9 +175,9 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
     if (!activeId) return null;
     
     return [
-      ...tasksByStatus.todo,
-      ...tasksByStatus.in_progress,
-      ...tasksByStatus.completed
+      ...localTasks.todo,
+      ...localTasks.in_progress,
+      ...localTasks.completed
     ].find(task => task.id === activeId);
   };
 
@@ -146,97 +193,43 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Todo column */}
-        <div id="todo" className="bg-muted/30 rounded-lg p-4">
-          <div className="flex items-center mb-4">
-            <h3 className="font-medium">Todo</h3>
-            {getCountBadge(tasksByStatus.todo.length)}
-          </div>
-          <SortableContext 
-            items={tasksByStatus.todo.map(task => task.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-2">
-              {tasksByStatus.todo.map(task => (
-                <TaskCard 
-                  key={task.id}
-                  task={task}
-                  getStatusBadge={getStatusBadge}
-                  getPriorityBadge={getPriorityBadge}
-                  getTaskAssignees={getTaskAssignees}
-                  onClick={() => onTaskClick(task.id)}
-                  isDragging={activeId === task.id}
-                />
-              ))}
-              {tasksByStatus.todo.length === 0 && (
-                <div className="bg-background p-4 rounded-md border border-dashed border-border text-center text-muted-foreground">
-                  No tasks
-                </div>
-              )}
-            </div>
-          </SortableContext>
-        </div>
+        <TaskStatusColumn 
+          id="todo"
+          title="Todo"
+          tasks={localTasks.todo}
+          getCountBadge={getCountBadge}
+          getStatusBadge={getStatusBadge}
+          getPriorityBadge={getPriorityBadge}
+          getTaskAssignees={getTaskAssignees}
+          onTaskClick={onTaskClick}
+          activeId={activeId}
+        />
         
         {/* In Progress column */}
-        <div id="in_progress" className="bg-muted/30 rounded-lg p-4">
-          <div className="flex items-center mb-4">
-            <h3 className="font-medium">In Progress</h3>
-            {getCountBadge(tasksByStatus.in_progress.length)}
-          </div>
-          <SortableContext 
-            items={tasksByStatus.in_progress.map(task => task.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-2">
-              {tasksByStatus.in_progress.map(task => (
-                <TaskCard 
-                  key={task.id}
-                  task={task}
-                  getStatusBadge={getStatusBadge}
-                  getPriorityBadge={getPriorityBadge}
-                  getTaskAssignees={getTaskAssignees}
-                  onClick={() => onTaskClick(task.id)}
-                  isDragging={activeId === task.id}
-                />
-              ))}
-              {tasksByStatus.in_progress.length === 0 && (
-                <div className="bg-background p-4 rounded-md border border-dashed border-border text-center text-muted-foreground">
-                  No tasks
-                </div>
-              )}
-            </div>
-          </SortableContext>
-        </div>
+        <TaskStatusColumn 
+          id="in_progress"
+          title="In Progress"
+          tasks={localTasks.in_progress}
+          getCountBadge={getCountBadge}
+          getStatusBadge={getStatusBadge}
+          getPriorityBadge={getPriorityBadge}
+          getTaskAssignees={getTaskAssignees}
+          onTaskClick={onTaskClick}
+          activeId={activeId}
+        />
         
         {/* Completed column */}
-        <div id="completed" className="bg-muted/30 rounded-lg p-4">
-          <div className="flex items-center mb-4">
-            <h3 className="font-medium">Completed</h3>
-            {getCountBadge(tasksByStatus.completed.length)}
-          </div>
-          <SortableContext 
-            items={tasksByStatus.completed.map(task => task.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-2">
-              {tasksByStatus.completed.map(task => (
-                <TaskCard 
-                  key={task.id}
-                  task={task}
-                  getStatusBadge={getStatusBadge}
-                  getPriorityBadge={getPriorityBadge}
-                  getTaskAssignees={getTaskAssignees}
-                  onClick={() => onTaskClick(task.id)}
-                  isDragging={activeId === task.id}
-                />
-              ))}
-              {tasksByStatus.completed.length === 0 && (
-                <div className="bg-background p-4 rounded-md border border-dashed border-border text-center text-muted-foreground">
-                  No tasks
-                </div>
-              )}
-            </div>
-          </SortableContext>
-        </div>
+        <TaskStatusColumn 
+          id="completed"
+          title="Completed"
+          tasks={localTasks.completed}
+          getCountBadge={getCountBadge}
+          getStatusBadge={getStatusBadge}
+          getPriorityBadge={getPriorityBadge}
+          getTaskAssignees={getTaskAssignees}
+          onTaskClick={onTaskClick}
+          activeId={activeId}
+        />
       </div>
       
       {/* Add a DragOverlay component to show the task being dragged */}
@@ -255,5 +248,69 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
         ) : null}
       </DragOverlay>
     </DndContext>
+  );
+};
+
+interface TaskStatusColumnProps {
+  id: string;
+  title: string;
+  tasks: Task[];
+  getCountBadge: (count: number) => React.ReactNode;
+  getStatusBadge: (status: string) => React.ReactNode;
+  getPriorityBadge: (priority: string) => React.ReactNode;
+  getTaskAssignees: (task: Task) => Contact[];
+  onTaskClick: (taskId: string) => void;
+  activeId: string | null;
+}
+
+const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
+  id,
+  title,
+  tasks,
+  getCountBadge,
+  getStatusBadge,
+  getPriorityBadge,
+  getTaskAssignees,
+  onTaskClick,
+  activeId
+}) => {
+  // Set up droppable container for this status column
+  const { setNodeRef } = useDroppable({ id });
+
+  return (
+    <div id={id} className="bg-muted/30 rounded-lg p-4">
+      <div className="flex items-center mb-4">
+        <h3 className="font-medium">{title}</h3>
+        {getCountBadge(tasks.length)}
+      </div>
+      <div 
+        ref={setNodeRef}  
+        className="space-y-2 min-h-[300px]"
+      >
+        <SortableContext 
+          items={tasks.map(task => task.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-2">
+            {tasks.map(task => (
+              <TaskCard 
+                key={task.id}
+                task={task}
+                getStatusBadge={getStatusBadge}
+                getPriorityBadge={getPriorityBadge}
+                getTaskAssignees={getTaskAssignees}
+                onClick={() => onTaskClick(task.id)}
+                isDragging={activeId === task.id}
+              />
+            ))}
+            {tasks.length === 0 && (
+              <div className="bg-background p-4 rounded-md border border-dashed border-border text-center text-muted-foreground">
+                No tasks
+              </div>
+            )}
+          </div>
+        </SortableContext>
+      </div>
+    </div>
   );
 };
