@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { format } from 'date-fns';
 import { TimeEntry, Task, Campaign, ViewType } from '@/types/timeTracking';
 import { Company } from '@/types/company'; // Import the correct Company type
 import { TimeTrackerHeader } from '@/components/TimeTracking/TimeTrackerHeader';
@@ -198,15 +197,17 @@ const TimeTrackingPage = () => {
       )}
       
       {/* Edit Time Entry Dialog */}
-      <TimeEntryForm
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-        currentEntry={currentEntry}
-        onCancelEdit={handleCancelEdit}
-        tasks={tasks}
-        companies={companies}
-        campaigns={campaigns}
-      />
+      {isEditing && (
+        <TimeEntryForm
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
+          currentEntry={currentEntry}
+          onCancelEdit={handleCancelEdit}
+          tasks={tasks}
+          companies={companies}
+          campaigns={campaigns}
+        />
+      )}
     </div>
   );
 };

@@ -35,6 +35,8 @@ export const TimeTrackerHeader = ({
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
+  const [showEntryForm, setShowEntryForm] = useState(false);
+  const [completedEntry, setCompletedEntry] = useState<TimeEntry | null>(null);
   
   // Update description from active entry
   useEffect(() => {
@@ -102,11 +104,15 @@ export const TimeTrackerHeader = ({
       return data[0] as TimeEntry;
     },
     onSuccess: (data) => {
+      if (data) {
+        setCompletedEntry(data);
+        setShowEntryForm(true);
+      }
       setActiveEntry(null);
       setIsTracking(false);
       toast({
         title: 'Time tracking stopped',
-        description: 'Your time entry has been saved.',
+        description: 'Please provide additional details for your time entry.',
       });
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
@@ -125,10 +131,23 @@ export const TimeTrackerHeader = ({
     if (isTracking) {
       stopTracking.mutate();
     } else {
+      if (!description.trim()) {
+        toast({
+          title: 'Description required',
+          description: 'Please enter a description before starting time tracking.',
+          variant: 'destructive',
+        });
+        return;
+      }
       startTracking.mutate();
     }
   };
-  
+
+  const handleCompleteEdit = () => {
+    setShowEntryForm(false);
+    setCompletedEntry(null);
+  };
+
   return (
     <div className="mb-6 bg-white p-4 rounded-lg shadow">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -138,15 +157,17 @@ export const TimeTrackerHeader = ({
             <input
               type="text"
               placeholder="What are you working on?"
-              className="w-full border rounded px-3 py-2"
+              className={`w-full border rounded px-3 py-2 ${isTracking ? '' : 'border-primary'}`}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              disabled={!isTracking}
+              disabled={isTracking}
+              required
             />
             <Button
               onClick={handleToggleTracking}
               variant={isTracking ? "destructive" : "default"}
               className="whitespace-nowrap"
+              disabled={!isTracking && !description.trim()}
             >
               {isTracking ? (
                 <>
@@ -188,10 +209,23 @@ export const TimeTrackerHeader = ({
         </div>
       </div>
       
+      {/* Manual entry form */}
       <TimeEntryForm 
         isCreating={isCreating} 
-        setIsCreating={setIsCreating} 
+        setIsCreating={setIsCreating}
       />
+
+      {/* Form for completed entry */}
+      {completedEntry && (
+        <TimeEntryForm
+          isEditing={showEntryForm} 
+          setIsEditing={setShowEntryForm}
+          currentEntry={completedEntry}
+          onCancelEdit={handleCompleteEdit}
+          onComplete={handleCompleteEdit}
+          isCompletingTracking={true}
+        />
+      )}
     </div>
   );
 };

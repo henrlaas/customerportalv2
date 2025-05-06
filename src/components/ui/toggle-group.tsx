@@ -22,7 +22,7 @@ ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName
 const ToggleGroupItem = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> & 
-  Pick<ToggleProps, "variant" | "size"> // Use Pick to only include the variant and size props
+  { variant?: ToggleProps["variant"]; size?: ToggleProps["size"] }
 >(({ className, children, variant = "default", size = "default", ...props }, ref) => (
   <ToggleGroupPrimitive.Item
     ref={ref}
