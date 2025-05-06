@@ -55,7 +55,7 @@ export const CalendarView = ({ timeEntries, onEditEntry }: CalendarViewProps) =>
           components={{
             DayContent: (props) => (
               <div className="flex flex-col items-center">
-                <span>{props.date.getDate()}</span>
+                <span>{props.day}</span>
                 {getTotalHoursForDay(props.date) && (
                   <Badge variant="secondary" className="mt-1 text-xs">
                     {getTotalHoursForDay(props.date)}
