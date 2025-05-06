@@ -188,9 +188,7 @@ export const EmailForm = () => {
     const emailData: EmailData = {
       to: data.to,
       subject: data.subject,
-      html: htmlTemplate,
-      // Generate a simple plain text version as fallback for email clients that don't support HTML
-      text: `Hello 👋\n\n${data.message}\n\nThank you,\nThe Box Team\n\nThis email was sent to you because you have an association with Box Marketing AS.\n© 2025 Box Marketing AS. All rights reserved.`
+      html: htmlTemplate
     };
 
     console.log("Sending email to:", data.to);
