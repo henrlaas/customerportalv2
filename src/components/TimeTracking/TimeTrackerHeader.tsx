@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Play, Square, Clock, ListIcon, Calendar } from 'lucide-react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
@@ -171,7 +170,7 @@ export const TimeTrackerHeader = ({
               onClick={handleToggleTracking}
               variant={isTracking ? "destructive" : "default"}
               className="whitespace-nowrap"
-              disabled={!isTracking && !description.trim()}
+              disabled={!isTracking && description.trim() === ''}
             >
               {isTracking ? (
                 <>
