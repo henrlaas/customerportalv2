@@ -1161,10 +1161,13 @@ export type Database = {
       }
       time_entries: {
         Row: {
+          campaign_id: string | null
+          company_id: string | null
           created_at: string
           description: string | null
           end_time: string | null
           id: string
+          is_billable: boolean | null
           is_running: boolean | null
           start_time: string
           task_id: string | null
@@ -1172,10 +1175,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          campaign_id?: string | null
+          company_id?: string | null
           created_at?: string
           description?: string | null
           end_time?: string | null
           id?: string
+          is_billable?: boolean | null
           is_running?: boolean | null
           start_time: string
           task_id?: string | null
@@ -1183,10 +1189,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          campaign_id?: string | null
+          company_id?: string | null
           created_at?: string
           description?: string | null
           end_time?: string | null
           id?: string
+          is_billable?: boolean | null
           is_running?: boolean | null
           start_time?: string
           task_id?: string | null
@@ -1194,6 +1203,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "time_entries_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "time_entries_task_id_fkey"
             columns: ["task_id"]
@@ -1272,6 +1295,10 @@ export type Database = {
       get_employees_with_profiles: {
         Args: Record<PropertyKey, never>
         Returns: Json[]
+      }
+      get_monthly_hours: {
+        Args: { user_id_param: string; year_month: string }
+        Returns: number
       }
       get_user_display_name: {
         Args: { user_id: string }
