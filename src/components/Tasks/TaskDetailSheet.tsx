@@ -5,7 +5,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetTrigger,
   SheetFooter,
   SheetClose,
 } from "@/components/ui/sheet"
@@ -15,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { TaskForm } from '@/components/Tasks/TaskForm';
+import { Company } from '@/types/company';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -56,12 +56,6 @@ type Campaign = {
 
 // Define Project type
 type Project = {
-  id: string;
-  name: string;
-};
-
-// Define Company type
-type Company = {
   id: string;
   name: string;
 };
@@ -186,7 +180,34 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({ isOpen, onOpen
         return [];
       }
       
-      return data as Company[];
+      // We need to adapt the fetched companies to the expected Company type
+      // Only include the properties we actually need
+      return data.map(company => ({
+        id: company.id,
+        name: company.name,
+        // Include any other properties that are used but keep the type compatible
+        // with the imported Company type
+        website: null,
+        phone: null,
+        address: null,
+        logo_url: null,
+        parent_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        organization_number: null,
+        invoice_email: null,
+        street_address: null,
+        city: null,
+        postal_code: null,
+        country: null,
+        client_type: null,
+        is_marketing_client: false,
+        is_web_client: false,
+        mrr: null,
+        trial_period: null,
+        is_partner: null,
+        advisor_id: null,
+      })) as Company[];
     },
   });
 

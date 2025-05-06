@@ -48,6 +48,7 @@ import { Switch } from '@/components/ui/switch';
 import { TaskListView } from '@/components/Tasks/TaskListView';
 import { TaskKanbanView } from '@/components/Tasks/TaskKanbanView';
 import { useAuth } from '@/contexts/AuthContext';
+import { Company } from '@/types/company';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -101,6 +102,22 @@ type Company = {
   phone?: string;
   address?: string;
   logo_url?: string;
+  parent_id?: string;
+  created_at: string;
+  updated_at: string;
+  organization_number?: string;
+  invoice_email?: string;
+  street_address?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+  client_type?: string;
+  is_marketing_client: boolean;
+  is_web_client: boolean;
+  mrr?: number;
+  trial_period?: number;
+  is_partner?: boolean;
+  advisor_id?: string;
 };
 
 export const TasksPage = () => {
@@ -266,7 +283,34 @@ export const TasksPage = () => {
         return [];
       }
       
-      return data as Company[];
+      // We need to adapt the fetched companies to the expected Company type
+      // Only include the properties we actually need
+      return data.map(company => ({
+        id: company.id,
+        name: company.name,
+        // Include other necessary properties used in the component,
+        // even if they're null/undefined
+        website: null,
+        phone: null,
+        address: null,
+        logo_url: null,
+        parent_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        organization_number: null,
+        invoice_email: null,
+        street_address: null,
+        city: null,
+        postal_code: null,
+        country: null,
+        client_type: null,
+        is_marketing_client: false,
+        is_web_client: false,
+        mrr: null,
+        trial_period: null,
+        is_partner: null,
+        advisor_id: null,
+      })) as Company[];
     },
   });
 

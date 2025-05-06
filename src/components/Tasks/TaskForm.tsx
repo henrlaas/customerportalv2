@@ -73,6 +73,7 @@ interface Task {
   client_visible: boolean | null;
   company_id: string | null;
   creator_id: string | null;
+  related_type: string | null;
   assignees?: { id: string; user_id: string }[];
 }
 
@@ -82,7 +83,7 @@ type TaskFormProps = {
   campaigns: Campaign[];
   projects?: Project[];
   companies?: Company[];
-  taskToEdit?: Task;
+  initialData?: Task;
 };
 
 // Define the task schema for form validation
@@ -105,12 +106,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   campaigns,
   projects = [],
   companies = [],
-  taskToEdit,
+  initialData,
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isEditing = !!taskToEdit;
+  const isEditing = !!initialData;
   const [loadingAssignees, setLoadingAssignees] = useState(isEditing);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
 
@@ -121,13 +122,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [existingAssignees, setExistingAssignees] = useState<string[]>([]);
 
   useEffect(() => {
-    if (isEditing && taskToEdit) {
+    if (isEditing && initialData) {
       const fetchTaskAssignees = async () => {
         try {
           const { data, error } = await supabase
             .from('task_assignees')
             .select('user_id')
-            .eq('task_id', taskToEdit.id);
+            .eq('task_id', initialData.id);
 
           if (error) throw error;
           
@@ -146,22 +147,22 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     } else {
       setLoadingAssignees(false);
     }
-  }, [isEditing, taskToEdit]);
+  }, [isEditing, initialData]);
 
   // Set up the form
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      title: taskToEdit?.title || '',
-      description: taskToEdit?.description || '',
-      priority: taskToEdit?.priority || 'medium',
-      status: taskToEdit?.status || 'todo',
-      due_date: taskToEdit?.due_date || '',
+      title: initialData?.title || '',
+      description: initialData?.description || '',
+      priority: initialData?.priority || 'medium',
+      status: initialData?.status || 'todo',
+      due_date: initialData?.due_date || '',
       assignees: loadingAssignees ? [] : existingAssignees,
-      campaign_id: taskToEdit?.campaign_id || '',
-      client_visible: taskToEdit?.client_visible || false,
-      related_type: taskToEdit?.related_type || 'none',
-      company_id: taskToEdit?.company_id || null,
+      campaign_id: initialData?.campaign_id || '',
+      client_visible: initialData?.client_visible || false,
+      related_type: initialData?.related_type || 'none',
+      company_id: initialData?.company_id || null,
     },
   });
 
@@ -213,7 +214,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         const { data: result, error } = await supabase
           .from('tasks')
           .update(taskData)
-          .eq('id', taskToEdit.id)
+          .eq('id', initialData.id)
           .select()
           .single();
         
@@ -232,11 +233,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       }
       
       // Now handle assignees - first remove existing assignees if updating
-      if (isEditing && taskToEdit) {
+      if (isEditing && initialData) {
         const { error: deleteError } = await supabase
           .from('task_assignees')
           .delete()
-          .eq('task_id', taskToEdit.id);
+          .eq('task_id', initialData.id);
         
         if (deleteError) throw deleteError;
       }
@@ -244,7 +245,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       // Insert new assignees
       if (data.assignees && data.assignees.length > 0 && taskResult && taskResult.id) {
         const assigneesData = data.assignees.map(userId => ({
-          task_id: isEditing ? taskToEdit.id : taskResult.id,
+          task_id: isEditing ? initialData.id : taskResult.id,
           user_id: userId
         }));
         
