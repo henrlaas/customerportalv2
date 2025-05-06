@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -163,7 +163,7 @@ export const EmailTemplateTab = () => {
   const form = useForm<EmailTemplateFormValues>();
 
   // Load the template from the workspace settings
-  useState(() => {
+  useEffect(() => {
     const fetchTemplate = async () => {
       try {
         const settings = await workspaceService.getSettings();
