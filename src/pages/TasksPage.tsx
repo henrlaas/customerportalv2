@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -98,6 +97,10 @@ type Project = {
 type Company = {
   id: string;
   name: string;
+  website?: string;
+  phone?: string;
+  address?: string;
+  logo_url?: string;
 };
 
 export const TasksPage = () => {

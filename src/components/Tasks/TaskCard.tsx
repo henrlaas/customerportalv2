@@ -124,23 +124,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       <CardContent className="p-4">
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-start">
-            <div className="flex items-start gap-2">
+            {/* Priority Badge with Client Visibility Icon Next to It */}
+            <div className="flex items-center gap-2">
               {/* Client Visible Eye Icon */}
-              <div className="mt-0.5">
-                {task.client_visible ? 
-                  <Eye className="h-3.5 w-3.5 text-gray-500" /> :
-                  <EyeOff className="h-3.5 w-3.5 text-gray-500" />
-                }
-              </div>
+              {task.client_visible ? 
+                <Eye className="h-3.5 w-3.5 text-gray-500" /> :
+                <EyeOff className="h-3.5 w-3.5 text-gray-500" />
+              }
               
-              {/* Status Badge */}
-              <div>
-                {getStatusBadge(task.status)}
-              </div>
+              {/* Priority Badge */}
+              {getPriorityBadge(task.priority)}
             </div>
-            
-            {/* Priority Badge */}
-            {getPriorityBadge(task.priority)}
           </div>
           
           <h4 className={cn(

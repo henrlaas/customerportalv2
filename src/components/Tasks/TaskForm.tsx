@@ -54,6 +54,28 @@ type Campaign = {
   company_id: string;
 };
 
+// Define Project type if it's missing
+interface Project {
+  id: string;
+  name: string;
+}
+
+// Define Task type for editing
+interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  status: 'todo' | 'in_progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  due_date: string | null;
+  campaign_id: string | null;
+  project_id: string | null;
+  client_visible: boolean | null;
+  company_id: string | null;
+  creator_id: string | null;
+  assignees?: { id: string; user_id: string }[];
+}
+
 type TaskFormProps = {
   onSuccess: () => void;
   profiles: Contact[];
