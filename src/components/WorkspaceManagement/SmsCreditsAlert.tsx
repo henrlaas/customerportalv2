@@ -13,20 +13,9 @@ export const SmsCreditsAlert = () => {
     const fetchCredits = async () => {
       try {
         setIsLoading(true);
-        // Direct GET request without any headers or body
-        const response = await fetch('https://sveve.no/SMS/AccountAdm?cmd=sms_count&user=box&passwd=4bbc3a48af044f74');
         
-        if (!response.ok) {
-          throw new Error(`API responded with status: ${response.status}`);
-        }
-        
-        const textResponse = await response.text();
-        const creditsValue = parseInt(textResponse.trim(), 10);
-        
-        if (isNaN(creditsValue)) {
-          throw new Error("Invalid response format from API");
-        }
-        
+        // Use the getSmsCredits method from smsService
+        const creditsValue = await smsService.getSmsCredits();
         setCredits(creditsValue);
         setError(null);
       } catch (err: any) {
