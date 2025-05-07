@@ -12,6 +12,7 @@ import {
   FileText,
   CheckSquare,
   Tag,
+  Folder,
 } from "lucide-react";
 
 export function getSidebarItems() {
@@ -32,6 +33,14 @@ export function getSidebarItems() {
       title: t('Campaigns'),
       href: '/campaigns',
       icon: BookOpen,
+      roles: ['admin', 'employee', 'client'],
+      category: 'MENU',
+      hasDropdown: false
+    },
+    {
+      title: t('Projects'),
+      href: '/projects',
+      icon: Folder,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
       hasDropdown: false

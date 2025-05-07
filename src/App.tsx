@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -27,6 +26,7 @@ import ClientCompanyDetailsPage from './pages/ClientCompanyDetailsPage';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 import SetPassword from './pages/SetPassword';
+import ProjectsPage from './pages/ProjectsPage';
 
 import { ProtectedRoute } from './components/providers/ProtectedRoute';
 import { ClientProtectedRoute } from './components/ClientProtectedRoute';
@@ -93,6 +93,7 @@ function App() {
                   <Route path="/campaigns/:campaignId/adsets/:adsetId" element={<AdSetDetailsPage />} />
                   <Route path="/campaigns/:campaignId/adsets/:adsetId/ads/:adId" element={<AdDetailsPage />} />
                   <Route path="/deals" element={<DealsPage />} />
+                  <Route path="/projects" element={<ProjectsPage />} />
                   
                   {/* Update task routes to use our TaskRedirect component */}
                   <Route path="/tasks" element={<TasksPage />} />
