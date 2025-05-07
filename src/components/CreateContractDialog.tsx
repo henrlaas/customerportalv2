@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -28,7 +27,6 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -365,8 +363,6 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         return (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Choose a contract template to use.</p>
-            
-            <PlaceholdersHelp />
             
             <Tabs defaultValue="DPA">
               <TabsList className="mb-4">
