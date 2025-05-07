@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -36,6 +35,20 @@ import Select from 'react-select';
 
 interface CreateContractDialogProps {
   onContractCreated?: () => void;
+}
+
+// Define the contact interface to include the email property
+interface CompanyContact {
+  id: string;
+  company_id: string;
+  user_id: string;
+  position: string | null;
+  is_primary: boolean;
+  profiles?: {
+    first_name?: string | null;
+    last_name?: string | null;
+  };
+  email?: string; // Add this to the type
 }
 
 export function CreateContractDialog({ onContractCreated }: CreateContractDialogProps) {
@@ -92,7 +105,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
   };
   
   // Fetch contacts when company is selected
-  const { data: contacts = [], isLoading: isLoadingContacts, refetch: refetchContacts, error: contactsError } = useQuery({
+  const { data: contacts = [], isLoading: isLoadingContacts, refetch: refetchContacts, error: contactsError } = useQuery<CompanyContact[]>({
     queryKey: ['companyContacts', selectedCompany?.id],
     queryFn: async () => {
       if (!selectedCompany?.id) return [];
@@ -123,9 +136,11 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
       });
       
       // Get emails for contacts directly from auth.users
-      if (data && data.length > 0) {
+      const contactsWithEmail: CompanyContact[] = [...(data || [])];
+      
+      if (contactsWithEmail && contactsWithEmail.length > 0) {
         try {
-          const userIds = data.map(contact => contact.user_id).filter(Boolean);
+          const userIds = contactsWithEmail.map(contact => contact.user_id).filter(Boolean);
           
           // Call edge function to get emails
           const { data: emailsData, error: emailError } = await supabase.functions.invoke('user-management', {
@@ -142,7 +157,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
             // Map emails to contacts
             const emailMap = new Map(emailsData.map((item: any) => [item.id, item.email]));
             
-            data.forEach(contact => {
+            contactsWithEmail.forEach(contact => {
               if (contact.user_id) {
                 // Add email property to contact objects
                 contact.email = emailMap.get(contact.user_id);
@@ -155,7 +170,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         }
       }
       
-      return data || [];
+      return contactsWithEmail;
     },
     enabled: !!selectedCompany?.id,
     retry: 2,
@@ -280,7 +295,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
   };
 
   // Format contacts for react-select
-  const formatContactsForSelect = (contacts: any[]) => {
+  const formatContactsForSelect = (contacts: CompanyContact[]) => {
     return contacts.map(contact => {
       const firstName = contact.profiles?.first_name || '';
       const lastName = contact.profiles?.last_name || '';
