@@ -30,7 +30,14 @@ export type Contract = {
 };
 
 export type ContractWithDetails = Contract & {
-  company: { name: string; organization_number: string | null };
+  company: { 
+    name: string; 
+    organization_number: string | null;
+    address?: string | null;
+    zipcode?: string | null;
+    city?: string | null;
+    country?: string | null;
+  };
   contact: { 
     id: string;
     user_id: string;
@@ -105,7 +112,7 @@ export async function fetchContracts() {
   if (error) throw error;
   
   // Get user emails for contacts
-  const contractsWithDetails = await enrichContractData(data);
+  const contractsWithDetails = await enrichContractData(data || []);
   
   return contractsWithDetails;
 }
@@ -116,8 +123,23 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
     return [];
   }
   
+  // Initialize each contract's properties to ensure they match ContractWithDetails type
+  const initializedContracts = contracts.map(contract => {
+    // Ensure company object exists with required properties
+    if (!contract.company || typeof contract.company !== 'object') {
+      contract.company = { name: 'Unknown', organization_number: null };
+    }
+    
+    // Ensure contact object exists with required properties
+    if (!contract.contact || typeof contract.contact !== 'object') {
+      contract.contact = { id: '', user_id: '', position: null };
+    }
+    
+    return contract;
+  });
+  
   // Get user IDs for contacts
-  const contactUserIds = contracts
+  const contactUserIds = initializedContracts
     .map(contract => contract.contact?.user_id)
     .filter(Boolean);
   
@@ -137,30 +159,19 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
       const profileMap = new Map(profilesData?.map((item: any) => [item.id, item]) || []);
       
       // Enrich each contract with additional data
-      for (const contract of contracts) {
+      for (const contract of initializedContracts) {
         if (contract.contact?.user_id) {
           // Add email to contact if available
           if (emailMap.has(contract.contact.user_id)) {
-            if (!contract.contact.email) {
-              contract.contact.email = emailMap.get(contract.contact.user_id);
-            }
+            contract.contact.email = emailMap.get(contract.contact.user_id);
           }
           
           // Add first_name and last_name to contact if available
           if (profileMap.has(contract.contact.user_id)) {
             const profile = profileMap.get(contract.contact.user_id);
-            if (!contract.contact.first_name) {
-              contract.contact.first_name = profile?.first_name;
-            }
-            if (!contract.contact.last_name) {
-              contract.contact.last_name = profile?.last_name;
-            }
+            contract.contact.first_name = profile?.first_name;
+            contract.contact.last_name = profile?.last_name;
           }
-        }
-        
-        // Ensure company has required properties
-        if (!contract.company || typeof contract.company !== 'object') {
-          contract.company = { name: 'Unknown', organization_number: null };
         }
       }
     } catch (err) {
@@ -168,8 +179,8 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
     }
   }
   
-  // Make sure we return the expected type
-  return contracts as ContractWithDetails[];
+  // Cast to expected type after ensuring all required properties exist
+  return initializedContracts as ContractWithDetails[];
 }
 
 // Fetch a specific contract
@@ -187,46 +198,48 @@ export async function fetchContract(id: string) {
 
   if (error) throw error;
   
+  // Initialize contract with required properties
+  const contract = data as any;
+  
+  // Ensure company object exists with required properties
+  if (!contract.company || typeof contract.company !== 'object') {
+    contract.company = { name: 'Unknown', organization_number: null };
+  }
+  
+  // Ensure contact object exists with required properties
+  if (!contract.contact || typeof contract.contact !== 'object') {
+    contract.contact = { id: '', user_id: '', position: null };
+  }
+  
   // Enrich with contact details
-  if (data && data.contact?.user_id) {
+  if (contract && contract.contact?.user_id) {
     try {
       // Get email for contact
       const { data: emailData } = await supabase.rpc('get_users_email', { 
-        user_ids: [data.contact.user_id] 
+        user_ids: [contract.contact.user_id] 
       });
       
       if (emailData && emailData[0]) {
-        if (!data.contact.email) {
-          data.contact.email = emailData[0].email;
-        }
+        contract.contact.email = emailData[0].email;
       }
       
       // Get profile for contact
       const { data: profileData } = await supabase
         .from('profiles')
         .select('first_name, last_name')
-        .eq('id', data.contact.user_id)
+        .eq('id', contract.contact.user_id)
         .single();
         
       if (profileData) {
-        if (!data.contact.first_name) {
-          data.contact.first_name = profileData.first_name;
-        }
-        if (!data.contact.last_name) {
-          data.contact.last_name = profileData.last_name;
-        }
+        contract.contact.first_name = profileData.first_name;
+        contract.contact.last_name = profileData.last_name;
       }
     } catch (err) {
       console.error("Error fetching contact details:", err);
     }
   }
   
-  // Ensure we have a valid company object
-  if (!data.company || typeof data.company !== 'object') {
-    data.company = { name: 'Unknown', organization_number: null };
-  }
-  
-  return data as ContractWithDetails;
+  return contract as ContractWithDetails;
 }
 
 // Create a new contract
@@ -279,7 +292,7 @@ export async function fetchClientContracts(userId: string) {
   if (error) throw error;
   
   // Enrich with additional data
-  const contractsWithDetails = await enrichContractData(data);
+  const contractsWithDetails = await enrichContractData(data || []);
   
   return contractsWithDetails;
 }
