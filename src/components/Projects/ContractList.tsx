@@ -39,7 +39,7 @@ export const ContractList: React.FC<ContractListProps> = ({
     
     setLoading(true);
     try {
-      // Using explicit type assertion for Database definition to avoid recursive types
+      // Using explicit type assertion to avoid recursive types
       let query = supabase
         .from('contracts')
         .select(`
@@ -102,7 +102,8 @@ export const ContractList: React.FC<ContractListProps> = ({
       }
       
       if (data) {
-        setContracts(data as Contract[]);
+        // Use 'unknown' as intermediate type to satisfy TypeScript
+        setContracts(data as unknown as Contract[]);
       }
     } catch (error) {
       console.error("Error fetching contracts:", error);
