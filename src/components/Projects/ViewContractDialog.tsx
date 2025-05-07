@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Dialog,
@@ -14,33 +13,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import SignaturePad from 'signature_pad';
 import { fillContractTemplate, getTemplateTypeName } from '@/utils/contractUtils';
+import { Contract } from '@/types/contract';
 
 interface ViewContractDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  contract: {
-    id: string;
-    template_type: string;
-    company_id: string;
-    contact_id: string;
-    status: string;
-    signed_at?: string;
-    signature_data?: string;
-    created_at: string;
-    created_by?: string;
-    companies?: {
-      name?: string;
-    };
-    contacts?: {
-      position?: string;
-      user?: {
-        profiles?: {
-          first_name?: string;
-          last_name?: string;
-        }[];
-      };
-    };
-  };
+  contract: Contract;
   onContractUpdated?: () => void;
 }
 

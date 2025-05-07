@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { 
@@ -81,7 +80,7 @@ export const CreateContractDialog = ({
     }
 
     try {
-      // Create contract in database
+      // Create contract in database with correct fields
       const { error } = await supabase
         .from('contracts')
         .insert({
@@ -90,8 +89,7 @@ export const CreateContractDialog = ({
           contact_id: data.contactId,
           project_id: projectId,
           status: 'unsigned',
-          created_by: user.id,
-          title: `${data.templateType.toUpperCase()} Contract` // Add title field
+          created_by: user.id
         });
 
       if (error) {

@@ -1,6 +1,7 @@
 
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { Contract } from '@/types/contract';
 // Import PDFDocument directly without EventEmitter dependency
 // We'll use it as a class/constructor
 const PDFDocument = require('pdfkit');
@@ -36,7 +37,7 @@ export const getContractTemplate = (templateType: string): string => {
 };
 
 // Fill contract template with data
-export const fillContractTemplate = async (contract: any): Promise<string> => {
+export const fillContractTemplate = async (contract: Contract): Promise<string> => {
   try {
     if (!contract) return 'Contract not found';
     
@@ -79,8 +80,8 @@ export const fillContractTemplate = async (contract: any): Promise<string> => {
         'profiles' in contactData.user && 
         Array.isArray(contactData.user.profiles) && 
         contactData.user.profiles.length > 0) {
-      contactFirstName = contactData.user.profiles[0].first_name || '';
-      contactLastName = contactData.user.profiles[0].last_name || '';
+      contactFirstName = contactData.user.profiles[0]?.first_name || '';
+      contactLastName = contactData.user.profiles[0]?.last_name || '';
     }
     
     const replacementData: Record<string, string> = {
@@ -111,7 +112,7 @@ export const fillContractTemplate = async (contract: any): Promise<string> => {
 };
 
 // Generate PDF from contract
-export const generateContractPDF = async (contract: any): Promise<void> => {
+export const generateContractPDF = async (contract: Contract): Promise<void> => {
   try {
     // Get filled contract content
     const contractContent = await fillContractTemplate(contract);
@@ -168,8 +169,8 @@ export const generateContractPDF = async (contract: any): Promise<void> => {
           'profiles' in contract.contacts.user && 
           Array.isArray(contract.contacts.user.profiles) && 
           contract.contacts.user.profiles.length > 0) {
-        const contactFirstName = contract.contacts.user.profiles[0].first_name || '';
-        const contactLastName = contract.contacts.user.profiles[0].last_name || '';
+        const contactFirstName = contract.contacts.user.profiles[0]?.first_name || '';
+        const contactLastName = contract.contacts.user.profiles[0]?.last_name || '';
         contactFullName = `${contactFirstName} ${contactLastName}`.trim();
       }
       
@@ -186,8 +187,7 @@ export const generateContractPDF = async (contract: any): Promise<void> => {
           const signatureData = contract.signature_data.replace(/^data:image\/\w+;base64,/, '');
           // Fix image options format
           doc.image(Buffer.from(signatureData, 'base64'), { 
-            width: 200,
-            align: 'left'
+            width: 200
           });
         } catch (error) {
           console.error("Error adding signature to PDF:", error);

@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ViewContractDialog } from './ViewContractDialog';
 import { generateContractPDF } from '@/utils/contractUtils';
+import { Contract } from '@/types/contract';
 
 interface ContractListProps {
   projectId?: string;
@@ -16,39 +17,6 @@ interface ContractListProps {
   showAll?: boolean;
   filter?: 'signed' | 'unsigned';
 }
-
-type Contract = {
-  id: string;
-  template_type: string;
-  company_id: string;
-  contact_id: string;
-  project_id?: string;
-  status: string;
-  signed_at?: string;
-  signature_data?: string;
-  created_at: string;
-  updated_at: string;
-  created_by?: string;
-  file_url?: string;
-  companies?: {
-    name?: string;
-  };
-  contacts?: {
-    position?: string;
-    user?: {
-      profiles?: {
-        first_name?: string;
-        last_name?: string;
-      }[];
-    };
-  };
-  creators?: {
-    profiles?: {
-      first_name?: string;
-      last_name?: string;
-    }[];
-  };
-};
 
 export const ContractList: React.FC<ContractListProps> = ({ 
   projectId,
@@ -134,24 +102,9 @@ export const ContractList: React.FC<ContractListProps> = ({
       }
       
       if (data) {
-        const typedContracts: Contract[] = data.map(contract => ({
-          id: contract.id,
-          template_type: contract.template_type || '',
-          company_id: contract.company_id,
-          contact_id: contract.contact_id || '',
-          project_id: contract.project_id,
-          status: contract.status,
-          signed_at: contract.signed_at,
-          signature_data: contract.signature_data,
-          created_at: contract.created_at,
-          updated_at: contract.updated_at,
-          created_by: contract.created_by,
-          file_url: contract.file_url,
-          companies: contract.companies,
-          contacts: contract.contacts,
-          creators: contract.creators
-        }));
-        setContracts(typedContracts);
+        // Properly cast the data to our Contract type
+        const contractsData = data as unknown as Contract[];
+        setContracts(contractsData);
       }
     } catch (error) {
       console.error("Error fetching contracts:", error);
