@@ -144,6 +144,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
             
             data.forEach(contact => {
               if (contact.user_id) {
+                // Add email property to contact objects
                 contact.email = emailMap.get(contact.user_id);
               }
             });
@@ -158,9 +159,11 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     },
     enabled: !!selectedCompany?.id,
     retry: 2,
-    onError: (error: any) => {
-      console.error('Error fetching contacts:', error);
-      setContactsFetchError(error.message);
+    meta: {
+      onError: (error: any) => {
+        console.error('Error fetching contacts:', error);
+        setContactsFetchError(error.message);
+      }
     }
   });
   
@@ -281,7 +284,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     return contacts.map(contact => {
       const firstName = contact.profiles?.first_name || '';
       const lastName = contact.profiles?.last_name || '';
-      const email = contact.email || '';
+      const email = contact.email || ''; // Using email property we add in the query function
       const label = `${firstName} ${lastName}${email ? ` (${email})` : ''}`;
       
       return {
