@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Contract } from '@/types/contract';
@@ -82,8 +81,11 @@ export const fillContractTemplate = async (contract: Contract): Promise<string> 
         contactData.user.profiles !== null &&
         Array.isArray(contactData.user.profiles) && 
         contactData.user.profiles.length > 0) {
-      contactFirstName = contactData.user.profiles[0]?.first_name || '';
-      contactLastName = contactData.user.profiles[0]?.last_name || '';
+      const profile = contactData.user.profiles[0];
+      if (profile) {
+        contactFirstName = profile.first_name || '';
+        contactLastName = profile.last_name || '';
+      }
     }
     
     const replacementData: Record<string, string> = {

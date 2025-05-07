@@ -22,17 +22,17 @@ export interface Contract {
     user?: {
       email?: string;
       id?: string;
-      profiles?: {
+      profiles?: Array<{
         first_name?: string;
         last_name?: string;
-      }[];
+      }>;
     };
   };
   creators?: {
     email?: string;
-    profiles?: {
+    profiles?: Array<{
       first_name?: string;
       last_name?: string;
-    }[];
+    }>;
   };
 }
