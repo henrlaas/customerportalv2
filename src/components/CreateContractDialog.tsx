@@ -344,19 +344,6 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     }));
   };
   
-  // Placeholder helper component
-  const PlaceholdersHelp = () => (
-    <Alert className="bg-[#FEF7CD] border-yellow-300 mb-4">
-      <AlertTriangle className="h-4 w-4 text-yellow-600" />
-      <AlertDescription className="text-sm text-yellow-800">
-        <span className="font-medium">Available placeholders:</span>{' '}
-        <code>{'{{companyname}}'}</code>, <code>{'{{organizationnumber}}'}</code>, 
-        <code>{'{{address}}'}</code>, <code>{'{{zipcode}}'}</code>, <code>{'{{city}}'}</code>, <code>{'{{country}}'}</code>, 
-        <code>{'{{contactfullname}}'}</code>, <code>{'{{contactposition}}'}</code>, <code>{'{{todaydate}}'}</code>, <code>{'{{mrrprice}}'}</code>
-      </AlertDescription>
-    </Alert>
-  );
-  
   const stepContent = () => {
     switch (step) {
       case 1: // Template selection
