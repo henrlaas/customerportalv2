@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -102,9 +101,7 @@ export const ContractList: React.FC<ContractListProps> = ({
       }
       
       if (data) {
-        // Properly cast the data to our Contract type
-        const contractsData = data as unknown as Contract[];
-        setContracts(contractsData);
+        setContracts(data as unknown as Contract[]);
       }
     } catch (error) {
       console.error("Error fetching contracts:", error);

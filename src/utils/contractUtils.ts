@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Contract } from '@/types/contract';
@@ -185,7 +184,6 @@ export const generateContractPDF = async (contract: Contract): Promise<void> => 
         // Convert base64 to image for PDF
         try {
           const signatureData = contract.signature_data.replace(/^data:image\/\w+;base64,/, '');
-          // Fix image options format
           doc.image(Buffer.from(signatureData, 'base64'), { 
             width: 200 
           });
