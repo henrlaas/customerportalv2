@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Contract } from '@/types/contract';
@@ -59,6 +58,8 @@ export const fillContractTemplate = async (contract: Contract): Promise<string> 
       .select(`
         *,
         user:user_id (
+          email,
+          id,
           profiles (
             first_name,
             last_name
@@ -74,12 +75,13 @@ export const fillContractTemplate = async (contract: Contract): Promise<string> 
     let contactFirstName = '';
     let contactLastName = '';
     
-    // Enhanced null checks: Ensure each property access is guarded
+    // Enhanced null checks with explicit type checking
     if (contactData && contactData.user) {
+      const user = contactData.user as any; // Use type assertion to resolve the TypeScript error
+      
       // Check if profiles exists and is an array with data
-      const profiles = contactData.user.profiles;
-      if (Array.isArray(profiles) && profiles.length > 0) {
-        const profile = profiles[0];
+      if (user && user.profiles && Array.isArray(user.profiles) && user.profiles.length > 0) {
+        const profile = user.profiles[0];
         if (profile) {
           contactFirstName = profile.first_name || '';
           contactLastName = profile.last_name || '';
@@ -166,12 +168,13 @@ export const generateContractPDF = async (contract: Contract): Promise<void> => 
       // Get contact name with safe property access
       let contactFullName = '';
       
-      // Enhanced null checks for signature section
+      // Enhanced null checks with explicit type casting for signature section
       if (contract.contacts && contract.contacts.user) {
-        const profiles = contract.contacts.user.profiles;
-        if (Array.isArray(profiles) && profiles.length > 0) {
-          const contactFirstName = profiles[0]?.first_name || '';
-          const contactLastName = profiles[0]?.last_name || '';
+        const user = contract.contacts.user as any; // Use type assertion to solve the TypeScript issue
+        
+        if (user && user.profiles && Array.isArray(user.profiles) && user.profiles.length > 0) {
+          const contactFirstName = user.profiles[0]?.first_name || '';
+          const contactLastName = user.profiles[0]?.last_name || '';
           contactFullName = `${contactFirstName} ${contactLastName}`.trim();
         }
       }
@@ -229,18 +232,12 @@ Behandlingsansvarlig: {{companyname}}, org.nr {{organizationnumber}} {{address}}
 Databehandler:  Box Marketing AS, org.nr 920 441 882  Skiftesvikvegen 101, 5302 Strusshamn, Norge
 Avtalen er inngått som del av det etablerte kundeforholdet og er et tillegg til samarbeidsavtalen mellom partene om levering av digitale markedsføringstjenester, nettside- og nettbutikkløsninger, teknisk implementering og automatisering.
 
-
-
 1. Formål og behandlingsgrunnlag
 Databehandleren behandler personopplysninger på vegne av Behandlingsansvarlig i forbindelse med levering av tjenester innen digital markedsføring, analyse, konverteringsoptimalisering, utvikling og drift av nettsider/nettbutikker, CRM-integrasjoner, e-postutsendelser og automatiserte prosesser.
 Behandlingen skjer kun etter dokumentert instruks fra Behandlingsansvarlig og i den grad det er nødvendig for å oppfylle avtalt leveranse.
 
-
-
 2. Behandlingens art og varighet
 Behandlingen omfatter innsamling, registrering, strukturering, analyse, lagring, overføring og sletting av personopplysninger.  Behandlingen skjer i den perioden det eksisterer et aktivt kundeforhold og avsluttes ved avtalens opphør, med mindre videre oppbevaring kreves ved lov.
-
-
 
 3. Typer personopplysninger som behandles
 Databehandleren kan behandle følgende kategorier av personopplysninger:
@@ -472,7 +469,6 @@ Mellom:
 Box Marketing AS, org.nr. 920 441 882, Skiftesvikvegen 101, 5302 Strusshamn ("Box")  og 
  {{companyname}}, org.nr. {{organizationnumber}}, {{address}}, {{zipcode}} {{city}}, {{country}} ("Kunden")  (kalt samlet "Partene", hver for seg "Part")
 
-
 1. Omfang og varighet
 Box skal bistå Kunden med tjenester innen strategi og ledelse samt relaterte aktiviteter som partene løpende avtaler skriftlig (e-post godtas).
 Avtalen gjelder fra signering og løper inntil den sies opp. Det er ingen bindingstid, men én måneds oppsigelsestid, gjeldende fra første dag i påfølgende måned.
@@ -516,4 +512,3 @@ Uenigheter søkes løst i minnelighet. Uoppgjorte tvister behandles etter norsk 
 12. Signatur
 Avtalen trer i kraft ved signering av begge parter.`
 };
-
