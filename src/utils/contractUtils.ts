@@ -1,9 +1,9 @@
+
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Contract } from '@/types/contract';
-// Import PDFDocument directly without EventEmitter dependency
-// We'll use it as a class/constructor
-const PDFDocument = require('pdfkit');
+// Import PDFDocument using dynamic import for browser compatibility
+// We'll create a helper function instead of using require
 
 // Template content placeholders mapping
 const placeholders = {
@@ -116,11 +116,26 @@ export const fillContractTemplate = async (contract: Contract): Promise<string> 
   }
 };
 
+// Function to dynamically load PDFKit
+async function loadPDFKit() {
+  // Using dynamic import instead of require
+  try {
+    const pdfkitModule = await import('pdfkit/js/pdfkit.standalone.js');
+    return pdfkitModule.default || pdfkitModule;
+  } catch (error) {
+    console.error('Error loading PDFKit:', error);
+    throw error;
+  }
+}
+
 // Generate PDF from contract
 export const generateContractPDF = async (contract: Contract): Promise<void> => {
   try {
     // Get filled contract content
     const contractContent = await fillContractTemplate(contract);
+    
+    // Load PDFKit dynamically
+    const PDFDocument = await loadPDFKit();
     
     // Create PDF document
     const doc = new PDFDocument({ margin: 50 });
