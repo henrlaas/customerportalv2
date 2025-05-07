@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +43,19 @@ export const ContractList: React.FC<ContractListProps> = ({
       let query = supabase
         .from('contracts')
         .select(`
-          *,
+          id,
+          template_type,
+          company_id,
+          contact_id,
+          project_id,
+          status,
+          signed_at,
+          signature_data,
+          created_at,
+          updated_at,
+          created_by,
+          file_url,
+          title,
           companies:company_id (name),
           contacts:contact_id (
             position,
@@ -101,8 +114,8 @@ export const ContractList: React.FC<ContractListProps> = ({
       }
       
       if (data) {
-        // Break the recursive type chain by using a simple type assertion
-        setContracts(data as any[]);
+        // Use type assertion to break the recursive type chain
+        setContracts(data as unknown as Contract[]);
       }
     } catch (error) {
       console.error("Error fetching contracts:", error);

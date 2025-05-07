@@ -73,12 +73,10 @@ export const fillContractTemplate = async (contract: Contract): Promise<string> 
     let contactFirstName = '';
     let contactLastName = '';
     
-    // Safety check to avoid errors with profiles
+    // Safety check to avoid errors with profiles - with proper null checking
     if (contactData && 
         contactData.user && 
-        contactData.user !== null && 
         typeof contactData.user === 'object' && 
-        contactData.user !== null && 
         'profiles' in contactData.user && 
         Array.isArray(contactData.user.profiles) && 
         contactData.user.profiles.length > 0) {
