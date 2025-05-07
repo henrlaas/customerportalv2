@@ -450,45 +450,81 @@ export type Database = {
           },
         ]
       }
+      contract_templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          name: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contracts: {
         Row: {
           company_id: string
+          contact_id: string
+          content: string | null
           created_at: string
           created_by: string | null
-          end_date: string | null
           file_url: string | null
           id: string
-          start_date: string | null
+          project_id: string | null
+          signature_data: string | null
+          signed_at: string | null
           status: string
-          title: string
+          template_type: string
+          title: string | null
           updated_at: string
-          value: number | null
         }
         Insert: {
           company_id: string
+          contact_id: string
+          content?: string | null
           created_at?: string
           created_by?: string | null
-          end_date?: string | null
           file_url?: string | null
           id?: string
-          start_date?: string | null
+          project_id?: string | null
+          signature_data?: string | null
+          signed_at?: string | null
           status?: string
-          title: string
+          template_type: string
+          title?: string | null
           updated_at?: string
-          value?: number | null
         }
         Update: {
           company_id?: string
+          contact_id?: string
+          content?: string | null
           created_at?: string
           created_by?: string | null
-          end_date?: string | null
           file_url?: string | null
           id?: string
-          start_date?: string | null
+          project_id?: string | null
+          signature_data?: string | null
+          signed_at?: string | null
           status?: string
-          title?: string
+          template_type?: string
+          title?: string | null
           updated_at?: string
-          value?: number | null
         }
         Relationships: [
           {
@@ -496,6 +532,20 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "company_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
