@@ -1,5 +1,4 @@
 
-// Import dynamically to prevent 'require' errors in the browser
 import { saveAs } from 'file-saver';
 
 export async function createPDF(content: string, filename: string) {

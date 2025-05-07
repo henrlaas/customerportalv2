@@ -105,44 +105,59 @@ export async function fetchContracts() {
   if (error) throw error;
   
   // Get user emails for contacts
-  const contactUserIds = data?.map(contract => contract.contact?.user_id).filter(Boolean);
+  const contractsWithDetails = await enrichContractData(data);
   
-  if (contactUserIds && contactUserIds.length > 0) {
-    const { data: emailsData } = await supabase.rpc('get_users_email', { user_ids: contactUserIds });
-    
-    if (emailsData) {
-      const emailMap = new Map(emailsData.map((item: any) => [item.id, item.email]));
+  return contractsWithDetails as ContractWithDetails[];
+}
+
+// Helper function to enrich contract data with user details
+async function enrichContractData(contracts: any[]): Promise<ContractWithDetails[]> {
+  if (!contracts || contracts.length === 0) {
+    return [];
+  }
+  
+  // Get user IDs for contacts
+  const contactUserIds = contracts
+    .map(contract => contract.contact?.user_id)
+    .filter(Boolean);
+  
+  if (contactUserIds.length > 0) {
+    try {
+      // Get emails for contacts
+      const { data: emailsData } = await supabase.rpc('get_users_email', { user_ids: contactUserIds });
       
-      // Add email to contact data
-      data.forEach((contract: any) => {
-        if (contract.contact && contract.contact.user_id) {
-          contract.contact.email = emailMap.get(contract.contact.user_id);
-        }
-      });
+      const emailMap = new Map(emailsData?.map((item: any) => [item.id, item.email]) || []);
       
-      // Get first and last names for contacts from profiles
+      // Get first and last names for contacts
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, first_name, last_name')
         .in('id', contactUserIds);
       
-      if (profilesData) {
-        const profileMap = new Map(profilesData.map((item: any) => [item.id, item]));
-        
-        data.forEach((contract: any) => {
-          if (contract.contact && contract.contact.user_id) {
-            const profile = profileMap.get(contract.contact.user_id);
-            if (profile) {
-              contract.contact.first_name = profile.first_name;
-              contract.contact.last_name = profile.last_name;
-            }
+      const profileMap = new Map(profilesData?.map((item: any) => [item.id, item]) || []);
+      
+      // Enrich each contract with additional data
+      for (const contract of contracts) {
+        if (contract.contact?.user_id) {
+          // Add email to contact if available
+          if (emailMap.has(contract.contact.user_id)) {
+            contract.contact.email = emailMap.get(contract.contact.user_id);
           }
-        });
+          
+          // Add first_name and last_name to contact if available
+          if (profileMap.has(contract.contact.user_id)) {
+            const profile = profileMap.get(contract.contact.user_id);
+            contract.contact.first_name = profile?.first_name;
+            contract.contact.last_name = profile?.last_name;
+          }
+        }
       }
+    } catch (err) {
+      console.error("Error enriching contract data:", err);
     }
   }
   
-  return data as ContractWithDetails[];
+  return contracts as ContractWithDetails[];
 }
 
 // Fetch a specific contract
@@ -160,25 +175,31 @@ export async function fetchContract(id: string) {
 
   if (error) throw error;
   
-  // Get user email and profile for contact
+  // Enrich with contact details
   if (data.contact?.user_id) {
-    const { data: emailData } = await supabase.rpc('get_users_email', { 
-      user_ids: [data.contact.user_id] 
-    });
-    
-    if (emailData && emailData[0]) {
-      data.contact.email = emailData[0].email;
-    }
-    
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('first_name, last_name')
-      .eq('id', data.contact.user_id)
-      .single();
+    try {
+      // Get email for contact
+      const { data: emailData } = await supabase.rpc('get_users_email', { 
+        user_ids: [data.contact.user_id] 
+      });
       
-    if (profileData) {
-      data.contact.first_name = profileData.first_name;
-      data.contact.last_name = profileData.last_name;
+      if (emailData && emailData[0]) {
+        data.contact.email = emailData[0].email;
+      }
+      
+      // Get profile for contact
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', data.contact.user_id)
+        .single();
+        
+      if (profileData) {
+        data.contact.first_name = profileData.first_name;
+        data.contact.last_name = profileData.last_name;
+      }
+    } catch (err) {
+      console.error("Error fetching contact details:", err);
     }
   }
   
@@ -233,7 +254,11 @@ export async function fetchClientContracts(userId: string) {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data as ContractWithDetails[];
+  
+  // Enrich with additional data
+  const contractsWithDetails = await enrichContractData(data);
+  
+  return contractsWithDetails as ContractWithDetails[];
 }
 
 // Sign a contract

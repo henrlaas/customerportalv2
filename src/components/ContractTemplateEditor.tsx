@@ -116,6 +116,15 @@ export const ContractTemplateEditor = () => {
     });
   };
   
+  const PlaceholdersHelp = () => (
+    <div className="text-xs text-muted-foreground">
+      <AlertTriangle className="h-3 w-3 inline-block mr-1" />
+      Available placeholders: <code>{'{{companyname}}'}</code>, <code>{'{{organizationnumber}}'}</code>, 
+      <code>{'{{address}}'}</code>, <code>{'{{zipcode}}'}</code>, <code>{'{{city}}'}</code>, <code>{'{{country}}'}</code>, 
+      <code>{'{{contactfullname}}'}</code>, <code>{'{{contactposition}}'}</code>, <code>{'{{todaydate}}'}</code>, <code>{'{{mrrprice}}'}</code>
+    </div>
+  );
+  
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading templates...</div>;
   }
@@ -167,10 +176,7 @@ export const ContractTemplateEditor = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium">Content</label>
-                  <div className="text-xs text-muted-foreground">
-                    <AlertTriangle className="h-3 w-3 inline-block mr-1" />
-                    Use {{placeholders}} for dynamic content
-                  </div>
+                  <PlaceholdersHelp />
                 </div>
                 <Textarea 
                   value={editForm.content} 
@@ -209,10 +215,7 @@ export const ContractTemplateEditor = () => {
               <TabsTrigger value="Marketing">Marketing</TabsTrigger>
             </TabsList>
             
-            <div className="text-xs text-muted-foreground p-2">
-              <AlertTriangle className="h-3 w-3 inline-block mr-1" />
-              Templates use {{placeholders}} for dynamic content
-            </div>
+            <PlaceholdersHelp />
           </div>
           
           <TabsContent value={selectedTab} className="p-4">
@@ -290,10 +293,7 @@ export const ContractTemplateEditor = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Content</label>
-                <div className="text-xs text-muted-foreground">
-                  <AlertTriangle className="h-3 w-3 inline-block mr-1" />
-                  Use {{placeholders}} for dynamic content
-                </div>
+                <PlaceholdersHelp />
               </div>
               <Textarea 
                 value={editForm.content} 
