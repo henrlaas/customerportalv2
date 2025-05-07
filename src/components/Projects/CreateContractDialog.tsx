@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { 
@@ -80,7 +81,7 @@ export const CreateContractDialog = ({
     }
 
     try {
-      // Create contract in database with correct fields
+      // Create contract in database with correct fields including template_type
       const { error } = await supabase
         .from('contracts')
         .insert({
@@ -89,7 +90,8 @@ export const CreateContractDialog = ({
           contact_id: data.contactId,
           project_id: projectId,
           status: 'unsigned',
-          created_by: user.id
+          created_by: user.id,
+          title: `${templates.find(t => t.id === data.templateType)?.name || 'Contract'}`
         });
 
       if (error) {

@@ -12,6 +12,7 @@ export interface Contract {
   updated_at: string;
   created_by?: string;
   file_url?: string;
+  title?: string;
   companies?: {
     name?: string;
   };

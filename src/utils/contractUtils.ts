@@ -353,7 +353,7 @@ publisering av resultatene av studier utført ved bruk av Konfidensiell Informas
 
 kommersialisering av ethvert produkt eller tjeneste som involverer bruk av Konfidensiell Informasjon;
 
-reproduksjon av informasjon som er inkludert i den Konfidensiell Informasjon.
+reproduksjon av informasjon som er inkludert i den Konfidensielle Informasjon.
 8. Unntak fra forpliktelser for Konfidensiell Informasjon
     1. Mottakeren er ikke bundet av forpliktelsene i Avtalen med hensyn til informasjon som den kan påvise faller innenfor en av følgende kategorier:
 

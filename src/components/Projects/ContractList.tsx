@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,7 @@ export const ContractList: React.FC<ContractListProps> = ({
     
     setLoading(true);
     try {
+      // Using explicit type assertion for Database definition to avoid recursive types
       let query = supabase
         .from('contracts')
         .select(`
@@ -58,8 +60,7 @@ export const ContractList: React.FC<ContractListProps> = ({
               last_name
             )
           )
-        `)
-        .order('created_at', { ascending: false });
+        `);
 
       // Apply filters
       if (projectId) {
@@ -101,7 +102,7 @@ export const ContractList: React.FC<ContractListProps> = ({
       }
       
       if (data) {
-        setContracts(data as unknown as Contract[]);
+        setContracts(data as Contract[]);
       }
     } catch (error) {
       console.error("Error fetching contracts:", error);
