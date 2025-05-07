@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
@@ -53,7 +52,7 @@ export const ContractList = () => {
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes before refetching
-    cacheTime: 10 * 60 * 1000, // 10 minutes in cache
+    gcTime: 10 * 60 * 1000, // 10 minutes in cache (previously cacheTime)
   });
   
   // Memoize filtered contracts to prevent re-rendering on every render
