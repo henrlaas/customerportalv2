@@ -164,7 +164,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
           });
           
           if (emailError) {
-            console.warn('Could not fetch email addresses:', emailError);
+            console.error('Could not fetch email addresses:', emailError);
             // Continue without emails
           } else if (emailsData) {
             // Map emails to contacts
@@ -190,11 +190,12 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
             }
           }
         } catch (err) {
-          console.warn('Error fetching user emails:', err);
+          console.error('Error fetching user emails:', err);
           // Continue without emails
         }
       }
       
+      console.log('Returned contacts:', contactsWithEmail);
       return contactsWithEmail;
     },
     enabled: !!selectedCompany?.id,
@@ -204,7 +205,8 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         console.error('Error fetching contacts:', error);
         setContactsFetchError(error.message);
       }
-    }
+    },
+    staleTime: 0, // Don't cache the results for this query
   });
   
   // Fetch projects
