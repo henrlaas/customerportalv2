@@ -35,7 +35,7 @@ type Contract = {
   };
   contacts?: {
     position?: string;
-    users?: {
+    user?: {
       profiles?: {
         first_name?: string;
         last_name?: string;
@@ -78,15 +78,15 @@ export const ContractList: React.FC<ContractListProps> = ({
           companies:company_id (name),
           contacts:contact_id (
             position,
-            users:user_id (
-              profiles:profiles!inner (
+            user:user_id (
+              profiles:profiles (
                 first_name,
                 last_name
               )
             )
           ),
           creators:created_by (
-            profiles:profiles!inner (
+            profiles:profiles (
               first_name,
               last_name
             )
@@ -133,7 +133,26 @@ export const ContractList: React.FC<ContractListProps> = ({
         throw error;
       }
       
-      setContracts(data || []);
+      if (data) {
+        const typedContracts: Contract[] = data.map(contract => ({
+          id: contract.id,
+          template_type: contract.template_type || '',
+          company_id: contract.company_id,
+          contact_id: contract.contact_id || '',
+          project_id: contract.project_id,
+          status: contract.status,
+          signed_at: contract.signed_at,
+          signature_data: contract.signature_data,
+          created_at: contract.created_at,
+          updated_at: contract.updated_at,
+          created_by: contract.created_by,
+          file_url: contract.file_url,
+          companies: contract.companies,
+          contacts: contract.contacts,
+          creators: contract.creators
+        }));
+        setContracts(typedContracts);
+      }
     } catch (error) {
       console.error("Error fetching contracts:", error);
     } finally {
@@ -207,8 +226,8 @@ export const ContractList: React.FC<ContractListProps> = ({
                 <div className="grid grid-cols-2 gap-2 text-sm mb-4">
                   <div>
                     <span className="font-medium">Contact:</span>{" "}
-                    {contract.contacts?.users?.profiles?.[0]?.first_name || ''}{" "}
-                    {contract.contacts?.users?.profiles?.[0]?.last_name || ''}{" "}
+                    {contract.contacts?.user?.profiles?.[0]?.first_name || ''}{" "}
+                    {contract.contacts?.user?.profiles?.[0]?.last_name || ''}{" "}
                     {contract.contacts?.position && `(${contract.contacts.position})`}
                   </div>
                   <div>

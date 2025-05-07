@@ -91,6 +91,7 @@ export const CreateContractDialog = ({
           project_id: projectId,
           status: 'unsigned',
           created_by: user.id,
+          title: `${data.templateType.toUpperCase()} Contract` // Add title field
         });
 
       if (error) {

@@ -1,7 +1,9 @@
 
-import PDFDocument from 'pdfkit';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+// Import PDFDocument directly without EventEmitter dependency
+// We'll use it as a class/constructor
+const PDFDocument = require('pdfkit');
 
 // Template content placeholders mapping
 const placeholders = {
@@ -56,7 +58,7 @@ export const fillContractTemplate = async (contract: any): Promise<string> => {
       .select(`
         *,
         user:user_id (
-          profiles:profiles (
+          profiles (
             first_name,
             last_name
           )
@@ -68,8 +70,18 @@ export const fillContractTemplate = async (contract: any): Promise<string> => {
     if (contactError) throw contactError;
     
     // Prepare replacement data
-    const contactFirstName = contactData?.user?.profiles?.[0]?.first_name || '';
-    const contactLastName = contactData?.user?.profiles?.[0]?.last_name || '';
+    let contactFirstName = '';
+    let contactLastName = '';
+    
+    // Safety check to avoid errors with profiles
+    if (contactData?.user && 
+        typeof contactData.user === 'object' && 
+        'profiles' in contactData.user && 
+        Array.isArray(contactData.user.profiles) && 
+        contactData.user.profiles.length > 0) {
+      contactFirstName = contactData.user.profiles[0].first_name || '';
+      contactLastName = contactData.user.profiles[0].last_name || '';
+    }
     
     const replacementData: Record<string, string> = {
       company_name: companyData?.name || '',
@@ -109,7 +121,7 @@ export const generateContractPDF = async (contract: any): Promise<void> => {
     
     // Convert to blob
     const chunks: Uint8Array[] = [];
-    doc.on('data', (chunk) => chunks.push(chunk));
+    doc.on('data', (chunk: Uint8Array) => chunks.push(chunk));
     doc.on('end', () => {
       const pdfBlob = new Blob(chunks, { type: 'application/pdf' });
       const url = URL.createObjectURL(pdfBlob);
@@ -147,10 +159,19 @@ export const generateContractPDF = async (contract: any): Promise<void> => {
       doc.fontSize(14).text('Signed Contract', { underline: true });
       doc.moveDown();
       
-      // Get contact name from the contract object
-      const contactFirstName = contract.contacts?.users?.profiles?.[0]?.first_name || '';
-      const contactLastName = contract.contacts?.users?.profiles?.[0]?.last_name || '';
-      const contactFullName = `${contactFirstName} ${contactLastName}`.trim();
+      // Get contact name - safely handle potentially missing data
+      let contactFullName = '';
+      if (contract.contacts && 
+          typeof contract.contacts === 'object' && 
+          contract.contacts.user && 
+          typeof contract.contacts.user === 'object' && 
+          'profiles' in contract.contacts.user && 
+          Array.isArray(contract.contacts.user.profiles) && 
+          contract.contacts.user.profiles.length > 0) {
+        const contactFirstName = contract.contacts.user.profiles[0].first_name || '';
+        const contactLastName = contract.contacts.user.profiles[0].last_name || '';
+        contactFullName = `${contactFirstName} ${contactLastName}`.trim();
+      }
       
       doc.fontSize(12).text(`Signed by: ${contactFullName}`);
       doc.text(`Signed date: ${format(new Date(contract.signed_at), 'yyyy-MM-dd')}`);
@@ -163,9 +184,10 @@ export const generateContractPDF = async (contract: any): Promise<void> => {
         // Convert base64 to image for PDF
         try {
           const signatureData = contract.signature_data.replace(/^data:image\/\w+;base64,/, '');
+          // Fix image options format
           doc.image(Buffer.from(signatureData, 'base64'), { 
-            fit: [200, 100], 
-            align: 'left' 
+            width: 200,
+            align: 'left'
           });
         } catch (error) {
           console.error("Error adding signature to PDF:", error);

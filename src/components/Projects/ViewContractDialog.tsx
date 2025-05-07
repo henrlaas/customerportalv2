@@ -18,7 +18,29 @@ import { fillContractTemplate, getTemplateTypeName } from '@/utils/contractUtils
 interface ViewContractDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  contract: any;
+  contract: {
+    id: string;
+    template_type: string;
+    company_id: string;
+    contact_id: string;
+    status: string;
+    signed_at?: string;
+    signature_data?: string;
+    created_at: string;
+    created_by?: string;
+    companies?: {
+      name?: string;
+    };
+    contacts?: {
+      position?: string;
+      user?: {
+        profiles?: {
+          first_name?: string;
+          last_name?: string;
+        }[];
+      };
+    };
+  };
   onContractUpdated?: () => void;
 }
 
@@ -177,14 +199,14 @@ export const ViewContractDialog: React.FC<ViewContractDialogProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="font-medium">Company:</p>
-                  <p>{contract?.companies?.name}</p>
+                  <p>{contract?.companies?.name || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="font-medium">Contact:</p>
                   <p>
-                    {contract?.contacts?.users?.profiles?.first_name || ''} {' '}
-                    {contract?.contacts?.users?.profiles?.last_name || ''}
-                    {contract?.contacts?.position && ` (${contract.contacts.position})`}
+                    {contract?.contacts?.user?.profiles?.[0]?.first_name || ''}{' '}
+                    {contract?.contacts?.user?.profiles?.[0]?.last_name || ''}{' '}
+                    {contract?.contacts?.position && `(${contract.contacts.position})`}
                   </p>
                 </div>
                 <div>

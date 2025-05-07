@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -17,6 +18,20 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Add this to handle missing node modules in the browser
+      events: 'events-browserify',
+    },
+  },
+  define: {
+    // Handle Node.js globals
+    'process.env': {},
+    global: 'window',
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis'
+      },
     },
   },
 }));

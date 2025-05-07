@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -65,7 +64,7 @@ const ProjectsPage = () => {
         .select(`
           *,
           creator:created_by (
-            profiles:profiles (
+            profiles (
               first_name,
               last_name
             )
@@ -75,7 +74,17 @@ const ProjectsPage = () => {
         
       if (error) throw error;
       
-      setProjects(data || []);
+      if (data) {
+        const typedProjects: Project[] = data.map(project => ({
+          id: project.id,
+          name: project.name,
+          description: project.description,
+          created_at: project.created_at,
+          created_by: project.created_by,
+          creator: project.creator as Project['creator']
+        }));
+        setProjects(typedProjects);
+      }
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast({
