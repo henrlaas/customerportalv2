@@ -76,6 +76,7 @@ export const fillContractTemplate = async (contract: Contract): Promise<string> 
     // Safety check to avoid errors with profiles
     if (contactData?.user && 
         typeof contactData.user === 'object' && 
+        contactData.user !== null && 
         'profiles' in contactData.user && 
         Array.isArray(contactData.user.profiles) && 
         contactData.user.profiles.length > 0) {
