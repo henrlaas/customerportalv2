@@ -39,7 +39,7 @@ export type ContractWithDetails = Contract & {
     first_name?: string;
     last_name?: string;
   };
-  creator?: { first_name: string | null; last_name: string | null };
+  creator?: { first_name: string | null; last_name: string | null } | null;
 };
 
 // Fetch templates
@@ -107,7 +107,7 @@ export async function fetchContracts() {
   // Get user emails for contacts
   const contractsWithDetails = await enrichContractData(data);
   
-  return contractsWithDetails as ContractWithDetails[];
+  return contractsWithDetails;
 }
 
 // Helper function to enrich contract data with user details
@@ -141,15 +141,26 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
         if (contract.contact?.user_id) {
           // Add email to contact if available
           if (emailMap.has(contract.contact.user_id)) {
-            contract.contact.email = emailMap.get(contract.contact.user_id);
+            if (!contract.contact.email) {
+              contract.contact.email = emailMap.get(contract.contact.user_id);
+            }
           }
           
           // Add first_name and last_name to contact if available
           if (profileMap.has(contract.contact.user_id)) {
             const profile = profileMap.get(contract.contact.user_id);
-            contract.contact.first_name = profile?.first_name;
-            contract.contact.last_name = profile?.last_name;
+            if (!contract.contact.first_name) {
+              contract.contact.first_name = profile?.first_name;
+            }
+            if (!contract.contact.last_name) {
+              contract.contact.last_name = profile?.last_name;
+            }
           }
+        }
+        
+        // Ensure company has required properties
+        if (!contract.company || typeof contract.company !== 'object') {
+          contract.company = { name: 'Unknown', organization_number: null };
         }
       }
     } catch (err) {
@@ -157,6 +168,7 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
     }
   }
   
+  // Make sure we return the expected type
   return contracts as ContractWithDetails[];
 }
 
@@ -176,7 +188,7 @@ export async function fetchContract(id: string) {
   if (error) throw error;
   
   // Enrich with contact details
-  if (data.contact?.user_id) {
+  if (data && data.contact?.user_id) {
     try {
       // Get email for contact
       const { data: emailData } = await supabase.rpc('get_users_email', { 
@@ -184,7 +196,9 @@ export async function fetchContract(id: string) {
       });
       
       if (emailData && emailData[0]) {
-        data.contact.email = emailData[0].email;
+        if (!data.contact.email) {
+          data.contact.email = emailData[0].email;
+        }
       }
       
       // Get profile for contact
@@ -195,12 +209,21 @@ export async function fetchContract(id: string) {
         .single();
         
       if (profileData) {
-        data.contact.first_name = profileData.first_name;
-        data.contact.last_name = profileData.last_name;
+        if (!data.contact.first_name) {
+          data.contact.first_name = profileData.first_name;
+        }
+        if (!data.contact.last_name) {
+          data.contact.last_name = profileData.last_name;
+        }
       }
     } catch (err) {
       console.error("Error fetching contact details:", err);
     }
+  }
+  
+  // Ensure we have a valid company object
+  if (!data.company || typeof data.company !== 'object') {
+    data.company = { name: 'Unknown', organization_number: null };
   }
   
   return data as ContractWithDetails;
@@ -258,7 +281,7 @@ export async function fetchClientContracts(userId: string) {
   // Enrich with additional data
   const contractsWithDetails = await enrichContractData(data);
   
-  return contractsWithDetails as ContractWithDetails[];
+  return contractsWithDetails;
 }
 
 // Sign a contract
