@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -39,7 +39,7 @@ export const ContractList = () => {
   
   const isClient = profile?.role === 'client';
   
-  // Fetch contracts based on user role
+  // Fetch contracts based on user role with optimized caching
   const { data: contracts = [], isLoading } = useQuery({
     queryKey: ['contracts', user?.id, isClient],
     queryFn: async () => {
@@ -52,27 +52,36 @@ export const ContractList = () => {
       }
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes before refetching
+    cacheTime: 10 * 60 * 1000, // 10 minutes in cache
   });
   
-  // Filter contracts based on search term
-  const filteredContracts = contracts.filter(contract => {
+  // Memoize filtered contracts to prevent re-rendering on every render
+  const filteredContracts = useMemo(() => {
     const searchString = searchTerm.toLowerCase();
-    const companyName = contract.company?.name?.toLowerCase() || '';
-    const contactName = `${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.toLowerCase();
-    const status = contract.status.toLowerCase();
-    const type = contract.template_type.toLowerCase();
     
-    return (
-      companyName.includes(searchString) ||
-      contactName.includes(searchString) ||
-      status.includes(searchString) ||
-      type.includes(searchString)
-    );
-  });
+    return contracts.filter(contract => {
+      const companyName = contract.company?.name?.toLowerCase() || '';
+      const contactName = `${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.toLowerCase();
+      const status = contract.status.toLowerCase();
+      const type = contract.template_type.toLowerCase();
+      
+      return (
+        companyName.includes(searchString) ||
+        contactName.includes(searchString) ||
+        status.includes(searchString) ||
+        type.includes(searchString)
+      );
+    });
+  }, [contracts, searchTerm]);
   
-  // Sort contracts: unsigned first, then by date
-  const unsignedContracts = filteredContracts.filter(contract => contract.status === 'unsigned');
-  const signedContracts = filteredContracts.filter(contract => contract.status === 'signed');
+  // Memoize sorted contracts for better performance
+  const { unsignedContracts, signedContracts } = useMemo(() => {
+    return {
+      unsignedContracts: filteredContracts.filter(contract => contract.status === 'unsigned'),
+      signedContracts: filteredContracts.filter(contract => contract.status === 'signed')
+    };
+  }, [filteredContracts]);
 
   const downloadPdf = async (contract: ContractWithDetails) => {
     try {
@@ -100,7 +109,8 @@ export const ContractList = () => {
     setViewDialogOpen(true);
   };
   
-  const renderContractTable = (contracts: ContractWithDetails[]) => (
+  // Memoize the contract table rendering function for better performance
+  const renderContractTable = useMemo(() => (contracts: ContractWithDetails[]) => (
     <Table className="border">
       <TableHeader>
         <TableRow>
@@ -160,10 +170,15 @@ export const ContractList = () => {
         )}
       </TableBody>
     </Table>
-  );
+  ), [isClient]);
   
   if (isLoading) {
-    return <div className="flex justify-center p-8">Loading contracts...</div>;
+    return <div className="flex justify-center items-center p-8">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
+        <p>Loading contracts...</p>
+      </div>
+    </div>;
   }
   
   return (

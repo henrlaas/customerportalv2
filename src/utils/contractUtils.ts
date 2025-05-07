@@ -1,4 +1,3 @@
-
 import { createPDF } from '@/utils/pdfUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -99,6 +98,7 @@ export async function createContractTemplate(template: Omit<ContractTemplate, 'i
 
 // Fetch contracts with company and contact details
 export async function fetchContracts() {
+  console.time('fetchContracts');
   const { data, error } = await supabase
     .from('contracts')
     .select(`
@@ -109,11 +109,15 @@ export async function fetchContracts() {
     `)
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    console.timeEnd('fetchContracts');
+    throw error;
+  }
   
   // Get user emails for contacts
   const contractsWithDetails = await enrichContractData(data || []);
   
+  console.timeEnd('fetchContracts');
   return contractsWithDetails;
 }
 
@@ -122,6 +126,8 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
   if (!contracts || contracts.length === 0) {
     return [];
   }
+  
+  console.time('enrichContractData');
   
   // Initialize each contract's properties to ensure they match ContractWithDetails type
   const initializedContracts = contracts.map(contract => {
@@ -138,19 +144,23 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
     return contract;
   });
   
-  // Get user IDs for contacts
-  const contactUserIds = initializedContracts
-    .map(contract => contract.contact?.user_id)
-    .filter(Boolean);
+  // Get unique user IDs for contacts to prevent duplicate fetches
+  const contactUserIds = Array.from(new Set(
+    initializedContracts
+      .map(contract => contract.contact?.user_id)
+      .filter(Boolean)
+  ));
   
   if (contactUserIds.length > 0) {
     try {
-      // Get emails for contacts
-      const { data: emailsData } = await supabase.rpc('get_users_email', { user_ids: contactUserIds });
+      // Batch fetch all emails at once
+      const { data: emailsData } = await supabase.rpc('get_users_email', { 
+        user_ids: contactUserIds 
+      });
       
       const emailMap = new Map(emailsData?.map((item: any) => [item.id, item.email]) || []);
       
-      // Get first and last names for contacts
+      // Batch fetch all profiles at once
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, first_name, last_name')
@@ -178,6 +188,8 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
       console.error("Error enriching contract data:", err);
     }
   }
+  
+  console.timeEnd('enrichContractData');
   
   // Cast to expected type after ensuring all required properties exist
   return initializedContracts as ContractWithDetails[];
@@ -264,15 +276,20 @@ export async function createContract(contract: {
 
 // Fetch contracts for a client (user logged in)
 export async function fetchClientContracts(userId: string) {
+  console.time('fetchClientContracts');
   // Get all company contacts for this user
   const { data: contactsData, error: contactsError } = await supabase
     .from('company_contacts')
     .select('id, company_id')
     .eq('user_id', userId);
 
-  if (contactsError) throw contactsError;
+  if (contactsError) {
+    console.timeEnd('fetchClientContracts');
+    throw contactsError;
+  }
   
   if (!contactsData || contactsData.length === 0) {
+    console.timeEnd('fetchClientContracts');
     return [];
   }
 
@@ -289,11 +306,15 @@ export async function fetchClientContracts(userId: string) {
     .in('contact_id', contactIds)
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    console.timeEnd('fetchClientContracts');
+    throw error;
+  }
   
   // Enrich with additional data
   const contractsWithDetails = await enrichContractData(data || []);
   
+  console.timeEnd('fetchClientContracts');
   return contractsWithDetails;
 }
 
