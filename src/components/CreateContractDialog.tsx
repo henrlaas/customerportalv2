@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { PlusCircle, ArrowLeft, ArrowRight, Check, RefreshCw } from 'lucide-react';
+import { PlusCircle, ArrowLeft, ArrowRight, Check, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +28,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -44,6 +46,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
   const [selectedContact, setSelectedContact] = useState<any>(null);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
+  const [contactsFetchError, setContactsFetchError] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -89,48 +92,76 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
   };
   
   // Fetch contacts when company is selected
-  const { data: contacts = [], isLoading: isLoadingContacts } = useQuery({
-    queryKey: ['companyContacts', selectedCompany?.id, getParentCompanyId()],
+  const { data: contacts = [], isLoading: isLoadingContacts, refetch: refetchContacts, error: contactsError } = useQuery({
+    queryKey: ['companyContacts', selectedCompany?.id],
     queryFn: async () => {
       if (!selectedCompany?.id) return [];
       
-      // Get contacts for either the selected company or its parent
-      const companyId = getParentCompanyId();
+      console.log('Fetching contacts for company:', selectedCompany.id);
       
+      // Get contacts for the selected company
       const { data, error } = await supabase
         .from('company_contacts')
         .select(`
-          id,
+          id, 
+          company_id,
           user_id,
           position,
           is_primary,
-          profiles:user_id (first_name, last_name)
+          profiles:user_id (
+            first_name,
+            last_name
+          )
         `)
-        .eq('company_id', companyId);
+        .eq('company_id', selectedCompany.id);
       
       if (error) throw error;
+      console.info('Contacts query status:', {
+        isLoading: false,
+        isError: !!error,
+        contactCount: data?.length
+      });
       
-      // Get emails for contacts
-      const userIds = data.map((contact: any) => contact.user_id).filter(Boolean);
-      
-      if (userIds.length > 0) {
-        const { data: emailsData } = await supabase.rpc('get_users_email', { user_ids: userIds });
-        
-        if (emailsData) {
-          const emailMap = new Map(emailsData.map((item: any) => [item.id, item.email]));
+      // Get emails for contacts directly from auth.users
+      if (data && data.length > 0) {
+        try {
+          const userIds = data.map(contact => contact.user_id).filter(Boolean);
           
-          // Add email to contact data
-          data.forEach((contact: any) => {
-            if (contact.user_id) {
-              contact.email = emailMap.get(contact.user_id);
+          // Call edge function to get emails
+          const { data: emailsData, error: emailError } = await supabase.functions.invoke('user-management', {
+            body: {
+              action: 'list',
+              userIds: userIds
             }
           });
+          
+          if (emailError) {
+            console.warn('Could not fetch email addresses:', emailError);
+            // Continue without emails
+          } else if (emailsData) {
+            // Map emails to contacts
+            const emailMap = new Map(emailsData.map((item: any) => [item.id, item.email]));
+            
+            data.forEach(contact => {
+              if (contact.user_id) {
+                contact.email = emailMap.get(contact.user_id);
+              }
+            });
+          }
+        } catch (err) {
+          console.warn('Error fetching user emails:', err);
+          // Continue without emails
         }
       }
       
-      return data;
+      return data || [];
     },
     enabled: !!selectedCompany?.id,
+    retry: 2,
+    onError: (error: any) => {
+      console.error('Error fetching contacts:', error);
+      setContactsFetchError(error.message);
+    }
   });
   
   // Fetch projects
@@ -212,12 +243,19 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     setSelectedCompany(null);
     setSelectedContact(null);
     setSelectedProject(null);
+    setContactsFetchError(null);
   };
   
   const handleClose = () => {
     setOpen(false);
     resetForm();
   };
+
+  // Clear contact when company changes
+  useEffect(() => {
+    setSelectedContact(null);
+    setContactsFetchError(null);
+  }, [selectedCompany]);
 
   // Format templates for react-select
   const formatTemplatesForSelect = (templates: ContractTemplate[]) => {
@@ -263,12 +301,27 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     }));
   };
   
+  // Placeholder helper component
+  const PlaceholdersHelp = () => (
+    <Alert className="bg-[#FEF7CD] border-yellow-300 mb-4">
+      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+      <AlertDescription className="text-sm text-yellow-800">
+        <span className="font-medium">Available placeholders:</span>{' '}
+        <code>{'{{companyname}}'}</code>, <code>{'{{organizationnumber}}'}</code>, 
+        <code>{'{{address}}'}</code>, <code>{'{{zipcode}}'}</code>, <code>{'{{city}}'}</code>, <code>{'{{country}}'}</code>, 
+        <code>{'{{contactfullname}}'}</code>, <code>{'{{contactposition}}'}</code>, <code>{'{{todaydate}}'}</code>, <code>{'{{mrrprice}}'}</code>
+      </AlertDescription>
+    </Alert>
+  );
+  
   const stepContent = () => {
     switch (step) {
       case 1: // Template selection
         return (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Choose a contract template to use.</p>
+            
+            <PlaceholdersHelp />
             
             <Tabs defaultValue="DPA">
               <TabsList className="mb-4">
@@ -449,11 +502,22 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
                 <RefreshCw className="h-4 w-4 animate-spin" />
                 <span>Loading contacts...</span>
               </div>
+            ) : contactsFetchError ? (
+              <div className="text-center py-4 space-y-2">
+                <p className="text-red-500">Error loading contacts: {contactsFetchError}</p>
+                <Button variant="outline" size="sm" onClick={() => {
+                  setContactsFetchError(null);
+                  refetchContacts();
+                }}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
             ) : contacts.length === 0 ? (
               <div className="text-center py-4 space-y-2">
                 <p>No contacts found for this company.</p>
                 <Button variant="outline" size="sm" onClick={() => {
-                  queryClient.invalidateQueries({ queryKey: ['companyContacts', selectedCompany?.id] });
+                  refetchContacts();
                 }}>
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Retry
@@ -657,42 +721,37 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
               </div>
             ))}
           </div>
-          
+
+          {/* Step content */}
           {stepContent()}
         </div>
         
-        <div className="flex justify-between">
+        <div className="flex justify-between pt-4">
           <Button
             type="button"
             variant="outline"
-            onClick={step === 1 ? handleClose : () => setStep((prev) => prev - 1)}
+            onClick={() => (step > 1 ? setStep(step - 1) : handleClose())}
           >
-            {step === 1 ? 'Cancel' : (
-              <>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </>
-            )}
+            {step === 1 ? 'Cancel' : 'Back'}
           </Button>
           
-          {step < 5 ? (
-            <Button
-              type="button"
-              disabled={!canProceed()}
-              onClick={() => setStep((prev) => prev + 1)}
-            >
-              Next
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              disabled={createContractMutation.isPending || !canProceed()}
-              onClick={() => createContractMutation.mutate()}
-            >
-              {createContractMutation.isPending ? 'Creating...' : 'Create Contract'}
-            </Button>
-          )}
+          <Button
+            type="button"
+            onClick={() => {
+              if (step < 5) {
+                setStep(step + 1);
+              } else {
+                createContractMutation.mutate();
+              }
+            }}
+            disabled={!canProceed() || createContractMutation.isPending}
+          >
+            {step < 5
+              ? 'Next'
+              : createContractMutation.isPending
+              ? 'Creating...'
+              : 'Create Contract'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
