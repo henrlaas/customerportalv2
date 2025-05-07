@@ -18,7 +18,10 @@ export interface Contract {
   };
   contacts?: {
     position?: string;
+    user_id?: string;
     user?: {
+      email?: string;
+      id?: string;
       profiles?: {
         first_name?: string;
         last_name?: string;
@@ -26,6 +29,7 @@ export interface Contract {
     };
   };
   creators?: {
+    email?: string;
     profiles?: {
       first_name?: string;
       last_name?: string;

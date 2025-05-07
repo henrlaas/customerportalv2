@@ -39,7 +39,7 @@ export const ContractList: React.FC<ContractListProps> = ({
     
     setLoading(true);
     try {
-      // Create a query that avoids recursive types
+      // Create a query with explicit column selection to avoid recursive types
       let query = supabase
         .from('contracts')
         .select(`
@@ -59,7 +59,10 @@ export const ContractList: React.FC<ContractListProps> = ({
           companies:company_id (name),
           contacts:contact_id (
             position,
+            user_id,
             user:user_id (
+              email,
+              id,
               profiles:profiles (
                 first_name,
                 last_name
@@ -67,6 +70,7 @@ export const ContractList: React.FC<ContractListProps> = ({
             )
           ),
           creators:created_by (
+            email,
             profiles:profiles (
               first_name,
               last_name
@@ -114,7 +118,7 @@ export const ContractList: React.FC<ContractListProps> = ({
       }
       
       if (data) {
-        // Use type assertion to break the recursive type chain
+        // Use explicit type assertion to break the recursive type chain
         setContracts(data as unknown as Contract[]);
       }
     } catch (error) {

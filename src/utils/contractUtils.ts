@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Contract } from '@/types/contract';
@@ -73,11 +74,12 @@ export const fillContractTemplate = async (contract: Contract): Promise<string> 
     let contactFirstName = '';
     let contactLastName = '';
     
-    // Safety check to avoid errors with profiles - with proper null checking
+    // Proper null checking for potentially missing data
     if (contactData && 
         contactData.user && 
         typeof contactData.user === 'object' && 
         'profiles' in contactData.user && 
+        contactData.user.profiles !== null &&
         Array.isArray(contactData.user.profiles) && 
         contactData.user.profiles.length > 0) {
       contactFirstName = contactData.user.profiles[0]?.first_name || '';
