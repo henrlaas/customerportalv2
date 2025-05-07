@@ -18,6 +18,11 @@ export const ProjectContractTab: React.FC<ProjectContractTabProps> = ({
 }) => {
   const { isAdmin, isEmployee } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [contractsUpdated, setContractsUpdated] = useState(false);
+
+  const handleContractCreated = () => {
+    setContractsUpdated(!contractsUpdated);
+  };
 
   return (
     <div className="space-y-6">
@@ -44,12 +49,14 @@ export const ProjectContractTab: React.FC<ProjectContractTabProps> = ({
             <ContractList 
               projectId={projectId} 
               companyId={companyId} 
+              filter="unsigned"
             />
           </TabsContent>
           <TabsContent value="signed">
             <ContractList 
               projectId={projectId} 
               companyId={companyId} 
+              filter="signed"
             />
           </TabsContent>
         </Tabs>
@@ -63,6 +70,7 @@ export const ProjectContractTab: React.FC<ProjectContractTabProps> = ({
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         projectId={projectId}
+        onSuccess={handleContractCreated}
       />
     </div>
   );

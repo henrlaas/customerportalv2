@@ -14,22 +14,57 @@ interface ContractListProps {
   projectId?: string;
   companyId?: string;
   showAll?: boolean;
+  filter?: 'signed' | 'unsigned';
 }
+
+type Contract = {
+  id: string;
+  template_type: string;
+  company_id: string;
+  contact_id: string;
+  project_id?: string;
+  status: string;
+  signed_at?: string;
+  signature_data?: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  file_url?: string;
+  companies?: {
+    name?: string;
+  };
+  contacts?: {
+    position?: string;
+    users?: {
+      profiles?: {
+        first_name?: string;
+        last_name?: string;
+      }[];
+    };
+  };
+  creators?: {
+    profiles?: {
+      first_name?: string;
+      last_name?: string;
+    }[];
+  };
+};
 
 export const ContractList: React.FC<ContractListProps> = ({ 
   projectId,
   companyId,
-  showAll = false
+  showAll = false,
+  filter
 }) => {
   const { user, isAdmin, isEmployee } = useAuth();
-  const [contracts, setContracts] = useState<any[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedContract, setSelectedContract] = useState<any>(null);
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchContracts();
-  }, [projectId, companyId, user]);
+  }, [projectId, companyId, user, filter]);
 
   const fetchContracts = async () => {
     if (!user) return;
@@ -41,7 +76,7 @@ export const ContractList: React.FC<ContractListProps> = ({
         .select(`
           *,
           companies:company_id (name),
-          contacts:company_contacts!contact_id (
+          contacts:contact_id (
             position,
             users:user_id (
               profiles:profiles!inner (
@@ -66,6 +101,11 @@ export const ContractList: React.FC<ContractListProps> = ({
       
       if (companyId) {
         query = query.eq('company_id', companyId);
+      }
+      
+      // Filter by status if specified
+      if (filter) {
+        query = query.eq('status', filter);
       }
       
       // If not admin/employee and not showing all, only show user's contracts
@@ -101,12 +141,12 @@ export const ContractList: React.FC<ContractListProps> = ({
     }
   };
 
-  const handleViewContract = (contract: any) => {
+  const handleViewContract = (contract: Contract) => {
     setSelectedContract(contract);
     setIsViewDialogOpen(true);
   };
 
-  const handleDownload = async (contract: any) => {
+  const handleDownload = async (contract: Contract) => {
     try {
       await generateContractPDF(contract);
     } catch (error) {
@@ -167,14 +207,14 @@ export const ContractList: React.FC<ContractListProps> = ({
                 <div className="grid grid-cols-2 gap-2 text-sm mb-4">
                   <div>
                     <span className="font-medium">Contact:</span>{" "}
-                    {contract.contacts?.users?.profiles?.first_name || ''}{" "}
-                    {contract.contacts?.users?.profiles?.last_name || ''}{" "}
+                    {contract.contacts?.users?.profiles?.[0]?.first_name || ''}{" "}
+                    {contract.contacts?.users?.profiles?.[0]?.last_name || ''}{" "}
                     {contract.contacts?.position && `(${contract.contacts.position})`}
                   </div>
                   <div>
                     <span className="font-medium">Created by:</span>{" "}
-                    {contract.creators?.profiles?.first_name || ''}{" "}
-                    {contract.creators?.profiles?.last_name || ''}
+                    {contract.creators?.profiles?.[0]?.first_name || ''}{" "}
+                    {contract.creators?.profiles?.[0]?.last_name || ''}
                   </div>
                   <div>
                     <span className="font-medium">Created:</span>{" "}

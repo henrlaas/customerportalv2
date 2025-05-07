@@ -68,17 +68,20 @@ export const fillContractTemplate = async (contract: any): Promise<string> => {
     if (contactError) throw contactError;
     
     // Prepare replacement data
+    const contactFirstName = contactData?.user?.profiles?.[0]?.first_name || '';
+    const contactLastName = contactData?.user?.profiles?.[0]?.last_name || '';
+    
     const replacementData: Record<string, string> = {
-      company_name: companyData.name || '',
-      organization_number: companyData.organization_number || '',
-      address: companyData.street_address || companyData.address || '',
-      postal_code: companyData.postal_code || '',
-      city: companyData.city || '',
-      country: companyData.country || '',
-      contact_full_name: `${contactData.user?.profiles?.[0]?.first_name || ''} ${contactData.user?.profiles?.[0]?.last_name || ''}`.trim(),
-      contact_position: contactData.position || '',
+      company_name: companyData?.name || '',
+      organization_number: companyData?.organization_number || '',
+      address: companyData?.street_address || companyData?.address || '',
+      postal_code: companyData?.postal_code || '',
+      city: companyData?.city || '',
+      country: companyData?.country || '',
+      contact_full_name: `${contactFirstName} ${contactLastName}`.trim(),
+      contact_position: contactData?.position || '',
       today_date: format(new Date(), 'yyyy-MM-dd'),
-      mrr_price: companyData.mrr ? `${companyData.mrr} NOK` : 'N/A'
+      mrr_price: companyData?.mrr ? `${companyData.mrr} NOK` : 'N/A'
     };
     
     // Replace placeholders
@@ -143,7 +146,13 @@ export const generateContractPDF = async (contract: any): Promise<void> => {
       doc.moveDown(2);
       doc.fontSize(14).text('Signed Contract', { underline: true });
       doc.moveDown();
-      doc.fontSize(12).text(`Signed by: ${contract.contacts?.users?.profiles?.first_name || ''} ${contract.contacts?.users?.profiles?.last_name || ''}`);
+      
+      // Get contact name from the contract object
+      const contactFirstName = contract.contacts?.users?.profiles?.[0]?.first_name || '';
+      const contactLastName = contract.contacts?.users?.profiles?.[0]?.last_name || '';
+      const contactFullName = `${contactFirstName} ${contactLastName}`.trim();
+      
+      doc.fontSize(12).text(`Signed by: ${contactFullName}`);
       doc.text(`Signed date: ${format(new Date(contract.signed_at), 'yyyy-MM-dd')}`);
       
       // Add signature image if available
@@ -152,10 +161,16 @@ export const generateContractPDF = async (contract: any): Promise<void> => {
         doc.text('Signature:');
         doc.moveDown(0.5);
         // Convert base64 to image for PDF
-        doc.image(Buffer.from(contract.signature_data.replace(/^data:image\/\w+;base64,/, ''), 'base64'), {
-          fit: [200, 100],
-          align: 'left'
-        });
+        try {
+          const signatureData = contract.signature_data.replace(/^data:image\/\w+;base64,/, '');
+          doc.image(Buffer.from(signatureData, 'base64'), { 
+            fit: [200, 100], 
+            align: 'left' 
+          });
+        } catch (error) {
+          console.error("Error adding signature to PDF:", error);
+          doc.text("(Signature unavailable)");
+        }
       }
     }
     

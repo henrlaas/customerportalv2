@@ -23,10 +23,10 @@ type Project = {
   created_at: string;
   created_by: string;
   creator?: {
-    profiles?: {
+    profiles?: Array<{
       first_name: string;
       last_name: string;
-    }[];
+    }>;
   };
 };
 

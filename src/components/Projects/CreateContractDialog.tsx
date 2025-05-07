@@ -66,8 +66,8 @@ export const CreateContractDialog = ({
   const templates = [
     { id: 'dpa', name: 'DPA (Data Processing Agreement)' },
     { id: 'nda', name: 'NDA (Non-Disclosure Agreement)' },
-    { id: 'marketing', name: 'Marketing' },
     { id: 'web', name: 'Web Development' },
+    { id: 'marketing', name: 'Marketing' },
   ];
 
   const onSubmit = async (data: ContractFormData) => {
@@ -82,7 +82,7 @@ export const CreateContractDialog = ({
 
     try {
       // Create contract in database
-      const { data: insertData, error } = await supabase
+      const { error } = await supabase
         .from('contracts')
         .insert({
           template_type: data.templateType,
