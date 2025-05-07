@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -37,7 +38,7 @@ interface CreateContractDialogProps {
   onContractCreated?: () => void;
 }
 
-// Define the contact interface to include the email property
+// Define the contact interface with properly typed profiles
 interface CompanyContact {
   id: string;
   company_id: string;
@@ -47,8 +48,14 @@ interface CompanyContact {
   profiles?: {
     first_name?: string | null;
     last_name?: string | null;
-  };
+  } | null;
   email?: string; // Add this to the type
+}
+
+// Interface for email data returned from edge function
+interface EmailData {
+  id: string;
+  email: string;
 }
 
 export function CreateContractDialog({ onContractCreated }: CreateContractDialogProps) {
@@ -135,8 +142,16 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         contactCount: data?.length
       });
       
-      // Get emails for contacts directly from auth.users
-      const contactsWithEmail: CompanyContact[] = [...(data || [])];
+      // Create a new array with the correct type
+      const contactsWithEmail: CompanyContact[] = (data || []).map(contact => ({
+        id: contact.id,
+        company_id: contact.company_id,
+        user_id: contact.user_id,
+        position: contact.position,
+        is_primary: contact.is_primary,
+        profiles: contact.profiles as unknown as { first_name?: string | null, last_name?: string | null } | null,
+        email: undefined // We'll fill this in later
+      }));
       
       if (contactsWithEmail && contactsWithEmail.length > 0) {
         try {
@@ -155,14 +170,26 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
             // Continue without emails
           } else if (emailsData) {
             // Map emails to contacts
-            const emailMap = new Map(emailsData.map((item: any) => [item.id, item.email]));
+            const emailMap = new Map<string, string>();
             
-            contactsWithEmail.forEach(contact => {
-              if (contact.user_id) {
-                // Add email property to contact objects
-                contact.email = emailMap.get(contact.user_id);
-              }
-            });
+            // Safely cast and process email data
+            if (Array.isArray(emailsData)) {
+              emailsData.forEach((item: any) => {
+                if (item && typeof item.id === 'string' && typeof item.email === 'string') {
+                  emailMap.set(item.id, item.email);
+                }
+              });
+              
+              contactsWithEmail.forEach(contact => {
+                if (contact.user_id) {
+                  // Add email property to contact objects
+                  const email = emailMap.get(contact.user_id);
+                  if (email) {
+                    contact.email = email;
+                  }
+                }
+              });
+            }
           }
         } catch (err) {
           console.warn('Error fetching user emails:', err);
