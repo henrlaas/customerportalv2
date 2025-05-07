@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Contract } from '@/types/contract';
@@ -73,18 +74,16 @@ export const fillContractTemplate = async (contract: Contract): Promise<string> 
     let contactFirstName = '';
     let contactLastName = '';
     
-    // Fixed: Add proper null checks for contactData.user
-    if (contactData && 
-        contactData.user && 
-        typeof contactData.user === 'object' && 
-        'profiles' in contactData.user && 
-        contactData.user.profiles !== null &&
-        Array.isArray(contactData.user.profiles) && 
-        contactData.user.profiles.length > 0) {
-      const profile = contactData.user.profiles[0];
-      if (profile) {
-        contactFirstName = profile.first_name || '';
-        contactLastName = profile.last_name || '';
+    // Enhanced null checks: Ensure each property access is guarded
+    if (contactData && contactData.user) {
+      // Check if profiles exists and is an array with data
+      const profiles = contactData.user.profiles;
+      if (Array.isArray(profiles) && profiles.length > 0) {
+        const profile = profiles[0];
+        if (profile) {
+          contactFirstName = profile.first_name || '';
+          contactLastName = profile.last_name || '';
+        }
       }
     }
     
@@ -164,19 +163,17 @@ export const generateContractPDF = async (contract: Contract): Promise<void> => 
       doc.fontSize(14).text('Signed Contract', { underline: true });
       doc.moveDown();
       
-      // Get contact name - safely handle potentially missing data
+      // Get contact name with safe property access
       let contactFullName = '';
-      if (contract.contacts && 
-          typeof contract.contacts === 'object' && 
-          contract.contacts.user && 
-          typeof contract.contacts.user === 'object' && 
-          'profiles' in contract.contacts.user && 
-          contract.contacts.user.profiles !== null &&
-          Array.isArray(contract.contacts.user.profiles) && 
-          contract.contacts.user.profiles.length > 0) {
-        const contactFirstName = contract.contacts.user.profiles[0]?.first_name || '';
-        const contactLastName = contract.contacts.user.profiles[0]?.last_name || '';
-        contactFullName = `${contactFirstName} ${contactLastName}`.trim();
+      
+      // Enhanced null checks for signature section
+      if (contract.contacts && contract.contacts.user) {
+        const profiles = contract.contacts.user.profiles;
+        if (Array.isArray(profiles) && profiles.length > 0) {
+          const contactFirstName = profiles[0]?.first_name || '';
+          const contactLastName = profiles[0]?.last_name || '';
+          contactFullName = `${contactFirstName} ${contactLastName}`.trim();
+        }
       }
       
       doc.fontSize(12).text(`Signed by: ${contactFullName}`);
@@ -353,7 +350,7 @@ innlevering av patenter eller varemerker eller initiering av andre prosedyrer so
 
 gjennomføring av analyser eller utvikling av Konfidensiell Informasjon annet enn med hensyn til Formålet;
 
-bruk av Konfidensiell Informasjonen til å utføre forskning eller studier;
+bruk av Konfidensiell Informasjon til å utføre forskning eller studier;
 
 publisering av resultatene av studier utført ved bruk av Konfidensiell Informasjon; og
 
@@ -519,3 +516,4 @@ Uenigheter søkes løst i minnelighet. Uoppgjorte tvister behandles etter norsk 
 12. Signatur
 Avtalen trer i kraft ved signering av begge parter.`
 };
+
