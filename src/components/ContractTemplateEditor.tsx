@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Save, Edit, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   ContractTemplate,
   fetchContractTemplates,
@@ -117,12 +118,15 @@ export const ContractTemplateEditor = () => {
   };
   
   const PlaceholdersHelp = () => (
-    <div className="text-xs text-muted-foreground">
-      <AlertTriangle className="h-3 w-3 inline-block mr-1" />
-      Available placeholders: <code>{'{{companyname}}'}</code>, <code>{'{{organizationnumber}}'}</code>, 
-      <code>{'{{address}}'}</code>, <code>{'{{zipcode}}'}</code>, <code>{'{{city}}'}</code>, <code>{'{{country}}'}</code>, 
-      <code>{'{{contactfullname}}'}</code>, <code>{'{{contactposition}}'}</code>, <code>{'{{todaydate}}'}</code>, <code>{'{{mrrprice}}'}</code>
-    </div>
+    <Alert className="bg-[#FEF7CD] border-yellow-300 mb-4">
+      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+      <AlertDescription className="text-sm text-yellow-800">
+        <span className="font-medium">Available placeholders:</span>{' '}
+        <code>{'{{companyname}}'}</code>, <code>{'{{organizationnumber}}'}</code>, 
+        <code>{'{{address}}'}</code>, <code>{'{{zipcode}}'}</code>, <code>{'{{city}}'}</code>, <code>{'{{country}}'}</code>, 
+        <code>{'{{contactfullname}}'}</code>, <code>{'{{contactposition}}'}</code>, <code>{'{{todaydate}}'}</code>, <code>{'{{mrrprice}}'}</code>
+      </AlertDescription>
+    </Alert>
   );
   
   if (isLoading) {
@@ -147,6 +151,8 @@ export const ContractTemplateEditor = () => {
             </DialogHeader>
             
             <div className="space-y-4 py-4">
+              <PlaceholdersHelp />
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Name</label>
@@ -174,10 +180,7 @@ export const ContractTemplateEditor = () => {
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Content</label>
-                  <PlaceholdersHelp />
-                </div>
+                <label className="text-sm font-medium">Content</label>
                 <Textarea 
                   value={editForm.content} 
                   onChange={e => setEditForm(prev => ({ ...prev, content: e.target.value }))}
@@ -207,53 +210,55 @@ export const ContractTemplateEditor = () => {
       
       <div className="bg-background rounded-lg border shadow-sm">
         <Tabs defaultValue="DPA" value={selectedTab} onValueChange={setSelectedTab}>
-          <div className="flex items-center justify-between border-b px-4">
+          <div className="border-b px-4">
             <TabsList>
               <TabsTrigger value="DPA">DPA</TabsTrigger>
               <TabsTrigger value="NDA">NDA</TabsTrigger>
               <TabsTrigger value="Web">Web</TabsTrigger>
               <TabsTrigger value="Marketing">Marketing</TabsTrigger>
             </TabsList>
-            
-            <PlaceholdersHelp />
           </div>
           
-          <TabsContent value={selectedTab} className="p-4">
-            <div className="grid grid-cols-1 gap-4">
-              {filteredTemplates.map(template => (
-                <Card key={template.id}>
-                  <CardHeader>
-                    <CardTitle>{template.name}</CardTitle>
-                    <CardDescription>
-                      {format(new Date(template.updated_at), "Last updated: MMM d, yyyy 'at' h:mm a")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-60 overflow-y-auto whitespace-pre-wrap border rounded-md p-3 bg-muted/50 text-sm">
-                      {template.content}
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-end">
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleEditTemplate(template)}
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit Template
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-              
-              {filteredTemplates.length === 0 && (
-                <Card>
-                  <CardContent className="flex justify-center items-center h-32">
-                    <p className="text-muted-foreground">No templates found for {selectedTab}</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
+          <div className="p-4">
+            <PlaceholdersHelp />
+            
+            <TabsContent value={selectedTab} className="pt-2">
+              <div className="grid grid-cols-1 gap-4">
+                {filteredTemplates.map(template => (
+                  <Card key={template.id}>
+                    <CardHeader>
+                      <CardTitle>{template.name}</CardTitle>
+                      <CardDescription>
+                        {format(new Date(template.updated_at), "Last updated: MMM d, yyyy 'at' h:mm a")}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-60 overflow-y-auto whitespace-pre-wrap border rounded-md p-3 bg-muted/50 text-sm">
+                        {template.content}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-end">
+                      <Button 
+                        variant="outline"
+                        onClick={() => handleEditTemplate(template)}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Template
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+                
+                {filteredTemplates.length === 0 && (
+                  <Card>
+                    <CardContent className="flex justify-center items-center h-32">
+                      <p className="text-muted-foreground">No templates found for {selectedTab}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+          </div>
         </Tabs>
       </div>
       
@@ -265,6 +270,8 @@ export const ContractTemplateEditor = () => {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
+            <PlaceholdersHelp />
+            
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Name</label>
@@ -291,10 +298,7 @@ export const ContractTemplateEditor = () => {
             </div>
             
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Content</label>
-                <PlaceholdersHelp />
-              </div>
+              <label className="text-sm font-medium">Content</label>
               <Textarea 
                 value={editForm.content} 
                 onChange={e => setEditForm(prev => ({ ...prev, content: e.target.value }))}
@@ -323,3 +327,4 @@ export const ContractTemplateEditor = () => {
     </div>
   );
 };
+
