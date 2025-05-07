@@ -73,7 +73,7 @@ export const fillContractTemplate = async (contract: Contract): Promise<string> 
     let contactFirstName = '';
     let contactLastName = '';
     
-    // Proper null checking for potentially missing data
+    // Fixed: Add proper null checks for contactData.user
     if (contactData && 
         contactData.user && 
         typeof contactData.user === 'object' && 
@@ -171,6 +171,7 @@ export const generateContractPDF = async (contract: Contract): Promise<void> => 
           contract.contacts.user && 
           typeof contract.contacts.user === 'object' && 
           'profiles' in contract.contacts.user && 
+          contract.contacts.user.profiles !== null &&
           Array.isArray(contract.contacts.user.profiles) && 
           contract.contacts.user.profiles.length > 0) {
         const contactFirstName = contract.contacts.user.profiles[0]?.first_name || '';
