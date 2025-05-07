@@ -187,7 +187,7 @@ export const generateContractPDF = async (contract: Contract): Promise<void> => 
           const signatureData = contract.signature_data.replace(/^data:image\/\w+;base64,/, '');
           // Fix image options format
           doc.image(Buffer.from(signatureData, 'base64'), { 
-            width: 200
+            width: 200 
           });
         } catch (error) {
           console.error("Error adding signature to PDF:", error);
