@@ -1,8 +1,7 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { PlusCircle, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { PlusCircle, ArrowLeft, ArrowRight, Check, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,14 +22,15 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import { Card, CardDescription } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import Select from 'react-select';
 
 interface CreateContractDialogProps {
   onContractCreated?: () => void;
@@ -43,6 +43,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [selectedContact, setSelectedContact] = useState<any>(null);
   const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -53,25 +54,48 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     queryFn: () => fetchContractTemplates(),
   });
   
-  // Fetch companies
+  // Fetch companies with subsidiaries option
   const { data: companies = [], isLoading: isLoadingCompanies } = useQuery({
-    queryKey: ['companies'],
+    queryKey: ['companies', showSubsidiaries],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('companies')
-        .select('*')
+        .select('*, parent:parent_id(id, name)')
         .order('name');
+      
+      // Only filter by parent_id when not showing subsidiaries
+      if (!showSubsidiaries) {
+        query = query.is('parent_id', null);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data;
     },
   });
   
+  // Get parent company ID (either the selected company or its parent)
+  const getParentCompanyId = () => {
+    if (!selectedCompany) return null;
+    
+    // If the selected company has a parent, use the parent's ID
+    if (selectedCompany.parent_id) {
+      return selectedCompany.parent_id;
+    }
+    
+    // Otherwise, use the selected company's ID
+    return selectedCompany.id;
+  };
+  
   // Fetch contacts when company is selected
   const { data: contacts = [], isLoading: isLoadingContacts } = useQuery({
-    queryKey: ['companyContacts', selectedCompany?.id],
+    queryKey: ['companyContacts', selectedCompany?.id, getParentCompanyId()],
     queryFn: async () => {
       if (!selectedCompany?.id) return [];
+      
+      // Get contacts for either the selected company or its parent
+      const companyId = getParentCompanyId();
       
       const { data, error } = await supabase
         .from('company_contacts')
@@ -82,23 +106,26 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
           is_primary,
           profiles:user_id (first_name, last_name)
         `)
-        .eq('company_id', selectedCompany.id);
+        .eq('company_id', companyId);
       
       if (error) throw error;
       
       // Get emails for contacts
-      const userIds = data.map((contact: any) => contact.user_id);
-      const { data: emailsData } = await supabase.rpc('get_users_email', { user_ids: userIds });
+      const userIds = data.map((contact: any) => contact.user_id).filter(Boolean);
       
-      if (emailsData) {
-        const emailMap = new Map(emailsData.map((item: any) => [item.id, item.email]));
+      if (userIds.length > 0) {
+        const { data: emailsData } = await supabase.rpc('get_users_email', { user_ids: userIds });
         
-        // Add email to contact data
-        data.forEach((contact: any) => {
-          if (contact.user_id) {
-            contact.email = emailMap.get(contact.user_id);
-          }
-        });
+        if (emailsData) {
+          const emailMap = new Map(emailsData.map((item: any) => [item.id, item.email]));
+          
+          // Add email to contact data
+          data.forEach((contact: any) => {
+            if (contact.user_id) {
+              contact.email = emailMap.get(contact.user_id);
+            }
+          });
+        }
       }
       
       return data;
@@ -191,6 +218,50 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     setOpen(false);
     resetForm();
   };
+
+  // Format templates for react-select
+  const formatTemplatesForSelect = (templates: ContractTemplate[]) => {
+    return templates.map(template => ({
+      value: template.id,
+      label: template.name,
+      template
+    }));
+  };
+
+  // Format companies for react-select
+  const formatCompaniesForSelect = (companies: any[]) => {
+    return companies.map(company => ({
+      value: company.id,
+      label: company.name,
+      isSubsidiary: !!company.parent_id,
+      ...company
+    }));
+  };
+
+  // Format contacts for react-select
+  const formatContactsForSelect = (contacts: any[]) => {
+    return contacts.map(contact => {
+      const firstName = contact.profiles?.first_name || '';
+      const lastName = contact.profiles?.last_name || '';
+      const email = contact.email || '';
+      const label = `${firstName} ${lastName}${email ? ` (${email})` : ''}`;
+      
+      return {
+        value: contact.id,
+        label,
+        ...contact
+      };
+    });
+  };
+
+  // Format projects for react-select
+  const formatProjectsForSelect = (projects: any[]) => {
+    return projects.map(project => ({
+      value: project.id,
+      label: project.name,
+      ...project
+    }));
+  };
   
   const stepContent = () => {
     switch (step) {
@@ -200,31 +271,12 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
             <p className="text-sm text-muted-foreground">Choose a contract template to use.</p>
             
             <Tabs defaultValue="DPA">
-              <TabsList>
+              <TabsList className="mb-4">
                 <TabsTrigger value="DPA">DPA</TabsTrigger>
                 <TabsTrigger value="NDA">NDA</TabsTrigger>
                 <TabsTrigger value="Web">Web</TabsTrigger>
                 <TabsTrigger value="Marketing">Marketing</TabsTrigger>
               </TabsList>
-              
-              <div className="mt-4 grid grid-cols-1 gap-4">
-                {templates
-                  .filter((template) => template.type === (templates.find((t) => t.type === 'DPA') ? 'DPA' : ''))
-                  .map((template) => (
-                    <Card
-                      key={template.id}
-                      className={`cursor-pointer p-4 ${
-                        selectedTemplate?.id === template.id ? 'border-primary ring-2 ring-primary' : ''
-                      }`}
-                      onClick={() => setSelectedTemplate(template)}
-                    >
-                      <h3 className="font-medium">{template.name}</h3>
-                      <CardDescription>
-                        Created {format(new Date(template.created_at), 'MMM d, yyyy')}
-                      </CardDescription>
-                    </Card>
-                  ))}
-              </div>
               
               <TabsContent value="DPA">
                 <div className="grid grid-cols-1 gap-4">
@@ -318,22 +370,70 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Select a company for the contract.</p>
             
-            <Select value={selectedCompany?.id || ''} onValueChange={(value) => {
-              const company = companies.find((c) => c.id === value);
-              setSelectedCompany(company || null);
-              setSelectedContact(null); // Reset contact when company changes
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a company" />
-              </SelectTrigger>
-              <SelectContent>
-                {companies.map((company) => (
-                  <SelectItem key={company.id} value={company.id}>
-                    {company.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="show-subsidiaries"
+                  checked={showSubsidiaries} 
+                  onCheckedChange={setShowSubsidiaries} 
+                />
+                <Label htmlFor="show-subsidiaries">Show subsidiaries</Label>
+              </div>
+              
+              <div className="mt-2">
+                <Select
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  options={formatCompaniesForSelect(companies)}
+                  value={selectedCompany ? {
+                    value: selectedCompany.id,
+                    label: selectedCompany.name,
+                    isSubsidiary: !!selectedCompany.parent_id,
+                  } : null}
+                  onChange={(option: any) => {
+                    setSelectedCompany(option);
+                    setSelectedContact(null); // Reset contact when company changes
+                  }}
+                  isLoading={isLoadingCompanies}
+                  isClearable
+                  placeholder="Select a company..."
+                  formatOptionLabel={({ label, isSubsidiary }) => (
+                    <div>
+                      {isSubsidiary && <span className="text-muted-foreground">↳ </span>}
+                      {label}
+                    </div>
+                  )}
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      borderRadius: 'var(--radius)',
+                      borderColor: 'hsl(var(--input))',
+                      backgroundColor: 'hsl(var(--background))',
+                      boxShadow: 'none',
+                      '&:hover': {
+                        borderColor: 'hsl(var(--input))'
+                      },
+                      padding: '1px',
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      backgroundColor: 'hsl(var(--background))',
+                      borderRadius: 'var(--radius)',
+                      zIndex: 50,
+                    }),
+                    option: (base, { isFocused, isSelected }) => ({
+                      ...base,
+                      backgroundColor: isSelected 
+                        ? 'hsl(var(--primary) / 0.2)'
+                        : isFocused 
+                          ? 'hsl(var(--accent))'
+                          : undefined,
+                      color: 'hsl(var(--foreground))'
+                    }),
+                  }}
+                />
+              </div>
+            </div>
           </div>
         );
       
@@ -345,25 +445,62 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
             </p>
             
             {isLoadingContacts ? (
-              <div className="text-center py-4">Loading contacts...</div>
+              <div className="flex items-center justify-center space-x-2 py-4">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <span>Loading contacts...</span>
+              </div>
             ) : contacts.length === 0 ? (
-              <div className="text-center py-4">No contacts found for this company.</div>
+              <div className="text-center py-4 space-y-2">
+                <p>No contacts found for this company.</p>
+                <Button variant="outline" size="sm" onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ['companyContacts', selectedCompany?.id] });
+                }}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
             ) : (
-              <Select value={selectedContact?.id || ''} onValueChange={(value) => {
-                const contact = contacts.find((c) => c.id === value);
-                setSelectedContact(contact || null);
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a contact" />
-                </SelectTrigger>
-                <SelectContent>
-                  {contacts.map((contact: any) => (
-                    <SelectItem key={contact.id} value={contact.id}>
-                      {contact.profiles.first_name} {contact.profiles.last_name} ({contact.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Select
+                className="react-select-container"
+                classNamePrefix="react-select"
+                options={formatContactsForSelect(contacts)}
+                value={selectedContact ? {
+                  value: selectedContact.id,
+                  label: `${selectedContact.profiles?.first_name || ''} ${selectedContact.profiles?.last_name || ''}${selectedContact.email ? ` (${selectedContact.email})` : ''}`,
+                } : null}
+                onChange={(option: any) => setSelectedContact(option)}
+                isLoading={isLoadingContacts}
+                isClearable
+                placeholder="Select a contact..."
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    borderRadius: 'var(--radius)',
+                    borderColor: 'hsl(var(--input))',
+                    backgroundColor: 'hsl(var(--background))',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      borderColor: 'hsl(var(--input))'
+                    },
+                    padding: '1px',
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    backgroundColor: 'hsl(var(--background))',
+                    borderRadius: 'var(--radius)',
+                    zIndex: 50,
+                  }),
+                  option: (base, { isFocused, isSelected }) => ({
+                    ...base,
+                    backgroundColor: isSelected 
+                      ? 'hsl(var(--primary) / 0.2)'
+                      : isFocused 
+                        ? 'hsl(var(--accent))'
+                        : undefined,
+                    color: 'hsl(var(--foreground))'
+                  }),
+                }}
+              />
             )}
           </div>
         );
@@ -375,27 +512,55 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
               Optionally, you can associate this contract with a project.
             </p>
             
-            <Select value={selectedProject?.id || ''} onValueChange={(value) => {
-              if (value === '') {
-                setSelectedProject(null);
-                return;
-              }
-              
-              const project = projects.find((p) => p.id === value);
-              setSelectedProject(project || null);
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a project (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">None</SelectItem>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Select
+              className="react-select-container"
+              classNamePrefix="react-select"
+              options={[
+                { value: '', label: 'None' },
+                ...formatProjectsForSelect(projects)
+              ]}
+              value={selectedProject ? {
+                value: selectedProject.id,
+                label: selectedProject.name,
+              } : { value: '', label: 'None' }}
+              onChange={(option: any) => {
+                if (option.value === '') {
+                  setSelectedProject(null);
+                } else {
+                  setSelectedProject(option);
+                }
+              }}
+              isLoading={isLoadingProjects}
+              placeholder="Select a project (optional)..."
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  borderRadius: 'var(--radius)',
+                  borderColor: 'hsl(var(--input))',
+                  backgroundColor: 'hsl(var(--background))',
+                  boxShadow: 'none',
+                  '&:hover': {
+                    borderColor: 'hsl(var(--input))'
+                  },
+                  padding: '1px',
+                }),
+                menu: (base) => ({
+                  ...base,
+                  backgroundColor: 'hsl(var(--background))',
+                  borderRadius: 'var(--radius)',
+                  zIndex: 50,
+                }),
+                option: (base, { isFocused, isSelected }) => ({
+                  ...base,
+                  backgroundColor: isSelected 
+                    ? 'hsl(var(--primary) / 0.2)'
+                    : isFocused 
+                      ? 'hsl(var(--accent))'
+                      : undefined,
+                  color: 'hsl(var(--foreground))'
+                }),
+              }}
+            />
           </div>
         );
       
@@ -419,7 +584,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
                 <div>
                   <p className="font-medium">Contact:</p>
                   <p>
-                    {selectedContact?.profiles?.first_name} {selectedContact?.profiles?.last_name}
+                    {selectedContact?.profiles?.first_name || ''} {selectedContact?.profiles?.last_name || ''}
                     {selectedContact?.email && <span> ({selectedContact.email})</span>}
                   </p>
                 </div>
