@@ -135,6 +135,7 @@ export async function fetchContracts() {
     
     // Get user emails for contacts
     const contractsWithDetails = await enrichContractData(data || []);
+    console.log('Contracts after enrichment:', contractsWithDetails); // Add debugging
     
     return contractsWithDetails;
   } catch (err) {

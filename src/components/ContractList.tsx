@@ -371,8 +371,8 @@ export const ContractList = () => {
   console.log('User:', user);
   console.log('Profile:', profile);
   console.log('Contracts loading:', isLoading);
-  console.log('Contracts count:', contracts.length);
-  console.log('Filtered contracts:', filteredContracts.length);
+  console.log('Contracts count:', contracts?.length || 0);
+  console.log('Filtered contracts:', filteredContracts?.length || 0);
   
   return (
     <div className="space-y-6">
