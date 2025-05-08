@@ -17,9 +17,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, Trash2 } from 'lucide-react';
 import { CreateContractDialog } from './CreateContractDialog';
 import { ViewContractDialog } from './ViewContractDialog';
+import { DeleteContractDialog } from './DeleteContractDialog';
 import { createPDF } from '@/utils/pdfUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
@@ -36,6 +37,8 @@ export const ContractList = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'unsigned' | 'signed'>('all');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contractToDelete, setContractToDelete] = useState<ContractWithDetails | null>(null);
   
   const isClient = profile?.role === 'client';
   
@@ -150,6 +153,12 @@ export const ContractList = () => {
     setViewDialogOpen(true);
   }, []);
   
+  const handleDeleteClick = useCallback((contract: ContractWithDetails, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click from opening view dialog
+    setContractToDelete(contract);
+    setDeleteDialogOpen(true);
+  }, []);
+
   // Skeleton loader for the stats cards
   const StatCardsSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -226,7 +235,7 @@ export const ContractList = () => {
     );
   });
   
-  // Contract table component with memoization - updated to make rows clickable
+  // Contract table component with memoization - updated with delete button
   const ContractTable = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
       <Table>
@@ -332,6 +341,14 @@ export const ContractList = () => {
                         <Download className="h-4 w-4" />
                       )}
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleDeleteClick(contract, e)}
+                      title="Delete Contract"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -425,6 +442,19 @@ export const ContractList = () => {
             setSelectedContract(null);
           }}
           onContractSigned={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })}
+        />
+      )}
+      
+      {contractToDelete && (
+        <DeleteContractDialog
+          contractId={contractToDelete.id}
+          contractName={`${contractToDelete.template_type} for ${contractToDelete.company?.name || 'Unknown Company'}`}
+          isOpen={deleteDialogOpen}
+          onClose={() => {
+            setDeleteDialogOpen(false);
+            setContractToDelete(null);
+          }}
+          onDeleted={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })}
         />
       )}
     </div>
