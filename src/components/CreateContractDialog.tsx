@@ -64,7 +64,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
   const [selectedContact, setSelectedContact] = useState<any>(null);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
-  const [contactsFetchError, setContactsFetchError] = useState<string | null>(null);
+  const [contactsFetchError, setContactsFetchError] = useState<unknown | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -669,9 +669,11 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         <div className="text-center py-4 space-y-2">
           <div className="flex items-center justify-center text-red-500">
             <AlertTriangle className="h-5 w-5 mr-2" />
-            <p>Error loading contacts: {typeof contactsFetchError === 'object' && contactsFetchError && 'message' in contactsFetchError 
-              ? String(contactsFetchError.message) 
-              : String(contactsFetchError)}</p>
+            <p>Error loading contacts: {
+              typeof contactsFetchError === 'object' && contactsFetchError !== null 
+                ? (contactsFetchError as any).message || String(contactsFetchError)
+                : String(contactsFetchError)
+            }</p>
           </div>
           <Button variant="outline" size="sm" onClick={() => {
             setContactsFetchError(null);
