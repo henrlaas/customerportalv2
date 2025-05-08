@@ -210,8 +210,8 @@ export async function createPDF(content: string, filename: string) {
           const blob = stream.toBlob('application/pdf');
           console.log('Blob created, size:', blob.size);
           
-          // Sanitize filename to avoid special characters
-          const sanitizedFilename = filename.replace(/[^\w.-]/gi, '_');
+          // Sanitize filename to avoid special characters - FIX: Use let instead of const
+          let sanitizedFilename = filename.replace(/[^\w.-]/gi, '_');
           if (!sanitizedFilename.endsWith('.pdf')) {
             sanitizedFilename += '.pdf';
           }
