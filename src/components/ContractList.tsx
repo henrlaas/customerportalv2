@@ -15,20 +15,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, FileText, Download } from 'lucide-react';
+import { FileText, Download, Eye } from 'lucide-react';
 import { CreateContractDialog } from './CreateContractDialog';
 import { ViewContractDialog } from './ViewContractDialog';
 import { createPDF } from '@/utils/pdfUtils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 export const ContractList = () => {
   const { user, profile } = useAuth();
@@ -152,26 +148,26 @@ export const ContractList = () => {
   
   // Skeleton loader for the contracts table
   const TableSkeleton = () => (
-    <Table className="border">
+    <Table className="border rounded-xl overflow-hidden">
       <TableHeader>
         <TableRow>
-          <TableHead>Type</TableHead>
           <TableHead>Company</TableHead>
-          {!isClient && <TableHead>Contact</TableHead>}
+          <TableHead>Type</TableHead>
           <TableHead>Created Date</TableHead>
+          <TableHead>Created By</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="w-[80px]">Actions</TableHead>
+          <TableHead className="w-[100px]">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {Array(5).fill(0).map((_, index) => (
           <TableRow key={index}>
-            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-            {!isClient && <TableCell><Skeleton className="h-4 w-24" /></TableCell>}
+            <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 w-32" /></div></TableCell>
+            <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+            <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /></div></TableCell>
             <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-            <TableCell><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+            <TableCell><div className="flex gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-8 w-8 rounded-full" /></div></TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -210,63 +206,87 @@ export const ContractList = () => {
   
   // Contract table component with memoization
   const ContractTable = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => (
-    <Table className="border">
+    <Table className="border rounded-xl overflow-hidden">
       <TableHeader>
         <TableRow>
-          <TableHead>Type</TableHead>
           <TableHead>Company</TableHead>
-          {!isClient && <TableHead>Contact</TableHead>}
+          <TableHead>Type</TableHead>
           <TableHead>Created Date</TableHead>
+          <TableHead>Created By</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="w-[80px]">Actions</TableHead>
+          <TableHead className="w-[100px]">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {contracts.length > 0 ? (
           contracts.map((contract) => (
             <TableRow key={contract.id}>
-              <TableCell>{contract.template_type}</TableCell>
-              <TableCell>{contract.company?.name || 'N/A'}</TableCell>
-              {!isClient && (
-                <TableCell>
-                  {`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.trim() || 'N/A'}
-                </TableCell>
-              )}
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <CompanyFavicon 
+                    companyName={contract.company?.name || 'Unknown'} 
+                    website={contract.company?.website}
+                    size="sm"
+                  />
+                  <span>{contract.company?.name || 'N/A'}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
+                  {contract.template_type}
+                </Badge>
+              </TableCell>
               <TableCell>{format(new Date(contract.created_at), 'MMM d, yyyy')}</TableCell>
+              <TableCell>
+                {contract.created_by ? (
+                  <UserAvatarGroup 
+                    users={[{
+                      id: contract.created_by,
+                      first_name: contract.creator?.first_name || '',
+                      last_name: contract.creator?.last_name || '',
+                      avatar_url: contract.creator?.avatar_url
+                    }]}
+                    size="sm"
+                  />
+                ) : (
+                  <span>System</span>
+                )}
+              </TableCell>
               <TableCell>
                 <Badge variant={contract.status === 'signed' ? 'default' : 'outline'}>
                   {contract.status === 'signed' ? 'Signed' : 'Unsigned'}
                 </Badge>
               </TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" disabled={isDownloading === contract.id}>
-                      {isDownloading === contract.id ? (
-                        <span className="w-4 h-4 block rounded-full border-2 border-b-transparent border-r-transparent border-gray-400 animate-spin" />
-                      ) : (
-                        <MoreHorizontal className="h-4 w-4" />
-                      )}
-                      <span className="sr-only">Actions</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => viewContract(contract)}>
-                      <FileText className="mr-2 h-4 w-4" />
-                      View Contract
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => downloadPdf(contract)} disabled={isDownloading === contract.id}>
-                      <Download className="mr-2 h-4 w-4" />
-                      {isDownloading === contract.id ? 'Generating...' : 'Download PDF'}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => viewContract(contract)}
+                    title="View Contract"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => downloadPdf(contract)} 
+                    disabled={isDownloading === contract.id}
+                    title="Download PDF"
+                  >
+                    {isDownloading === contract.id ? (
+                      <span className="w-4 h-4 block rounded-full border-2 border-b-transparent border-r-transparent border-gray-400 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))
         ) : (
           <TableRow>
-            <TableCell colSpan={isClient ? 5 : 6} className="text-center py-8">
+            <TableCell colSpan={6} className="text-center py-8">
               No contracts found
             </TableCell>
           </TableRow>
