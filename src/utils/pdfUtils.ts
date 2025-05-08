@@ -2,23 +2,32 @@
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 
-// Create a browser-compatible environment for blob-stream
+// Create a more comprehensive browser-compatible environment for blob-stream and pdfkit
 const createBrowserCompatibleEnvironment = () => {
   if (typeof window !== 'undefined') {
-    // Create a minimal polyfill for 'util.inherits' which blob-stream uses
+    // Create a robust polyfill for 'util.inherits' which blob-stream uses
+    // Some libraries access it directly, others via a 'U' object
+    const inheritsFunction = function(ctor: any, superCtor: any) {
+      // Simple inheritance polyfill
+      ctor.super_ = superCtor;
+      ctor.prototype = Object.create(superCtor.prototype, {
+        constructor: {
+          value: ctor,
+          enumerable: false,
+          writable: true,
+          configurable: true
+        }
+      });
+    };
+    
+    // Add inherits to multiple possible locations
     (window as any).util = {
-      inherits: function(ctor: any, superCtor: any) {
-        // Simple inheritance polyfill
-        ctor.super_ = superCtor;
-        ctor.prototype = Object.create(superCtor.prototype, {
-          constructor: {
-            value: ctor,
-            enumerable: false,
-            writable: true,
-            configurable: true
-          }
-        });
-      }
+      inherits: inheritsFunction
+    };
+    
+    // Some libraries may access it as U.inherits
+    (window as any).U = {
+      inherits: inheritsFunction
     };
     
     // Make sure 'global' is defined for browser environment
