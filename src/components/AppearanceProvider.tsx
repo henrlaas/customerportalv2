@@ -132,14 +132,12 @@ export const AppearanceProvider = ({ children }: AppearanceProviderProps) => {
         }
         
         if (buttonTextColorSetting) {
-          // Log the button text color being set
-          console.log("Loading button text color from DB:", buttonTextColorSetting.setting_value);
+          console.log("Setting button text color from DB:", buttonTextColorSetting.setting_value);
           
-          // Set the button text color directly
+          // DIRECT APPLICATION: Apply the button text color directly as a CSS color value
           document.documentElement.style.setProperty('--primary-foreground', buttonTextColorSetting.setting_value);
         } else {
-          console.log("No button text color setting found in DB, using default:", defaultAppearance.buttonTextColor);
-          // Set default if not found
+          console.log("No button text color found in DB, using default:", defaultAppearance.buttonTextColor);
           document.documentElement.style.setProperty('--primary-foreground', defaultAppearance.buttonTextColor);
         }
       } catch (error) {

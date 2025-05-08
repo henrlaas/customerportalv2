@@ -44,8 +44,10 @@ export const AppearanceTab = () => {
         if (sidebarColorSetting) setSidebarColor(sidebarColorSetting.setting_value);
         if (accentColorSetting) setAccentColor(accentColorSetting.setting_value);
         if (buttonColorSetting) setButtonColor(buttonColorSetting.setting_value);
-        if (buttonTextColorSetting) setButtonTextColor(buttonTextColorSetting.setting_value);
-        console.log("Loaded button text color:", buttonTextColorSetting?.setting_value || "not set");
+        if (buttonTextColorSetting) {
+          console.log("Loaded button text color from DB:", buttonTextColorSetting.setting_value);
+          setButtonTextColor(buttonTextColorSetting.setting_value);
+        }
       } catch (error) {
         console.error("Failed to fetch appearance settings:", error);
         toast({
@@ -198,9 +200,9 @@ export const AppearanceTab = () => {
       setIsLoading(true);
       await saveOrCreateSetting('appearance.button.text.color', buttonTextColor, 'Button text color');
       
-      // Update CSS variable for button text color
+      // Apply CSS variable directly 
       document.documentElement.style.setProperty('--primary-foreground', buttonTextColor);
-      console.log("Setting button text color to:", buttonTextColor);
+      console.log("Applied button text color:", buttonTextColor);
       
       toast({
         title: "Button text color updated",
@@ -572,12 +574,14 @@ export const AppearanceTab = () => {
                       <Toggle
                         className={`bg-black text-white border-2 ${buttonTextColor === "#000000" ? "ring-2 ring-offset-2" : ""}`}
                         onClick={() => setButtonTextColorValue("#000000")}
+                        pressed={buttonTextColor === "#000000"}
                       >
                         Black
                       </Toggle>
                       <Toggle
                         className={`bg-white text-black border-2 ${buttonTextColor === "#FFFFFF" ? "ring-2 ring-offset-2" : ""}`}
                         onClick={() => setButtonTextColorValue("#FFFFFF")}
+                        pressed={buttonTextColor === "#FFFFFF"}
                       >
                         White
                       </Toggle>
