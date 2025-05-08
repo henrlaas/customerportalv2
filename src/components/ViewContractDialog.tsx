@@ -218,7 +218,7 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
                     src={contract.contact?.avatar_url || undefined} 
                     alt={`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`} 
                   />
-                  <AvatarFallback className="text-[8px]">
+                  <AvatarFallback className="text-[10px]">
                     {getInitials(contract.contact?.first_name, contract.contact?.last_name)}
                   </AvatarFallback>
                 </Avatar>
@@ -234,7 +234,7 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
                     src={contract.creator?.avatar_url || undefined} 
                     alt={`${contract.creator?.first_name || ''} ${contract.creator?.last_name || ''}`} 
                   />
-                  <AvatarFallback className="text-[8px]">
+                  <AvatarFallback className="text-[10px]">
                     {getInitials(contract.creator?.first_name, contract.creator?.last_name)}
                   </AvatarFallback>
                 </Avatar>
