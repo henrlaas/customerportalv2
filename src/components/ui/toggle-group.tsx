@@ -23,12 +23,13 @@ const ToggleGroup = React.forwardRef<
 
 ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName;
 
+// Update the variant definition to include "tab" as a valid variant
 const ToggleGroupItem = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> &
     VariantProps<typeof buttonVariants> & {
       size?: "sm" | "default" | "lg";
-      variant?: "tab" | "default" | "ghost";
+      variant?: "default" | "ghost" | "tab"; // Added "tab" as a valid option
     }
 >(({ className, variant = "default", size = "default", ...props }, ref) => {
   // If variant is 'tab', use tab-specific styling
