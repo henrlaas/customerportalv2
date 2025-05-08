@@ -24,13 +24,28 @@ export const handleResetPassword = async (
     console.log(`Sending password reset email to ${email} with redirect to ${origin}/set-password?type=recovery`);
     
     // Use Supabase's built-in password reset functionality
-    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
+    const { data, error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/set-password?type=recovery`,
     });
 
     if (error) {
-      console.error("Password reset error:", error);
-      throw error;
+      // Log the specific error details to help with debugging
+      console.error("Password reset error details:", error.message, error.status, error.name);
+      
+      // Return a specific error response with a 400 status code for client-side errors
+      return new Response(
+        JSON.stringify({ 
+          error: `Failed to send password reset: ${error.message}`,
+          details: {
+            status: error.status,
+            name: error.name
+          }
+        }),
+        {
+          status: error.status || 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     // If we reach this point, Supabase has sent the password reset email
