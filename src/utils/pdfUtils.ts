@@ -1,8 +1,20 @@
 
 import { saveAs } from 'file-saver';
 
+// Create a browser-compatible global
+const createGlobal = () => {
+  if (typeof window !== 'undefined') {
+    // Make sure 'global' is defined for browser environment
+    // This is needed for blob-stream which expects a Node.js environment
+    (window as any).global = window;
+  }
+};
+
 export async function createPDF(content: string, filename: string) {
   try {
+    // Ensure global is defined before importing blob-stream
+    createGlobal();
+    
     // Dynamically import pdfkit and blob-stream for client-side PDF generation
     const [PDFKitModule, blobStreamModule] = await Promise.all([
       import('pdfkit/js/pdfkit.standalone.js'),
