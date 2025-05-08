@@ -28,22 +28,38 @@ const ToggleGroupItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> &
     VariantProps<typeof buttonVariants> & {
       size?: "sm" | "default" | "lg";
+      variant?: "tab" | "default" | "ghost";
     }
->(({ className, variant = "default", size = "default", ...props }, ref) => (
-  <ToggleGroupPrimitive.Item
-    ref={ref}
-    className={cn(
-      buttonVariants({
-        variant: props["aria-checked"]
-          ? "default"
-          : "ghost",
-        size,
-      }),
-      className
-    )}
-    {...props}
-  />
-));
+>(({ className, variant = "default", size = "default", ...props }, ref) => {
+  // If variant is 'tab', use tab-specific styling
+  if (variant === "tab") {
+    return (
+      <ToggleGroupPrimitive.Item
+        ref={ref}
+        className={cn(
+          "inline-flex items-center justify-center whitespace-nowrap px-4 py-2 text-sm font-medium ring-offset-background transition-all data-[state=on]:border-b-2 data-[state=on]:border-[#004743] data-[state=on]:text-[#004743] data-[state=on]:font-semibold",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+
+  // Default toggle styling
+  return (
+    <ToggleGroupPrimitive.Item
+      ref={ref}
+      className={cn(
+        buttonVariants({
+          variant: props["data-state"] === "on" ? "default" : "ghost",
+          size,
+        }),
+        className
+      )}
+      {...props}
+    />
+  );
+});
 
 ToggleGroupItem.displayName = ToggleGroupPrimitive.Item.displayName;
 

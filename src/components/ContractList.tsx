@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
@@ -242,6 +241,7 @@ export const ContractList = () => {
                     <CompanyFavicon 
                       companyName={contract.company?.name || 'Unknown'} 
                       website={contract.company?.website || null}
+                      logoUrl={contract.company?.logo_url || null}
                       size="sm"
                     />
                     <span>{contract.company?.name || 'N/A'}</span>
@@ -354,10 +354,11 @@ export const ContractList = () => {
         onValueChange={(value) => {
           if (value) setStatusFilter(value as 'all' | 'unsigned' | 'signed');
         }}
+        className="border-0 bg-transparent p-0"
       >
-        <ToggleGroupItem value="all" aria-label="View all contracts" size="sm">All</ToggleGroupItem>
-        <ToggleGroupItem value="unsigned" aria-label="View unsigned contracts" size="sm">Unsigned</ToggleGroupItem>
-        <ToggleGroupItem value="signed" aria-label="View signed contracts" size="sm">Signed</ToggleGroupItem>
+        <ToggleGroupItem value="all" aria-label="View all contracts" variant="tab">All</ToggleGroupItem>
+        <ToggleGroupItem value="unsigned" aria-label="View unsigned contracts" variant="tab">Unsigned</ToggleGroupItem>
+        <ToggleGroupItem value="signed" aria-label="View signed contracts" variant="tab">Signed</ToggleGroupItem>
       </ToggleGroup>
     </div>
   );
@@ -374,10 +375,10 @@ export const ContractList = () => {
       )}
       
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center w-full">
           <Input
             placeholder="Search contracts..."
-            className="max-w-sm"
+            className="max-w-md w-full"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

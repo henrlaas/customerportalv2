@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { fetchFavicon } from '@/services/companyHelpers';
@@ -6,18 +5,27 @@ import { fetchFavicon } from '@/services/companyHelpers';
 interface CompanyFaviconProps {
   companyName: string;
   website?: string | null;
+  logoUrl?: string | null;
   size?: 'sm' | 'md' | 'lg';
 }
 
 export const CompanyFavicon: React.FC<CompanyFaviconProps> = ({ 
   companyName, 
   website,
+  logoUrl,
   size = 'md'
 }) => {
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [error, setError] = useState(false);
   
   useEffect(() => {
+    // If we already have a logo URL, use that directly
+    if (logoUrl) {
+      setFaviconUrl(logoUrl);
+      return;
+    }
+    
+    // Otherwise fetch favicon from website if available
     async function loadFavicon() {
       if (website) {
         try {
@@ -31,7 +39,7 @@ export const CompanyFavicon: React.FC<CompanyFaviconProps> = ({
     }
     
     loadFavicon();
-  }, [website]);
+  }, [website, logoUrl]);
 
   const getInitials = () => {
     if (!companyName) return '?';
