@@ -134,8 +134,18 @@ export const AppearanceProvider = ({ children }: AppearanceProviderProps) => {
         if (buttonTextColorSetting) {
           console.log("Setting button text color from DB:", buttonTextColorSetting.setting_value);
           
-          // DIRECT APPLICATION: Apply the button text color directly as a CSS color value
+          // CRITICAL FIX: Apply the text color in multiple ways to ensure it works
+          // 1. Direct CSS variable application
           document.documentElement.style.setProperty('--primary-foreground', buttonTextColorSetting.setting_value);
+          
+          // 2. Also set it as a direct color in case the variable isn't being properly referenced
+          const buttons = document.querySelectorAll('.bg-primary');
+          buttons.forEach(button => {
+            (button as HTMLElement).style.color = buttonTextColorSetting.setting_value;
+          });
+          
+          // 3. Force a UI update by setting a data attribute
+          document.documentElement.setAttribute('data-button-text-color', buttonTextColorSetting.setting_value);
         } else {
           console.log("No button text color found in DB, using default:", defaultAppearance.buttonTextColor);
           document.documentElement.style.setProperty('--primary-foreground', defaultAppearance.buttonTextColor);

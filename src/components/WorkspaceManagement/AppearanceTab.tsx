@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Upload, Image, Palette, Sun, LayoutDashboard, MousePointer, Brush } from "lucide-react";
@@ -201,9 +200,20 @@ export const AppearanceTab = () => {
       setIsLoading(true);
       await saveOrCreateSetting('appearance.button.text.color', buttonTextColor, 'Button text color');
       
-      // Apply CSS variable directly 
+      console.log("Saving button text color:", buttonTextColor);
+      
+      // IMPROVED APPLICATION: Apply the text color in multiple ways
+      // 1. Direct CSS variable application
       document.documentElement.style.setProperty('--primary-foreground', buttonTextColor);
-      console.log("Applied button text color:", buttonTextColor);
+      
+      // 2. Also set it as a direct color in case the variable isn't being properly referenced
+      const buttons = document.querySelectorAll('.bg-primary');
+      buttons.forEach(button => {
+        (button as HTMLElement).style.color = buttonTextColor;
+      });
+      
+      // 3. Force a UI update by setting a data attribute
+      document.documentElement.setAttribute('data-button-text-color', buttonTextColor);
       
       toast({
         title: "Button text color updated",
