@@ -22,6 +22,7 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [showSignature, setShowSignature] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [signaturePad, setSignaturePad] = useState<SignaturePad | null>(null);
   
@@ -97,22 +98,33 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
   
   const downloadContract = async () => {
     try {
+      setIsDownloading(true);
+      
       const companyName = contract.company?.name || 'Company';
-      const filename = `${contract.template_type}_${companyName.replace(/\s+/g, '_')}.pdf`;
+      // Sanitize filename to avoid special characters
+      const sanitizedCompanyName = companyName.replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+      const filename = `${contract.template_type}_${sanitizedCompanyName}.pdf`;
+      
+      toast({
+        title: 'Preparing PDF',
+        description: 'Starting PDF generation...',
+      });
       
       await createPDF(contract.content, filename);
       
       toast({
-        title: 'Download started',
-        description: 'Your contract PDF is being generated.',
+        title: 'PDF Generated',
+        description: 'Your contract PDF has been downloaded.',
       });
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({
         title: 'Error',
-        description: 'Failed to download the contract PDF.',
+        description: 'Failed to download the contract PDF. Please check the console for details.',
         variant: 'destructive',
       });
+    } finally {
+      setIsDownloading(false);
     }
   };
   
@@ -192,9 +204,13 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
         </div>
         
         <DialogFooter className="space-x-2 flex justify-between">
-          <Button variant="outline" onClick={downloadContract}>
+          <Button 
+            variant="outline" 
+            onClick={downloadContract}
+            disabled={isDownloading}
+          >
             <Download className="h-4 w-4 mr-2" />
-            Download PDF
+            {isDownloading ? 'Generating PDF...' : 'Download PDF'}
           </Button>
           
           <div className="space-x-2">

@@ -15,11 +15,15 @@ export async function createPDF(content: string, filename: string) {
     // Ensure global is defined before importing blob-stream
     createGlobal();
     
+    console.log('PDF creation started');
+    
     // Dynamically import pdfkit and blob-stream for client-side PDF generation
     const [PDFKitModule, blobStreamModule] = await Promise.all([
       import('pdfkit/js/pdfkit.standalone.js'),
       import('blob-stream')
     ]);
+    
+    console.log('Libraries loaded');
     
     const PDFDocument = PDFKitModule.default;
     const blobStream = blobStreamModule.default;
@@ -31,11 +35,16 @@ export async function createPDF(content: string, filename: string) {
         bottom: 50,
         left: 50,
         right: 50
-      }
+      },
+      autoFirstPage: true // Ensure a page is created automatically
     });
+    
+    console.log('Document created');
     
     // Pipe its output to a blob
     const stream = doc.pipe(blobStream());
+    
+    console.log('Stream created');
     
     // Add content
     const paragraphs = content.split('\n');
@@ -83,18 +92,31 @@ export async function createPDF(content: string, filename: string) {
       doc.fontSize(12).text('Signed electronically', 50, currentY + 20);
     }
     
+    console.log('Content added to PDF');
+    
     // Finalize the PDF
     doc.end();
+    
+    console.log('Document finalized');
     
     // Get the blob when it's ready
     return new Promise<void>((resolve, reject) => {
       stream.on('finish', () => {
-        const blob = stream.toBlob('application/pdf');
-        saveAs(blob, filename);
-        resolve();
+        try {
+          console.log('Stream finished');
+          const blob = stream.toBlob('application/pdf');
+          console.log('Blob created:', blob);
+          saveAs(blob, filename);
+          console.log('File saved');
+          resolve();
+        } catch (err) {
+          console.error('Error in stream finish handler:', err);
+          reject(err);
+        }
       });
       
       stream.on('error', (err) => {
+        console.error('Stream error:', err);
         reject(err);
       });
     });

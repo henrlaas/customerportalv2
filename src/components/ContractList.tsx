@@ -37,6 +37,7 @@ export const ContractList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedContract, setSelectedContract] = useState<ContractWithDetails | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
   
   const isClient = profile?.role === 'client';
   
@@ -98,25 +99,37 @@ export const ContractList = () => {
 
   // Memoize action handlers to prevent unnecessary re-renders
   const downloadPdf = useCallback(async (contract: ContractWithDetails) => {
+    if (isDownloading) return;
+    
     try {
+      setIsDownloading(contract.id);
       const companyName = contract.company?.name || 'Company';
-      const filename = `${contract.template_type}_${companyName.replace(/\s+/g, '_')}.pdf`;
+      // Sanitize filename to avoid special characters
+      const sanitizedCompanyName = companyName.replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+      const filename = `${contract.template_type}_${sanitizedCompanyName}.pdf`;
+      
+      toast({
+        title: 'Preparing PDF',
+        description: 'Starting PDF generation...',
+      });
       
       await createPDF(contract.content, filename);
       
       toast({
-        title: 'Download started',
-        description: 'Your contract PDF is being generated.',
+        title: 'PDF Generated',
+        description: 'Your contract PDF has been downloaded.',
       });
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({
         title: 'Error',
-        description: 'Failed to download the contract PDF.',
+        description: 'Failed to download the contract PDF. Please check the console for details.',
         variant: 'destructive',
       });
+    } finally {
+      setIsDownloading(null);
     }
-  }, [toast]);
+  }, [toast, isDownloading]);
   
   const viewContract = useCallback((contract: ContractWithDetails) => {
     setSelectedContract(contract);
@@ -228,8 +241,12 @@ export const ContractList = () => {
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" disabled={isDownloading === contract.id}>
+                      {isDownloading === contract.id ? (
+                        <span className="w-4 h-4 block rounded-full border-2 border-b-transparent border-r-transparent border-gray-400 animate-spin" />
+                      ) : (
+                        <MoreHorizontal className="h-4 w-4" />
+                      )}
                       <span className="sr-only">Actions</span>
                     </Button>
                   </DropdownMenuTrigger>
@@ -238,9 +255,9 @@ export const ContractList = () => {
                       <FileText className="mr-2 h-4 w-4" />
                       View Contract
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => downloadPdf(contract)}>
+                    <DropdownMenuItem onClick={() => downloadPdf(contract)} disabled={isDownloading === contract.id}>
                       <Download className="mr-2 h-4 w-4" />
-                      Download PDF
+                      {isDownloading === contract.id ? 'Generating...' : 'Download PDF'}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
