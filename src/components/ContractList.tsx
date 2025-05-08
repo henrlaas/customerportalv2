@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Trash2, ClipboardList, FilePlus, FileCheck } from 'lucide-react';
+import { FileText, Download, Trash2, ClipboardList, FilePlus, FileCheck, CheckCircle, XCircle } from 'lucide-react';
 import { CreateContractDialog } from './CreateContractDialog';
 import { ViewContractDialog } from './ViewContractDialog';
 import { DeleteContractDialog } from './DeleteContractDialog';
@@ -256,7 +256,7 @@ export const ContractList = () => {
     </div>
   );
   
-  // Contract table component with memoization - updated with delete button
+  // Contract table component with memoization - updated with enhanced status badges
   const ContractTable = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
       <Table>
@@ -343,8 +343,25 @@ export const ContractList = () => {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={contract.status === 'signed' ? 'default' : 'outline'}>
-                    {contract.status === 'signed' ? 'Signed' : 'Unsigned'}
+                  <Badge 
+                    variant={contract.status === 'signed' ? "default" : "outline"} 
+                    className={`inline-flex items-center gap-1 w-fit ${
+                      contract.status === 'signed' 
+                        ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800"
+                        : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800"
+                    }`}
+                  >
+                    {contract.status === 'signed' ? (
+                      <>
+                        <CheckCircle className="h-3 w-3" />
+                        <span>Signed</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-3 w-3" />
+                        <span>Unsigned</span>
+                      </>
+                    )}
                   </Badge>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
