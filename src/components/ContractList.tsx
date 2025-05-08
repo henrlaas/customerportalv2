@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
@@ -18,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Eye } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
 import { CreateContractDialog } from './CreateContractDialog';
 import { ViewContractDialog } from './ViewContractDialog';
 import { createPDF } from '@/utils/pdfUtils';
@@ -108,8 +107,13 @@ export const ContractList = () => {
   }, [filteredContracts]);
 
   // Memoize action handlers to prevent unnecessary re-renders
-  const downloadPdf = useCallback(async (contract: ContractWithDetails) => {
+  const downloadPdf = useCallback(async (contract: ContractWithDetails, e?: React.MouseEvent) => {
     if (isDownloading) return;
+    
+    // If called from a click event, stop propagation to prevent opening dialog
+    if (e) {
+      e.stopPropagation();
+    }
     
     try {
       setIsDownloading(contract.id);
@@ -222,7 +226,7 @@ export const ContractList = () => {
     );
   });
   
-  // Contract table component with memoization
+  // Contract table component with memoization - updated to make rows clickable
   const ContractTable = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
       <Table>
@@ -240,7 +244,11 @@ export const ContractList = () => {
         <TableBody>
           {contracts.length > 0 ? (
             contracts.map((contract) => (
-              <TableRow key={contract.id}>
+              <TableRow 
+                key={contract.id} 
+                onClick={() => viewContract(contract)}
+                className="cursor-pointer hover:bg-gray-100"
+              >
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <CompanyFavicon 
@@ -309,20 +317,12 @@ export const ContractList = () => {
                     {contract.status === 'signed' ? 'Signed' : 'Unsigned'}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex space-x-2">
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={() => viewContract(contract)}
-                      title="View Contract"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => downloadPdf(contract)} 
+                      onClick={(e) => downloadPdf(contract, e)}
                       disabled={isDownloading === contract.id}
                       title="Download PDF"
                     >
@@ -430,4 +430,3 @@ export const ContractList = () => {
     </div>
   );
 };
-
