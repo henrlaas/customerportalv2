@@ -82,7 +82,7 @@ export function DeleteContractDialog({
             htmlFor="confirm-delete" 
             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
-            I confirm that I have downloaded the PDF contract before deleting it
+            I confirm that I have downloaded the PDF contract before deleting
           </label>
         </div>
         
