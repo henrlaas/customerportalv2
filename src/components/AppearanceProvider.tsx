@@ -134,7 +134,9 @@ export const AppearanceProvider = ({ children }: AppearanceProviderProps) => {
         }
         
         if (buttonTextColorSetting) {
+          // Set the button text color directly
           document.documentElement.style.setProperty('--primary-foreground', buttonTextColorSetting.setting_value);
+          console.log("Button text color set to:", buttonTextColorSetting.setting_value);
         }
       } catch (error) {
         console.error("Failed to load appearance settings:", error);

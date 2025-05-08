@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Upload, Image, Palette, Sun, LayoutDashboard, MousePointer, Brush } from "lucide-react";
@@ -134,27 +135,28 @@ export const AppearanceTab = () => {
       setIsLoading(true);
       await saveOrCreateSetting('appearance.button.color', buttonColor, 'Button background color');
       
-      // Update CSS variable for button background color using HSL format
+      // Convert HEX to HSL for button background color
       const tempElement = document.createElement('div');
       tempElement.style.backgroundColor = buttonColor;
       document.body.appendChild(tempElement);
       const rgbColor = window.getComputedStyle(tempElement).backgroundColor;
       document.body.removeChild(tempElement);
       
-      // Convert RGB to HSL
+      // Parse RGB values
       const rgb = rgbColor.match(/\d+/g);
       if (rgb && rgb.length === 3) {
         const r = parseInt(rgb[0]) / 255;
         const g = parseInt(rgb[1]) / 255;
         const b = parseInt(rgb[2]) / 255;
         
+        // Calculate HSL values
         const max = Math.max(r, g, b);
         const min = Math.min(r, g, b);
-        let h, s, l = (max + min) / 2;
+        let h = 0;
+        let s = 0;
+        let l = (max + min) / 2;
         
-        if (max === min) {
-          h = s = 0; // achromatic
-        } else {
+        if (max !== min) {
           const d = max - min;
           s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
           
@@ -162,16 +164,15 @@ export const AppearanceTab = () => {
             case r: h = (g - b) / d + (g < b ? 6 : 0); break;
             case g: h = (b - r) / d + 2; break;
             case b: h = (r - g) / d + 4; break;
-            default: h = 0;
           }
           
           h = Math.round(h * 60);
-          if (h < 0) h += 360;
         }
         
         s = Math.round(s * 100);
         l = Math.round(l * 100);
         
+        // Set the CSS variable in HSL format
         document.documentElement.style.setProperty('--primary', `${h} ${s}% ${l}%`);
         console.log(`Button color set to HSL: ${h} ${s}% ${l}%`);
       }
@@ -199,6 +200,7 @@ export const AppearanceTab = () => {
       
       // Update CSS variable for button text color
       document.documentElement.style.setProperty('--primary-foreground', buttonTextColor);
+      console.log("Setting button text color to:", buttonTextColor);
       
       toast({
         title: "Button text color updated",
