@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { ContractWithDetails, signContract } from '@/utils/contractUtils';
@@ -12,6 +12,7 @@ import SignaturePad from 'signature_pad';
 import { Download, CheckCircle, XCircle, Edit, FileText, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ViewContractDialogProps {
   contract: ContractWithDetails;
@@ -138,6 +139,13 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
     }
   };
   
+  // Helper function to get initials for avatar fallback
+  const getInitials = (firstName?: string | null, lastName?: string | null) => {
+    const first = firstName?.charAt(0) || '';
+    const last = lastName?.charAt(0) || '';
+    return (first + last).toUpperCase() || 'U';
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) onClose();
@@ -151,25 +159,6 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
                 {contract.template_type} Contract
               </DialogTitle>
             </div>
-            <Badge 
-              variant={contract.status === 'signed' ? "default" : "outline"} 
-              className={contract.status === 'signed' 
-                ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800 flex items-center gap-1"
-                : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800 flex items-center gap-1"
-              }
-            >
-              {contract.status === 'signed' ? (
-                <>
-                  <CheckCircle className="h-3 w-3" />
-                  <span>Signed</span>
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-3 w-3" />
-                  <span>Unsigned</span>
-                </>
-              )}
-            </Badge>
           </div>
         </DialogHeader>
         
@@ -180,14 +169,67 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
               <p className="text-sm text-gray-500 mb-1">Company</p>
               <p className="font-medium">{contract.company?.name || 'N/A'}</p>
             </div>
+            
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Status</p>
+              <Badge 
+                variant={contract.status === 'signed' ? "default" : "outline"} 
+                className={contract.status === 'signed' 
+                  ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800 inline-flex items-center gap-1"
+                  : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800 inline-flex items-center gap-1"
+                }
+              >
+                {contract.status === 'signed' ? (
+                  <>
+                    <CheckCircle className="h-3 w-3" />
+                    <span>Signed</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3 w-3" />
+                    <span>Unsigned</span>
+                  </>
+                )}
+              </Badge>
+            </div>
+            
             <div>
               <p className="text-sm text-gray-500 mb-1">Contact</p>
-              <p className="font-medium">{`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.trim() || 'N/A'}</p>
+              <div className="flex items-center gap-2">
+                <Avatar className="h-5 w-5">
+                  <AvatarImage 
+                    src={contract.contact?.avatar_url || undefined} 
+                    alt={`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`} 
+                  />
+                  <AvatarFallback>
+                    {getInitials(contract.contact?.first_name, contract.contact?.last_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="font-medium">{`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.trim() || 'N/A'}</p>
+              </div>
             </div>
+            
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Created By</p>
+              <div className="flex items-center gap-2">
+                <Avatar className="h-5 w-5">
+                  <AvatarImage 
+                    src={contract.creator?.avatar_url || undefined} 
+                    alt={`${contract.creator?.first_name || ''} ${contract.creator?.last_name || ''}`} 
+                  />
+                  <AvatarFallback>
+                    {getInitials(contract.creator?.first_name, contract.creator?.last_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="font-medium">{`${contract.creator?.first_name || ''} ${contract.creator?.last_name || ''}`.trim() || 'N/A'}</p>
+              </div>
+            </div>
+            
             <div>
               <p className="text-sm text-gray-500 mb-1">Created</p>
               <p className="font-medium">{format(new Date(contract.created_at), 'MMM d, yyyy')}</p>
             </div>
+            
             {contract.status === 'signed' && contract.signed_at && (
               <div>
                 <p className="text-sm text-gray-500 mb-1">Signed</p>
@@ -286,8 +328,6 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
             </>
           )}
         </div>
-        
-        {/* We removed the Close button as requested and just rely on the X in the DialogContent */}
       </DialogContent>
     </Dialog>
   );
