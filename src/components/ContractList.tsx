@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
@@ -17,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Eye, Filter } from 'lucide-react';
+import { FileText, Download, Eye } from 'lucide-react';
 import { CreateContractDialog } from './CreateContractDialog';
 import { ViewContractDialog } from './ViewContractDialog';
 import { createPDF } from '@/utils/pdfUtils';
@@ -348,23 +349,18 @@ export const ContractList = () => {
   ));
 
   const FilterToggle = () => (
-    <div className="flex items-center mb-4">
-      <span className="text-sm text-gray-500 mr-2 flex items-center">
-        <Filter className="h-4 w-4 mr-1" /> Filter:
-      </span>
-      <ToggleGroup 
-        type="single" 
-        value={statusFilter} 
-        onValueChange={(value) => {
-          if (value) setStatusFilter(value as 'all' | 'unsigned' | 'signed');
-        }}
-        className="border-0 bg-transparent p-0"
-      >
-        <ToggleGroupItem value="all" aria-label="View all contracts" variant="tab">All</ToggleGroupItem>
-        <ToggleGroupItem value="unsigned" aria-label="View unsigned contracts" variant="tab">Unsigned</ToggleGroupItem>
-        <ToggleGroupItem value="signed" aria-label="View signed contracts" variant="tab">Signed</ToggleGroupItem>
-      </ToggleGroup>
-    </div>
+    <ToggleGroup 
+      type="single" 
+      value={statusFilter} 
+      onValueChange={(value) => {
+        if (value) setStatusFilter(value as 'all' | 'unsigned' | 'signed');
+      }}
+      className="border-0 bg-transparent p-0"
+    >
+      <ToggleGroupItem value="all" aria-label="View all contracts" variant="tab">All</ToggleGroupItem>
+      <ToggleGroupItem value="unsigned" aria-label="View unsigned contracts" variant="tab">Unsigned</ToggleGroupItem>
+      <ToggleGroupItem value="signed" aria-label="View signed contracts" variant="tab">Signed</ToggleGroupItem>
+    </ToggleGroup>
   );
   
   // Debug output to inspect what's happening
@@ -386,19 +382,21 @@ export const ContractList = () => {
       )}
       
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div className="flex gap-2 items-center w-full">
+        <div className="flex-grow max-w-md">
           <Input
             placeholder="Search contracts..."
-            className="max-w-md w-full"
+            className="w-full"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <FilterToggle />
         </div>
         
-        {!isClient && (
-          <CreateContractDialog onContractCreated={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })} />
-        )}
+        <div className="flex items-center gap-4">
+          <FilterToggle />
+          {!isClient && (
+            <CreateContractDialog onContractCreated={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })} />
+          )}
+        </div>
       </div>
       
       {isClient ? (
@@ -432,3 +430,4 @@ export const ContractList = () => {
     </div>
   );
 };
+
