@@ -7,13 +7,15 @@ import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm"
 import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
 import { EmailToolsTab } from "@/components/WorkspaceManagement/EmailToolsTab";
 import { SmsToolsTab } from "@/components/WorkspaceManagement/SmsToolsTab";
+import { AppearanceTab } from "@/components/WorkspaceManagement/AppearanceTab";
 import {
   Settings,
   Users,
   Mail,
   UserCog,
   Cog,
-  MessageSquare
+  MessageSquare,
+  Palette
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -97,7 +99,10 @@ const WorkspaceManagementPage = () => {
   };
 
   // Get settings by category, filtering out the email.template.default
-  const allSettings = settings.filter(setting => setting.setting_key !== 'email.template.default');
+  const allSettings = settings.filter(setting => 
+    setting.setting_key !== 'email.template.default' && 
+    !setting.setting_key.startsWith('appearance.')
+  );
 
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading workspace settings...</div>;
@@ -146,6 +151,10 @@ const WorkspaceManagementPage = () => {
           <TabsTrigger value="sms-tools">
             <MessageSquare className="h-4 w-4 mr-2" />
             SMS Tools
+          </TabsTrigger>
+          <TabsTrigger value="appearance">
+            <Palette className="h-4 w-4 mr-2" />
+            Appearance
           </TabsTrigger>
         </TabsList>
 
@@ -196,6 +205,10 @@ const WorkspaceManagementPage = () => {
         
         <TabsContent value="sms-tools">
           <SmsToolsTab />
+        </TabsContent>
+
+        <TabsContent value="appearance">
+          <AppearanceTab />
         </TabsContent>
       </Tabs>
     </div>
