@@ -112,13 +112,13 @@ export async function deleteContractTemplate(id: string) {
 export async function fetchContracts() {
   console.time('fetchContracts');
   try {
+    // Modified query to not attempt to join with created_by directly
     const { data, error } = await supabase
       .from('contracts')
       .select(`
         *,
         company:company_id (name, organization_number),
-        contact:contact_id (id, user_id, position),
-        creator:created_by (first_name, last_name)
+        contact:contact_id (id, user_id, position)
       `)
       .order('created_at', { ascending: false });
 
@@ -168,6 +168,13 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
         .map(contract => contract.contact?.user_id)
         .filter(Boolean)
     ));
+
+    // Get unique creator IDs for later lookup
+    const creatorIds = Array.from(new Set(
+      initializedContracts
+        .map(contract => contract.created_by)
+        .filter(Boolean)
+    ));
     
     if (contactUserIds.length > 0) {
       // Split into batches if there are many IDs to prevent query size issues
@@ -182,8 +189,11 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
       const [emailsResults, profilesResults] = await Promise.all([
         // Process email batches
         Promise.all(batches.map(async batch => {
-          const { data } = await supabase.rpc('get_users_email', { 
-            user_ids: batch
+          const { data } = await supabase.functions.invoke('user-management', { 
+            body: {
+              action: 'list',
+              userIds: batch
+            }
           });
           return data || [];
         })),
@@ -219,6 +229,25 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
             const profile = profileMap.get(contract.contact.user_id);
             contract.contact.first_name = profile?.first_name;
             contract.contact.last_name = profile?.last_name;
+          }
+        }
+      }
+    }
+
+    // If we have creator IDs, fetch their profile data separately
+    if (creatorIds.length > 0) {
+      const { data: creatorProfiles } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .in('id', creatorIds);
+      
+      if (creatorProfiles && creatorProfiles.length > 0) {
+        const creatorMap = new Map(creatorProfiles.map(profile => [profile.id, profile]));
+        
+        // Add creator info to contracts
+        for (const contract of initializedContracts) {
+          if (contract.created_by && creatorMap.has(contract.created_by)) {
+            contract.creator = creatorMap.get(contract.created_by) || null;
           }
         }
       }
