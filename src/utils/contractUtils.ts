@@ -96,6 +96,17 @@ export async function createContractTemplate(template: Omit<ContractTemplate, 'i
   return data as ContractTemplate;
 }
 
+// Delete a template
+export async function deleteContractTemplate(id: string) {
+  const { data, error } = await supabase
+    .from('contract_templates')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+  return true;
+}
+
 // Fetch contracts with company and contact details
 export async function fetchContracts() {
   console.time('fetchContracts');

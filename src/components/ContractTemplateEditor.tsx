@@ -8,14 +8,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Save, Edit, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Save, Edit, AlertTriangle, Trash } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   ContractTemplate,
   fetchContractTemplates,
   updateContractTemplate,
-  createContractTemplate
+  createContractTemplate,
+  deleteContractTemplate
 } from '@/utils/contractUtils';
 
 export const ContractTemplateEditor = () => {
@@ -23,6 +34,8 @@ export const ContractTemplateEditor = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<ContractTemplate | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<ContractTemplate | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     type: 'DPA', // Default to the currently selected tab
@@ -82,6 +95,27 @@ export const ContractTemplateEditor = () => {
       });
     },
   });
+
+  // Delete template mutation
+  const deleteTemplateMutation = useMutation({
+    mutationFn: (id: string) => deleteContractTemplate(id),
+    onSuccess: () => {
+      toast({
+        title: 'Template deleted',
+        description: 'The contract template has been deleted successfully.',
+      });
+      setIsDeleteDialogOpen(false);
+      setTemplateToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['contractTemplates'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error deleting template',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
   
   // Handle template selection for editing
   const handleEditTemplate = (template: ContractTemplate) => {
@@ -106,6 +140,19 @@ export const ContractTemplateEditor = () => {
         content: editForm.content
       }
     });
+  };
+  
+  // Handle template deletion
+  const handleDeleteTemplate = (template: ContractTemplate) => {
+    setTemplateToDelete(template);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Confirm template deletion
+  const confirmDeleteTemplate = () => {
+    if (templateToDelete) {
+      deleteTemplateMutation.mutate(templateToDelete.id);
+    }
   };
   
   // Handle create new template
@@ -245,13 +292,21 @@ export const ContractTemplateEditor = () => {
                       {template.content}
                     </div>
                   </CardContent>
-                  <CardFooter className="flex justify-end">
+                  <CardFooter className="flex justify-end gap-2">
                     <Button 
                       variant="outline"
                       onClick={() => handleEditTemplate(template)}
                     >
                       <Edit className="mr-2 h-4 w-4" />
                       Edit Template
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
+                      onClick={() => handleDeleteTemplate(template)}
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Delete
                     </Button>
                   </CardFooter>
                 </Card>
@@ -331,6 +386,28 @@ export const ContractTemplateEditor = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the template "{templateToDelete?.name}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteTemplate}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteTemplateMutation.isPending}
+            >
+              {deleteTemplateMutation.isPending ? "Deleting..." : "Delete Template"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
