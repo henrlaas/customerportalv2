@@ -37,6 +37,7 @@ export type ContractWithDetails = Contract & {
     city?: string | null;
     country?: string | null;
     website?: string | null;
+    logo_url?: string | null;
   };
   contact: { 
     id: string;
@@ -122,7 +123,7 @@ export async function fetchContracts() {
       .from('contracts')
       .select(`
         *,
-        company:company_id (name, organization_number, address, zipcode, city, country, website),
+        company:company_id (name, organization_number, address, zipcode, city, country, website, logo_url),
         contact:contact_id (id, user_id, position)
       `)
       .order('created_at', { ascending: false });
@@ -274,7 +275,7 @@ export async function fetchContract(id: string) {
     .from('contracts')
     .select(`
       *,
-      company:company_id (name, organization_number, address, zipcode, city, country, website),
+      company:company_id (name, organization_number, address, zipcode, city, country, website, logo_url),
       contact:contact_id (id, user_id, position),
       creator:created_by (first_name, last_name, avatar_url)
     `)
