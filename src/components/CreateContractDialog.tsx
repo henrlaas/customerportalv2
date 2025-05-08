@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -65,6 +66,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   const [contactsFetchError, setContactsFetchError] = useState<unknown | null>(null);
+  const [previewContent, setPreviewContent] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -222,22 +224,6 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         throw new Error('Missing required fields');
       }
       
-      // Get company details for placeholders
-      const { data: companyDetails } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', selectedCompany.id)
-        .single();
-      
-      // Get contact details for placeholders
-      let contactDetails = { ...selectedContact };
-      
-      // Replace placeholders in contract text
-      const content = replacePlaceholders(selectedTemplate.content, {
-        company: companyDetails,
-        contact: contactDetails
-      });
-      
       const title = `${selectedTemplate.type} - ${selectedCompany.name}`;
       
       // Create the contract
@@ -246,7 +232,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         contact_id: selectedContact.id,
         project_id: selectedProject?.id || null,
         template_type: selectedTemplate.type,
-        content: content,
+        content: previewContent,
         title: title,
         created_by: user.id,
       });
@@ -274,6 +260,42 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     },
   });
   
+  // Generate preview content when moving to the final step
+  useEffect(() => {
+    if (step === 6 && selectedTemplate && selectedCompany && selectedContact) {
+      const generatePreview = async () => {
+        try {
+          // Get company details for placeholders
+          const { data: companyDetails } = await supabase
+            .from('companies')
+            .select('*')
+            .eq('id', selectedCompany.id)
+            .single();
+
+          // Get contact details for placeholders
+          let contactDetails = { ...selectedContact };
+          
+          // Replace placeholders in contract text
+          const content = replacePlaceholders(selectedTemplate.content, {
+            company: companyDetails,
+            contact: contactDetails
+          });
+          
+          setPreviewContent(content);
+        } catch (error) {
+          console.error('Error generating preview:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to generate contract preview',
+            variant: 'destructive',
+          });
+        }
+      };
+      
+      generatePreview();
+    }
+  }, [step, selectedTemplate, selectedCompany, selectedContact]);
+  
   const resetForm = () => {
     setStep(1);
     setSelectedTemplate(null);
@@ -281,6 +303,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     setSelectedContact(null);
     setSelectedProject(null);
     setContactsFetchError(null);
+    setPreviewContent('');
   };
   
   const handleClose = () => {
@@ -598,7 +621,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         return (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Please review the contract details before creating it.
+              Please review the contract details before proceeding to the final review.
             </p>
             
             <div className="bg-muted p-4 rounded-md space-y-2 text-sm">
@@ -625,9 +648,31 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
               </div>
               
               <p className="text-xs mt-4">
-                The contract will be created and the contact will be notified that a contract is ready for them to sign.
+                Click 'Next' to preview the finalized contract with all placeholders filled in.
               </p>
             </div>
+          </div>
+        );
+      
+      case 6: // Contract preview with placeholders filled in
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground font-medium">
+              Final Contract Preview - All placeholders have been replaced with actual data
+            </p>
+            
+            <div className="bg-white border rounded-md p-4 max-h-[300px] overflow-y-auto whitespace-pre-wrap text-sm">
+              {previewContent ? previewContent : (
+                <div className="flex items-center justify-center h-32">
+                  <RefreshCw className="h-5 w-5 animate-spin mr-2" />
+                  <span>Generating preview...</span>
+                </div>
+              )}
+            </div>
+            
+            <p className="text-xs text-muted-foreground">
+              Review the finalized contract above. When you're satisfied, click 'Create Contract' to finalize.
+            </p>
           </div>
         );
       
@@ -648,6 +693,8 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         return true; // Project is optional
       case 5:
         return true; // Confirmation step
+      case 6:
+        return !!previewContent; // Final preview step
       default:
         return false;
     }
@@ -742,6 +789,17 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
       />
     );
   };
+
+  // Get the button text based on the current step
+  const getButtonText = () => {
+    if (step < 5) {
+      return 'Next';
+    } else if (step === 5) {
+      return 'Preview Contract';
+    } else {
+      return createContractMutation.isPending ? 'Creating...' : 'Create Contract';
+    }
+  };
   
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -762,7 +820,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         <div className="py-4">
           {/* Stepper indicator */}
           <div className="flex justify-between items-center mb-6">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
                 className={`flex items-center justify-center w-8 h-8 rounded-full ${
@@ -794,7 +852,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
           <Button
             type="button"
             onClick={() => {
-              if (step < 5) {
+              if (step < 6) {
                 setStep(step + 1);
               } else {
                 createContractMutation.mutate();
@@ -802,14 +860,11 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
             }}
             disabled={!canProceed() || createContractMutation.isPending}
           >
-            {step < 5
-              ? 'Next'
-              : createContractMutation.isPending
-              ? 'Creating...'
-              : 'Create Contract'}
+            {getButtonText()}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
