@@ -103,11 +103,11 @@ export const AppearanceProvider = ({ children }: AppearanceProviderProps) => {
             
             const max = Math.max(r, g, b);
             const min = Math.min(r, g, b);
-            let h, s, l = (max + min) / 2;
+            let h = 0;
+            let s = 0;
+            let l = (max + min) / 2;
             
-            if (max === min) {
-              h = s = 0; // achromatic
-            } else {
+            if (max !== min) {
               const d = max - min;
               s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
               
@@ -115,11 +115,9 @@ export const AppearanceProvider = ({ children }: AppearanceProviderProps) => {
                 case r: h = (g - b) / d + (g < b ? 6 : 0); break;
                 case g: h = (b - r) / d + 2; break;
                 case b: h = (r - g) / d + 4; break;
-                default: h = 0;
               }
               
               h = Math.round(h * 60);
-              if (h < 0) h += 360;
             }
             
             s = Math.round(s * 100);
@@ -134,9 +132,15 @@ export const AppearanceProvider = ({ children }: AppearanceProviderProps) => {
         }
         
         if (buttonTextColorSetting) {
+          // Log the button text color being set
+          console.log("Loading button text color from DB:", buttonTextColorSetting.setting_value);
+          
           // Set the button text color directly
           document.documentElement.style.setProperty('--primary-foreground', buttonTextColorSetting.setting_value);
-          console.log("Button text color set to:", buttonTextColorSetting.setting_value);
+        } else {
+          console.log("No button text color setting found in DB, using default:", defaultAppearance.buttonTextColor);
+          // Set default if not found
+          document.documentElement.style.setProperty('--primary-foreground', defaultAppearance.buttonTextColor);
         }
       } catch (error) {
         console.error("Failed to load appearance settings:", error);

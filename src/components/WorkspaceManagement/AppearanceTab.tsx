@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Upload, Image, Palette, Sun, LayoutDashboard, MousePointer, Brush } from "lucide-react";
@@ -46,6 +45,7 @@ export const AppearanceTab = () => {
         if (accentColorSetting) setAccentColor(accentColorSetting.setting_value);
         if (buttonColorSetting) setButtonColor(buttonColorSetting.setting_value);
         if (buttonTextColorSetting) setButtonTextColor(buttonTextColorSetting.setting_value);
+        console.log("Loaded button text color:", buttonTextColorSetting?.setting_value || "not set");
       } catch (error) {
         console.error("Failed to fetch appearance settings:", error);
         toast({
@@ -294,9 +294,10 @@ export const AppearanceTab = () => {
     }
   };
 
-  const toggleButtonTextColor = () => {
-    const newColor = buttonTextColor === "#FFFFFF" ? "#000000" : "#FFFFFF";
-    setButtonTextColor(newColor);
+  // This function now directly sets the button text color to the selected value
+  const setButtonTextColorValue = (color: string) => {
+    console.log("Setting button text color to:", color);
+    setButtonTextColor(color);
   };
 
   return (
@@ -569,24 +570,32 @@ export const AppearanceTab = () => {
                     <Label>Button Text Color</Label>
                     <div className="flex items-center gap-4">
                       <Toggle
-                        className="bg-black text-white data-[state=on]:bg-black data-[state=on]:text-white border-2"
-                        onClick={() => buttonTextColor !== "#000000" && toggleButtonTextColor()}
+                        className={`bg-black text-white border-2 ${buttonTextColor === "#000000" ? "ring-2 ring-offset-2" : ""}`}
+                        onClick={() => setButtonTextColorValue("#000000")}
                       >
                         Black
                       </Toggle>
                       <Toggle
-                        className="bg-white text-black border-2 data-[state=on]:bg-white data-[state=on]:text-black"
-                        onClick={() => buttonTextColor !== "#FFFFFF" && toggleButtonTextColor()}
+                        className={`bg-white text-black border-2 ${buttonTextColor === "#FFFFFF" ? "ring-2 ring-offset-2" : ""}`}
+                        onClick={() => setButtonTextColorValue("#FFFFFF")}
                       >
                         White
                       </Toggle>
                       
-                      <Input
-                        type="color"
-                        value={buttonTextColor}
-                        onChange={(e) => setButtonTextColor(e.target.value)}
-                        className="w-16 h-10 p-1 ml-4"
-                      />
+                      <div className="flex items-center gap-2 ml-4">
+                        <Input
+                          type="color"
+                          value={buttonTextColor}
+                          onChange={(e) => setButtonTextColorValue(e.target.value)}
+                          className="w-16 h-10 p-1"
+                        />
+                        <Input
+                          value={buttonTextColor}
+                          onChange={(e) => setButtonTextColorValue(e.target.value)}
+                          placeholder="#FFFFFF"
+                          className="w-28"
+                        />
+                      </div>
                     </div>
                   </div>
 

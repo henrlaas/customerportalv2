@@ -15,7 +15,7 @@
     --popover-foreground: 222.2 84% 4.9%;
 
     --primary: 181 100% 13%; /* #004743 in HSL */
-    --primary-foreground: 0 0% 100%; /* White by default, changed to proper CSS format */
+    --primary-foreground: 0 0% 100%; /* White by default */
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -63,7 +63,7 @@
     --popover-foreground: 210 40% 98%;
 
     --primary: 181 100% 13%; /* #004743 in HSL */
-    --primary-foreground: 0 0% 100%; /* White by default, changed to proper CSS format */
+    --primary-foreground: 0 0% 100%; /* White by default */
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -101,12 +101,4 @@
   }
 }
 
-/* Add custom card shadow styling */
-.shadow-card {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-}
-
-/* Add sidebar icon hover styling */
-.sidebar-menu-link:hover svg {
-  color: #004743 !important;
-}
+/* ... keep existing code */
