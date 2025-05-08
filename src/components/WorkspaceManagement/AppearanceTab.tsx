@@ -460,16 +460,14 @@ export const AppearanceTab = () => {
                     <Label>Button Text Color</Label>
                     <div className="flex items-center gap-4">
                       <Toggle
-                        pressed={buttonTextColor === "#000000"}
-                        onPressedChange={() => toggleButtonTextColor()}
                         className="bg-black text-white data-[state=on]:bg-black data-[state=on]:text-white border-2"
+                        onClick={() => buttonTextColor !== "#000000" && toggleButtonTextColor()}
                       >
                         Black
                       </Toggle>
                       <Toggle
-                        pressed={buttonTextColor === "#FFFFFF"}
-                        onPressedChange={() => toggleButtonTextColor()}
                         className="bg-white text-black border-2 data-[state=on]:bg-white data-[state=on]:text-black"
+                        onClick={() => buttonTextColor !== "#FFFFFF" && toggleButtonTextColor()}
                       >
                         White
                       </Toggle>
