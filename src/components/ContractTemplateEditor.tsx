@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Save, Edit, AlertTriangle, Trash } from 'lucide-react';
+import { PlusCircle, Save, Edit, AlertTriangle, Trash, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -21,6 +21,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   ContractTemplate,
   fetchContractTemplates,
@@ -36,6 +41,8 @@ export const ContractTemplateEditor = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<ContractTemplate | null>(null);
+  const [isAddingContractType, setIsAddingContractType] = useState(false);
+  const [newContractTypeName, setNewContractTypeName] = useState('');
   const [editForm, setEditForm] = useState({
     name: '',
     type: 'DPA', // Default to the currently selected tab
@@ -49,6 +56,9 @@ export const ContractTemplateEditor = () => {
     queryKey: ['contractTemplates'],
     queryFn: () => fetchContractTemplates(),
   });
+  
+  // Get all unique contract types from templates
+  const contractTypes = Array.from(new Set(templates.map(template => template.type)));
   
   // Filter templates by type (based on selected tab)
   const filteredTemplates = templates.filter(template => template.type === selectedTab);
@@ -182,6 +192,29 @@ export const ContractTemplateEditor = () => {
       setEditForm(prev => ({ ...prev, type: value }));
     }
   };
+
+  // Handle adding a new contract type
+  const handleAddContractType = () => {
+    if (!newContractTypeName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Contract type name cannot be empty.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Create a template with the new type to ensure the type exists
+    createTemplateMutation.mutate({
+      name: `${newContractTypeName} Template`,
+      type: newContractTypeName.trim(),
+      content: 'Your new contract template content goes here.'
+    });
+
+    setIsAddingContractType(false);
+    setNewContractTypeName('');
+    setSelectedTab(newContractTypeName.trim());
+  };
   
   const PlaceholdersHelp = () => (
     <Alert className="bg-[#FEF7CD] border-yellow-300 mb-4">
@@ -204,74 +237,101 @@ export const ContractTemplateEditor = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Contract Templates</h2>
         
-        <Dialog open={isCreating} onOpenChange={setIsCreating}>
-          <DialogTrigger asChild>
-            <Button onClick={handleOpenCreateDialog}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create Template
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Contract Template</DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4 py-4">
-              <PlaceholdersHelp />
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Name</label>
-                <Input 
-                  value={editForm.name} 
-                  onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Template name"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Template Type: <span className="font-semibold">{selectedTab}</span></label>
-                <p className="text-sm text-muted-foreground">
-                  New templates will be created with the currently selected tab type.
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Content</label>
-                <Textarea 
-                  value={editForm.content} 
-                  onChange={e => setEditForm(prev => ({ ...prev, content: e.target.value }))}
-                  placeholder="Contract content"
-                  className="min-h-[400px] font-mono text-sm"
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsCreating(false)}
-              >
-                Cancel
+        <div className="flex space-x-2">
+          <Popover open={isAddingContractType} onOpenChange={setIsAddingContractType}>
+            <PopoverTrigger asChild>
+              <Button variant="outline">
+                <FileText className="mr-2 h-4 w-4" />
+                Add Contract Type
               </Button>
-              <Button 
-                onClick={handleCreateTemplate}
-                disabled={!editForm.name || !editForm.content || createTemplateMutation.isPending}
-              >
-                {createTemplateMutation.isPending ? 'Creating...' : 'Create Template'}
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="space-y-4">
+                <h4 className="font-medium">Add New Contract Type</h4>
+                <div className="space-y-2">
+                  <Input 
+                    placeholder="Contract type name" 
+                    value={newContractTypeName}
+                    onChange={e => setNewContractTypeName(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={handleAddContractType}>
+                    Add Type
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Dialog open={isCreating} onOpenChange={setIsCreating}>
+            <DialogTrigger asChild>
+              <Button onClick={handleOpenCreateDialog}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create Template
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Contract Template</DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <PlaceholdersHelp />
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Name</label>
+                  <Input 
+                    value={editForm.name} 
+                    onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Template name"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Template Type: <span className="font-semibold">{selectedTab}</span></label>
+                  <p className="text-sm text-muted-foreground">
+                    New templates will be created with the currently selected tab type.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Content</label>
+                  <Textarea 
+                    value={editForm.content} 
+                    onChange={e => setEditForm(prev => ({ ...prev, content: e.target.value }))}
+                    placeholder="Contract content"
+                    className="min-h-[400px] font-mono text-sm"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsCreating(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleCreateTemplate}
+                  disabled={!editForm.name || !editForm.content || createTemplateMutation.isPending}
+                >
+                  {createTemplateMutation.isPending ? 'Creating...' : 'Create Template'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       
       <div className="bg-background rounded-lg border shadow-sm">
         <Tabs defaultValue="DPA" value={selectedTab} onValueChange={handleTabChange}>
-          <div className="border-b px-4">
-            <TabsList>
-              <TabsTrigger value="DPA">DPA</TabsTrigger>
-              <TabsTrigger value="NDA">NDA</TabsTrigger>
-              <TabsTrigger value="Web">Web</TabsTrigger>
-              <TabsTrigger value="Marketing">Marketing</TabsTrigger>
+          <div className="border-b px-4 overflow-x-auto">
+            <TabsList className="flex-wrap">
+              {contractTypes.map((type) => (
+                <TabsTrigger key={type} value={type}>{type}</TabsTrigger>
+              ))}
             </TabsList>
           </div>
           
@@ -349,11 +409,10 @@ export const ContractTemplateEditor = () => {
                   value={editForm.type} 
                   onValueChange={value => setEditForm(prev => ({ ...prev, type: value }))}
                 >
-                  <TabsList>
-                    <TabsTrigger value="DPA">DPA</TabsTrigger>
-                    <TabsTrigger value="NDA">NDA</TabsTrigger>
-                    <TabsTrigger value="Web">Web</TabsTrigger>
-                    <TabsTrigger value="Marketing">Marketing</TabsTrigger>
+                  <TabsList className="flex-wrap">
+                    {contractTypes.map((type) => (
+                      <TabsTrigger key={type} value={type}>{type}</TabsTrigger>
+                    ))}
                   </TabsList>
                 </Tabs>
               </div>
