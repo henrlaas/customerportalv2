@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Company } from '@/types/company';
 
 export const ContractList = () => {
   const { user, profile } = useAuth();
