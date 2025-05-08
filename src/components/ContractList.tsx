@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -40,26 +40,34 @@ export const ContractList = () => {
   
   const isClient = profile?.role === 'client';
   
-  // Fetch contracts based on user role with optimized caching
+  // Fetch contracts with optimized query configuration
   const { data: contracts = [], isLoading } = useQuery({
     queryKey: ['contracts', user?.id, isClient],
     queryFn: async () => {
       if (!user) return [];
       
+      console.time('fetchContractsTotal');
+      let result;
       if (isClient) {
-        return await fetchClientContracts(user.id);
+        result = await fetchClientContracts(user.id);
       } else {
-        return await fetchContracts();
+        result = await fetchContracts();
       }
+      console.timeEnd('fetchContractsTotal');
+      return result;
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes before refetching
-    gcTime: 10 * 60 * 1000, // 10 minutes in cache (previously cacheTime)
+    gcTime: 10 * 60 * 1000, // 10 minutes in cache
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
   
-  // Memoize filtered contracts to prevent re-rendering on every render
+  // Memoize filtered contracts 
   const filteredContracts = useMemo(() => {
+    if (!contracts?.length) return [];
+    
     const searchString = searchTerm.toLowerCase();
+    if (!searchString) return contracts;
     
     return contracts.filter(contract => {
       const companyName = contract.company?.name?.toLowerCase() || '';
@@ -76,15 +84,20 @@ export const ContractList = () => {
     });
   }, [contracts, searchTerm]);
   
-  // Memoize sorted contracts for better performance
+  // Memoize contract groups for better performance
   const { unsignedContracts, signedContracts } = useMemo(() => {
+    if (!filteredContracts?.length) {
+      return { unsignedContracts: [], signedContracts: [] };
+    }
+    
     return {
       unsignedContracts: filteredContracts.filter(contract => contract.status === 'unsigned'),
       signedContracts: filteredContracts.filter(contract => contract.status === 'signed')
     };
   }, [filteredContracts]);
 
-  const downloadPdf = async (contract: ContractWithDetails) => {
+  // Memoize action handlers to prevent unnecessary re-renders
+  const downloadPdf = useCallback(async (contract: ContractWithDetails) => {
     try {
       const companyName = contract.company?.name || 'Company';
       const filename = `${contract.template_type}_${companyName.replace(/\s+/g, '_')}.pdf`;
@@ -103,12 +116,12 @@ export const ContractList = () => {
         variant: 'destructive',
       });
     }
-  };
+  }, [toast]);
   
-  const viewContract = (contract: ContractWithDetails) => {
+  const viewContract = useCallback((contract: ContractWithDetails) => {
     setSelectedContract(contract);
     setViewDialogOpen(true);
-  };
+  }, []);
   
   // Skeleton loader for the stats cards
   const StatCardsSkeleton = () => (
@@ -152,8 +165,38 @@ export const ContractList = () => {
     </Table>
   );
   
-  // Memoize the contract table rendering function for better performance
-  const renderContractTable = useMemo(() => (contracts: ContractWithDetails[]) => (
+  // Stats cards component that prevents re-renders
+  const StatsCards = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => {
+    const unsignedCount = contracts.filter(c => c.status === 'unsigned').length;
+    const signedCount = contracts.filter(c => c.status === 'signed').length;
+    const totalCount = contracts.length;
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{totalCount}</div>
+            <p className="text-muted-foreground">Total Contracts</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{unsignedCount}</div>
+            <p className="text-muted-foreground">Unsigned Contracts</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{signedCount}</div>
+            <p className="text-muted-foreground">Signed Contracts</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  });
+  
+  // Contract table component with memoization
+  const ContractTable = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => (
     <Table className="border">
       <TableHeader>
         <TableRow>
@@ -213,7 +256,7 @@ export const ContractList = () => {
         )}
       </TableBody>
     </Table>
-  ), [isClient]);
+  ));
   
   return (
     <div className="space-y-6">
@@ -222,26 +265,7 @@ export const ContractList = () => {
         isLoading ? (
           <StatCardsSkeleton />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{contracts.length}</div>
-                <p className="text-muted-foreground">Total Contracts</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{unsignedContracts.length}</div>
-                <p className="text-muted-foreground">Unsigned Contracts</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{signedContracts.length}</div>
-                <p className="text-muted-foreground">Signed Contracts</p>
-              </CardContent>
-            </Card>
-          </div>
+          <StatsCards contracts={contracts} />
         )
       )}
       
@@ -265,14 +289,14 @@ export const ContractList = () => {
             <TabsTrigger value="signed">Signed Contracts</TabsTrigger>
           </TabsList>
           <TabsContent value="unsigned">
-            {isLoading ? <TableSkeleton /> : renderContractTable(unsignedContracts)}
+            {isLoading ? <TableSkeleton /> : <ContractTable contracts={unsignedContracts} />}
           </TabsContent>
           <TabsContent value="signed">
-            {isLoading ? <TableSkeleton /> : renderContractTable(signedContracts)}
+            {isLoading ? <TableSkeleton /> : <ContractTable contracts={signedContracts} />}
           </TabsContent>
         </Tabs>
       ) : (
-        isLoading ? <TableSkeleton /> : renderContractTable(filteredContracts)
+        isLoading ? <TableSkeleton /> : <ContractTable contracts={filteredContracts} />
       )}
       
       {selectedContract && (

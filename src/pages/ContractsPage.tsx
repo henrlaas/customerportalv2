@@ -1,5 +1,5 @@
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ContractList } from '@/components/ContractList';
 import { ContractTemplateEditor } from '@/components/ContractTemplateEditor';
@@ -9,6 +9,7 @@ import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 const ContractsPage = () => {
   const { profile } = useAuth();
   const isClient = profile?.role === 'client';
+  const [activeTab, setActiveTab] = useState('contracts');
 
   return (
     <div className="container p-6 mx-auto">
@@ -17,13 +18,11 @@ const ContractsPage = () => {
       </div>
       
       {isClient ? (
-        // Client view - just show the contracts
-        <Suspense fallback={<CenteredSpinner />}>
-          <ContractList />
-        </Suspense>
+        // Client view - just show the contracts with immediate rendering
+        <ContractList />
       ) : (
         // Admin/Employee view - tabs for contracts and templates
-        <Tabs defaultValue="contracts">
+        <Tabs defaultValue="contracts" value={activeTab} onValueChange={setActiveTab}>
           <div className="mb-6">
             <TabsList>
               <TabsTrigger value="contracts">Contracts</TabsTrigger>
@@ -32,15 +31,17 @@ const ContractsPage = () => {
           </div>
           
           <TabsContent value="contracts">
-            <Suspense fallback={<CenteredSpinner />}>
-              <ContractList />
-            </Suspense>
+            {/* Load contract list directly for immediate UI feedback */}
+            <ContractList />
           </TabsContent>
           
           <TabsContent value="templates">
-            <Suspense fallback={<CenteredSpinner />}>
-              <ContractTemplateEditor />
-            </Suspense>
+            {/* Only load the template editor when the tab is active */}
+            {activeTab === 'templates' && (
+              <Suspense fallback={<CenteredSpinner />}>
+                <ContractTemplateEditor />
+              </Suspense>
+            )}
           </TabsContent>
         </Tabs>
       )}
