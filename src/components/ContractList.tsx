@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
@@ -27,6 +28,7 @@ import { MoreHorizontal, FileText, Download } from 'lucide-react';
 import { CreateContractDialog } from './CreateContractDialog';
 import { ViewContractDialog } from './ViewContractDialog';
 import { createPDF } from '@/utils/pdfUtils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const ContractList = () => {
   const { user, profile } = useAuth();
@@ -108,6 +110,48 @@ export const ContractList = () => {
     setViewDialogOpen(true);
   };
   
+  // Skeleton loader for the stats cards
+  const StatCardsSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      {[1, 2, 3].map((item) => (
+        <Card key={item}>
+          <CardContent className="pt-6">
+            <Skeleton className="h-8 w-24 mb-2" />
+            <Skeleton className="h-4 w-32" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+  
+  // Skeleton loader for the contracts table
+  const TableSkeleton = () => (
+    <Table className="border">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Type</TableHead>
+          <TableHead>Company</TableHead>
+          {!isClient && <TableHead>Contact</TableHead>}
+          <TableHead>Created Date</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="w-[80px]">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Array(5).fill(0).map((_, index) => (
+          <TableRow key={index}>
+            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+            {!isClient && <TableCell><Skeleton className="h-4 w-24" /></TableCell>}
+            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+            <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+            <TableCell><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+  
   // Memoize the contract table rendering function for better performance
   const renderContractTable = useMemo(() => (contracts: ContractWithDetails[]) => (
     <Table className="border">
@@ -171,39 +215,34 @@ export const ContractList = () => {
     </Table>
   ), [isClient]);
   
-  if (isLoading) {
-    return <div className="flex justify-center items-center p-8">
-      <div className="flex flex-col items-center space-y-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
-        <p>Loading contracts...</p>
-      </div>
-    </div>;
-  }
-  
   return (
     <div className="space-y-6">
       {/* Contract Dashboard for Admins/Employees */}
       {!isClient && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{contracts.length}</div>
-              <p className="text-muted-foreground">Total Contracts</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{unsignedContracts.length}</div>
-              <p className="text-muted-foreground">Unsigned Contracts</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{signedContracts.length}</div>
-              <p className="text-muted-foreground">Signed Contracts</p>
-            </CardContent>
-          </Card>
-        </div>
+        isLoading ? (
+          <StatCardsSkeleton />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-2xl font-bold">{contracts.length}</div>
+                <p className="text-muted-foreground">Total Contracts</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-2xl font-bold">{unsignedContracts.length}</div>
+                <p className="text-muted-foreground">Unsigned Contracts</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-2xl font-bold">{signedContracts.length}</div>
+                <p className="text-muted-foreground">Signed Contracts</p>
+              </CardContent>
+            </Card>
+          </div>
+        )
       )}
       
       <div className="flex justify-between items-center mb-4">
@@ -226,14 +265,14 @@ export const ContractList = () => {
             <TabsTrigger value="signed">Signed Contracts</TabsTrigger>
           </TabsList>
           <TabsContent value="unsigned">
-            {renderContractTable(unsignedContracts)}
+            {isLoading ? <TableSkeleton /> : renderContractTable(unsignedContracts)}
           </TabsContent>
           <TabsContent value="signed">
-            {renderContractTable(signedContracts)}
+            {isLoading ? <TableSkeleton /> : renderContractTable(signedContracts)}
           </TabsContent>
         </Tabs>
       ) : (
-        renderContractTable(filteredContracts)
+        isLoading ? <TableSkeleton /> : renderContractTable(filteredContracts)
       )}
       
       {selectedContract && (

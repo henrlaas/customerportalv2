@@ -4,16 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ContractList } from '@/components/ContractList';
 import { ContractTemplateEditor } from '@/components/ContractTemplateEditor';
 import { useAuth } from '@/contexts/AuthContext';
-
-// Loading placeholder component
-const LoadingPlaceholder = () => (
-  <div className="flex justify-center items-center p-12">
-    <div className="flex flex-col items-center space-y-4">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
-      <p>Loading content...</p>
-    </div>
-  </div>
-);
+import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 
 const ContractsPage = () => {
   const { profile } = useAuth();
@@ -27,7 +18,7 @@ const ContractsPage = () => {
       
       {isClient ? (
         // Client view - just show the contracts
-        <Suspense fallback={<LoadingPlaceholder />}>
+        <Suspense fallback={<CenteredSpinner />}>
           <ContractList />
         </Suspense>
       ) : (
@@ -41,13 +32,13 @@ const ContractsPage = () => {
           </div>
           
           <TabsContent value="contracts">
-            <Suspense fallback={<LoadingPlaceholder />}>
+            <Suspense fallback={<CenteredSpinner />}>
               <ContractList />
             </Suspense>
           </TabsContent>
           
           <TabsContent value="templates">
-            <Suspense fallback={<LoadingPlaceholder />}>
+            <Suspense fallback={<CenteredSpinner />}>
               <ContractTemplateEditor />
             </Suspense>
           </TabsContent>
