@@ -156,7 +156,7 @@ const WorkspaceManagementPage = () => {
               Workspace Settings
             </h2>
             <p className="text-muted-foreground">
-              View and manage all settings for your workspace.
+              View and manage adjustable price settings for your workspace.
             </p>
             <Separator />
           </div>
