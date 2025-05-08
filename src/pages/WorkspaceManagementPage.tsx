@@ -129,7 +129,7 @@ const WorkspaceManagementPage = () => {
         <TabsList>
           <TabsTrigger value="all-settings">
             <Cog className="h-4 w-4 mr-2" />
-            All Settings
+            Settings
           </TabsTrigger>
           <TabsTrigger value="employees">
             <Users className="h-4 w-4 mr-2" />
@@ -153,7 +153,7 @@ const WorkspaceManagementPage = () => {
           <div className="grid gap-4">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              All Workspace Settings
+              Workspace Settings
             </h2>
             <p className="text-muted-foreground">
               View and manage all settings for your workspace.
