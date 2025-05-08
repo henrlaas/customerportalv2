@@ -165,7 +165,7 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
               className="rounded-full p-1 hover:bg-gray-100 transition-colors"
               aria-label="Close"
             >
-              <X className="h-6 w-6" /> {/* Increased size of X icon */}
+              <X className="h-6 w-6" />
             </button>
           </div>
         </DialogHeader>
@@ -218,7 +218,7 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
                     src={contract.contact?.avatar_url || undefined} 
                     alt={`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`} 
                   />
-                  <AvatarFallback className="text-[8px]"> {/* Making the initials smaller */}
+                  <AvatarFallback className="text-[8px]">
                     {getInitials(contract.contact?.first_name, contract.contact?.last_name)}
                   </AvatarFallback>
                 </Avatar>
@@ -234,7 +234,7 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
                     src={contract.creator?.avatar_url || undefined} 
                     alt={`${contract.creator?.first_name || ''} ${contract.creator?.last_name || ''}`} 
                   />
-                  <AvatarFallback className="text-[8px]"> {/* Making the initials smaller */}
+                  <AvatarFallback className="text-[8px]">
                     {getInitials(contract.creator?.first_name, contract.creator?.last_name)}
                   </AvatarFallback>
                 </Avatar>
