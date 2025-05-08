@@ -26,7 +26,7 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: '#004743', // Primary color
+					DEFAULT: 'hsl(var(--primary))', // Use CSS variable for the primary color
 					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
@@ -42,7 +42,7 @@ export default {
 					foreground: 'hsl(var(--muted-foreground))'
 				},
 				accent: {
-					DEFAULT: '#f3f3f3', // Changed to light gray instead of green
+					DEFAULT: 'hsl(var(--accent))', // Use CSS variable for the accent color
 					foreground: 'hsl(var(--accent-foreground))'
 				},
 				popover: {
@@ -56,12 +56,12 @@ export default {
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: '#004743', // Sidebar primary color
+					primary: 'hsl(var(--primary))', // Use primary CSS variable
 					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: '#f3f3f3', // Changed to light gray
+					accent: 'hsl(var(--accent))', // Use accent CSS variable
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
-					ring: '#f3f3f3' // Changed to light gray
+					ring: 'hsl(var(--sidebar-ring))'
 				},
         'evergreen': '#004743',   // Keeping for consistency 
         'minty': '#F2FCE2',       // Keeping minty color as is

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Upload, Image, Palette, Sun, LayoutDashboard, MousePointer } from "lucide-react";
+import { Loader2, Upload, Image, Palette, Sun, LayoutDashboard, MousePointer, Brush } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ export const AppearanceTab = () => {
   const [authLogo, setAuthLogo] = useState("");
   const [favicon, setFavicon] = useState("");
   const [sidebarColor, setSidebarColor] = useState("#004743");
+  const [accentColor, setAccentColor] = useState("#f3f3f3");
   const [buttonColor, setButtonColor] = useState("#004743");
   const [buttonTextColor, setButtonTextColor] = useState("#FFFFFF");
   const { toast } = useToast();
@@ -32,6 +33,7 @@ export const AppearanceTab = () => {
         const authLogoSetting = settings.find(s => s.setting_key === 'appearance.auth.logo');
         const faviconSetting = settings.find(s => s.setting_key === 'appearance.favicon');
         const sidebarColorSetting = settings.find(s => s.setting_key === 'appearance.sidebar.color');
+        const accentColorSetting = settings.find(s => s.setting_key === 'appearance.accent.color');
         const buttonColorSetting = settings.find(s => s.setting_key === 'appearance.button.color');
         const buttonTextColorSetting = settings.find(s => s.setting_key === 'appearance.button.text.color');
         
@@ -40,6 +42,7 @@ export const AppearanceTab = () => {
         if (authLogoSetting) setAuthLogo(authLogoSetting.setting_value);
         if (faviconSetting) setFavicon(faviconSetting.setting_value);
         if (sidebarColorSetting) setSidebarColor(sidebarColorSetting.setting_value);
+        if (accentColorSetting) setAccentColor(accentColorSetting.setting_value);
         if (buttonColorSetting) setButtonColor(buttonColorSetting.setting_value);
         if (buttonTextColorSetting) setButtonTextColor(buttonTextColorSetting.setting_value);
       } catch (error) {
@@ -103,19 +106,82 @@ export const AppearanceTab = () => {
     }
   };
 
+  const handleSaveAccentColor = async () => {
+    try {
+      setIsLoading(true);
+      await saveOrCreateSetting('appearance.accent.color', accentColor, 'Application accent color');
+      
+      // Update CSS variable for accent color
+      document.documentElement.style.setProperty('--accent', accentColor);
+      
+      toast({
+        title: "Accent color updated",
+        description: "Application accent color has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update accent color.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSaveButtonColor = async () => {
     try {
       setIsLoading(true);
       await saveOrCreateSetting('appearance.button.color', buttonColor, 'Button background color');
       
-      // Update CSS variable for button background color
-      document.documentElement.style.setProperty('--primary', buttonColor);
+      // Update CSS variable for button background color using HSL format
+      const tempElement = document.createElement('div');
+      tempElement.style.backgroundColor = buttonColor;
+      document.body.appendChild(tempElement);
+      const rgbColor = window.getComputedStyle(tempElement).backgroundColor;
+      document.body.removeChild(tempElement);
+      
+      // Convert RGB to HSL
+      const rgb = rgbColor.match(/\d+/g);
+      if (rgb && rgb.length === 3) {
+        const r = parseInt(rgb[0]) / 255;
+        const g = parseInt(rgb[1]) / 255;
+        const b = parseInt(rgb[2]) / 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        
+        if (max === min) {
+          h = s = 0; // achromatic
+        } else {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+            default: h = 0;
+          }
+          
+          h = Math.round(h * 60);
+          if (h < 0) h += 360;
+        }
+        
+        s = Math.round(s * 100);
+        l = Math.round(l * 100);
+        
+        document.documentElement.style.setProperty('--primary', `${h} ${s}% ${l}%`);
+        console.log(`Button color set to HSL: ${h} ${s}% ${l}%`);
+      }
       
       toast({
         title: "Button color updated",
         description: "Button background color has been updated successfully.",
       });
     } catch (error) {
+      console.error("Button color update error:", error);
       toast({
         title: "Error",
         description: "Failed to update button color.",
@@ -419,6 +485,47 @@ export const AppearanceTab = () => {
               </div>
               <Button onClick={handleSaveSidebarColor} disabled={isLoading}>
                 Save Sidebar Color
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brush className="h-5 w-5" />
+                Accent Color
+              </CardTitle>
+              <CardDescription>
+                Set the main accent color used throughout the application
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="accentColor">Color</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="accentColor"
+                    type="color"
+                    value={accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    className="w-16 h-10 p-1"
+                  />
+                  <Input
+                    value={accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    placeholder="#f3f3f3"
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+              <div 
+                className="border rounded h-20 flex items-center justify-center"
+                style={{ backgroundColor: accentColor }}
+              >
+                Accent Preview
+              </div>
+              <Button onClick={handleSaveAccentColor} disabled={isLoading}>
+                Save Accent Color
               </Button>
             </CardContent>
           </Card>
