@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
@@ -54,17 +53,20 @@ export const ContractList = () => {
         result = await fetchContracts();
       }
       console.timeEnd('fetchContractsTotal');
+      console.log('Contracts fetched:', result); // Debug log to see if contracts are being fetched
       return result;
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes before refetching
     gcTime: 10 * 60 * 1000, // 10 minutes in cache
-    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
   
   // Memoize filtered contracts 
   const filteredContracts = useMemo(() => {
-    if (!contracts?.length) return [];
+    if (!contracts?.length) {
+      console.log('No contracts available to filter'); // Debug log
+      return [];
+    }
     
     let result = [...contracts];
     
@@ -364,6 +366,13 @@ export const ContractList = () => {
       </ToggleGroup>
     </div>
   );
+  
+  // Debug output to inspect what's happening
+  console.log('User:', user);
+  console.log('Profile:', profile);
+  console.log('Contracts loading:', isLoading);
+  console.log('Contracts count:', contracts.length);
+  console.log('Filtered contracts:', filteredContracts.length);
   
   return (
     <div className="space-y-6">

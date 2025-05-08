@@ -37,7 +37,7 @@ export type ContractWithDetails = Contract & {
     city?: string | null;
     country?: string | null;
     website?: string | null;
-    logo_url?: string | null;
+    logo_url?: string | null; // Ensure logo_url is included in the type
   };
   contact: { 
     id: string;
@@ -118,7 +118,7 @@ export async function deleteContractTemplate(id: string) {
 export async function fetchContracts() {
   console.time('fetchContracts');
   try {
-    // Modified query to not attempt to join with created_by directly
+    // Modified query to include logo_url and not attempt to join with created_by directly
     const { data, error } = await supabase
       .from('contracts')
       .select(`
