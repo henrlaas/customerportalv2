@@ -5,6 +5,7 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 
 // Initialize pdfMake with the fonts
+// This fixes the "Cannot read properties of undefined (reading 'vfs')" error
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 export async function createPDF(content: string, filename: string) {
