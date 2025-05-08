@@ -2,15 +2,15 @@
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 
-// Create a more comprehensive browser-compatible environment for blob-stream and pdfkit
+// Create a complete browser-compatible environment for pdfkit and blob-stream
 const createBrowserCompatibleEnvironment = () => {
   if (typeof window !== 'undefined') {
-    // Create a robust polyfill for 'util.inherits' which blob-stream uses
-    // Some libraries access it directly, others via a 'U' object
+    console.log('Setting up browser environment for PDF generation');
+    
+    // Create a comprehensive inherits function
     const inheritsFunction = function(ctor: any, superCtor: any) {
-      // Simple inheritance polyfill
       ctor.super_ = superCtor;
-      ctor.prototype = Object.create(superCtor.prototype, {
+      const tempObj = Object.create(superCtor.prototype, {
         constructor: {
           value: ctor,
           enumerable: false,
@@ -18,50 +18,88 @@ const createBrowserCompatibleEnvironment = () => {
           configurable: true
         }
       });
+      
+      // Use Object.setPrototypeOf if available for better compatibility
+      if (Object.setPrototypeOf) {
+        Object.setPrototypeOf(ctor.prototype, tempObj);
+      } else {
+        ctor.prototype = Object.create(superCtor.prototype);
+        ctor.prototype.constructor = ctor;
+      }
     };
     
-    // Add inherits to multiple possible locations
-    (window as any).util = {
-      inherits: inheritsFunction
-    };
+    // Ensure all possible variations of util.inherits are defined
+    (window as any).util = (window as any).util || {};
+    (window as any).util.inherits = inheritsFunction;
     
-    // Some libraries may access it as U.inherits
-    (window as any).U = {
-      inherits: inheritsFunction
-    };
+    // Define it on U object as well (blob-stream sometimes looks for U.inherits)
+    (window as any).U = (window as any).U || {};
+    (window as any).U.inherits = inheritsFunction;
     
-    // Make sure 'global' is defined for browser environment
+    // Make global available (used by some Node-based libraries)
     (window as any).global = window;
     
-    // Some modules expect process.nextTick
-    (window as any).process = (window as any).process || {};
-    (window as any).process.nextTick = (window as any).process.nextTick || setTimeout;
+    // Set up process for nextTick (used by some async operations)
+    (window as any).process = (window as any).process || {
+      env: { NODE_ENV: 'production' },
+      nextTick: function(fn: Function) { setTimeout(fn, 0); },
+      browser: true
+    };
+    
+    // Provide fallbacks for Node.js Buffer if needed
+    if (typeof (window as any).Buffer === 'undefined') {
+      (window as any).Buffer = {
+        isBuffer: function() { return false; }
+      };
+    }
+    
+    // Setup basic stream implementations if needed
+    (window as any).stream = (window as any).stream || {
+      Writable: function() {}
+    };
+    
+    console.log('Browser environment setup completed');
   }
 };
 
 export async function createPDF(content: string, filename: string) {
   try {
-    // Set up the browser environment before importing any modules
+    console.log('PDF creation started');
+    
+    // Set up the browser environment before importing modules
     createBrowserCompatibleEnvironment();
     
     toast.info('Preparing PDF...', {
       description: 'Starting PDF generation'
     });
     
-    console.log('PDF creation started');
+    // Dynamically import pdfkit and blob-stream with better error handling
+    const PDFKitModule = await import('pdfkit/js/pdfkit.standalone.js')
+      .catch(err => {
+        console.error('Error loading PDFKit:', err);
+        throw new Error('Failed to load PDF generation library');
+      });
     
-    // Dynamically import pdfkit and blob-stream for client-side PDF generation
-    const [PDFKitModule, blobStreamModule] = await Promise.all([
-      import('pdfkit/js/pdfkit.standalone.js'),
-      import('blob-stream')
-    ]);
+    const blobStreamModule = await import('blob-stream')
+      .catch(err => {
+        console.error('Error loading blob-stream:', err);
+        throw new Error('Failed to load PDF streaming library');
+      });
     
-    console.log('Libraries loaded');
+    console.log('Libraries loaded successfully');
     
     const PDFDocument = PDFKitModule.default;
     const blobStream = blobStreamModule.default;
     
-    // Create a document
+    if (!PDFDocument) {
+      throw new Error('PDFDocument not available');
+    }
+    
+    if (!blobStream) {
+      throw new Error('blobStream not available');
+    }
+    
+    // Create a document with error handling
     const doc = new PDFDocument({
       margins: {
         top: 50,
@@ -69,15 +107,13 @@ export async function createPDF(content: string, filename: string) {
         left: 50,
         right: 50
       },
-      autoFirstPage: true // Ensure a page is created automatically
+      autoFirstPage: true
     });
     
-    console.log('Document created');
-    
-    // Pipe its output to a blob
+    // Pipe its output to a blob stream
     const stream = doc.pipe(blobStream());
     
-    console.log('Stream created');
+    console.log('Document and stream created');
     
     // Add content
     const paragraphs = content.split('\n');
@@ -86,11 +122,19 @@ export async function createPDF(content: string, filename: string) {
     const pageHeight = 792 - 100; // Letter size minus margins
     const lineHeight = 14;
     
+    // Add title
+    doc.fontSize(18).font('Helvetica-Bold');
+    doc.text('CONTRACT', { align: 'center' });
+    currentY += 30;
+    
+    doc.moveTo(50, currentY).lineTo(550, currentY).stroke();
+    currentY += 20;
+    
+    // Process each paragraph with better formatting
     for (const paragraph of paragraphs) {
       if (paragraph.trim() === '') {
         currentY += lineHeight;
         
-        // Check if we need a new page
         if (currentY > pageHeight) {
           doc.addPage();
           currentY = 50;
@@ -98,19 +142,32 @@ export async function createPDF(content: string, filename: string) {
         continue;
       }
       
-      // Check if it's a heading (starts with #)
+      // Check if it's a heading
       if (paragraph.startsWith('#')) {
+        const headingLevel = paragraph.match(/^#+/)?.[0].length || 1;
         const headingText = paragraph.replace(/^#+\s/, '');
-        doc.fontSize(16).font('Helvetica-Bold');
+        
+        // Set font size based on heading level
+        const fontSize = 20 - (headingLevel * 2);
+        doc.fontSize(fontSize).font('Helvetica-Bold');
         doc.text(headingText, 50, currentY);
-        currentY += 24;
+        currentY += fontSize + 10;
       } else {
         doc.fontSize(12).font('Helvetica');
-        doc.text(paragraph, {
+        const textHeight = doc.heightOfString(paragraph, { width: 500 });
+        
+        // Check if we need a new page before adding this paragraph
+        if (currentY + textHeight > pageHeight) {
+          doc.addPage();
+          currentY = 50;
+        }
+        
+        doc.text(paragraph, 50, currentY, {
           width: 500,
           align: 'left'
         });
-        currentY += doc.heightOfString(paragraph, { width: 500 }) + 5;
+        
+        currentY += textHeight + 5;
       }
       
       // Check if we need a new page
@@ -118,6 +175,19 @@ export async function createPDF(content: string, filename: string) {
         doc.addPage();
         currentY = 50;
       }
+    }
+    
+    // Add footer with page numbers
+    const totalPages = doc.bufferedPageRange().count;
+    for (let i = 0; i < totalPages; i++) {
+      doc.switchToPage(i);
+      doc.fontSize(10).font('Helvetica');
+      doc.text(
+        `Page ${i + 1} of ${totalPages}`,
+        50,
+        doc.page.height - 50,
+        { align: 'center' }
+      );
     }
     
     // If there's signature data, add it
@@ -138,10 +208,13 @@ export async function createPDF(content: string, filename: string) {
         try {
           console.log('Stream finished');
           const blob = stream.toBlob('application/pdf');
-          console.log('Blob created:', blob);
+          console.log('Blob created, size:', blob.size);
           
           // Sanitize filename to avoid special characters
           const sanitizedFilename = filename.replace(/[^\w.-]/gi, '_');
+          if (!sanitizedFilename.endsWith('.pdf')) {
+            sanitizedFilename += '.pdf';
+          }
           
           saveAs(blob, sanitizedFilename);
           console.log('File saved as:', sanitizedFilename);
