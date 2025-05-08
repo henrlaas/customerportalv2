@@ -1,12 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Upload, Image, Palette, Sun, LayoutDashboard } from "lucide-react";
+import { Loader2, Upload, Image, Palette, Sun, LayoutDashboard, MousePointer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Toggle } from "@/components/ui/toggle";
 import { workspaceService } from "@/services/workspaceService";
 
 export const AppearanceTab = () => {
@@ -16,6 +16,8 @@ export const AppearanceTab = () => {
   const [authLogo, setAuthLogo] = useState("");
   const [favicon, setFavicon] = useState("");
   const [sidebarColor, setSidebarColor] = useState("#004743");
+  const [buttonColor, setButtonColor] = useState("#004743");
+  const [buttonTextColor, setButtonTextColor] = useState("#FFFFFF");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,12 +32,16 @@ export const AppearanceTab = () => {
         const authLogoSetting = settings.find(s => s.setting_key === 'appearance.auth.logo');
         const faviconSetting = settings.find(s => s.setting_key === 'appearance.favicon');
         const sidebarColorSetting = settings.find(s => s.setting_key === 'appearance.sidebar.color');
+        const buttonColorSetting = settings.find(s => s.setting_key === 'appearance.button.color');
+        const buttonTextColorSetting = settings.find(s => s.setting_key === 'appearance.button.text.color');
         
         if (titleSetting) setTitle(titleSetting.setting_value);
         if (sidebarLogoSetting) setSidebarLogo(sidebarLogoSetting.setting_value);
         if (authLogoSetting) setAuthLogo(authLogoSetting.setting_value);
         if (faviconSetting) setFavicon(faviconSetting.setting_value);
         if (sidebarColorSetting) setSidebarColor(sidebarColorSetting.setting_value);
+        if (buttonColorSetting) setButtonColor(buttonColorSetting.setting_value);
+        if (buttonTextColorSetting) setButtonTextColor(buttonTextColorSetting.setting_value);
       } catch (error) {
         console.error("Failed to fetch appearance settings:", error);
         toast({
@@ -90,6 +96,52 @@ export const AppearanceTab = () => {
       toast({
         title: "Error",
         description: "Failed to update sidebar color.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveButtonColor = async () => {
+    try {
+      setIsLoading(true);
+      await saveOrCreateSetting('appearance.button.color', buttonColor, 'Button background color');
+      
+      // Update CSS variable for button background color
+      document.documentElement.style.setProperty('--primary', buttonColor);
+      
+      toast({
+        title: "Button color updated",
+        description: "Button background color has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update button color.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleSaveButtonTextColor = async () => {
+    try {
+      setIsLoading(true);
+      await saveOrCreateSetting('appearance.button.text.color', buttonTextColor, 'Button text color');
+      
+      // Update CSS variable for button text color
+      document.documentElement.style.setProperty('--primary-foreground', buttonTextColor);
+      
+      toast({
+        title: "Button text color updated",
+        description: "Button text color has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update button text color.",
         variant: "destructive",
       });
     } finally {
@@ -172,6 +224,11 @@ export const AppearanceTab = () => {
     } else {
       await workspaceService.createSetting(key, value, description);
     }
+  };
+
+  const toggleButtonTextColor = () => {
+    const newColor = buttonTextColor === "#FFFFFF" ? "#000000" : "#FFFFFF";
+    setButtonTextColor(newColor);
   };
 
   return (
@@ -363,6 +420,107 @@ export const AppearanceTab = () => {
               <Button onClick={handleSaveSidebarColor} disabled={isLoading}>
                 Save Sidebar Color
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Button Customization Card */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MousePointer className="h-5 w-5" />
+                Button Customization
+              </CardTitle>
+              <CardDescription>
+                Customize the appearance of buttons throughout the application
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="buttonColor">Button Background Color</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="buttonColor"
+                        type="color"
+                        value={buttonColor}
+                        onChange={(e) => setButtonColor(e.target.value)}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={buttonColor}
+                        onChange={(e) => setButtonColor(e.target.value)}
+                        placeholder="#004743"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Button Text Color</Label>
+                    <div className="flex items-center gap-4">
+                      <Toggle
+                        pressed={buttonTextColor === "#000000"}
+                        onPressedChange={() => toggleButtonTextColor()}
+                        className="bg-black text-white data-[state=on]:bg-black data-[state=on]:text-white border-2"
+                      >
+                        Black
+                      </Toggle>
+                      <Toggle
+                        pressed={buttonTextColor === "#FFFFFF"}
+                        onPressedChange={() => toggleButtonTextColor()}
+                        className="bg-white text-black border-2 data-[state=on]:bg-white data-[state=on]:text-black"
+                      >
+                        White
+                      </Toggle>
+                      
+                      <Input
+                        type="color"
+                        value={buttonTextColor}
+                        onChange={(e) => setButtonTextColor(e.target.value)}
+                        className="w-16 h-10 p-1 ml-4"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mt-6">
+                    <div className="flex space-x-2">
+                      <Button onClick={handleSaveButtonColor} disabled={isLoading}>
+                        Save Button Color
+                      </Button>
+                      <Button onClick={handleSaveButtonTextColor} disabled={isLoading} variant="outline">
+                        Save Text Color
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border rounded p-6 flex flex-col items-center justify-center space-y-4 bg-gray-50">
+                  <h3 className="text-lg font-medium">Button Preview</h3>
+                  <div
+                    className="p-4 rounded flex items-center justify-center"
+                    style={{ backgroundColor: buttonColor, color: buttonTextColor }}
+                  >
+                    Primary Button
+                  </div>
+                  <div className="space-y-4 w-full">
+                    <button
+                      className="w-full py-2 px-4 rounded flex items-center justify-center"
+                      style={{ backgroundColor: buttonColor, color: buttonTextColor }}
+                    >
+                      <span className="mr-2">Button with Icon</span>
+                      <Sun className="h-4 w-4" />
+                    </button>
+                    
+                    <button
+                      className="w-full py-2 px-4 border-2 rounded flex items-center justify-center"
+                      style={{ backgroundColor: "transparent", color: buttonColor, borderColor: buttonColor }}
+                    >
+                      Outline Button
+                    </button>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
