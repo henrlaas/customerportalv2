@@ -9,10 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import SignaturePad from 'signature_pad';
-import { Download, CheckCircle, XCircle, Edit, FileText, Eye } from 'lucide-react';
+import { Download, CheckCircle, XCircle, Edit, FileText, Eye, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 interface ViewContractDialogProps {
   contract: ContractWithDetails;
@@ -159,6 +160,13 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
                 {contract.template_type} Contract
               </DialogTitle>
             </div>
+            <button 
+              onClick={onClose} 
+              className="rounded-full p-1 hover:bg-gray-100 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-6 w-6" /> {/* Increased size of X icon */}
+            </button>
           </div>
         </DialogHeader>
         
@@ -167,17 +175,26 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md shadow-sm">
             <div>
               <p className="text-sm text-gray-500 mb-1">Company</p>
-              <p className="font-medium">{contract.company?.name || 'N/A'}</p>
+              <div className="flex items-center gap-2">
+                <CompanyFavicon 
+                  companyName={contract.company?.name || 'Unknown'} 
+                  website={contract.company?.website} 
+                  logoUrl={contract.company?.logo_url}
+                  size="sm"
+                />
+                <p className="font-medium">{contract.company?.name || 'N/A'}</p>
+              </div>
             </div>
             
             <div>
               <p className="text-sm text-gray-500 mb-1">Status</p>
               <Badge 
                 variant={contract.status === 'signed' ? "default" : "outline"} 
-                className={contract.status === 'signed' 
-                  ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800 inline-flex items-center gap-1"
-                  : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800 inline-flex items-center gap-1"
-                }
+                className={`inline-flex items-center gap-1 w-fit ${
+                  contract.status === 'signed' 
+                    ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800"
+                    : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800"
+                }`}
               >
                 {contract.status === 'signed' ? (
                   <>
@@ -201,7 +218,7 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
                     src={contract.contact?.avatar_url || undefined} 
                     alt={`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`} 
                   />
-                  <AvatarFallback>
+                  <AvatarFallback className="text-[8px]"> {/* Making the initials smaller */}
                     {getInitials(contract.contact?.first_name, contract.contact?.last_name)}
                   </AvatarFallback>
                 </Avatar>
@@ -217,7 +234,7 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
                     src={contract.creator?.avatar_url || undefined} 
                     alt={`${contract.creator?.first_name || ''} ${contract.creator?.last_name || ''}`} 
                   />
-                  <AvatarFallback>
+                  <AvatarFallback className="text-[8px]"> {/* Making the initials smaller */}
                     {getInitials(contract.creator?.first_name, contract.creator?.last_name)}
                   </AvatarFallback>
                 </Avatar>
