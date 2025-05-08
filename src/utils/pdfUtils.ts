@@ -1,19 +1,43 @@
 
 import { saveAs } from 'file-saver';
+import { toast } from 'sonner';
 
-// Create a browser-compatible global
-const createGlobal = () => {
+// Create a browser-compatible environment for blob-stream
+const createBrowserCompatibleEnvironment = () => {
   if (typeof window !== 'undefined') {
+    // Create a minimal polyfill for 'util.inherits' which blob-stream uses
+    (window as any).util = {
+      inherits: function(ctor: any, superCtor: any) {
+        // Simple inheritance polyfill
+        ctor.super_ = superCtor;
+        ctor.prototype = Object.create(superCtor.prototype, {
+          constructor: {
+            value: ctor,
+            enumerable: false,
+            writable: true,
+            configurable: true
+          }
+        });
+      }
+    };
+    
     // Make sure 'global' is defined for browser environment
-    // This is needed for blob-stream which expects a Node.js environment
     (window as any).global = window;
+    
+    // Some modules expect process.nextTick
+    (window as any).process = (window as any).process || {};
+    (window as any).process.nextTick = (window as any).process.nextTick || setTimeout;
   }
 };
 
 export async function createPDF(content: string, filename: string) {
   try {
-    // Ensure global is defined before importing blob-stream
-    createGlobal();
+    // Set up the browser environment before importing any modules
+    createBrowserCompatibleEnvironment();
+    
+    toast.info('Preparing PDF...', {
+      description: 'Starting PDF generation'
+    });
     
     console.log('PDF creation started');
     
@@ -106,22 +130,46 @@ export async function createPDF(content: string, filename: string) {
           console.log('Stream finished');
           const blob = stream.toBlob('application/pdf');
           console.log('Blob created:', blob);
-          saveAs(blob, filename);
-          console.log('File saved');
+          
+          // Sanitize filename to avoid special characters
+          const sanitizedFilename = filename.replace(/[^\w.-]/gi, '_');
+          
+          saveAs(blob, sanitizedFilename);
+          console.log('File saved as:', sanitizedFilename);
+          
+          toast.success('PDF Generated', {
+            description: 'Your contract PDF has been downloaded'
+          });
+          
           resolve();
         } catch (err) {
           console.error('Error in stream finish handler:', err);
+          
+          toast.error('Download Failed', {
+            description: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`
+          });
+          
           reject(err);
         }
       });
       
       stream.on('error', (err) => {
         console.error('Stream error:', err);
+        
+        toast.error('PDF Generation Failed', {
+          description: `Stream error: ${err.message || 'Unknown error'}`
+        });
+        
         reject(err);
       });
     });
   } catch (error) {
     console.error('Error creating PDF:', error);
+    
+    toast.error('PDF Creation Failed', {
+      description: error instanceof Error ? error.message : 'Unknown error occurred'
+    });
+    
     throw error;
   }
 }
