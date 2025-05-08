@@ -9,7 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import SignaturePad from 'signature_pad';
-import { Download, CheckCircle, XCircle, Edit } from 'lucide-react';
+import { Download, CheckCircle, XCircle, Edit, FileText, Eye } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 interface ViewContractDialogProps {
   contract: ContractWithDetails;
@@ -22,6 +24,7 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [showSignature, setShowSignature] = useState(false);
+  const [showContract, setShowContract] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [signaturePad, setSignaturePad] = useState<SignaturePad | null>(null);
@@ -31,6 +34,13 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
   
   // Check if the contract can be signed (is unsigned and user is the contact)
   const canSign = contract.status === 'unsigned' && isContractContact && profile?.role === 'client';
+  
+  useEffect(() => {
+    // Reset the state when the dialog is opened
+    if (isOpen) {
+      setShowContract(false);
+    }
+  }, [isOpen]);
   
   useEffect(() => {
     // Initialize signature pad when canvas is shown
@@ -134,108 +144,150 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
     }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {contract.template_type} Contract
-            {contract.status === 'signed' && (
-              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                Signed
-              </span>
-            )}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              <DialogTitle className="text-xl">
+                {contract.template_type} Contract
+              </DialogTitle>
+            </div>
+            <Badge 
+              variant={contract.status === 'signed' ? "default" : "outline"} 
+              className={contract.status === 'signed' 
+                ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800 flex items-center gap-1"
+                : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800 flex items-center gap-1"
+              }
+            >
+              {contract.status === 'signed' ? (
+                <>
+                  <CheckCircle className="h-3 w-3" />
+                  <span>Signed</span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-3 w-3" />
+                  <span>Unsigned</span>
+                </>
+              )}
+            </Badge>
+          </div>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Contract metadata */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md shadow-sm">
             <div>
-              <p className="font-medium">Company</p>
-              <p>{contract.company?.name}</p>
+              <p className="text-sm text-gray-500 mb-1">Company</p>
+              <p className="font-medium">{contract.company?.name || 'N/A'}</p>
             </div>
             <div>
-              <p className="font-medium">Contact</p>
-              <p>{`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.trim() || 'N/A'}</p>
+              <p className="text-sm text-gray-500 mb-1">Contact</p>
+              <p className="font-medium">{`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.trim() || 'N/A'}</p>
             </div>
             <div>
-              <p className="font-medium">Created</p>
-              <p>{format(new Date(contract.created_at), 'MMM d, yyyy')}</p>
+              <p className="text-sm text-gray-500 mb-1">Created</p>
+              <p className="font-medium">{format(new Date(contract.created_at), 'MMM d, yyyy')}</p>
             </div>
             {contract.status === 'signed' && contract.signed_at && (
               <div>
-                <p className="font-medium">Signed</p>
-                <p>{format(new Date(contract.signed_at), 'MMM d, yyyy')}</p>
+                <p className="text-sm text-gray-500 mb-1">Signed</p>
+                <p className="font-medium">{format(new Date(contract.signed_at), 'MMM d, yyyy')}</p>
               </div>
             )}
           </div>
           
-          {/* Contract content */}
-          <div className="bg-white p-6 rounded-md border whitespace-pre-wrap">
-            {contract.content}
+          {/* Button row for actions */}
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={() => setShowContract(!showContract)}
+              className="flex items-center gap-2"
+              variant={showContract ? "secondary" : "default"}
+            >
+              <Eye className="h-4 w-4" />
+              {showContract ? 'Hide Contract' : 'Open Contract'}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={downloadContract}
+              disabled={isDownloading}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {isDownloading ? 'Downloading...' : 'Download PDF'}
+            </Button>
+            
+            {canSign && !showSignature && !contract.signature_data && (
+              <Button 
+                onClick={() => setShowSignature(true)}
+                className="flex items-center gap-2 ml-auto"
+                variant="default"
+              >
+                <Edit className="h-4 w-4" />
+                Sign Contract
+              </Button>
+            )}
           </div>
           
-          {/* Signature section */}
-          {contract.status === 'signed' && contract.signature_data && (
-            <div className="border-t pt-4">
-              <p className="font-medium mb-2">Signature:</p>
-              <img 
-                src={contract.signature_data} 
-                alt="Signature" 
-                className="max-h-32 border p-2 rounded"
-              />
+          {/* Contract content - only shown when showContract is true */}
+          {showContract && (
+            <div className="bg-white p-6 rounded-md border shadow-sm whitespace-pre-wrap">
+              <div className="prose max-w-none">
+                {contract.content}
+              </div>
             </div>
+          )}
+          
+          {/* Signature display section */}
+          {contract.status === 'signed' && contract.signature_data && (
+            <>
+              <Separator />
+              <div className="pt-4">
+                <h4 className="text-sm font-medium mb-3 text-gray-700">Signature</h4>
+                <div className="flex justify-center bg-white border p-4 rounded-md">
+                  <img 
+                    src={contract.signature_data} 
+                    alt="Signature" 
+                    className="max-h-32"
+                  />
+                </div>
+              </div>
+            </>
           )}
           
           {/* Signature pad */}
           {showSignature && canSign && (
-            <div className="space-y-4 border-t pt-4">
-              <p className="font-medium">Sign here:</p>
-              <canvas 
-                ref={canvasRef} 
-                className="border rounded-md w-full h-32 touch-none"
-                style={{ touchAction: 'none' }}
-              />
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={clearSignature}>
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Clear
-                </Button>
+            <>
+              <Separator />
+              <div className="space-y-4 pt-4">
+                <h4 className="text-sm font-medium mb-3 text-gray-700">Sign here:</h4>
+                <div className="bg-white border rounded-md p-2">
+                  <canvas 
+                    ref={canvasRef} 
+                    className="w-full h-32 touch-none"
+                    style={{ touchAction: 'none' }}
+                  />
+                </div>
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={clearSignature}>
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Clear
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => signContractMutation.mutate()}
+                    disabled={signaturePad?.isEmpty() || signContractMutation.isPending}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {signContractMutation.isPending ? 'Signing...' : 'Complete Signing'}
+                  </Button>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
         
-        <DialogFooter className="space-x-2 flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={downloadContract}
-            disabled={isDownloading}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            {isDownloading ? 'Generating PDF...' : 'Download PDF'}
-          </Button>
-          
-          <div className="space-x-2">
-            {canSign && !showSignature && (
-              <Button onClick={() => setShowSignature(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Sign Contract
-              </Button>
-            )}
-            
-            {showSignature && canSign && (
-              <Button 
-                onClick={() => signContractMutation.mutate()}
-                disabled={signaturePad?.isEmpty() || signContractMutation.isPending}
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {signContractMutation.isPending ? 'Signing...' : 'Complete Signing'}
-              </Button>
-            )}
-            
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
-          </div>
-        </DialogFooter>
+        {/* We removed the Close button as requested and just rely on the X in the DialogContent */}
       </DialogContent>
     </Dialog>
   );
