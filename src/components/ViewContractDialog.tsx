@@ -9,9 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import SignaturePad from 'signature_pad';
-import { Download, CheckCircle, XCircle, Edit, FileText, Eye } from 'lucide-react';
+import { Download, CheckCircle, XCircle, Edit, FileText, Eye, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ViewContractDialogProps {
   contract: ContractWithDetails;
@@ -137,6 +138,16 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
       setIsDownloading(false);
     }
   };
+
+  // Helper function to get user initials from first and last name
+  const getUserInitials = (firstName?: string, lastName?: string) => {
+    const first = firstName?.[0] || '';
+    const last = lastName?.[0] || '';
+    return (first + last).toUpperCase() || '?';
+  };
+  
+  const contactInitials = getUserInitials(contract.contact?.first_name, contract.contact?.last_name);
+  const creatorInitials = getUserInitials(contract.creator?.first_name, contract.creator?.last_name);
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -151,43 +162,76 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
                 {contract.template_type} Contract
               </DialogTitle>
             </div>
-            <Badge 
-              variant={contract.status === 'signed' ? "default" : "outline"} 
-              className={contract.status === 'signed' 
-                ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800 flex items-center gap-1"
-                : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800 flex items-center gap-1"
-              }
-            >
-              {contract.status === 'signed' ? (
-                <>
-                  <CheckCircle className="h-3 w-3" />
-                  <span>Signed</span>
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-3 w-3" />
-                  <span>Unsigned</span>
-                </>
-              )}
-            </Badge>
           </div>
         </DialogHeader>
         
+        {/* Close button - now bigger */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+        >
+          <X className="h-6 w-6" />
+          <span className="sr-only">Close</span>
+        </button>
+        
         <div className="space-y-6">
           {/* Contract metadata */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-md shadow-sm">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 border">
+                <AvatarImage src={contract.contact?.avatar_url || undefined} alt={`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.trim()} />
+                <AvatarFallback>{contactInitials}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Contact</p>
+                <p className="font-medium">{`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.trim() || 'N/A'}</p>
+              </div>
+            </div>
+            
             <div>
               <p className="text-sm text-gray-500 mb-1">Company</p>
               <p className="font-medium">{contract.company?.name || 'N/A'}</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Contact</p>
-              <p className="font-medium">{`${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.trim() || 'N/A'}</p>
+            
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 border">
+                <AvatarImage src={contract.creator?.avatar_url || undefined} alt={`${contract.creator?.first_name || ''} ${contract.creator?.last_name || ''}`.trim()} />
+                <AvatarFallback>{creatorInitials}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Created By</p>
+                <p className="font-medium">{`${contract.creator?.first_name || ''} ${contract.creator?.last_name || ''}`.trim() || 'N/A'}</p>
+              </div>
             </div>
+            
             <div>
               <p className="text-sm text-gray-500 mb-1">Created</p>
               <p className="font-medium">{format(new Date(contract.created_at), 'MMM d, yyyy')}</p>
             </div>
+            
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Status</p>
+              <Badge 
+                variant={contract.status === 'signed' ? "default" : "outline"} 
+                className={contract.status === 'signed' 
+                  ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800 flex items-center gap-1"
+                  : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800 flex items-center gap-1"
+                }
+              >
+                {contract.status === 'signed' ? (
+                  <>
+                    <CheckCircle className="h-3 w-3" />
+                    <span>Signed</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3 w-3" />
+                    <span>Unsigned</span>
+                  </>
+                )}
+              </Badge>
+            </div>
+            
             {contract.status === 'signed' && contract.signed_at && (
               <div>
                 <p className="text-sm text-gray-500 mb-1">Signed</p>
@@ -286,8 +330,6 @@ export function ViewContractDialog({ contract, isOpen, onClose, onContractSigned
             </>
           )}
         </div>
-        
-        {/* We removed the Close button as requested and just rely on the X in the DialogContent */}
       </DialogContent>
     </Dialog>
   );
