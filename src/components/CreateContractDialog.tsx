@@ -47,7 +47,7 @@ interface CompanyContact {
     first_name?: string | null;
     last_name?: string | null;
   } | null;
-  email?: string; // Add this to the type
+  email?: string;
 }
 
 // Interface for email data returned from edge function
@@ -117,96 +117,88 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
       
       console.log('Fetching contacts for company:', selectedCompany.id);
       
-      // Get contacts for the selected company
-      const { data, error } = await supabase
-        .from('company_contacts')
-        .select(`
-          id, 
-          company_id,
-          user_id,
-          position,
-          is_primary,
-          profiles:user_id (
-            first_name,
-            last_name
-          )
-        `)
-        .eq('company_id', selectedCompany.id);
-      
-      if (error) throw error;
-      console.info('Contacts query status:', {
-        isLoading: false,
-        isError: !!error,
-        contactCount: data?.length
-      });
-      
-      // Create a new array with the correct type
-      const contactsWithEmail: CompanyContact[] = (data || []).map(contact => ({
-        id: contact.id,
-        company_id: contact.company_id,
-        user_id: contact.user_id,
-        position: contact.position,
-        is_primary: contact.is_primary,
-        profiles: contact.profiles as unknown as { first_name?: string | null, last_name?: string | null } | null,
-        email: undefined // We'll fill this in later
-      }));
-      
-      if (contactsWithEmail && contactsWithEmail.length > 0) {
-        try {
-          const userIds = contactsWithEmail.map(contact => contact.user_id).filter(Boolean);
+      try {
+        // Step 1: Fetch company_contacts for the selected company
+        const { data: contactsData, error: contactsError } = await supabase
+          .from('company_contacts')
+          .select('id, company_id, user_id, position, is_primary, is_admin')
+          .eq('company_id', selectedCompany.id);
+        
+        if (contactsError) throw contactsError;
+        
+        if (!contactsData || contactsData.length === 0) {
+          console.log('No contacts found for company:', selectedCompany.id);
+          return [];
+        }
+        
+        console.log(`Found ${contactsData.length} contacts for company`);
+        
+        // Extract user IDs to fetch profile data
+        const userIds = contactsData.map(contact => contact.user_id);
+        
+        // Step 2: Get profile data for these users
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .in('id', userIds);
           
-          // Call edge function to get emails
-          const { data: emailsData, error: emailError } = await supabase.functions.invoke('user-management', {
-            body: {
-              action: 'list',
-              userIds: userIds
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+        }
+        
+        // Create a map for quick profile lookups
+        const profilesMap = profilesData?.reduce((acc: Record<string, any>, profile) => {
+          acc[profile.id] = profile;
+          return acc;
+        }, {}) || {};
+        
+        // Step 3: Get emails using the edge function
+        const { data: emailsData, error: emailsError } = await supabase.functions.invoke('user-management', {
+          body: {
+            action: 'list',
+            userIds: userIds
+          }
+        });
+        
+        if (emailsError) {
+          console.error('Error fetching user emails:', emailsError);
+        }
+        
+        // Create a map for email lookups
+        const emailsMap: Record<string, string> = {};
+        
+        if (Array.isArray(emailsData)) {
+          emailsData.forEach((item: any) => {
+            if (item && typeof item.id === 'string' && typeof item.email === 'string') {
+              emailsMap[item.id] = item.email;
             }
           });
-          
-          if (emailError) {
-            console.error('Could not fetch email addresses:', emailError);
-            // Continue without emails
-          } else if (emailsData) {
-            // Map emails to contacts
-            const emailMap = new Map<string, string>();
-            
-            // Safely cast and process email data
-            if (Array.isArray(emailsData)) {
-              emailsData.forEach((item: any) => {
-                if (item && typeof item.id === 'string' && typeof item.email === 'string') {
-                  emailMap.set(item.id, item.email);
-                }
-              });
-              
-              contactsWithEmail.forEach(contact => {
-                if (contact.user_id) {
-                  // Add email property to contact objects
-                  const email = emailMap.get(contact.user_id);
-                  if (email) {
-                    contact.email = email;
-                  }
-                }
-              });
-            }
-          }
-        } catch (err) {
-          console.error('Error fetching user emails:', err);
-          // Continue without emails
         }
+        
+        // Step 4: Combine all data
+        const enrichedContacts = contactsData.map(contact => {
+          const profile = profilesMap[contact.user_id];
+          return {
+            ...contact,
+            email: emailsMap[contact.user_id] || '',
+            profiles: profile ? {
+              first_name: profile.first_name || '',
+              last_name: profile.last_name || '',
+              avatar_url: profile.avatar_url || null
+            } : null
+          };
+        });
+        
+        console.log('Enriched contacts:', enrichedContacts);
+        return enrichedContacts;
+      } catch (error) {
+        console.error('Error in fetchContactsFn:', error);
+        throw error;
       }
-      
-      console.log('Returned contacts:', contactsWithEmail);
-      return contactsWithEmail;
     },
     enabled: !!selectedCompany?.id,
-    retry: 2,
-    meta: {
-      onError: (error: any) => {
-        console.error('Error fetching contacts:', error);
-        setContactsFetchError(error.message);
-      }
-    },
-    staleTime: 0, // Don't cache the results for this query
+    retry: 1,
+    staleTime: 0 // Don't cache the results for this query
   });
   
   // Fetch projects
@@ -321,13 +313,25 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     }));
   };
 
-  // Format contacts for react-select
+  // Format contacts for react-select - UPDATED IMPLEMENTATION
   const formatContactsForSelect = (contacts: CompanyContact[]) => {
     return contacts.map(contact => {
       const firstName = contact.profiles?.first_name || '';
       const lastName = contact.profiles?.last_name || '';
-      const email = contact.email || ''; // Using email property we add in the query function
-      const label = `${firstName} ${lastName}${email ? ` (${email})` : ''}`;
+      const email = contact.email || '';
+      
+      // Format the label to show name and email
+      let label = '';
+      if (firstName || lastName) {
+        label = `${firstName} ${lastName}`.trim();
+      }
+      if (email) {
+        label = label ? `${label} (${email})` : email;
+      }
+      
+      if (!label) {
+        label = `Contact ${contact.id.substring(0, 8)}`;
+      }
       
       return {
         value: contact.id,
@@ -527,75 +531,7 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
               Select a contact from {selectedCompany?.name} who will receive and sign the contract.
             </p>
             
-            {isLoadingContacts ? (
-              <div className="flex items-center justify-center space-x-2 py-4">
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                <span>Loading contacts...</span>
-              </div>
-            ) : contactsFetchError ? (
-              <div className="text-center py-4 space-y-2">
-                <p className="text-red-500">Error loading contacts: {contactsFetchError}</p>
-                <Button variant="outline" size="sm" onClick={() => {
-                  setContactsFetchError(null);
-                  refetchContacts();
-                }}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
-              </div>
-            ) : contacts.length === 0 ? (
-              <div className="text-center py-4 space-y-2">
-                <p>No contacts found for this company.</p>
-                <Button variant="outline" size="sm" onClick={() => {
-                  refetchContacts();
-                }}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
-              </div>
-            ) : (
-              <Select
-                className="react-select-container"
-                classNamePrefix="react-select"
-                options={formatContactsForSelect(contacts)}
-                value={selectedContact ? {
-                  value: selectedContact.id,
-                  label: `${selectedContact.profiles?.first_name || ''} ${selectedContact.profiles?.last_name || ''}${selectedContact.email ? ` (${selectedContact.email})` : ''}`,
-                } : null}
-                onChange={(option: any) => setSelectedContact(option)}
-                isLoading={isLoadingContacts}
-                isClearable
-                placeholder="Select a contact..."
-                styles={{
-                  control: (base) => ({
-                    ...base,
-                    borderRadius: 'var(--radius)',
-                    borderColor: 'hsl(var(--input))',
-                    backgroundColor: 'hsl(var(--background))',
-                    boxShadow: 'none',
-                    '&:hover': {
-                      borderColor: 'hsl(var(--input))'
-                    },
-                    padding: '1px',
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    backgroundColor: 'hsl(var(--background))',
-                    borderRadius: 'var(--radius)',
-                    zIndex: 50,
-                  }),
-                  option: (base, { isFocused, isSelected }) => ({
-                    ...base,
-                    backgroundColor: isSelected 
-                      ? 'hsl(var(--primary) / 0.2)'
-                      : isFocused 
-                        ? 'hsl(var(--accent))'
-                        : undefined,
-                    color: 'hsl(var(--foreground))'
-                  }),
-                }}
-              />
-            )}
+            {renderContactSelection()}
           </div>
         );
       
@@ -715,6 +651,92 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
       default:
         return false;
     }
+  };
+  
+  // For Step 3: Contact selection - UPDATED TO HANDLE UI STATES
+  const renderContactSelection = () => {
+    if (isLoadingContacts) {
+      return (
+        <div className="flex items-center justify-center space-x-2 py-4">
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          <span>Loading contacts...</span>
+        </div>
+      );
+    }
+    
+    if (contactsFetchError) {
+      return (
+        <div className="text-center py-4 space-y-2">
+          <div className="flex items-center justify-center text-red-500">
+            <AlertTriangle className="h-5 w-5 mr-2" />
+            <p>Error loading contacts: {contactsFetchError instanceof Error ? contactsFetchError.message : 'Unknown error'}</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => {
+            setContactsFetchError(null);
+            refetchContacts();
+          }}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      );
+    }
+    
+    if (!contacts || contacts.length === 0) {
+      return (
+        <div className="text-center py-4 space-y-2">
+          <p>No contacts found for this company.</p>
+          <Button variant="outline" size="sm" onClick={() => refetchContacts()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      );
+    }
+    
+    return (
+      <Select
+        className="react-select-container"
+        classNamePrefix="react-select"
+        options={formatContactsForSelect(contacts)}
+        value={selectedContact ? {
+          value: selectedContact.id,
+          label: `${selectedContact.profiles?.first_name || ''} ${selectedContact.profiles?.last_name || ''}${selectedContact.email ? ` (${selectedContact.email})` : ''}`.trim() || `Contact ${selectedContact.id.substring(0, 8)}`,
+        } : null}
+        onChange={(option: any) => setSelectedContact(option)}
+        isLoading={isLoadingContacts}
+        isClearable
+        placeholder="Select a contact..."
+        styles={{
+          control: (base) => ({
+            ...base,
+            borderRadius: 'var(--radius)',
+            borderColor: 'hsl(var(--input))',
+            backgroundColor: 'hsl(var(--background))',
+            boxShadow: 'none',
+            '&:hover': {
+              borderColor: 'hsl(var(--input))'
+            },
+            padding: '1px',
+          }),
+          menu: (base) => ({
+            ...base,
+            backgroundColor: 'hsl(var(--background))',
+            borderRadius: 'var(--radius)',
+            zIndex: 50,
+          }),
+          option: (base, { isFocused, isSelected }) => ({
+            ...base,
+            backgroundColor: isSelected 
+              ? 'hsl(var(--primary) / 0.2)'
+              : isFocused 
+                ? 'hsl(var(--accent))'
+                : undefined,
+            color: 'hsl(var(--foreground))'
+          }),
+        }}
+      />
+    );
   };
   
   return (

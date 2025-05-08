@@ -1,30 +1,11 @@
-
-/**
- * Email utility functions for Edge Functions
- */
-
-/**
- * Send an email using Supabase Edge Function
- * This is a simplified implementation that logs the action rather than 
- * actually sending an email since the reset password functionality 
- * is already handled by Supabase Auth.
- */
-export const sendAppEmail = async (options: {
-  to: string;
-  subject: string;
-  html?: string;
-  text?: string;
-}) => {
-  // Log the email sending attempt
-  console.log(`[EMAIL] Would send email to: ${options.to}`);
-  console.log(`[EMAIL] Subject: ${options.subject}`);
-  
-  // In a real implementation, this would connect to an email service
-  // like SendGrid, Resend, or AWS SES to send the actual email
-  
-  // Return a success response
-  return {
-    success: true,
-    messageId: `mock-${Date.now()}`
-  };
+// This is a placeholder function since the actual email sending is handled by Supabase Auth
+// for password resets. But we keep this here for potential custom emails in the future.
+export const sendAppEmail = async (
+  to: string, 
+  subject: string, 
+  html: string
+): Promise<boolean> => {
+  console.log(`[Mock Email] Would send email to: ${to}, subject: ${subject}`);
+  // For actual email sending implementation, you'd use SMTP or a service like SendGrid
+  return true;
 };

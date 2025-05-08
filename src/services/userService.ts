@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { EditUserFormValues } from "@/schemas/userSchemas";
 
@@ -11,7 +12,7 @@ export interface User {
     team?: string;
     language?: string;
     phone_number?: string;
-    avatar_url?: string;  // Added this property
+    avatar_url?: string;
   };
   created_at: string;
 }
