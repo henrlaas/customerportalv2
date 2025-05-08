@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Upload, Image, Palette, Sun, LayoutDashboard, MousePointer, Brush } from "lucide-react";
@@ -574,14 +575,12 @@ export const AppearanceTab = () => {
                       <Toggle
                         className={`bg-black text-white border-2 ${buttonTextColor === "#000000" ? "ring-2 ring-offset-2" : ""}`}
                         onClick={() => setButtonTextColorValue("#000000")}
-                        pressed={buttonTextColor === "#000000"}
                       >
                         Black
                       </Toggle>
                       <Toggle
                         className={`bg-white text-black border-2 ${buttonTextColor === "#FFFFFF" ? "ring-2 ring-offset-2" : ""}`}
                         onClick={() => setButtonTextColorValue("#FFFFFF")}
-                        pressed={buttonTextColor === "#FFFFFF"}
                       >
                         White
                       </Toggle>
