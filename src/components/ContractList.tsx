@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Trash2 } from 'lucide-react';
+import { FileText, Download, Trash2, ClipboardList, FilePlus, FileCheck } from 'lucide-react';
 import { CreateContractDialog } from './CreateContractDialog';
 import { ViewContractDialog } from './ViewContractDialog';
 import { DeleteContractDialog } from './DeleteContractDialog';
@@ -159,6 +159,57 @@ export const ContractList = () => {
     setDeleteDialogOpen(true);
   }, []);
 
+  // Stats cards component that prevents re-renders
+  const StatsCards = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => {
+    const unsignedCount = contracts.filter(c => c.status === 'unsigned').length;
+    const signedCount = contracts.filter(c => c.status === 'signed').length;
+    const totalCount = contracts.length;
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-100 p-3 rounded-full">
+                <ClipboardList className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">{totalCount}</div>
+                <p className="text-muted-foreground">Total Contracts</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-amber-100 p-3 rounded-full">
+                <FilePlus className="h-6 w-6 text-amber-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">{unsignedCount}</div>
+                <p className="text-muted-foreground">Unsigned Contracts</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-green-100 p-3 rounded-full">
+                <FileCheck className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">{signedCount}</div>
+                <p className="text-muted-foreground">Signed Contracts</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  });
+  
   // Skeleton loader for the stats cards
   const StatCardsSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -204,36 +255,6 @@ export const ContractList = () => {
       </Table>
     </div>
   );
-  
-  // Stats cards component that prevents re-renders
-  const StatsCards = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => {
-    const unsignedCount = contracts.filter(c => c.status === 'unsigned').length;
-    const signedCount = contracts.filter(c => c.status === 'signed').length;
-    const totalCount = contracts.length;
-    
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{totalCount}</div>
-            <p className="text-muted-foreground">Total Contracts</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{unsignedCount}</div>
-            <p className="text-muted-foreground">Unsigned Contracts</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{signedCount}</div>
-            <p className="text-muted-foreground">Signed Contracts</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  });
   
   // Contract table component with memoization - updated with delete button
   const ContractTable = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => (
