@@ -1,12 +1,15 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAppearance } from '@/components/AppearanceProvider';
 
 export const AuthLogo: React.FC = () => {
+  const { authLogo } = useAppearance();
+
   return (
     <div className="flex justify-center items-center">
       <img 
-        src="/lovable-uploads/960baec8-7ae0-4685-bb7d-f3272c86efbe.png" 
+        src={authLogo}
         alt="Box Logo" 
         className="h-14 w-auto" 
       />

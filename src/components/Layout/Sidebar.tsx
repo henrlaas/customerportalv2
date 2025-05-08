@@ -17,25 +17,28 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Logo } from './Logo';
 import { Button } from '@/components/ui/button';
+import { useAppearance } from '@/components/AppearanceProvider';
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
   const sidebarItems = getSidebarItems();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { sidebarColor } = useAppearance();
 
   // Group sidebar items by category
   const menuItems = sidebarItems.filter(item => !item.category || item.category === 'MENU');
 
   return (
     <ShadcnSidebar 
-      className="border-r bg-[#004743]" 
+      className="border-r" 
       collapsible="icon"
       style={{
-        "--sidebar-width-icon": "4.5rem", // Increased width for collapsed sidebar
+        "--sidebar-width-icon": "4.5rem",
+        backgroundColor: sidebarColor,
       } as React.CSSProperties}
     >
-      <SidebarHeader className="p-4 bg-[#004743] flex flex-col items-center pt-8">
+      <SidebarHeader className="p-4 flex flex-col items-center pt-8" style={{ backgroundColor: sidebarColor }}>
         <div className="flex items-center">
           {!isCollapsed && (
             <div className="mr-4">
@@ -53,7 +56,7 @@ export const Sidebar: React.FC = () => {
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="px-4 py-2 bg-[#004743]">
+      <SidebarContent className="px-4 py-2" style={{ backgroundColor: sidebarColor }}>
         {/* MENU section without the label text */}
         <SidebarGroup>
           <SidebarMenu>
