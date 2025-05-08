@@ -233,7 +233,7 @@ export const ContractTemplateEditor = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="h-60 overflow-y-auto whitespace-pre-wrap border rounded-md p-3 bg-muted/50 text-sm">
+                      <div className="h-96 overflow-y-auto whitespace-pre-wrap border rounded-md p-3 bg-muted/50 text-sm">
                         {template.content}
                       </div>
                     </CardContent>
