@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { EditUserFormValues } from "@/schemas/userSchemas";
 
@@ -84,9 +83,10 @@ export const userService = {
       throw error;
     }
   },
-
+  
   resetPassword: async (email: string): Promise<any> => {
     try {
+      console.log(`Attempting to reset password for email: ${email}`);
       const response = await supabase.functions.invoke('user-management', {
         body: {
           action: 'resetPassword',
@@ -95,12 +95,14 @@ export const userService = {
       });
       
       if (response.error) {
+        console.error('Error in resetPassword service:', response.error);
         throw new Error(response.error.message || 'Error sending password reset');
       }
       
+      console.log('Password reset response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error in resetPassword:', error);
+      console.error('Error in resetPassword service:', error);
       throw error;
     }
   },

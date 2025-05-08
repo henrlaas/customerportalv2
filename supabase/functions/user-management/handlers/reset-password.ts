@@ -33,9 +33,10 @@ export const handleResetPassword = async (
       throw error;
     }
 
-    // If we get here, the password reset was successful
+    // If we reach this point, Supabase has sent the password reset email
     console.log(`Password reset email sent successfully to ${email}`);
     
+    // Return a success response
     return new Response(
       JSON.stringify({ 
         message: `Password reset email sent to ${email}` 
@@ -48,6 +49,7 @@ export const handleResetPassword = async (
   } catch (error) {
     console.error("Error sending password reset email:", error);
     
+    // Return a more detailed error response
     return new Response(
       JSON.stringify({ 
         error: `Failed to send password reset email: ${error.message || "Unknown error"}` 
