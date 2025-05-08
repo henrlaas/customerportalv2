@@ -33,7 +33,7 @@ export type ContractWithDetails = Contract & {
     name: string; 
     organization_number: string | null;
     address?: string | null;
-    zipcode?: string | null;
+    postal_code?: string | null;
     city?: string | null;
     country?: string | null;
     website?: string | null;
@@ -118,12 +118,12 @@ export async function deleteContractTemplate(id: string) {
 export async function fetchContracts() {
   console.time('fetchContracts');
   try {
-    // Modified query to include logo_url and not attempt to join with created_by directly
+    // Modified query to properly reference column names from the companies table
     const { data, error } = await supabase
       .from('contracts')
       .select(`
         *,
-        company:company_id (name, organization_number, address, zipcode, city, country, website, logo_url),
+        company:company_id (name, organization_number, address, postal_code, city, country, website, logo_url),
         contact:contact_id (id, user_id, position)
       `)
       .order('created_at', { ascending: false });
@@ -135,7 +135,7 @@ export async function fetchContracts() {
     
     // Get user emails for contacts
     const contractsWithDetails = await enrichContractData(data || []);
-    console.log('Contracts after enrichment:', contractsWithDetails); // Add debugging
+    console.log('Contracts after enrichment:', contractsWithDetails); // Debug log
     
     return contractsWithDetails;
   } catch (err) {
@@ -276,7 +276,7 @@ export async function fetchContract(id: string) {
     .from('contracts')
     .select(`
       *,
-      company:company_id (name, organization_number, address, zipcode, city, country, website, logo_url),
+      company:company_id (name, organization_number, address, postal_code, city, country, website, logo_url),
       contact:contact_id (id, user_id, position),
       creator:created_by (first_name, last_name, avatar_url)
     `)
@@ -423,7 +423,7 @@ export function replacePlaceholders(text: string, data: Record<string, any>) {
     companyname: data.company?.name || '',
     organizationnumber: data.company?.organization_number || '',
     address: data.company?.address || '',
-    zipcode: data.company?.zipcode || '',
+    postal_code: data.company?.postal_code || '',
     city: data.company?.city || '',
     country: data.company?.country || '',
     contactfullname: `${data.contact?.first_name || ''} ${data.contact?.last_name || ''}`.trim(),
