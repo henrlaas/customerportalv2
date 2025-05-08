@@ -202,18 +202,52 @@ export const AppearanceTab = () => {
       
       console.log("Saving button text color:", buttonTextColor);
       
-      // IMPROVED APPLICATION: Apply the text color in multiple ways
-      // 1. Direct CSS variable application
-      document.documentElement.style.setProperty('--primary-foreground', buttonTextColor);
+      // Convert HEX to HSL for button text color - using the same approach as button background
+      const tempElement = document.createElement('div');
+      tempElement.style.color = buttonTextColor;
+      document.body.appendChild(tempElement);
+      const rgbColor = window.getComputedStyle(tempElement).color;
+      document.body.removeChild(tempElement);
       
-      // 2. Also set it as a direct color in case the variable isn't being properly referenced
-      const buttons = document.querySelectorAll('.bg-primary');
-      buttons.forEach(button => {
-        (button as HTMLElement).style.color = buttonTextColor;
-      });
-      
-      // 3. Force a UI update by setting a data attribute
-      document.documentElement.setAttribute('data-button-text-color', buttonTextColor);
+      // Convert RGB to HSL
+      const rgb = rgbColor.match(/\d+/g);
+      if (rgb && rgb.length === 3) {
+        const r = parseInt(rgb[0]) / 255;
+        const g = parseInt(rgb[1]) / 255;
+        const b = parseInt(rgb[2]) / 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h = 0;
+        let s = 0;
+        let l = (max + min) / 2;
+        
+        if (max !== min) {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+          }
+          
+          h = Math.round(h * 60);
+        }
+        
+        s = Math.round(s * 100);
+        l = Math.round(l * 100);
+        
+        // Set the CSS variable in HSL format
+        document.documentElement.style.setProperty('--primary-foreground', `${h} ${s}% ${l}%`);
+        console.log(`Button text color set to HSL: ${h} ${s}% ${l}%`);
+        
+        // For compatibility, also set the data attribute
+        document.documentElement.setAttribute('data-button-text-color', buttonTextColor);
+      } else {
+        // Direct set as a fallback
+        document.documentElement.style.setProperty('--primary-foreground', buttonTextColor);
+      }
       
       toast({
         title: "Button text color updated",
@@ -307,7 +341,7 @@ export const AppearanceTab = () => {
     }
   };
 
-  // This function now directly sets the button text color to the selected value
+  // This function directly sets the button text color to the selected value
   const setButtonTextColorValue = (color: string) => {
     console.log("Setting button text color to:", color);
     setButtonTextColor(color);

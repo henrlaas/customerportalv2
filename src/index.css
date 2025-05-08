@@ -102,6 +102,6 @@
 
   /* Add styles to directly interact with button text color */
   .bg-primary {
-    color: var(--primary-foreground);
+    color: hsl(var(--primary-foreground));
   }
 }

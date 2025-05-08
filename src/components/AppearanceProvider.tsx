@@ -134,18 +134,51 @@ export const AppearanceProvider = ({ children }: AppearanceProviderProps) => {
         if (buttonTextColorSetting) {
           console.log("Setting button text color from DB:", buttonTextColorSetting.setting_value);
           
-          // CRITICAL FIX: Apply the text color in multiple ways to ensure it works
-          // 1. Direct CSS variable application
-          document.documentElement.style.setProperty('--primary-foreground', buttonTextColorSetting.setting_value);
+          // Convert HEX to HSL for button text color - using the same approach as button background
+          const tempElement = document.createElement('div');
+          tempElement.style.color = buttonTextColorSetting.setting_value;
+          document.body.appendChild(tempElement);
+          const rgbColor = window.getComputedStyle(tempElement).color;
+          document.body.removeChild(tempElement);
           
-          // 2. Also set it as a direct color in case the variable isn't being properly referenced
-          const buttons = document.querySelectorAll('.bg-primary');
-          buttons.forEach(button => {
-            (button as HTMLElement).style.color = buttonTextColorSetting.setting_value;
-          });
-          
-          // 3. Force a UI update by setting a data attribute
-          document.documentElement.setAttribute('data-button-text-color', buttonTextColorSetting.setting_value);
+          // Convert RGB to HSL
+          const rgb = rgbColor.match(/\d+/g);
+          if (rgb && rgb.length === 3) {
+            const r = parseInt(rgb[0]) / 255;
+            const g = parseInt(rgb[1]) / 255;
+            const b = parseInt(rgb[2]) / 255;
+            
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h = 0;
+            let s = 0;
+            let l = (max + min) / 2;
+            
+            if (max !== min) {
+              const d = max - min;
+              s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+              
+              switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+              }
+              
+              h = Math.round(h * 60);
+            }
+            
+            s = Math.round(s * 100);
+            l = Math.round(l * 100);
+            
+            document.documentElement.style.setProperty('--primary-foreground', `${h} ${s}% ${l}%`);
+            console.log(`Button text color set to HSL: ${h} ${s}% ${l}%`);
+            
+            // For compatibility, also set the data attribute
+            document.documentElement.setAttribute('data-button-text-color', buttonTextColorSetting.setting_value);
+          } else {
+            // Direct set as a fallback
+            document.documentElement.style.setProperty('--primary-foreground', buttonTextColorSetting.setting_value);
+          }
         } else {
           console.log("No button text color found in DB, using default:", defaultAppearance.buttonTextColor);
           document.documentElement.style.setProperty('--primary-foreground', defaultAppearance.buttonTextColor);
