@@ -1,4 +1,3 @@
-
 import { createPDF } from '@/utils/pdfUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -37,6 +36,7 @@ export type ContractWithDetails = Contract & {
     zipcode?: string | null;
     city?: string | null;
     country?: string | null;
+    website?: string | null;
   };
   contact: { 
     id: string;
@@ -45,8 +45,13 @@ export type ContractWithDetails = Contract & {
     email?: string;
     first_name?: string;
     last_name?: string;
+    avatar_url?: string | null;
   };
-  creator?: { first_name: string | null; last_name: string | null } | null;
+  creator?: { 
+    first_name: string | null; 
+    last_name: string | null;
+    avatar_url?: string | null;
+  } | null;
 };
 
 // Fetch templates
@@ -117,7 +122,7 @@ export async function fetchContracts() {
       .from('contracts')
       .select(`
         *,
-        company:company_id (name, organization_number),
+        company:company_id (name, organization_number, address, zipcode, city, country, website),
         contact:contact_id (id, user_id, position)
       `)
       .order('created_at', { ascending: false });
@@ -151,7 +156,7 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
     const initializedContracts = contracts.map(contract => {
       // Ensure company object exists with required properties
       if (!contract.company || typeof contract.company !== 'object') {
-        contract.company = { name: 'Unknown', organization_number: null };
+        contract.company = { name: 'Unknown', organization_number: null, website: null };
       }
       
       // Ensure contact object exists with required properties
@@ -202,7 +207,7 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
         Promise.all(batches.map(async batch => {
           const { data } = await supabase
             .from('profiles')
-            .select('id, first_name, last_name')
+            .select('id, first_name, last_name, avatar_url')
             .in('id', batch);
           return data || [];
         }))
@@ -224,11 +229,12 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
             contract.contact.email = emailMap.get(contract.contact.user_id);
           }
           
-          // Add first_name and last_name to contact if available
+          // Add first_name, last_name, and avatar_url to contact if available
           if (profileMap.has(contract.contact.user_id)) {
             const profile = profileMap.get(contract.contact.user_id);
             contract.contact.first_name = profile?.first_name;
             contract.contact.last_name = profile?.last_name;
+            contract.contact.avatar_url = profile?.avatar_url;
           }
         }
       }
@@ -238,7 +244,7 @@ async function enrichContractData(contracts: any[]): Promise<ContractWithDetails
     if (creatorIds.length > 0) {
       const { data: creatorProfiles } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name')
+        .select('id, first_name, last_name, avatar_url')
         .in('id', creatorIds);
       
       if (creatorProfiles && creatorProfiles.length > 0) {
@@ -268,9 +274,9 @@ export async function fetchContract(id: string) {
     .from('contracts')
     .select(`
       *,
-      company:company_id (name, organization_number, address, zipcode, city, country),
+      company:company_id (name, organization_number, address, zipcode, city, country, website),
       contact:contact_id (id, user_id, position),
-      creator:created_by (first_name, last_name)
+      creator:created_by (first_name, last_name, avatar_url)
     `)
     .eq('id', id)
     .single();
@@ -282,7 +288,7 @@ export async function fetchContract(id: string) {
   
   // Ensure company object exists with required properties
   if (!contract.company || typeof contract.company !== 'object') {
-    contract.company = { name: 'Unknown', organization_number: null };
+    contract.company = { name: 'Unknown', organization_number: null, website: null };
   }
   
   // Ensure contact object exists with required properties
@@ -305,13 +311,14 @@ export async function fetchContract(id: string) {
       // Get profile for contact
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('first_name, last_name')
+        .select('first_name, last_name, avatar_url')
         .eq('id', contract.contact.user_id)
         .single();
         
       if (profileData) {
         contract.contact.first_name = profileData.first_name;
         contract.contact.last_name = profileData.last_name;
+        contract.contact.avatar_url = profileData.avatar_url;
       }
     } catch (err) {
       console.error("Error fetching contact details:", err);

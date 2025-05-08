@@ -18,13 +18,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Eye } from 'lucide-react';
+import { FileText, Download, Eye, Filter } from 'lucide-react';
 import { CreateContractDialog } from './CreateContractDialog';
 import { ViewContractDialog } from './ViewContractDialog';
 import { createPDF } from '@/utils/pdfUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 export const ContractList = () => {
   const { user, profile } = useAuth();
@@ -34,6 +35,7 @@ export const ContractList = () => {
   const [selectedContract, setSelectedContract] = useState<ContractWithDetails | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'unsigned' | 'signed'>('all');
   
   const isClient = profile?.role === 'client';
   
@@ -63,10 +65,18 @@ export const ContractList = () => {
   const filteredContracts = useMemo(() => {
     if (!contracts?.length) return [];
     
-    const searchString = searchTerm.toLowerCase();
-    if (!searchString) return contracts;
+    let result = [...contracts];
     
-    return contracts.filter(contract => {
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(contract => contract.status === statusFilter);
+    }
+    
+    // Apply search filter
+    const searchString = searchTerm.toLowerCase();
+    if (!searchString) return result;
+    
+    return result.filter(contract => {
       const companyName = contract.company?.name?.toLowerCase() || '';
       const contactName = `${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.toLowerCase();
       const status = contract.status.toLowerCase();
@@ -79,7 +89,7 @@ export const ContractList = () => {
         type.includes(searchString)
       );
     });
-  }, [contracts, searchTerm]);
+  }, [contracts, searchTerm, statusFilter]);
   
   // Memoize contract groups for better performance
   const { unsignedContracts, signedContracts } = useMemo(() => {
@@ -148,30 +158,34 @@ export const ContractList = () => {
   
   // Skeleton loader for the contracts table
   const TableSkeleton = () => (
-    <Table className="border rounded-xl overflow-hidden">
-      <TableHeader>
-        <TableRow>
-          <TableHead>Company</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Created Date</TableHead>
-          <TableHead>Created By</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="w-[100px]">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {Array(5).fill(0).map((_, index) => (
-          <TableRow key={index}>
-            <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 w-32" /></div></TableCell>
-            <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-            <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /></div></TableCell>
-            <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-            <TableCell><div className="flex gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-8 w-8 rounded-full" /></div></TableCell>
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Company</TableHead>
+            <TableHead>Contact</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Created Date</TableHead>
+            <TableHead>Created By</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {Array(5).fill(0).map((_, index) => (
+            <TableRow key={index}>
+              <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 w-32" /></div></TableCell>
+              <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 w-32" /></div></TableCell>
+              <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
+              <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+              <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 w-24" /></div></TableCell>
+              <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+              <TableCell><div className="flex gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-8 w-8 rounded-full" /></div></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
   
   // Stats cards component that prevents re-renders
@@ -206,94 +220,147 @@ export const ContractList = () => {
   
   // Contract table component with memoization
   const ContractTable = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => (
-    <Table className="border rounded-xl overflow-hidden">
-      <TableHeader>
-        <TableRow>
-          <TableHead>Company</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Created Date</TableHead>
-          <TableHead>Created By</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="w-[100px]">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {contracts.length > 0 ? (
-          contracts.map((contract) => (
-            <TableRow key={contract.id}>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <CompanyFavicon 
-                    companyName={contract.company?.name || 'Unknown'} 
-                    website={contract.company?.website}
-                    size="sm"
-                  />
-                  <span>{contract.company?.name || 'N/A'}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
-                  {contract.template_type}
-                </Badge>
-              </TableCell>
-              <TableCell>{format(new Date(contract.created_at), 'MMM d, yyyy')}</TableCell>
-              <TableCell>
-                {contract.created_by ? (
-                  <UserAvatarGroup 
-                    users={[{
-                      id: contract.created_by,
-                      first_name: contract.creator?.first_name || '',
-                      last_name: contract.creator?.last_name || '',
-                      avatar_url: contract.creator?.avatar_url
-                    }]}
-                    size="sm"
-                  />
-                ) : (
-                  <span>System</span>
-                )}
-              </TableCell>
-              <TableCell>
-                <Badge variant={contract.status === 'signed' ? 'default' : 'outline'}>
-                  {contract.status === 'signed' ? 'Signed' : 'Unsigned'}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => viewContract(contract)}
-                    title="View Contract"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => downloadPdf(contract)} 
-                    disabled={isDownloading === contract.id}
-                    title="Download PDF"
-                  >
-                    {isDownloading === contract.id ? (
-                      <span className="w-4 h-4 block rounded-full border-2 border-b-transparent border-r-transparent border-gray-400 animate-spin" />
-                    ) : (
-                      <Download className="h-4 w-4" />
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Company</TableHead>
+            <TableHead>Contact</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Created Date</TableHead>
+            <TableHead>Created By</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-[100px]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {contracts.length > 0 ? (
+            contracts.map((contract) => (
+              <TableRow key={contract.id}>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <CompanyFavicon 
+                      companyName={contract.company?.name || 'Unknown'} 
+                      website={contract.company?.website || null}
+                      size="sm"
+                    />
+                    <span>{contract.company?.name || 'N/A'}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {contract.contact && (
+                      <UserAvatarGroup 
+                        users={[{
+                          id: contract.contact.user_id,
+                          first_name: contract.contact.first_name || '',
+                          last_name: contract.contact.last_name || '',
+                          avatar_url: contract.contact.avatar_url
+                        }]}
+                        size="sm"
+                      />
                     )}
-                  </Button>
-                </div>
+                    <span>
+                      {contract.contact ? 
+                        `${contract.contact.first_name || ''} ${contract.contact.last_name || ''}`.trim() || 'N/A'
+                        : 'N/A'
+                      }
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
+                    {contract.template_type}
+                  </Badge>
+                </TableCell>
+                <TableCell>{format(new Date(contract.created_at), 'MMM d, yyyy')}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {contract.created_by ? (
+                      <>
+                        <UserAvatarGroup 
+                          users={[{
+                            id: contract.created_by,
+                            first_name: contract.creator?.first_name || '',
+                            last_name: contract.creator?.last_name || '',
+                            avatar_url: contract.creator?.avatar_url
+                          }]}
+                          size="sm"
+                        />
+                        <span>
+                          {contract.creator ? 
+                            `${contract.creator.first_name || ''} ${contract.creator.last_name || ''}`.trim() || 'N/A'
+                            : 'System'
+                          }
+                        </span>
+                      </>
+                    ) : (
+                      <span>System</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={contract.status === 'signed' ? 'default' : 'outline'}>
+                    {contract.status === 'signed' ? 'Signed' : 'Unsigned'}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => viewContract(contract)}
+                      title="View Contract"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => downloadPdf(contract)} 
+                      disabled={isDownloading === contract.id}
+                      title="Download PDF"
+                    >
+                      {isDownloading === contract.id ? (
+                        <span className="w-4 h-4 block rounded-full border-2 border-b-transparent border-r-transparent border-gray-400 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8">
+                No contracts found
               </TableCell>
             </TableRow>
-          ))
-        ) : (
-          <TableRow>
-            <TableCell colSpan={6} className="text-center py-8">
-              No contracts found
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+          )}
+        </TableBody>
+      </Table>
+    </div>
   ));
+
+  const FilterToggle = () => (
+    <div className="flex items-center mb-4">
+      <span className="text-sm text-gray-500 mr-2 flex items-center">
+        <Filter className="h-4 w-4 mr-1" /> Filter:
+      </span>
+      <ToggleGroup 
+        type="single" 
+        value={statusFilter} 
+        onValueChange={(value) => {
+          if (value) setStatusFilter(value as 'all' | 'unsigned' | 'signed');
+        }}
+      >
+        <ToggleGroupItem value="all" aria-label="View all contracts" size="sm">All</ToggleGroupItem>
+        <ToggleGroupItem value="unsigned" aria-label="View unsigned contracts" size="sm">Unsigned</ToggleGroupItem>
+        <ToggleGroupItem value="signed" aria-label="View signed contracts" size="sm">Signed</ToggleGroupItem>
+      </ToggleGroup>
+    </div>
+  );
   
   return (
     <div className="space-y-6">
@@ -306,13 +373,16 @@ export const ContractList = () => {
         )
       )}
       
-      <div className="flex justify-between items-center mb-4">
-        <Input
-          placeholder="Search contracts..."
-          className="max-w-sm"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <div className="flex gap-2 items-center">
+          <Input
+            placeholder="Search contracts..."
+            className="max-w-sm"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <FilterToggle />
+        </div>
         
         {!isClient && (
           <CreateContractDialog onContractCreated={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })} />
