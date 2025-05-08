@@ -25,7 +25,7 @@ export const ContractTemplateEditor = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
-    type: '',
+    type: 'DPA', // Default to the currently selected tab
     content: ''
   });
   const { toast } = useToast();
@@ -112,9 +112,28 @@ export const ContractTemplateEditor = () => {
   const handleCreateTemplate = () => {
     createTemplateMutation.mutate({
       name: editForm.name,
-      type: editForm.type,
+      // Use the currently selected tab as the type instead of requiring users to select it
+      type: selectedTab,
       content: editForm.content
     });
+  };
+  
+  // Handle opening create dialog - reset form and set type to current tab
+  const handleOpenCreateDialog = () => {
+    setEditForm({
+      name: '',
+      type: selectedTab,
+      content: ''
+    });
+    setIsCreating(true);
+  };
+
+  // When tab changes, update the form type for new templates
+  const handleTabChange = (value: string) => {
+    setSelectedTab(value);
+    if (isCreating) {
+      setEditForm(prev => ({ ...prev, type: value }));
+    }
   };
   
   const PlaceholdersHelp = () => (
@@ -140,7 +159,7 @@ export const ContractTemplateEditor = () => {
         
         <Dialog open={isCreating} onOpenChange={setIsCreating}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={handleOpenCreateDialog}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Create Template
             </Button>
@@ -153,30 +172,20 @@ export const ContractTemplateEditor = () => {
             <div className="space-y-4 py-4">
               <PlaceholdersHelp />
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Name</label>
-                  <Input 
-                    value={editForm.name} 
-                    onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Template name"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Type</label>
-                  <Tabs 
-                    value={editForm.type || 'DPA'} 
-                    onValueChange={value => setEditForm(prev => ({ ...prev, type: value }))}
-                  >
-                    <TabsList>
-                      <TabsTrigger value="DPA">DPA</TabsTrigger>
-                      <TabsTrigger value="NDA">NDA</TabsTrigger>
-                      <TabsTrigger value="Web">Web</TabsTrigger>
-                      <TabsTrigger value="Marketing">Marketing</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name</label>
+                <Input 
+                  value={editForm.name} 
+                  onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Template name"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Template Type: <span className="font-semibold">{selectedTab}</span></label>
+                <p className="text-sm text-muted-foreground">
+                  New templates will be created with the currently selected tab type.
+                </p>
               </div>
               
               <div className="space-y-2">
@@ -199,7 +208,7 @@ export const ContractTemplateEditor = () => {
               </Button>
               <Button 
                 onClick={handleCreateTemplate}
-                disabled={!editForm.name || !editForm.type || !editForm.content || createTemplateMutation.isPending}
+                disabled={!editForm.name || !editForm.content || createTemplateMutation.isPending}
               >
                 {createTemplateMutation.isPending ? 'Creating...' : 'Create Template'}
               </Button>
@@ -209,7 +218,7 @@ export const ContractTemplateEditor = () => {
       </div>
       
       <div className="bg-background rounded-lg border shadow-sm">
-        <Tabs defaultValue="DPA" value={selectedTab} onValueChange={setSelectedTab}>
+        <Tabs defaultValue="DPA" value={selectedTab} onValueChange={handleTabChange}>
           <div className="border-b px-4">
             <TabsList>
               <TabsTrigger value="DPA">DPA</TabsTrigger>
@@ -222,41 +231,39 @@ export const ContractTemplateEditor = () => {
           <div className="p-4">
             <PlaceholdersHelp />
             
-            <TabsContent value={selectedTab} className="pt-2">
-              <div className="grid grid-cols-1 gap-4">
-                {filteredTemplates.map(template => (
-                  <Card key={template.id}>
-                    <CardHeader>
-                      <CardTitle>{template.name}</CardTitle>
-                      <CardDescription>
-                        {format(new Date(template.updated_at), "Last updated: MMM d, yyyy 'at' h:mm a")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-96 overflow-y-auto whitespace-pre-wrap border rounded-md p-3 bg-muted/50 text-sm">
-                        {template.content}
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-end">
-                      <Button 
-                        variant="outline"
-                        onClick={() => handleEditTemplate(template)}
-                      >
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Template
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-                
-                {filteredTemplates.length === 0 && (
-                  <Card>
-                    <CardContent className="flex justify-center items-center h-32">
-                      <p className="text-muted-foreground">No templates found for {selectedTab}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+            <TabsContent value={selectedTab} className="mt-2 space-y-4">
+              {filteredTemplates.map(template => (
+                <Card key={template.id} className="overflow-hidden">
+                  <CardHeader>
+                    <CardTitle>{template.name}</CardTitle>
+                    <CardDescription>
+                      {format(new Date(template.updated_at), "Last updated: MMM d, yyyy 'at' h:mm a")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-96 overflow-y-auto whitespace-pre-wrap border rounded-md p-3 bg-muted/50 text-sm">
+                      {template.content}
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-end">
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleEditTemplate(template)}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Template
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+              
+              {filteredTemplates.length === 0 && (
+                <Card>
+                  <CardContent className="flex justify-center items-center h-32">
+                    <p className="text-muted-foreground">No templates found for {selectedTab}</p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </div>
         </Tabs>
@@ -327,4 +334,3 @@ export const ContractTemplateEditor = () => {
     </div>
   );
 };
-
