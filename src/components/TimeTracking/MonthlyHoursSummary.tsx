@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
 export const MonthlyHoursSummary = () => {
   const { user } = useAuth();
@@ -75,39 +75,44 @@ export const MonthlyHoursSummary = () => {
     <Card className="mb-6">
       <CardContent className="p-6">
         <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-medium">Monthly Summary</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={goToPreviousMonth}
-                className="h-8 w-8"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <p className="text-muted-foreground px-2 min-w-[130px]">
-                {format(selectedMonth, 'MMMM yyyy')}
-              </p>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={goToNextMonth}
-                disabled={isCurrentMonth}
-                className="h-8 w-8"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              {!isCurrentMonth && (
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-100 p-3 rounded-full">
+              <Calendar className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-medium">Monthly Summary</h3>
+              <div className="flex items-center gap-2 mt-1">
                 <Button 
                   variant="outline" 
-                  size="sm"
-                  onClick={goToCurrentMonth}
-                  className="ml-2 text-xs h-8"
+                  size="icon" 
+                  onClick={goToPreviousMonth}
+                  className="h-8 w-8"
                 >
-                  Current Month
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
-              )}
+                <p className="text-muted-foreground px-2 min-w-[130px]">
+                  {format(selectedMonth, 'MMMM yyyy')}
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={goToNextMonth}
+                  disabled={isCurrentMonth}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                {!isCurrentMonth && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={goToCurrentMonth}
+                    className="ml-2 text-xs h-8"
+                  >
+                    Current Month
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
           <div className="text-right">
