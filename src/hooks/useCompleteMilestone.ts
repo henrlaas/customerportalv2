@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 export const useCompleteMilestone = () => {
   const queryClient = useQueryClient();
   
-  const { mutateAsync, isLoading, error } = useMutation({
+  const { mutateAsync, isPending, error } = useMutation({
     mutationFn: async (milestoneId: string) => {
       const { data, error } = await supabase
         .from('milestones')
@@ -29,7 +29,7 @@ export const useCompleteMilestone = () => {
   
   return {
     completeMilestone: mutateAsync,
-    isLoading,
+    isLoading: isPending,
     error
   };
 };

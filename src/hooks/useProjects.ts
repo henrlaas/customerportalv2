@@ -88,7 +88,28 @@ export const useProjects = () => {
         throw error;
       }
       
-      return data as unknown as ProjectWithRelations[];
+      // Process the data to handle errors and ensure types are correct
+      return data.map(project => {
+        // Ensure the creator field is properly typed even if it's an error
+        let creator: User;
+        
+        if (project.creator && typeof project.creator === 'object' && !('error' in project.creator)) {
+          creator = project.creator as User;
+        } else {
+          // Create a fallback user object if creator is not found
+          creator = {
+            id: project.created_by || '',
+            first_name: null,
+            last_name: null,
+            avatar_url: null
+          };
+        }
+        
+        return {
+          ...project,
+          creator
+        };
+      }) as ProjectWithRelations[];
     },
     enabled: !!profile
   });

@@ -13,7 +13,7 @@ type CreateMilestoneParams = {
 export const useCreateMilestone = () => {
   const queryClient = useQueryClient();
   
-  const { mutateAsync, isLoading, error } = useMutation({
+  const { mutateAsync, isPending, error } = useMutation({
     mutationFn: async ({ projectId, name, status, dueDate }: CreateMilestoneParams) => {
       const { data, error } = await supabase
         .from('milestones')
@@ -41,7 +41,7 @@ export const useCreateMilestone = () => {
   
   return {
     createMilestone: mutateAsync,
-    isLoading,
+    isLoading: isPending,
     error
   };
 };
