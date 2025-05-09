@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   BrowserRouter as Router,
@@ -44,37 +45,17 @@ const queryClient = new QueryClient();
 
 function AppLayout() {
   return (
-    
-      
-        
-          
-        
-        
-          
-        
-      
-      
-        
-      
-    
+    <div className="app-layout">
+      <Outlet />
+    </div>
   );
 }
 
 function ClientLayout() {
   return (
-    
-      
-        
-          
-        
-        
-          
-        
-      
-      
-        
-      
-    
+    <div className="client-layout">
+      <Outlet />
+    </div>
   );
 }
 
@@ -82,7 +63,7 @@ function ProtectedRoute() {
   const { isLoggedIn, isLoading } = useAuth();
 
   if (isLoading) {
-    return ;
+    return <div>Loading...</div>;
   }
 
   if (!isLoggedIn) {
@@ -96,7 +77,7 @@ function ClientProtectedRoute() {
   const { isClient, isLoading, isLoggedIn } = useAuth();
 
   if (isLoading) {
-    return ;
+    return <div>Loading...</div>;
   }
 
   if (!isLoggedIn) {
