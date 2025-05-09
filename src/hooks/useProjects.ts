@@ -30,30 +30,53 @@ export const useProjects = () => {
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
-      // Fetch projects with company and creator details
-      const { data, error } = await supabase
+      // First get projects with company details
+      const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select(`
           *,
           company:company_id (
             id,
             name
-          ),
-          creator:created_by (
-            id,
-            first_name,
-            last_name,
-            avatar_url
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching projects:', error);
-        throw error;
+      if (projectsError) {
+        console.error('Error fetching projects:', projectsError);
+        throw projectsError;
       }
 
-      return data as ProjectWithRelations[];
+      // Then get creator profiles separately
+      const projectsWithCreators = await Promise.all(
+        projectsData.map(async (project) => {
+          // Only fetch creator if created_by is present
+          if (project.created_by) {
+            const { data: creatorData, error: creatorError } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name, avatar_url')
+              .eq('id', project.created_by)
+              .single();
+
+            if (creatorError && creatorError.code !== 'PGRST116') {
+              console.error('Error fetching creator profile:', creatorError);
+            }
+
+            return {
+              ...project,
+              creator: creatorData
+            } as ProjectWithRelations;
+          }
+
+          // Return project without creator data if created_by is null
+          return {
+            ...project,
+            creator: null
+          } as ProjectWithRelations;
+        })
+      );
+
+      return projectsWithCreators;
     },
   });
 
@@ -93,28 +116,43 @@ export const useProjects = () => {
   };
 
   // Function to get a project by id with all related data
-  const getProject = async (projectId: string) => {
-    const { data, error } = await supabase
+  const getProject = async (projectId: string): Promise<ProjectWithRelations> => {
+    // Get project with company details
+    const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .select(`
         *,
-        company:company_id (*),
-        creator:created_by (
-          id, 
-          first_name,
-          last_name,
-          avatar_url
-        )
+        company:company_id (*)
       `)
       .eq('id', projectId)
       .single();
 
-    if (error) {
-      console.error('Error fetching project details:', error);
-      throw error;
+    if (projectError) {
+      console.error('Error fetching project details:', projectError);
+      throw projectError;
     }
 
-    return data as ProjectWithRelations;
+    // Get creator details separately if created_by exists
+    let creatorData = null;
+    if (projectData.created_by) {
+      const { data: creator, error: creatorError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .eq('id', projectData.created_by)
+        .single();
+
+      if (creatorError && creatorError.code !== 'PGRST116') {
+        console.error('Error fetching creator details:', creatorError);
+      } else {
+        creatorData = creator;
+      }
+    }
+
+    // Combine project data with creator data
+    return {
+      ...projectData,
+      creator: creatorData
+    } as ProjectWithRelations;
   };
 
   return {

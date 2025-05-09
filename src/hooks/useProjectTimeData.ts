@@ -45,25 +45,38 @@ export const useProjectTimeData = (projectId?: string) => {
     queryFn: async () => {
       if (!projectId) return [];
 
-      const { data, error } = await supabase
+      // First get time entries
+      const { data: entriesData, error: entriesError } = await supabase
         .from('time_entries')
-        .select(`
-          *,
-          employee:user_id (
-            id,
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('project_id', projectId);
 
-      if (error) {
-        console.error('Error fetching time entries:', error);
-        throw error;
+      if (entriesError) {
+        console.error('Error fetching time entries:', entriesError);
+        throw entriesError;
       }
 
-      return data as TimeEntry[];
+      // Then get profile data for each user
+      const entriesWithEmployeeData = await Promise.all(
+        entriesData.map(async (entry) => {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, avatar_url')
+            .eq('id', entry.user_id)
+            .single();
+
+          if (profileError && profileError.code !== 'PGRST116') {
+            console.error('Error fetching employee profile:', profileError);
+          }
+
+          return {
+            ...entry,
+            employee: profileData
+          } as TimeEntry;
+        })
+      );
+
+      return entriesWithEmployeeData;
     },
     enabled: !!projectId,
   });

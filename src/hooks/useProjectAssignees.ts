@@ -24,31 +24,43 @@ export const useProjectAssignees = (projectId?: string) => {
     queryFn: async () => {
       if (!projectId) return [];
 
-      const { data, error } = await supabase
+      // First get the project assignees
+      const { data: assigneesData, error: assigneesError } = await supabase
         .from('project_assignees')
-        .select(`
-          *,
-          profiles:user_id (
-            id,
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('project_id', projectId);
 
-      if (error) {
-        console.error('Error fetching project assignees:', error);
-        throw error;
+      if (assigneesError) {
+        console.error('Error fetching project assignees:', assigneesError);
+        throw assigneesError;
       }
 
-      return data.map(item => ({
-        ...item,
-        // Add null check for profiles
-        full_name: item.profiles ? 
-          `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Unknown User' 
-          : 'Unknown User'
-      })) as ProjectAssignee[];
+      // Then get the profiles for those assignees
+      const assigneesWithProfiles = await Promise.all(
+        assigneesData.map(async (assignee) => {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, avatar_url')
+            .eq('id', assignee.user_id)
+            .single();
+
+          if (profileError && profileError.code !== 'PGRST116') {
+            console.error('Error fetching profile:', profileError);
+          }
+
+          const fullName = profileData
+            ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 'Unknown User'
+            : 'Unknown User';
+
+          return {
+            ...assignee,
+            profiles: profileData,
+            full_name: fullName
+          } as ProjectAssignee & { full_name: string };
+        })
+      );
+
+      return assigneesWithProfiles;
     },
     enabled: !!projectId,
   });
