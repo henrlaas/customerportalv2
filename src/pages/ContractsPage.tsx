@@ -9,6 +9,7 @@ import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 const ContractsPage = () => {
   const { profile } = useAuth();
   const isClient = profile?.role === 'client';
+  const isAdmin = profile?.isAdmin || false; // Check if the user is an admin
   const [activeTab, setActiveTab] = useState('contracts');
 
   return (
@@ -21,12 +22,12 @@ const ContractsPage = () => {
         // Client view - just show the contracts with immediate rendering
         <ContractList />
       ) : (
-        // Admin/Employee view - tabs for contracts and templates
+        // Admin/Employee view - tabs for contracts and templates (Templates only for admin)
         <Tabs defaultValue="contracts" value={activeTab} onValueChange={setActiveTab}>
           <div className="mb-6">
             <TabsList>
               <TabsTrigger value="contracts">Contracts</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
+              {isAdmin && <TabsTrigger value="templates">Templates</TabsTrigger>}
             </TabsList>
           </div>
           
@@ -35,14 +36,16 @@ const ContractsPage = () => {
             <ContractList />
           </TabsContent>
           
-          <TabsContent value="templates">
-            {/* Only load the template editor when the tab is active */}
-            {activeTab === 'templates' && (
-              <Suspense fallback={<CenteredSpinner />}>
-                <ContractTemplateEditor />
-              </Suspense>
-            )}
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="templates">
+              {/* Only load the template editor when the tab is active */}
+              {activeTab === 'templates' && (
+                <Suspense fallback={<CenteredSpinner />}>
+                  <ContractTemplateEditor />
+                </Suspense>
+              )}
+            </TabsContent>
+          )}
         </Tabs>
       )}
     </div>
