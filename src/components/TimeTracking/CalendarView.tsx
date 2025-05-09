@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { format, isSameDay, isToday, parseISO } from 'date-fns';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Building, Briefcase, Tag, DollarSign, Pencil, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Building, Briefcase, Tag, DollarSign, Pencil, Trash2, Clock } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
