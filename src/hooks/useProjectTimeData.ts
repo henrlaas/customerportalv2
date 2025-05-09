@@ -75,7 +75,7 @@ export const useProjectTimeData = (projectId: string | null, projectValue: numbe
           const employeeSalary = entry.employee != null && 
                               typeof entry.employee === 'object' && 
                               !('error' in entry.employee) ? 
-                              entry.employee.hourly_salary || 0 : 0;
+                              (entry.employee.hourly_salary || 0) : 0;
                               
           totalCost += hours * employeeSalary;
         }
