@@ -1,30 +1,38 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { PlusIcon, ClockIcon, FileTextIcon, List, GridIcon } from 'lucide-react';
+import { PlusIcon, ClockIcon, FileTextIcon } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectCreateDialog } from '@/components/Projects/ProjectCreateDialog';
-import { ProjectCard } from '@/components/Projects/ProjectCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProjectMilestonesPanel } from '@/components/Projects/ProjectMilestonesPanel';
 import { useProjectMilestones } from '@/hooks/useProjectMilestones';
 import { ProjectListView } from '@/components/Projects/ProjectListView';
 import { ProjectsSummaryCards } from '@/components/Projects/ProjectsSummaryCards';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const ProjectsPage = () => {
   const { profile } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list'); // Default to list view
+  const [filter, setFilter] = useState<'all' | 'signed' | 'unsigned'>('all');
   const { projects, isLoading: projectsLoading } = useProjects();
   const { milestones } = useProjectMilestones(selectedProjectId);
 
-  // Function to handle clicking on a project card or row
+  // Function to handle clicking on a project
   const handleProjectSelect = (projectId: string) => {
     setSelectedProjectId(projectId === selectedProjectId ? null : projectId);
   };
+
+  // Filter projects based on contract status
+  const filteredProjects = projects ? projects.filter(project => {
+    if (filter === 'all') return true;
+    
+    // Note: This is a placeholder - we would need to implement contract status tracking in projects
+    // For now, we're treating all projects as unsigned
+    return filter === 'unsigned';
+  }) : [];
 
   // Get selected project details
   const selectedProject = projects?.find(p => p.id === selectedProjectId);
@@ -33,67 +41,47 @@ const ProjectsPage = () => {
     <div className="container p-6 mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Projects</h1>
-        <div className="flex items-center gap-2">
-          <div className="bg-muted rounded-md p-1 flex">
-            <Button 
-              variant={viewMode === 'grid' ? 'default' : 'ghost'} 
-              size="sm" 
-              onClick={() => setViewMode('grid')}
-              className="rounded-r-none"
-            >
-              <GridIcon className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant={viewMode === 'list' ? 'default' : 'ghost'} 
-              size="sm" 
-              onClick={() => setViewMode('list')}
-              className="rounded-l-none"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          {(profile?.role === 'admin' || profile?.role === 'employee') && (
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Create Project
-            </Button>
-          )}
-        </div>
       </div>
       
       {/* Summary Cards */}
       <ProjectsSummaryCards projects={projects} isLoading={projectsLoading} />
       
+      {/* Filter and Create Button */}
+      <div className="flex justify-between items-center my-6">
+        <ToggleGroup type="single" value={filter} onValueChange={(value) => value && setFilter(value as 'all' | 'signed' | 'unsigned')}>
+          <ToggleGroupItem value="all" variant="tab">All</ToggleGroupItem>
+          <ToggleGroupItem value="signed" variant="tab">Signed</ToggleGroupItem>
+          <ToggleGroupItem value="unsigned" variant="tab">Unsigned</ToggleGroupItem>
+        </ToggleGroup>
+        
+        {(profile?.role === 'admin' || profile?.role === 'employee') && (
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Create Project
+          </Button>
+        )}
+      </div>
+      
       {projectsLoading ? (
         <div className="flex justify-center items-center h-40">
           <p className="text-gray-500">Loading projects...</p>
         </div>
-      ) : projects && projects.length > 0 ? (
-        <>
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {projects.map((project) => (
-                <ProjectCard 
-                  key={project.id} 
-                  project={project} 
-                  isSelected={project.id === selectedProjectId}
-                  onClick={() => handleProjectSelect(project.id)}
-                />
-              ))}
-            </div>
-          ) : (
-            <ProjectListView 
-              projects={projects} 
-              onProjectSelect={handleProjectSelect} 
-              selectedProjectId={selectedProjectId}
-            />
-          )}
-        </>
+      ) : filteredProjects && filteredProjects.length > 0 ? (
+        <ProjectListView 
+          projects={filteredProjects} 
+          onProjectSelect={handleProjectSelect} 
+          selectedProjectId={selectedProjectId}
+        />
       ) : (
         <Card className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-center items-center h-40">
-            <p className="text-gray-500">No projects created yet. Projects will appear here once created.</p>
+            <p className="text-gray-500">
+              {filter === 'all' 
+                ? 'No projects created yet. Projects will appear here once created.' 
+                : filter === 'signed' 
+                  ? 'No signed projects found.' 
+                  : 'No unsigned projects found.'}
+            </p>
           </div>
         </Card>
       )}
