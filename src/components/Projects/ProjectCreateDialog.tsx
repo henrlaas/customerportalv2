@@ -78,7 +78,7 @@ export const ProjectCreateDialog = ({
     defaultValues: {
       name: '',
       description: '',
-      value: '', // Keep this as a string for the form, it will be transformed to number on submit
+      value: '', // This stays as a string in the form and is transformed during submission
       price_type: null,
       deadline: '',
     },

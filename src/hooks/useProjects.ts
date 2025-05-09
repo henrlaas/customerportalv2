@@ -36,7 +36,9 @@ export const useProjects = (companyId?: string) => {
         ...project,
         price_type: project.price_type as PriceType,
         // Properly handle the creator data - creator is an array from the join
-        creator: project.creator && project.creator.length > 0 ? project.creator[0] as Profile : null
+        creator: project.creator && project.creator.length > 0 
+          ? project.creator[0] as unknown as Profile // Cast to unknown first
+          : null
       }));
 
       // Fetch assignees for each project
@@ -93,7 +95,9 @@ export const useProjects = (companyId?: string) => {
       ...data,
       price_type: data.price_type as PriceType,
       // Properly handle the creator data - creator is an array from the join
-      creator: data.creator && data.creator.length > 0 ? data.creator[0] as Profile : null
+      creator: data.creator && data.creator.length > 0 
+        ? data.creator[0] as unknown as Profile // Cast to unknown first
+        : null
     };
 
     // Fetch assignees

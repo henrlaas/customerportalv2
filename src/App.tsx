@@ -14,8 +14,8 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { AppearanceProvider } from '@/contexts/AppearanceContext';
 import { Home, Building, LineChart, CheckSquare, BarChart3, Clock, Wallet, FileText, Image, FolderKanban } from 'lucide-react';
 
-// Fix the casing issue by using lowercase 'index'
-import Index from '@/pages/index';
+// Use only the properly cased version and avoid importing both
+import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
 import SetPassword from '@/pages/SetPassword';
 import Dashboard from '@/pages/Dashboard';
