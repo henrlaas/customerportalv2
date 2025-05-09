@@ -1,22 +1,8 @@
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Check, ChevronsUpDown, User as UserIcon } from "lucide-react";
+import Select from 'react-select';
+import { UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type User = {
@@ -27,114 +13,106 @@ type User = {
 };
 
 type UserSelectProps = {
+  users: User[];
   selectedUserId: string | null;
   onChange: (selectedId: string | null) => void;
   className?: string;
   placeholder?: string;
-  // New properties for multi-select support
-  selectedUserIds?: string[];
-  onUsersChange?: (userIds: string[]) => void;
-  multiple?: boolean;
 };
 
 export function UserSelect({
+  users,
   selectedUserId,
   onChange,
   className,
-  placeholder = "Select user...",
-  selectedUserIds,
-  onUsersChange,
-  multiple = false
+  placeholder = "Select a user..."
 }: UserSelectProps) {
-  const [open, setOpen] = useState(false);
+  // Utility functions defined BEFORE they are used
+  const getUserDisplayName = (user: User) => {
+    return `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
+  };
+
+  const getInitials = (user: User) => {
+    const first = user.first_name?.[0] || '';
+    const last = user.last_name?.[0] || '';
+    return (first + last).toUpperCase() || 'U';
+  };
   
-  // Fetch users from profiles table
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ['users-for-select'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
-        .order('first_name');
-        
-      if (error) throw error;
-      return data as User[];
+  // Ensure users is always an array, even if passed as undefined
+  const safeUsers = Array.isArray(users) ? users : [];
+  
+  // Format users for react-select
+  const options = [
+    { value: null, label: 'Unassigned', isUnassigned: true },
+    ...safeUsers.map(user => ({
+      value: user.id,
+      label: getUserDisplayName(user),
+      user
+    }))
+  ];
+
+  // Find the selected option
+  const selectedOption = selectedUserId 
+    ? options.find(option => option.value === selectedUserId) 
+    : options[0];
+
+  // Custom formatting for the dropdown options
+  const formatOptionLabel = (option: any) => {
+    if (option.isUnassigned) {
+      return (
+        <div className="flex items-center">
+          <UserRound className="mr-2 h-4 w-4" />
+          <span>Unassigned</span>
+        </div>
+      );
     }
-  });
 
-  const handleSelect = (userId: string) => {
-    if (multiple && onUsersChange && selectedUserIds) {
-      // Toggle selection for multi-select
-      const newSelection = selectedUserIds.includes(userId)
-        ? selectedUserIds.filter(id => id !== userId)
-        : [...selectedUserIds, userId];
-      onUsersChange(newSelection);
-    } else if (onChange) {
-      // Single select
-      onChange(userId === selectedUserId ? null : userId);
-      setOpen(false);
-    }
-  };
-
-  // Get display name for selected user (single mode)
-  const getSelectedUserName = () => {
-    if (!selectedUserId) return placeholder;
-    const user = users.find(u => u.id === selectedUserId);
-    return user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : placeholder;
-  };
-
-  // Get count text for multi-select mode
-  const getSelectedCountText = () => {
-    if (!selectedUserIds || selectedUserIds.length === 0) return placeholder;
-    return `${selectedUserIds.length} user${selectedUserIds.length === 1 ? '' : 's'} selected`;
+    const user = option.user;
+    return (
+      <div className="flex items-center">
+        <Avatar className="h-5 w-5 mr-2">
+          <AvatarImage src={user.avatar_url || undefined} />
+          <AvatarFallback className="text-xs">{getInitials(user)}</AvatarFallback>
+        </Avatar>
+        {getUserDisplayName(user)}
+      </div>
+    );
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between", className)}
-        >
-          {multiple ? getSelectedCountText() : getSelectedUserName()}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0">
-        <Command>
-          <CommandInput placeholder="Search users..." />
-          <CommandEmpty>No users found.</CommandEmpty>
-          <CommandGroup className="max-h-[300px] overflow-auto">
-            {users.map((user) => {
-              const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unnamed User';
-              const isSelected = multiple 
-                ? selectedUserIds?.includes(user.id)
-                : user.id === selectedUserId;
-                
-              return (
-                <CommandItem
-                  key={user.id}
-                  value={user.id}
-                  onSelect={() => handleSelect(user.id)}
-                >
-                  <div className="flex items-center">
-                    <Avatar className="h-6 w-6 mr-2">
-                      <AvatarImage src={user.avatar_url || undefined} alt={displayName} />
-                      <AvatarFallback>
-                        {(user.first_name?.[0] || '') + (user.last_name?.[0] || '')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{displayName}</span>
-                  </div>
-                  {isSelected && <Check className="ml-auto h-4 w-4" />}
-                </CommandItem>
-              );
-            })}
-          </CommandGroup>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <div className={className}>
+      <Select
+        options={options}
+        value={selectedOption}
+        onChange={(option) => onChange(option?.value ?? null)}
+        placeholder={placeholder}
+        formatOptionLabel={formatOptionLabel}
+        className="react-select-container"
+        classNamePrefix="react-select"
+        styles={{
+          control: (baseStyles) => ({
+            ...baseStyles,
+            borderColor: 'hsl(var(--input))',
+            boxShadow: 'none',
+            '&:hover': {
+              borderColor: 'hsl(var(--input))'
+            }
+          }),
+          menu: (baseStyles) => ({
+            ...baseStyles,
+            zIndex: 50
+          }),
+          option: (baseStyles, { isFocused, isSelected }) => ({
+            ...baseStyles,
+            backgroundColor: isFocused 
+              ? '#f3f3f3' // Light gray for hover/focus
+              : isSelected 
+                ? 'hsl(var(--accent) / 0.2)'
+                : undefined,
+            color: 'hsl(var(--foreground))'
+          })
+        }}
+      />
+    </div>
   );
 }
