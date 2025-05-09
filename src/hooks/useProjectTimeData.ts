@@ -72,10 +72,12 @@ export const useProjectTimeData = (projectId: string | null, projectValue: numbe
           
           // Add to cost if we have hourly salary data
           // Safely check if employee data exists and has hourly_salary
-          const employeeSalary = entry.employee != null && 
-                              typeof entry.employee === 'object' && 
-                              !('error' in entry.employee) ? 
-                              (entry.employee.hourly_salary || 0) : 0;
+          let employeeSalary = 0;
+          if (entry.employee !== null && 
+              typeof entry.employee === 'object' && 
+              !('error' in entry.employee)) {
+            employeeSalary = entry.employee.hourly_salary || 0;
+          }
                               
           totalCost += hours * employeeSalary;
         }

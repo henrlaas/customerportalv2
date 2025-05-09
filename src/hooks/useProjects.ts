@@ -93,7 +93,7 @@ export const useProjects = () => {
         // Ensure the creator field is properly typed even if it's null or an error
         let creator: User;
         
-        if (project.creator != null && 
+        if (project.creator !== null && 
             typeof project.creator === 'object' && 
             !('error' in project.creator)) {
           creator = project.creator as User;
