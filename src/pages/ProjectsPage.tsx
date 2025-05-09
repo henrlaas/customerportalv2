@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -46,13 +47,15 @@ const ProjectsPage = () => {
       {/* Summary Cards */}
       <ProjectsSummaryCards projects={projects} isLoading={projectsLoading} />
       
-      {/* Filter and Create Button */}
+      {/* Filter and Create Button in a single row */}
       <div className="flex justify-between items-center my-6">
-        <ToggleGroup type="single" value={filter} onValueChange={(value) => value && setFilter(value as 'all' | 'signed' | 'unsigned')}>
-          <ToggleGroupItem value="all" variant="tab">All</ToggleGroupItem>
-          <ToggleGroupItem value="signed" variant="tab">Signed</ToggleGroupItem>
-          <ToggleGroupItem value="unsigned" variant="tab">Unsigned</ToggleGroupItem>
-        </ToggleGroup>
+        <div className="flex items-center space-x-4">
+          <ToggleGroup type="single" value={filter} onValueChange={(value) => value && setFilter(value as 'all' | 'signed' | 'unsigned')}>
+            <ToggleGroupItem value="all">All</ToggleGroupItem>
+            <ToggleGroupItem value="signed">Signed</ToggleGroupItem>
+            <ToggleGroupItem value="unsigned">Unsigned</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
         
         {(profile?.role === 'admin' || profile?.role === 'employee') && (
           <Button onClick={() => setShowCreateDialog(true)}>
