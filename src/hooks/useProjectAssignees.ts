@@ -19,13 +19,14 @@ export const useProjectAssignees = (projectId?: string) => {
         .from('project_assignees')
         .select(`
           *,
-          user:user_id (id, first_name, last_name, avatar_url, role)
+          user:profiles(id, first_name, last_name, avatar_url, role)
         `)
         .eq('project_id', projectId!);
 
       if (error) throw error;
       
-      return data as (ProjectAssignee & {
+      // Use type assertion with unknown as intermediate step
+      return (data as unknown) as (ProjectAssignee & {
         user: User;
       })[];
     },

@@ -70,7 +70,16 @@ const ProjectsPage = () => {
         .maybeSingle();
         
       if (error) throw error;
-      return data;
+      
+      // Ensure status is strictly "signed" or "unsigned"
+      if (data) {
+        return {
+          ...data,
+          status: data.status === 'signed' ? 'signed' : 'unsigned'
+        } as { id: string; title: string; status: 'signed' | 'unsigned' };
+      }
+      
+      return null;
     },
     enabled: !!projectId
   });

@@ -21,7 +21,7 @@ export const useProjects = (companyId?: string) => {
       let query = supabase.from('projects').select(`
         *,
         company:company_id (name, organization_number, address, postal_code, city, country),
-        creator:created_by (id, first_name, last_name, avatar_url)
+        creator:profiles(id, first_name, last_name, avatar_url)
       `);
 
       // Filter by company if specified
@@ -52,7 +52,8 @@ export const useProjects = (companyId?: string) => {
         throw error;
       }
 
-      return data as (Project & {
+      // Apply type casting to handle possible type mismatch
+      return (data as unknown) as (Project & {
         company: { name: string; organization_number?: string; address?: string; postal_code?: string; city?: string; country?: string; };
         creator: User;
       })[];

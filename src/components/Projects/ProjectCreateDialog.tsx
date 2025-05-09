@@ -72,6 +72,7 @@ export default function ProjectCreateDialog({ isOpen, onClose, companies }: Proj
   const { user } = useAuth();
   const { createProject } = useProjects();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createMilestone } = useMilestones();
 
   const form = useForm<CreateProjectFormValues>({
     resolver: zodResolver(createProjectSchema),
@@ -115,20 +116,25 @@ export default function ProjectCreateDialog({ isOpen, onClose, companies }: Proj
       // Create initial milestone
       if (response) {
         // Create a milestone for the new project
-        const { error: milestoneError } = await useMilestones().createMilestone.mutateAsync({
-          project_id: response.id,
-          name: 'Project Started',
-          status: 'created'
-        });
-
-        if (milestoneError) {
+        try {
+          await createMilestone.mutateAsync({
+            project_id: response.id,
+            name: 'Project Started',
+            status: 'created'
+          });
+        } catch (milestoneError) {
           console.error('Error creating initial milestone:', milestoneError);
         }
 
         // Assign users to the project if any were selected
         if (values.assigned_users && values.assigned_users.length > 0) {
-          const assignUsersResponse = await useProjectAssignees(response.id).assignUsers.mutateAsync(values.assigned_users);
-          console.log('Users assigned:', assignUsersResponse);
+          const { assignUsers } = useProjectAssignees(response.id);
+          try {
+            await assignUsers.mutateAsync(values.assigned_users);
+            console.log('Users assigned successfully');
+          } catch (assignError) {
+            console.error('Error assigning users:', assignError);
+          }
         }
 
         // Generate contract
@@ -317,9 +323,12 @@ export default function ProjectCreateDialog({ isOpen, onClose, companies }: Proj
                   <FormLabel>Assign Users (Optional)</FormLabel>
                   <FormControl>
                     <UserSelect 
+                      selectedUserId={null}
+                      onChange={() => {}}
                       selectedUserIds={field.value || []}
                       onUsersChange={field.onChange}
                       placeholder="Select users to assign"
+                      multiple={true}
                     />
                   </FormControl>
                   <FormMessage />

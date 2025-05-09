@@ -16,7 +16,7 @@ export const useProjectTimeData = (projectId: string) => {
         .from('time_entries')
         .select(`
           *,
-          employee:user_id(id, hourly_salary)
+          employee:profiles(id, hourly_salary)
         `)
         .eq('project_id', projectId);
 
@@ -60,8 +60,10 @@ export const useProjectTimeData = (projectId: string) => {
         const endTime = new Date(entry.end_time);
         const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
         
-        // Default hourly rate if not found
-        const hourlyRate = (entry.employee?.hourly_salary as number) || 500; 
+        // Check if employee data exists and has hourly_salary property
+        const hourlyRate = entry.employee && typeof entry.employee === 'object' && 
+          'hourly_salary' in entry.employee ? 
+          (entry.employee.hourly_salary as number) : 500; // Default rate if not found
         
         totalHours += hours;
         
