@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
@@ -41,6 +42,7 @@ import { DealListView } from '@/components/Deals/DealListView';
 import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog';
 import { EditDealDialog } from '@/components/Deals/EditDealDialog';
 import { Deal, Company, Stage, Profile } from '@/components/Deals/types/deal';
+import { DealCleanupHandler } from '@/components/Deals/DealCleanupHandler';
 
 const DealsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -311,6 +313,9 @@ const DealsPage = () => {
 
   return (
     <div className="w-full px-4 py-6">
+      {/* Include the DealCleanupHandler component */}
+      <DealCleanupHandler />
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Deals</h1>
         <div className="flex items-center gap-4">
