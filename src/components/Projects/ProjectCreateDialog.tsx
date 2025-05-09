@@ -64,9 +64,14 @@ export const ProjectCreateDialog = ({
 }: ProjectCreateDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { companyOptions } = useCompanyNames();
+  const companyNamesQuery = useCompanyNames();
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const { users } = useUserFetch();
+
+  const companyOptions = companyNamesQuery.data?.map(company => ({
+    value: company.id,
+    label: company.name
+  })) || [];
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
@@ -186,8 +191,7 @@ export const ProjectCreateDialog = ({
                         <Input 
                           type="number" 
                           placeholder="50000" 
-                          {...field} 
-                          onChange={(e) => field.onChange(e.target.value)}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />

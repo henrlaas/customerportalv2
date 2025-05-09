@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,7 +14,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { AppearanceProvider } from '@/contexts/AppearanceContext';
 import { Home, Building, LineChart, CheckSquare, BarChart3, Clock, Wallet, FileText, Image, FolderKanban } from 'lucide-react';
 
-import Index from '@/pages';
+import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
 import SetPassword from '@/pages/SetPassword';
 import Dashboard from '@/pages/Dashboard';
@@ -24,9 +24,9 @@ import DealsPage from '@/pages/DealsPage';
 import TasksPage from '@/pages/TasksPage';
 import TaskDetailPage from '@/pages/TaskDetailPage';
 import CampaignsPage from '@/pages/CampaignsPage';
-import CampaignDetailsPage from '@/pages/CampaignDetailsPage';
-import AdSetDetailsPage from '@/pages/AdSetDetailsPage';
-import AdDetailsPage from '@/pages/AdDetailsPage';
+import { CampaignDetailsPage } from '@/pages/CampaignDetailsPage';
+import { AdSetDetailsPage } from '@/pages/AdSetDetailsPage';
+import { AdDetailsPage } from '@/pages/AdDetailsPage';
 import TimeTrackingPage from '@/pages/TimeTrackingPage';
 import SettingsPage from '@/pages/SettingsPage';
 import FinancePage from '@/pages/FinancePage';
@@ -60,32 +60,44 @@ function ClientLayout() {
 }
 
 function ProtectedRoute() {
-  const { isLoggedIn, isLoading } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [loading, user, navigate]);
+
+  if (loading) {
     return <div>Loading...</div>;
   }
 
-  if (!isLoggedIn) {
-    return <Unauthorized />;
+  if (!user) {
+    return null; // Navigation is handled in the effect
   }
 
   return <Outlet />;
 }
 
 function ClientProtectedRoute() {
-  const { isClient, isLoading, isLoggedIn } = useAuth();
+  const { user, profile, loading } = useAuth();
+  const navigate = useNavigate();
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    } else if (!loading && user && profile?.role !== 'client') {
+      navigate('/unauthorized');
+    }
+  }, [loading, user, profile, navigate]);
+
+  if (loading) {
     return <div>Loading...</div>;
   }
 
-  if (!isLoggedIn) {
-    return <Unauthorized />;
-  }
-
-  if (!isClient) {
-    return <Unauthorized />;
+  if (!user || profile?.role !== 'client') {
+    return null; // Navigation is handled in the effect
   }
 
   return <Outlet />;

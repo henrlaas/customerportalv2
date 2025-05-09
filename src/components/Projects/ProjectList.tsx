@@ -173,12 +173,12 @@ export const ProjectList = ({
                   <div className="w-full flex justify-between items-center">
                     <span className="text-xs text-gray-500">Assigned to:</span>
                     <UserAvatarGroup 
-                      profiles={project.assignees.map(a => ({
+                      users={project.assignees.map(a => ({
                         id: a.id,
-                        first_name: a.first_name || null,
-                        last_name: a.last_name || null,
-                        avatar_url: a.avatar_url || null
-                      }))} 
+                        firstName: a.first_name || '',
+                        lastName: a.last_name || '',
+                        avatarUrl: a.avatar_url || null
+                      }))}
                       max={3}
                     />
                   </div>

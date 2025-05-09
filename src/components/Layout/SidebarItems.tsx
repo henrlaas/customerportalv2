@@ -1,3 +1,4 @@
+
 import {
   BarChart3,
   Building,
@@ -24,96 +25,104 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 
+type SidebarLink = {
+  title: string;
+  href: string;
+  icon: React.ElementType;
+  hasDropdown?: boolean;
+  category?: string;
+};
+
 export function SidebarItems() {
   const { isAdmin, isEmployee, isClient } = useAuth();
   
   const route = window.location.pathname;
   const navigate = useNavigate();
 
-  const adminEmployeeLinks = useMemo(() => [
+  const adminEmployeeLinks = useMemo<SidebarLink[]>(() => [
     {
       title: 'Dashboard',
       href: '/dashboard',
-      icon: <Home />,
+      icon: Home,
     },
     {
       title: 'Companies',
       href: '/companies',
-      icon: <Building />,
+      icon: Building,
     },
     {
       title: 'Deals',
       href: '/deals',
-      icon: <LineChart />,
+      icon: LineChart,
     },
     {
       title: 'Tasks',
       href: '/tasks',
-      icon: <CheckSquare />,
+      icon: CheckSquare,
     },
     {
       title: 'Projects',
       href: '/projects',
-      icon: <FolderKanban />,
+      icon: FolderKanban,
     },
     {
       title: 'Campaigns',
       href: '/campaigns',
-      icon: <BarChart3 />,
+      icon: BarChart3,
     },
     {
       title: 'Time Tracking',
       href: '/time-tracking',
-      icon: <Clock />,
+      icon: Clock,
     },
     {
       title: 'Finance',
       href: '/finance',
-      icon: <Wallet />,
+      icon: Wallet,
     },
     {
       title: 'Contracts',
       href: '/contracts',
-      icon: <FileText />,
+      icon: FileText,
     },
     {
       title: 'Media',
       href: '/media',
-      icon: <Image />,
+      icon: Image,
     },
   ], []);
 
-  const clientLinks = useMemo(() => [
+  const clientLinks = useMemo<SidebarLink[]>(() => [
     {
       title: 'Dashboard',
       href: '/client-dashboard',
-      icon: <Home />,
+      icon: Home,
     },
     {
       title: 'Company Details',
       href: '/client-company',
-      icon: <Building />,
+      icon: Building,
     },
   ], []);
 
-  const settingsLink = useMemo(() => [
+  const settingsLink = useMemo<SidebarLink[]>(() => [
     {
       title: 'Settings',
       href: '/settings',
-      icon: <Settings />,
+      icon: Settings,
     },
   ], []);
 
-  const workspaceManagementLink = useMemo(() => [
+  const workspaceManagementLink = useMemo<SidebarLink[]>(() => [
     {
       title: 'Workspace Management',
       href: '/workspace-management',
-      icon: <User />,
+      icon: User,
     },
     {
       title: 'User Management',
       href: '/users',
-      icon: <User />,
+      icon: User,
     },
   ], []);
 
@@ -121,33 +130,39 @@ export function SidebarItems() {
     <div className="flex flex-col space-y-4">
       {(isAdmin || isEmployee) && (
         <>
-          {adminEmployeeLinks.map((link) => (
-            <Button
-              variant="ghost"
-              className="justify-start"
-              key={link.href}
-              onClick={() => navigate(link.href)}
-            >
-              <link.icon className="mr-2 h-4 w-4" />
-              <span>{link.title}</span>
-            </Button>
-          ))}
+          {adminEmployeeLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Button
+                variant="ghost"
+                className="justify-start"
+                key={link.href}
+                onClick={() => navigate(link.href)}
+              >
+                <Icon className="mr-2 h-4 w-4" />
+                <span>{link.title}</span>
+              </Button>
+            );
+          })}
           {(isAdmin) && (
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="workspace">
                 <AccordionTrigger>Workspace</AccordionTrigger>
                 <AccordionContent>
-                  {workspaceManagementLink.map((link) => (
-                    <Button
-                      variant="ghost"
-                      className="justify-start"
-                      key={link.href}
-                      onClick={() => navigate(link.href)}
-                    >
-                      <link.icon className="mr-2 h-4 w-4" />
-                      <span>{link.title}</span>
-                    </Button>
-                  ))}
+                  {workspaceManagementLink.map((link) => {
+                    const Icon = link.icon;
+                    return (
+                      <Button
+                        variant="ghost"
+                        className="justify-start"
+                        key={link.href}
+                        onClick={() => navigate(link.href)}
+                      >
+                        <Icon className="mr-2 h-4 w-4" />
+                        <span>{link.title}</span>
+                      </Button>
+                    );
+                  })}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -156,17 +171,20 @@ export function SidebarItems() {
       )}
       {isClient && (
         <>
-          {clientLinks.map((link) => (
-            <Button
-              variant="ghost"
-              className="justify-start"
-              key={link.href}
-              onClick={() => navigate(link.href)}
-            >
-              <link.icon className="mr-2 h-4 w-4" />
-              <span>{link.title}</span>
-            </Button>
-          ))}
+          {clientLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Button
+                variant="ghost"
+                className="justify-start"
+                key={link.href}
+                onClick={() => navigate(link.href)}
+              >
+                <Icon className="mr-2 h-4 w-4" />
+                <span>{link.title}</span>
+              </Button>
+            );
+          })}
         </>
       )}
       <Button

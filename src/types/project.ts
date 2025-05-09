@@ -1,6 +1,17 @@
 
 import { Company } from './company';
-import { Profile } from './company';
+
+export interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  phone_number?: string | null;
+  role?: string;
+  team?: string | null;
+  language?: string;
+  is_client?: boolean;
+}
 
 export type PriceType = 'fixed' | 'estimated';
 

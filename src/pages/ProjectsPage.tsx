@@ -29,8 +29,18 @@ const ProjectsPage = () => {
     if (!user) return;
 
     try {
-      const projectId = await createProject(
-        { project: { ...projectData, created_by: user.id }, assigneeIds },
+      const project = {
+        company_id: projectData.company_id,
+        name: projectData.name,
+        description: projectData.description || null,
+        value: projectData.value ? Number(projectData.value) : null,
+        price_type: projectData.price_type,
+        deadline: projectData.deadline || null,
+        created_by: user.id
+      };
+
+      createProject(
+        { project, assigneeIds },
         {
           onSuccess: async (newProjectId) => {
             toast({

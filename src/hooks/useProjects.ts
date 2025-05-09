@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Project, ProjectWithRelations } from '@/types/project';
+import type { Project, ProjectWithRelations, PriceType } from '@/types/project';
 
 export const useProjects = (companyId?: string) => {
   const { user, isAdmin, isEmployee } = useAuth();
@@ -31,8 +31,14 @@ export const useProjects = (companyId?: string) => {
         throw error;
       }
 
+      // Type cast to ensure proper price_type handling
+      const typedData = data.map(project => ({
+        ...project,
+        price_type: project.price_type as PriceType
+      }));
+
       // Fetch assignees for each project
-      const projectsWithAssignees = await Promise.all(data.map(async (project) => {
+      const projectsWithAssignees = await Promise.all(typedData.map(async (project) => {
         const { data: assigneesData, error: assigneesError } = await supabase
           .from('project_assignees')
           .select('user_id')
@@ -80,6 +86,12 @@ export const useProjects = (companyId?: string) => {
       throw error;
     }
 
+    // Type cast to ensure proper price_type handling
+    const typedData = {
+      ...data,
+      price_type: data.price_type as PriceType
+    };
+
     // Fetch assignees
     const { data: assigneesData, error: assigneesError } = await supabase
       .from('project_assignees')
@@ -88,12 +100,12 @@ export const useProjects = (companyId?: string) => {
     
     if (assigneesError) {
       console.error('Error fetching assignees:', assigneesError);
-      return data;
+      return typedData;
     }
 
     const userIds = assigneesData.map(a => a.user_id);
     if (userIds.length === 0) {
-      return { ...data, assignees: [] };
+      return { ...typedData, assignees: [] };
     }
 
     const { data: profilesData } = await supabase
@@ -101,7 +113,7 @@ export const useProjects = (companyId?: string) => {
       .select('*')
       .in('id', userIds);
 
-    return { ...data, assignees: profilesData || [] };
+    return { ...typedData, assignees: profilesData || [] };
   };
 
   // Create project mutation
