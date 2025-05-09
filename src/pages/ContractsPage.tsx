@@ -9,7 +9,7 @@ import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 const ContractsPage = () => {
   const { profile } = useAuth();
   const isClient = profile?.role === 'client';
-  const isAdmin = profile?.isAdmin || false; // Check if the user is an admin
+  const isAdmin = profile?.is_admin || false; // Updated to use is_admin instead of isAdmin
   const [activeTab, setActiveTab] = useState('contracts');
 
   return (
