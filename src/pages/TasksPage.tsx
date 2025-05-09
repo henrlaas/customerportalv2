@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,6 +49,7 @@ import { TaskListView } from '@/components/Tasks/TaskListView';
 import { TaskKanbanView } from '@/components/Tasks/TaskKanbanView';
 import { useAuth } from '@/contexts/AuthContext';
 import { Company } from '@/types/company';
+import { TaskCleanupHandler } from '@/components/Tasks/TaskCleanupHandler';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -399,6 +399,9 @@ export const TasksPage = () => {
 
   return (
     <div className="w-full max-w-full px-4 sm:px-6 py-6 overflow-x-hidden">
+      {/* Add the TaskCleanupHandler component */}
+      <TaskCleanupHandler />
+      
       <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Tasks</h1>
