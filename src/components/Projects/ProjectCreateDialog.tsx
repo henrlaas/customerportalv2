@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -66,17 +67,18 @@ export const ProjectCreateDialog = ({
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const { users } = useUserFetch();
 
-  const companyOptions = companyNamesQuery.data?.map(company => ({
+  // Fix the companyOptions resolution to handle undefined data safely
+  const companyOptions = companyNamesQuery.data ? companyNamesQuery.data.map(company => ({
     value: company.id,
     label: company.name
-  })) || [];
+  })) : [];
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
     defaultValues: {
       name: '',
       description: '',
-      value: '',
+      value: '', // Keep this as a string for the form, it will be transformed to number on submit
       price_type: null,
       deadline: '',
     },
