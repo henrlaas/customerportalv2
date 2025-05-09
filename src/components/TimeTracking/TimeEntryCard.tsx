@@ -56,11 +56,6 @@ export const TimeEntryCard = ({
               <h3 className="text-base font-medium truncate">
                 {entry.description || 'No description'}
               </h3>
-              
-              <Badge variant={entry.is_billable ? "default" : "outline"} className="flex items-center gap-1 ml-2">
-                <DollarSign className="h-3 w-3" />
-                {entry.is_billable ? 'Billable' : 'Non-billable'}
-              </Badge>
             </div>
             
             <div className="flex flex-wrap items-center text-sm text-gray-500 gap-3">
@@ -85,6 +80,17 @@ export const TimeEntryCard = ({
                 </div>
               )}
             </div>
+          </div>
+          
+          {/* Center - Badge always vertically centered */}
+          <div className="flex items-center self-center mx-3">
+            <Badge 
+              variant={entry.is_billable ? "default" : "outline"} 
+              className={`flex items-center gap-1 ${entry.is_billable ? 'bg-green-700 hover:bg-green-800' : ''}`}
+            >
+              <DollarSign className="h-3 w-3" />
+              {entry.is_billable ? 'Billable' : 'Non-billable'}
+            </Badge>
           </div>
           
           {/* Middle - Date and time information */}
