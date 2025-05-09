@@ -60,10 +60,14 @@ export const useProjectTimeData = (projectId: string) => {
         const endTime = new Date(entry.end_time);
         const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
         
-        // Check if employee data exists and has hourly_salary property
-        const hourlyRate = entry.employee && typeof entry.employee === 'object' && 
+        // Fix: Check if employee exists and has hourly_salary property
+        // Add proper null checks and type guards
+        const hourlyRate = entry.employee && 
+          typeof entry.employee === 'object' && 
+          entry.employee !== null && 
           'hourly_salary' in entry.employee ? 
-          (entry.employee.hourly_salary as number) : 500; // Default rate if not found
+          (entry.employee.hourly_salary as number) : 
+          500; // Default rate if not found
         
         totalHours += hours;
         
