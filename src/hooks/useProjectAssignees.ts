@@ -55,7 +55,13 @@ export const useProjectAssignees = (projectId: string | null) => {
         if (item.profiles && 
             typeof item.profiles === 'object' && 
             !('error' in item.profiles)) {
-          user = item.profiles as User;
+          // We need to safely access item.profiles which might be null
+          user = {
+            id: item.user_id,
+            first_name: item.profiles.first_name,
+            last_name: item.profiles.last_name,
+            avatar_url: item.profiles.avatar_url
+          };
         } else {
           // Create a fallback user object if profiles is not found
           user = {

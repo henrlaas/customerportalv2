@@ -74,10 +74,13 @@ export const useProjectTimeData = (projectId: string | null, projectValue: numbe
           // Safely check if employee data exists and has hourly_salary
           let employeeSalary = 0;
           
-          if (entry.employee && 
-              typeof entry.employee === 'object' && 
-              'hourly_salary' in entry.employee) {
-            employeeSalary = entry.employee.hourly_salary || 0;
+          // Safely check if entry.employee exists first
+          if (entry.employee !== null) {
+            // Now check if it's an object with the expected structure
+            if (typeof entry.employee === 'object' && 
+                'hourly_salary' in entry.employee) {
+              employeeSalary = entry.employee.hourly_salary || 0;
+            }
           }
                               
           totalCost += hours * employeeSalary;
