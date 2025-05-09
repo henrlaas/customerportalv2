@@ -74,7 +74,7 @@ export const TimeEntryList = ({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {entriesByWeek.map((weekGroup, index) => {
         const weekNumber = weekGroup.weekNumber;
         let weekTitle;
@@ -92,10 +92,10 @@ export const TimeEntryList = ({
         
         return (
           <Card key={index} className="shadow-sm">
-            <CardHeader className="py-3 px-6 bg-muted/30">
+            <CardHeader className="py-2 px-6 bg-muted/30">
               <h3 className="text-sm font-medium">{weekTitle}</h3>
             </CardHeader>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-3 space-y-2">
               {weekGroup.entries.map(entry => (
                 <TimeEntryCard 
                   key={entry.id} 

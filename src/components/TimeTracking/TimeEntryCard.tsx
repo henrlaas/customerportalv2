@@ -2,7 +2,7 @@
 import { format, formatDistance } from 'date-fns';
 import { Calendar, Clock, Pencil, Building, Tag, Briefcase, DollarSign, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
 import { Company } from '@/types/company';
@@ -47,85 +47,82 @@ export const TimeEntryCard = ({
   }
   
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start gap-4">
-          <div className="flex-1">
-            <h3 className="text-lg font-medium truncate mb-1">
-              {entry.description || 'No description'}
-            </h3>
+    <Card className="shadow-sm hover:shadow-md transition-shadow">
+      <div className="p-4">
+        <div className="flex items-center justify-between">
+          {/* Left side - Task description and metadata */}
+          <div className="flex-grow mr-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-base font-medium truncate">
+                {entry.description || 'No description'}
+              </h3>
+              
+              <Badge variant={entry.is_billable ? "default" : "outline"} className="flex items-center gap-1 ml-2">
+                <DollarSign className="h-3 w-3" />
+                {entry.is_billable ? 'Billable' : 'Non-billable'}
+              </Badge>
+            </div>
             
-            <div className="flex flex-wrap gap-2 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center text-sm text-gray-500 gap-3">
               {company && (
                 <div className="flex items-center gap-1">
-                  <Building className="h-4 w-4" />
-                  <span>{company.name}</span>
+                  <Building className="h-3.5 w-3.5" />
+                  <span className="truncate max-w-[120px]">{company.name}</span>
                 </div>
               )}
               
               {campaign && (
                 <div className="flex items-center gap-1">
-                  <Tag className="h-4 w-4" />
-                  <span>{campaign.name}</span>
+                  <Tag className="h-3.5 w-3.5" />
+                  <span className="truncate max-w-[120px]">{campaign.name}</span>
                 </div>
               )}
               
               {task && (
                 <div className="flex items-center gap-1">
-                  <Briefcase className="h-4 w-4" />
-                  <span>{task.title}</span>
+                  <Briefcase className="h-3.5 w-3.5" />
+                  <span className="truncate max-w-[120px]">{task.title}</span>
                 </div>
               )}
             </div>
           </div>
           
-          <div className="flex gap-1">
-            <Button variant="ghost" size="icon" onClick={() => onEdit(entry)}>
+          {/* Middle - Date and time information */}
+          <div className="flex items-center gap-6 mr-4">
+            <div className="flex items-center gap-1 text-sm text-gray-600">
+              <Calendar className="h-3.5 w-3.5 text-gray-500" />
+              <span>{format(startTime, 'dd MMM')}</span>
+            </div>
+            
+            <div className="flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
+              <Clock className="h-3.5 w-3.5 text-gray-500" />
+              <span>
+                {format(startTime, 'HH:mm')} - {endTime ? format(endTime, 'HH:mm') : 'ongoing'}
+              </span>
+            </div>
+            
+            <div className="font-mono text-sm font-medium whitespace-nowrap">
+              {duration}
+            </div>
+          </div>
+          
+          {/* Right side - Actions */}
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={(e) => {
+              e.stopPropagation();
+              onEdit(entry);
+            }}>
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => onDelete(entry)} className="text-destructive hover:text-destructive">
+            <Button variant="ghost" size="icon" onClick={(e) => {
+              e.stopPropagation();
+              onDelete(entry);
+            }} className="text-destructive hover:text-destructive">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         </div>
-      </CardHeader>
-      
-      <CardContent className="pb-2">
-        <div className="flex flex-col sm:flex-row justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">
-              {format(startTime, 'dd MMM yyyy')}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">
-              {format(startTime, 'HH:mm')} - {endTime ? format(endTime, 'HH:mm') : 'ongoing'}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-sm font-medium">
-              {duration}
-            </span>
-          </div>
-        </div>
-      </CardContent>
-      
-      <CardFooter>
-        <div className="w-full flex justify-between">
-          <Badge variant={entry.is_billable ? "default" : "outline"} className="flex items-center gap-1">
-            <DollarSign className="h-3 w-3" />
-            {entry.is_billable ? 'Billable' : 'Non-billable'}
-          </Badge>
-          
-          <span className="text-xs text-gray-500">
-            {endTime && `Added ${formatDistance(endTime, new Date(), { addSuffix: true })}`}
-          </span>
-        </div>
-      </CardFooter>
+      </div>
     </Card>
   );
 };
