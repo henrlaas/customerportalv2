@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Project, ProjectWithRelations, PriceType } from '@/types/project';
+import type { Project, ProjectWithRelations, PriceType, Profile } from '@/types/project';
 
 export const useProjects = (companyId?: string) => {
   const { user, isAdmin, isEmployee } = useAuth();
@@ -17,7 +17,7 @@ export const useProjects = (companyId?: string) => {
         .select(`
           *,
           company:companies(*),
-          creator:profiles!projects_created_by_fkey(*)
+          creator:profiles(*)
         `);
 
       if (companyId) {
@@ -34,7 +34,8 @@ export const useProjects = (companyId?: string) => {
       // Type cast to ensure proper price_type handling
       const typedData = data.map(project => ({
         ...project,
-        price_type: project.price_type as PriceType
+        price_type: project.price_type as PriceType,
+        creator: project.creator?.[0] as Profile || null
       }));
 
       // Fetch assignees for each project
@@ -75,7 +76,7 @@ export const useProjects = (companyId?: string) => {
       .select(`
         *,
         company:companies(*),
-        creator:profiles!projects_created_by_fkey(*),
+        creator:profiles(*),
         milestones(*)
       `)
       .eq('id', projectId)
@@ -89,7 +90,8 @@ export const useProjects = (companyId?: string) => {
     // Type cast to ensure proper price_type handling
     const typedData = {
       ...data,
-      price_type: data.price_type as PriceType
+      price_type: data.price_type as PriceType,
+      creator: data.creator?.[0] as Profile || null
     };
 
     // Fetch assignees

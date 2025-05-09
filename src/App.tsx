@@ -26,7 +26,7 @@ import TaskDetailPage from '@/pages/TaskDetailPage';
 import CampaignsPage from '@/pages/CampaignsPage';
 import { CampaignDetailsPage } from '@/pages/CampaignDetailsPage';
 import { AdSetDetailsPage } from '@/pages/AdSetDetailsPage';
-import { AdDetailsPage } from '@/pages/AdDetailsPage';
+import AdDetailsPage from '@/pages/AdDetailsPage';
 import TimeTrackingPage from '@/pages/TimeTrackingPage';
 import SettingsPage from '@/pages/SettingsPage';
 import FinancePage from '@/pages/FinancePage';

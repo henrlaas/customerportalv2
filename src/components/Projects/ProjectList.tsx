@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -20,7 +19,7 @@ import {
   Trash2,
   Edit
 } from 'lucide-react';
-import { ProjectWithRelations, Project } from '@/types/project';
+import { ProjectWithRelations, Project, User } from '@/types/project';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/components/Deals/utils/formatters';
 import { 
@@ -175,9 +174,9 @@ export const ProjectList = ({
                     <UserAvatarGroup 
                       users={project.assignees.map(a => ({
                         id: a.id,
-                        firstName: a.first_name || '',
-                        lastName: a.last_name || '',
-                        avatarUrl: a.avatar_url || null
+                        first_name: a.first_name || '',
+                        last_name: a.last_name || '',
+                        avatar_url: a.avatar_url
                       }))}
                       max={3}
                     />
