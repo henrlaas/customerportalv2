@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 type User = {
   id: string;
@@ -17,7 +19,7 @@ type User = {
 };
 
 type MultiUserSelectProps = {
-  users: User[];
+  users?: User[];
   selectedUserIds: string[];
   onChange: (selectedIds: string[]) => void;
   className?: string;
@@ -25,13 +27,38 @@ type MultiUserSelectProps = {
 };
 
 export function MultiUserSelect({
-  users,
+  users: providedUsers,
   selectedUserIds,
   onChange,
   className,
   placeholder = "Select users..."
 }: MultiUserSelectProps) {
   const [open, setOpen] = useState(false);
+  
+  // Fetch users from the database if not provided
+  const { data: fetchedUsers = [] } = useQuery({
+    queryKey: ['users-for-selection'],
+    queryFn: async () => {
+      // Skip the query if users are provided externally
+      if (providedUsers) return [];
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .in('role', ['employee', 'admin']);
+        
+      if (error) {
+        console.error('Error fetching users:', error);
+        throw error;
+      }
+      
+      return data as User[];
+    },
+    enabled: !providedUsers // Only run the query if users are not provided
+  });
+
+  // Use provided users or fetched users
+  const users = providedUsers || fetchedUsers;
 
   // Utility functions
   const getUserDisplayName = (user: User) => {

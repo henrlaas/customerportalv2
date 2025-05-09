@@ -90,10 +90,13 @@ export const useProjects = () => {
       
       // Process the data to handle errors and ensure types are correct
       return data.map(project => {
-        // Ensure the creator field is properly typed even if it's an error
+        // Ensure the creator field is properly typed even if it's null or an error
         let creator: User;
         
-        if (project.creator && typeof project.creator === 'object' && !('error' in project.creator)) {
+        if (project.creator && 
+            typeof project.creator === 'object' && 
+            !('error' in project.creator) &&
+            project.creator !== null) {
           creator = project.creator as User;
         } else {
           // Create a fallback user object if creator is not found
