@@ -50,7 +50,7 @@ export const useProjectAssignees = (projectId: string | null) => {
       // Transform the data to match our expected type
       return data.map(item => {
         // Handle the case where profiles might be null or a SelectQueryError
-        const user: User = (item.profiles && 
+        const user: User = (item.profiles != null && 
                           typeof item.profiles === 'object' && 
                           !('error' in item.profiles))
           ? item.profiles as User

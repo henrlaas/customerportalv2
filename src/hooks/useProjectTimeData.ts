@@ -43,7 +43,7 @@ export const useProjectTimeData = (projectId: string | null, projectValue: numbe
           )
         `)
         .eq('project_id', projectId)
-        .is('end_time', 'not.null'); // Using string literal for 'not.null'
+        .not('end_time', 'is', null); // Using not is null instead of is not null for better TypeScript compatibility
       
       if (timeError) {
         console.error('Error fetching time entries:', timeError);
@@ -72,10 +72,9 @@ export const useProjectTimeData = (projectId: string | null, projectValue: numbe
           
           // Add to cost if we have hourly salary data
           // Safely check if employee data exists and has hourly_salary
-          const employeeSalary = entry.employee && 
+          const employeeSalary = entry.employee != null && 
                               typeof entry.employee === 'object' && 
-                              !('error' in entry.employee) && 
-                              entry.employee !== null ? 
+                              !('error' in entry.employee) ? 
                               entry.employee.hourly_salary || 0 : 0;
                               
           totalCost += hours * employeeSalary;
