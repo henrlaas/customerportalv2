@@ -35,10 +35,10 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden w-full">
+    <div className="border border-gray-200 rounded-xl overflow-hidden w-full">
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Company</TableHead>
@@ -53,7 +53,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
             {projects.map(project => (
               <TableRow 
                 key={project.id}
-                className={`cursor-pointer hover:bg-muted/60 ${project.id === selectedProjectId ? 'bg-muted' : ''}`}
+                className={`cursor-pointer hover:bg-gray-100 ${project.id === selectedProjectId ? 'bg-muted' : ''}`}
                 onClick={() => onProjectSelect(project.id)}
               >
                 <TableCell className="font-medium">{project.name}</TableCell>
@@ -62,7 +62,11 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                 <TableCell>
                   <Badge 
                     variant={project.price_type === 'fixed' ? 'default' : 'secondary'} 
-                    className="capitalize"
+                    className={`capitalize ${
+                      project.price_type === 'fixed'
+                        ? "bg-blue-50 text-blue-700 border-blue-100"
+                        : "bg-amber-50 text-amber-700 border-amber-100"
+                    }`}
                   >
                     {project.price_type === 'fixed' ? 'Fixed Price' : 'Estimated'}
                   </Badge>
@@ -88,6 +92,13 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                 </TableCell>
               </TableRow>
             ))}
+            {projects.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  No projects found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
