@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -21,7 +22,6 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { TaskCard } from '@/components/Tasks/TaskCard';
-import { useToast } from '@/components/ui/use-toast';
 
 interface Task {
   id: string;
@@ -83,8 +83,6 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
     in_progress: Task[];
     completed: Task[];
   }>(tasksByStatus);
-  
-  const { toast } = useToast();
   
   // Update local tasks when props change
   React.useEffect(() => {
@@ -171,14 +169,6 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
             
             // Call the prop to update in the database
             onTaskMove(taskId, overId as string);
-            
-            // Show notification if moving to completed status
-            if (overId === 'completed') {
-              toast({
-                title: "Task marked as completed",
-                description: "This task will be automatically deleted after 5 days.",
-              });
-            }
           }
         }
       }

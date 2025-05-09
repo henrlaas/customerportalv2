@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -24,7 +25,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvertTempCompanyDialog } from './ConvertTempCompanyDialog';
 import { formatCurrency } from '../Deals/utils/formatters';
-import { useToast } from '@/components/ui/use-toast';
 
 interface DealKanbanViewProps {
   deals: Deal[];
@@ -58,7 +58,6 @@ export function DealKanbanView({
     })
   );
 
-  const { toast } = useToast();
   const [showConfetti, setShowConfetti] = useState(false);
   const [localDeals, setLocalDeals] = useState<Deal[]>(deals);
   const [showConvertDialog, setShowConvertDialog] = useState(false);
@@ -108,7 +107,7 @@ export function DealKanbanView({
     
     console.log(`Moving deal ${dealId} to stage ${newStageId}`);
     
-    // Check if we're dropping into "Closed Won" or "Closed Lost" stage
+    // Check if we're dropping into "Closed Won" stage
     const targetStage = stages.find(s => s.id === newStageId);
     const deal = deals.find(d => d.id === dealId);
     const tempCompany = tempCompanies?.find(tc => tc.deal_id === dealId);
@@ -146,20 +145,6 @@ export function DealKanbanView({
           setShowConvertDialog(true);
         }, 500);
       }
-      
-      // Show toast about automatic deletion
-      toast({
-        title: "Deal moved to Closed Won",
-        description: "This deal will be automatically deleted after 5 days.",
-      });
-    }
-    
-    // Notification for Closed Lost
-    if (targetStage?.name.toLowerCase() === 'closed lost') {
-      toast({
-        title: "Deal moved to Closed Lost",
-        description: "This deal will be automatically deleted after 3 days.",
-      });
     }
   };
 
