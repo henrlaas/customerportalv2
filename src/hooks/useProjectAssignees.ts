@@ -50,16 +50,21 @@ export const useProjectAssignees = (projectId: string | null) => {
       // Transform the data to match our expected type
       return data.map(item => {
         // Handle the case where profiles might be null or a SelectQueryError
-        const user: User = (item.profiles !== null && 
-                          typeof item.profiles === 'object' && 
-                          !('error' in item.profiles))
-          ? item.profiles as User
-          : {
-              id: item.user_id,
-              first_name: null,
-              last_name: null,
-              avatar_url: null
-            };
+        let user: User;
+        
+        if (item.profiles && 
+            typeof item.profiles === 'object' && 
+            !('error' in item.profiles)) {
+          user = item.profiles as User;
+        } else {
+          // Create a fallback user object if profiles is not found
+          user = {
+            id: item.user_id,
+            first_name: null,
+            last_name: null,
+            avatar_url: null
+          };
+        }
             
         return {
           id: item.id,
