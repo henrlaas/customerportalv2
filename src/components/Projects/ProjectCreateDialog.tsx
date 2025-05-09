@@ -1,22 +1,25 @@
 
 import { useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
+import { useCompanyNames } from '@/hooks/useCompanyNames';
+import { PriceType } from '@/types/project';
+import { useUserFetch } from '@/hooks/useUserFetch';
+
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -31,134 +34,113 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useMultiStepForm } from '@/components/ui/multi-step-form';
-import { useCompanyNames } from '@/hooks/useCompanyNames';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Profile } from '@/types/company';
-import { MultiSelect } from '@/components/ui/multi-select';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Step,
+  useMultiStepForm,
+} from '@/components/ui/multi-step-form';
 
-interface ProjectCreateDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (values: ProjectFormValues, assigneeIds: string[]) => void;
-}
-
-// Define schema for the project form
 const projectFormSchema = z.object({
+  company_id: z.string().min(1, 'Company is required'),
   name: z.string().min(1, 'Project name is required'),
   description: z.string().optional(),
-  company_id: z.string({
-    required_error: 'Please select a company',
-  }),
-  value: z.coerce.number().optional(),
-  price_type: z.enum(['fixed', 'estimated']).optional(),
+  value: z.string().optional().transform(val => val ? Number(val) : null),
+  price_type: z.enum(['fixed', 'estimated']).optional().nullable(),
   deadline: z.string().optional(),
 });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
-export const ProjectCreateDialog = ({
-  isOpen,
+export interface ProjectCreateDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: ProjectFormValues, assigneeIds: string[]) => void;
+}
+
+export const ProjectCreateDialog = ({ 
+  isOpen, 
   onOpenChange,
-  onSubmit,
+  onSubmit 
 }: ProjectCreateDialogProps) => {
   const { user } = useAuth();
-  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
-  
-  // Initialize form with default values
+  const { toast } = useToast();
+  const { companyOptions } = useCompanyNames();
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const { users } = useUserFetch();
+
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
     defaultValues: {
       name: '',
       description: '',
-      value: undefined,
-      price_type: 'estimated',
+      value: '',
+      price_type: null,
+      deadline: '',
     },
   });
 
-  // Fetch companies for dropdown
-  const { data: companies = [], isLoading: isLoadingCompanies } = useCompanyNames();
-  
-  // Fetch users for assignee selection
-  const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
-    queryKey: ['profiles'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('first_name');
-        
-      if (error) throw error;
-      
-      return data as Profile[];
-    }
-  });
-  
-  // Setup multi-step form
-  const {
-    step,
-    isFirstStep,
-    isLastStep,
-    nextStep,
-    prevStep,
-    goToStep,
-  } = useMultiStepForm([
-    {
-      id: 'project-details',
-      label: 'Project Details',
-    },
-    {
-      id: 'team-assignments',
-      label: 'Team & Deadlines',
-    },
-  ]);
+  const steps: Step[] = [
+    { id: 'basic-info', label: 'Basic Info' },
+    { id: 'details', label: 'Project Details' },
+    { id: 'assignees', label: 'Assignees' },
+  ];
 
-  // Handle form submission
+  const { currentStepIndex, step, isFirstStep, isLastStep, nextStep, prevStep } = useMultiStepForm(steps);
+
   const handleSubmit = (values: ProjectFormValues) => {
     if (!isLastStep) {
-      return nextStep();
+      nextStep();
+      return;
     }
     
-    if (user) {
-      // Add created_by field
-      const projectData = {
-        ...values,
-        created_by: user.id,
-      };
-      
-      onSubmit(projectData, assigneeIds);
-      form.reset();
-      setAssigneeIds([]);
-      onOpenChange(false);
-    }
-  };
+    // Format deadline date properly if it exists
+    const formattedValues = {
+      ...values,
+      deadline: values.deadline ? new Date(values.deadline).toISOString() : null,
+      created_by: user?.id,
+    };
 
-  // Format display name for profiles
-  const formatProfileName = (profile: Profile) => {
-    if (profile.first_name && profile.last_name) {
-      return `${profile.first_name} ${profile.last_name}`;
-    }
-    if (profile.first_name) return profile.first_name;
-    return `User ${profile.id.substring(0, 8)}`;
+    onSubmit(formattedValues, selectedAssignees);
+    form.reset();
+    setSelectedAssignees([]);
+    onOpenChange(false);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Create New Project</DialogTitle>
-          <DialogDescription>
-            {step.id === 'project-details' && 'Enter the basic details for this project.'}
-            {step.id === 'team-assignments' && 'Assign team members and set the deadline.'}
-          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            {step.id === 'project-details' && (
+            {step.id === 'basic-info' && (
               <>
+                <FormField
+                  control={form.control}
+                  name="company_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a company" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {companyOptions.map((company) => (
+                            <SelectItem key={company.value} value={company.value}>
+                              {company.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="name"
@@ -172,46 +154,15 @@ export const ProjectCreateDialog = ({
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="company_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Associated Company</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isLoadingCompanies}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a company" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {companies.map((company) => (
-                            <SelectItem key={company.id} value={company.id}>
-                              {company.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Description</FormLabel>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Describe the project scope, goals, and deliverables..." 
-                          rows={4}
+                          placeholder="Describe the project scope and goals..." 
                           {...field} 
                           value={field.value || ''}
                         />
@@ -220,7 +171,11 @@ export const ProjectCreateDialog = ({
                     </FormItem>
                   )}
                 />
+              </>
+            )}
 
+            {step.id === 'details' && (
+              <>
                 <FormField
                   control={form.control}
                   name="value"
@@ -232,42 +187,45 @@ export const ProjectCreateDialog = ({
                           type="number" 
                           placeholder="50000" 
                           {...field} 
-                          value={field.value || ''} 
+                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
-                      <FormDescription>
-                        The total budget or value for this project
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="price_type"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Price Type</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value || undefined}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select price type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="fixed">Fixed Price</SelectItem>
+                          <SelectItem value="estimated">Estimated Price</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="deadline"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Deadline (Optional)</FormLabel>
                       <FormControl>
-                        <RadioGroup 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value} 
-                          className="flex gap-4"
-                        >
-                          <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="fixed" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Fixed Price</FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="estimated" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Estimated Price</FormLabel>
-                          </FormItem>
-                        </RadioGroup>
+                        <Input type="date" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -276,62 +234,47 @@ export const ProjectCreateDialog = ({
               </>
             )}
 
-            {step.id === 'team-assignments' && (
-              <>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium leading-none">
-                      Assignees
-                    </label>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Select team members who will work on this project
-                    </p>
-                    <MultiSelect 
-                      options={profiles.map(profile => ({
-                        value: profile.id,
-                        label: formatProfileName(profile)
-                      }))}
-                      selected={assigneeIds}
-                      onChange={setAssigneeIds}
-                      placeholder="Select team members"
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="deadline"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Deadline (Optional)</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} value={field.value || ''} />
-                        </FormControl>
-                        <FormDescription>
-                          The date by which the project should be completed
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            {step.id === 'assignees' && (
+              <div className="space-y-4">
+                <h3 className="font-medium">Assign team members to this project</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {users?.map(user => (
+                    <div key={user.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`user-${user.id}`}
+                        checked={selectedAssignees.includes(user.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedAssignees([...selectedAssignees, user.id]);
+                          } else {
+                            setSelectedAssignees(
+                              selectedAssignees.filter(id => id !== user.id)
+                            );
+                          }
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <label htmlFor={`user-${user.id}`} className="text-sm">
+                        {user.first_name} {user.last_name}
+                      </label>
+                    </div>
+                  ))}
                 </div>
-              </>
+              </div>
             )}
 
             <div className="flex justify-between pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => {
-                  if (isFirstStep) {
-                    onOpenChange(false);
-                    form.reset();
-                  } else {
-                    prevStep();
-                  }
-                }}
-              >
-                {isFirstStep ? 'Cancel' : 'Back'}
-              </Button>
+              {!isFirstStep && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={prevStep}
+                >
+                  Back
+                </Button>
+              )}
+              <div className="flex-grow"></div>
               <Button type="submit">
                 {isLastStep ? 'Create Project' : 'Next'}
               </Button>

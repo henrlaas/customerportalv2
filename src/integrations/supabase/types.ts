@@ -541,13 +541,6 @@ export type Database = {
             referencedRelation: "company_contacts"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "contracts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
         ]
       }
       deal_stages: {
@@ -869,33 +862,6 @@ export type Database = {
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           team?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      projects: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          description: string | null
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          name?: string
           updated_at?: string
         }
         Relationships: []

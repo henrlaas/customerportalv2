@@ -1,43 +1,119 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Project } from '@/types/project';
-import { Company } from '@/types/company';
-import { format } from 'date-fns';
 
-interface ContractData {
-  title: string;
-  content: string;
-  company_id: string;
-  contact_id?: string;
-  project_id: string;
-  template_type: string;
-  created_by: string;
-  status: 'unsigned';
+interface ContractTemplateData {
+  companyname: string;
+  organizationnumber: string;
+  address: string;
+  zipcode: string;
+  city: string;
+  country: string;
+  projectdescription: string;
+  deadline: string;
+  price: string;
 }
 
-export const contractService = {
-  /**
-   * Generate contract content from template using project and company data
-   */
-  generateContractContent: async (
-    project: Project,
-    company: Company,
-    userId: string
-  ): Promise<string> {
-    // Norwegian contract template
-    const contractTemplate = `Oppdragskontrakt for Box Marketing
+const contractService = {
+  // Create a contract from a project
+  createContractFromProject: async (projectId: string, userId: string) => {
+    try {
+      // Fetch the project with company details
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          company:companies(*)
+        `)
+        .eq('id', projectId)
+        .single();
+      
+      if (projectError) {
+        throw new Error(`Error fetching project: ${projectError.message}`);
+      }
+
+      // Find a primary contact for the company
+      const { data: contacts, error: contactsError } = await supabase
+        .from('company_contacts')
+        .select('*')
+        .eq('company_id', project.company_id)
+        .eq('is_primary', true)
+        .limit(1);
+      
+      if (contactsError) {
+        throw new Error(`Error fetching company contacts: ${contactsError.message}`);
+      }
+
+      // Use the first contact or throw an error
+      const contactId = contacts && contacts.length > 0 
+        ? contacts[0].id 
+        : null;
+      
+      if (!contactId) {
+        throw new Error('No primary contact found for this company');
+      }
+
+      // Create the contract template data
+      const company = project.company;
+      const templateData: ContractTemplateData = {
+        companyname: company.name || 'Unknown',
+        organizationnumber: company.organization_number || 'N/A',
+        address: company.street_address || company.address || 'N/A',
+        zipcode: company.postal_code || 'N/A',
+        city: company.city || 'N/A',
+        country: company.country || 'N/A',
+        projectdescription: project.description || project.name || 'N/A',
+        deadline: project.deadline 
+          ? `Ferdigstillelse er avtalt til: ${new Date(project.deadline).toLocaleDateString('no-NO')}`
+          : 'Ferdigstillelse er avtalt separat',
+        price: project.value ? `${project.value.toLocaleString('no-NO')}` : 'Se tilbud'
+      };
+
+      // Create the contract content
+      const contractContent = generateContractContent(templateData);
+
+      // Insert the contract
+      const { data: contract, error: contractError } = await supabase
+        .from('contracts')
+        .insert({
+          company_id: project.company_id,
+          contact_id: contactId,
+          project_id: projectId,
+          title: `Contract for ${project.name}`,
+          content: contractContent,
+          status: 'unsigned',
+          template_type: 'project_contract',
+          created_by: userId
+        })
+        .select()
+        .single();
+
+      if (contractError) {
+        throw new Error(`Error creating contract: ${contractError.message}`);
+      }
+
+      return contract;
+    } catch (error) {
+      console.error('Error in createContractFromProject:', error);
+      throw error;
+    }
+  }
+};
+
+// Generate contract content based on template
+function generateContractContent(data: ContractTemplateData) {
+  return `Oppdragskontrakt for Box Marketing
 1. Partene
  Denne oppdragskontrakten ("Kontrakten") er inngått mellom:
-Oppdragsgiver: {{companyname}}, organisasjonsnummer {{organizationnumber}}, adresse {{address}}, {{zipcode}} {{city}}, {{country}}
+Oppdragsgiver: ${data.companyname}, organisasjonsnummer ${data.organizationnumber}, adresse ${data.address}, ${data.zipcode} ${data.city}, ${data.country}
 Oppdragstaker: Box Marketing AS, organisasjonsnummer 920441882, adresse Munkedamsveien 41, 0250 Oslo.
 2. Formål
  Formålet med denne Kontrakten er å regulere samarbeidet mellom Partene, herunder de tjenester Oppdragstaker skal levere, samt priser, betalingsbetingelser og andre vilkår.
 3. Tjenester
 Oppdragstaker skal levere følgende tjenester til Oppdragsgiver (heretter «Oppdraget»):
-{{projectdescription}}
-{{deadline}}
+${data.projectdescription}
+${data.deadline}
 4. Pris og prisestimat
-Pris er basert på estimert antall timer og oppdragets omfang til: {{price}},- eks. mva
+Pris er basert på estimert antall timer og oppdragets omfang til: ${data.price},- eks. mva
 Ekstra arbeid faktureres etter medgått tid eller fastpris, etter avtale med Oppdragsgiver.
 5. Betalingsbetingelser
 Fakturering skjer månedlig etterskuddsvis, med 14 dagers betalingsfrist med mindre annet er avtalt.
@@ -58,92 +134,6 @@ Endringer eller tillegg til denne Kontrakten skal være skriftlige og signeres a
 
 
 Vi ser frem til et godt samarbeid!`;
-
-    // Replace placeholders with actual values
-    let content = contractTemplate;
-    content = content.replace('{{companyname}}', company.name);
-    content = content.replace('{{organizationnumber}}', company.organization_number || '-');
-    content = content.replace('{{address}}', company.street_address || company.address || '-');
-    content = content.replace('{{zipcode}}', company.postal_code || '-');
-    content = content.replace('{{city}}', company.city || '-');
-    content = content.replace('{{country}}', company.country || 'Norge');
-    content = content.replace('{{projectdescription}}', project.description || project.name);
-    content = content.replace('{{price}}', project.value ? project.value.toString() : '-');
-    
-    // Add deadline if available
-    let deadlineText = '';
-    if (project.deadline) {
-      const deadlineDate = new Date(project.deadline);
-      const formattedDate = format(deadlineDate, 'dd.MM.yyyy');
-      deadlineText = `Leveringsfrist: ${formattedDate}`;
-    }
-    content = content.replace('{{deadline}}', deadlineText);
-    
-    return content;
-  },
-
-  /**
-   * Create a contract for a project
-   */
-  createContractFromProject: async (
-    projectId: string,
-    userId: string
-  ): Promise<string> {
-    // Fetch project with company
-    const { data: project, error: projectError } = await supabase
-      .from('projects')
-      .select('*, company:companies(*)')
-      .eq('id', projectId)
-      .single();
-
-    if (projectError) {
-      console.error('Error fetching project:', projectError);
-      throw projectError;
-    }
-
-    // Get primary contact for company
-    const { data: contacts, error: contactsError } = await supabase
-      .from('company_contacts')
-      .select('*')
-      .eq('company_id', project.company_id)
-      .eq('is_primary', true)
-      .limit(1);
-
-    if (contactsError) {
-      console.error('Error fetching company contacts:', contactsError);
-      throw contactsError;
-    }
-
-    const contactId = contacts?.length > 0 ? contacts[0].user_id : undefined;
-
-    // Generate contract content
-    const content = await this.generateContractContent(project, project.company, userId);
-
-    // Create contract in database
-    const contractData: ContractData = {
-      title: `Project contract: ${project.name}`,
-      content,
-      company_id: project.company_id,
-      contact_id: contactId,
-      project_id: projectId,
-      template_type: 'project_contract',
-      created_by: userId,
-      status: 'unsigned',
-    };
-
-    const { data: contract, error: contractError } = await supabase
-      .from('contracts')
-      .insert(contractData)
-      .select()
-      .single();
-
-    if (contractError) {
-      console.error('Error creating contract:', contractError);
-      throw contractError;
-    }
-
-    return contract.id;
-  },
-};
+}
 
 export default contractService;
