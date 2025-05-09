@@ -1,122 +1,182 @@
-
-import { useTranslation } from "@/hooks/useTranslation";
-import { useAuth } from "@/contexts/AuthContext";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FolderArchive, 
-  DollarSign,
-  Sliders,
-  BookOpen,
+import {
+  BarChart3,
+  Building,
+  CheckSquare,
   Clock,
   FileText,
-  CheckSquare,
-  Tag,
-  FileClock,
-} from "lucide-react";
+  FolderKanban,
+  Home,
+  Image,
+  LineChart,
+  Settings,
+  User,
+  Wallet,
+} from 'lucide-react';
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export function getSidebarItems() {
-  const t = useTranslation();
-  const { isAdmin, isEmployee } = useAuth();
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 
-  const items = [
-    // MENU category items
+export function SidebarItems() {
+  const { isAdmin, isEmployee, isClient } = useAuth();
+  
+  const route = window.location.pathname;
+  const navigate = useNavigate();
+
+  const adminEmployeeLinks = useMemo(() => [
     {
-      title: t('Dashboard'),
+      title: 'Dashboard',
       href: '/dashboard',
-      icon: LayoutDashboard,
-      roles: ['admin', 'employee', 'client'],
-      category: 'MENU',
-      hasDropdown: false
+      icon: <Home />,
     },
     {
-      title: t('Campaigns'),
-      href: '/campaigns',
-      icon: BookOpen,
-      roles: ['admin', 'employee', 'client'],
-      category: 'MENU',
-      hasDropdown: false
-    },
-    {
-      title: t('Tasks'),
-      href: '/tasks',
-      icon: CheckSquare,
-      roles: ['admin', 'employee', 'client'],
-      category: 'MENU',
-      hasDropdown: false
-    },
-    {
-      title: t('Deals'),
-      href: '/deals',
-      icon: Tag,
-      roles: ['admin', 'employee'],
-      category: 'MENU',
-      hasDropdown: false
-    },
-    {
-      title: t('Time Tracking'),
-      href: '/time-tracking',
-      icon: Clock,
-      roles: ['admin', 'employee'],
-      category: 'MENU',
-      hasDropdown: false
-    },
-    {
-      title: t('Companies'),
+      title: 'Companies',
       href: '/companies',
-      icon: Users,
-      roles: ['admin', 'employee'],
-      category: 'MENU',
-      hasDropdown: false
+      icon: <Building />,
     },
     {
-      title: t('Contracts'),
-      href: '/contracts',
-      icon: FileText,
-      roles: ['admin', 'employee', 'client'],
-      category: 'MENU',
-      hasDropdown: false
+      title: 'Deals',
+      href: '/deals',
+      icon: <LineChart />,
     },
     {
-      title: t('Projects'),
+      title: 'Tasks',
+      href: '/tasks',
+      icon: <CheckSquare />,
+    },
+    {
+      title: 'Projects',
       href: '/projects',
-      icon: FileClock,
-      roles: ['admin', 'employee', 'client'],
-      category: 'MENU',
-      hasDropdown: false
+      icon: <FolderKanban />,
     },
     {
-      title: t('Media'),
-      href: '/media',
-      icon: FolderArchive,
-      roles: ['admin', 'employee', 'client'],
-      category: 'MENU',
-      hasDropdown: false
+      title: 'Campaigns',
+      href: '/campaigns',
+      icon: <BarChart3 />,
     },
     {
-      title: t('Finance'),
+      title: 'Time Tracking',
+      href: '/time-tracking',
+      icon: <Clock />,
+    },
+    {
+      title: 'Finance',
       href: '/finance',
-      icon: DollarSign,
-      roles: ['admin', 'employee'],
-      category: 'MENU',
-      hasDropdown: false
+      icon: <Wallet />,
     },
     {
-      title: t('Management'),
-      href: '/workspace',
-      icon: Sliders,
-      roles: ['admin'],
-      category: 'MENU',
-      hasDropdown: false
+      title: 'Contracts',
+      href: '/contracts',
+      icon: <FileText />,
     },
-  ];
+    {
+      title: 'Media',
+      href: '/media',
+      icon: <Image />,
+    },
+  ], []);
 
-  // Filter items based on user role
-  const filteredItems = items.filter(item => {
-    if (isAdmin) return item.roles.includes('admin');
-    if (isEmployee) return item.roles.includes('employee');
-    return item.roles.includes('client');
-  });
+  const clientLinks = useMemo(() => [
+    {
+      title: 'Dashboard',
+      href: '/client-dashboard',
+      icon: <Home />,
+    },
+    {
+      title: 'Company Details',
+      href: '/client-company',
+      icon: <Building />,
+    },
+  ], []);
 
-  return filteredItems;
+  const settingsLink = useMemo(() => [
+    {
+      title: 'Settings',
+      href: '/settings',
+      icon: <Settings />,
+    },
+  ], []);
+
+  const workspaceManagementLink = useMemo(() => [
+    {
+      title: 'Workspace Management',
+      href: '/workspace-management',
+      icon: <User />,
+    },
+    {
+      title: 'User Management',
+      href: '/users',
+      icon: <User />,
+    },
+  ], []);
+
+  return (
+    <div className="flex flex-col space-y-4">
+      {(isAdmin || isEmployee) && (
+        <>
+          {adminEmployeeLinks.map((link) => (
+            <Button
+              variant="ghost"
+              className="justify-start"
+              key={link.href}
+              onClick={() => navigate(link.href)}
+            >
+              <link.icon className="mr-2 h-4 w-4" />
+              <span>{link.title}</span>
+            </Button>
+          ))}
+          {(isAdmin) && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="workspace">
+                <AccordionTrigger>Workspace</AccordionTrigger>
+                <AccordionContent>
+                  {workspaceManagementLink.map((link) => (
+                    <Button
+                      variant="ghost"
+                      className="justify-start"
+                      key={link.href}
+                      onClick={() => navigate(link.href)}
+                    >
+                      <link.icon className="mr-2 h-4 w-4" />
+                      <span>{link.title}</span>
+                    </Button>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
+        </>
+      )}
+      {isClient && (
+        <>
+          {clientLinks.map((link) => (
+            <Button
+              variant="ghost"
+              className="justify-start"
+              key={link.href}
+              onClick={() => navigate(link.href)}
+            >
+              <link.icon className="mr-2 h-4 w-4" />
+              <span>{link.title}</span>
+            </Button>
+          ))}
+        </>
+      )}
+      <Button
+        variant="ghost"
+        className="justify-start"
+        onClick={() => navigate('/settings')}
+      >
+        <Settings className="mr-2 h-4 w-4" />
+        <span>Settings</span>
+      </Button>
+    </div>
+  );
 }
