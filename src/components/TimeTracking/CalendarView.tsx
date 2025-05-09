@@ -151,100 +151,100 @@ export const CalendarView = ({
                     No time entries for this date
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     {selectedEntries.map(entry => {
                       // Find related data
                       const task = entry.task_id ? tasks.find(t => t.id === entry.task_id) : null;
                       const company = entry.company_id ? companies.find(c => c.id === entry.company_id) : null;
                       const campaign = entry.campaign_id ? campaigns.find(c => c.id === entry.campaign_id) : null;
                       
+                      // Format times and calculate duration
+                      const startTime = new Date(entry.start_time);
+                      const endTime = entry.end_time ? new Date(entry.end_time) : null;
+                      
+                      let duration = '-- : --';
+                      if (endTime) {
+                        const durationMs = endTime.getTime() - startTime.getTime();
+                        const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                        const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                        duration = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                      } else {
+                        duration = 'In progress';
+                      }
+                      
                       return (
-                        <div 
-                          key={entry.id}
-                          className="p-4 border rounded-lg hover:bg-muted/50 transition"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="font-medium mb-1">
-                              {entry.description || 'No description'}
-                            </div>
-                            <div className="flex gap-1 -mt-1 -mr-2">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8"
-                                onClick={() => onEditEntry(entry)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => onDeleteEntry(entry)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-2 space-y-2">
-                            {/* Company, Campaign and Task information */}
-                            <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                              {company && (
-                                <div className="flex items-center gap-1">
-                                  <Building className="h-3 w-3" />
-                                  <span>{company.name}</span>
-                                </div>
-                              )}
-                              
-                              {campaign && (
-                                <div className="flex items-center gap-1">
-                                  <Tag className="h-3 w-3" />
-                                  <span>{campaign.name}</span>
-                                </div>
-                              )}
-                              
-                              {task && (
-                                <div className="flex items-center gap-1">
-                                  <Briefcase className="h-3 w-3" />
-                                  <span>{task.title}</span>
-                                </div>
-                              )}
-                            </div>
-                            
+                        <Card key={entry.id} className="shadow-sm hover:shadow-md transition-shadow">
+                          <div className="p-3">
                             <div className="flex items-center justify-between">
-                              <div className="text-sm text-gray-500">
-                                {format(parseISO(entry.start_time), 'HH:mm')} - {
-                                  entry.end_time 
-                                    ? format(parseISO(entry.end_time), 'HH:mm')
-                                    : 'ongoing'
-                                }
+                              {/* Left side - Task description and metadata */}
+                              <div className="flex-grow mr-4">
+                                <div className="flex items-center justify-between mb-1">
+                                  <h3 className="text-sm font-medium truncate">
+                                    {entry.description || 'No description'}
+                                  </h3>
+                                </div>
+                                
+                                <div className="flex flex-wrap items-center text-xs text-gray-500 gap-2">
+                                  {company && (
+                                    <div className="flex items-center gap-1">
+                                      <Building className="h-3 w-3" />
+                                      <span className="truncate max-w-[80px]">{company.name}</span>
+                                    </div>
+                                  )}
+                                  
+                                  {campaign && (
+                                    <div className="flex items-center gap-1">
+                                      <Tag className="h-3 w-3" />
+                                      <span className="truncate max-w-[80px]">{campaign.name}</span>
+                                    </div>
+                                  )}
+                                  
+                                  {task && (
+                                    <div className="flex items-center gap-1">
+                                      <Briefcase className="h-3 w-3" />
+                                      <span className="truncate max-w-[80px]">{task.title}</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              <div className="font-mono text-xs">
-                                {entry.end_time ? (
-                                  (() => {
-                                    const start = parseISO(entry.start_time);
-                                    const end = parseISO(entry.end_time);
-                                    const durationMs = end.getTime() - start.getTime();
-                                    const hours = Math.floor(durationMs / (1000 * 60 * 60));
-                                    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-                                    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                                  })()
-                                ) : (
-                                  'In progress'
-                                )}
+                              
+                              {/* Center - Badge always vertically centered */}
+                              <div className="flex items-center self-center mx-3">
+                                <Badge 
+                                  variant={entry.is_billable ? "default" : "outline"} 
+                                  className={`flex items-center gap-1 text-xs ${entry.is_billable ? 'bg-green-700 hover:bg-green-800' : ''}`}
+                                >
+                                  <DollarSign className="h-2.5 w-2.5" />
+                                  {entry.is_billable ? 'Billable' : 'Non-billable'}
+                                </Badge>
                               </div>
-                            </div>
-                            
-                            {/* Billable badge */}
-                            <div className="flex justify-end mt-1">
-                              <Badge variant={entry.is_billable ? "default" : "outline"} className="flex items-center gap-1 text-xs">
-                                <DollarSign className="h-3 w-3" />
-                                {entry.is_billable ? 'Billable' : 'Non-billable'}
-                              </Badge>
+                              
+                              {/* Middle - Date and time information */}
+                              <div className="flex items-center gap-4 mr-4">
+                                <div className="flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap">
+                                  <Clock className="h-3 w-3 text-gray-500" />
+                                  <span>
+                                    {format(startTime, 'HH:mm')} - {endTime ? format(endTime, 'HH:mm') : 'ongoing'}
+                                  </span>
+                                </div>
+                                
+                                <div className="font-mono text-xs font-medium whitespace-nowrap">
+                                  {duration}
+                                </div>
+                              </div>
+                              
+                              {/* Right side - Actions */}
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditEntry(entry)}>
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDeleteEntry(entry)}>
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </Card>
                       );
                     })}
                   </div>
