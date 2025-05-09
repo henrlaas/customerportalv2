@@ -541,6 +541,13 @@ export type Database = {
             referencedRelation: "company_contacts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
         ]
       }
       deal_stages: {
@@ -824,44 +831,6 @@ export type Database = {
         }
         Relationships: []
       }
-      milestones: {
-        Row: {
-          created_at: string
-          due_date: string | null
-          id: string
-          name: string
-          project_id: string
-          status: Database["public"]["Enums"]["milestone_status"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          due_date?: string | null
-          id?: string
-          name: string
-          project_id: string
-          status?: Database["public"]["Enums"]["milestone_status"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          due_date?: string | null
-          id?: string
-          name?: string
-          project_id?: string
-          status?: Database["public"]["Enums"]["milestone_status"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "milestones_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -904,81 +873,32 @@ export type Database = {
         }
         Relationships: []
       }
-      project_assignees: {
-        Row: {
-          created_at: string
-          id: string
-          project_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          project_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          project_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_assignees_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       projects: {
         Row: {
-          company_id: string
           created_at: string
           created_by: string | null
-          deadline: string | null
           description: string | null
           id: string
           name: string
-          price_type: string | null
           updated_at: string
-          value: number | null
         }
         Insert: {
-          company_id: string
           created_at?: string
           created_by?: string | null
-          deadline?: string | null
           description?: string | null
           id?: string
           name: string
-          price_type?: string | null
           updated_at?: string
-          value?: number | null
         }
         Update: {
-          company_id?: string
           created_at?: string
           created_by?: string | null
-          deadline?: string | null
           description?: string | null
           id?: string
           name?: string
-          price_type?: string | null
           updated_at?: string
-          value?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "projects_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       subtasks: {
         Row: {
@@ -1299,7 +1219,6 @@ export type Database = {
           id: string
           is_billable: boolean | null
           is_running: boolean | null
-          project_id: string | null
           start_time: string
           task_id: string | null
           updated_at: string
@@ -1314,7 +1233,6 @@ export type Database = {
           id?: string
           is_billable?: boolean | null
           is_running?: boolean | null
-          project_id?: string | null
           start_time: string
           task_id?: string | null
           updated_at?: string
@@ -1329,7 +1247,6 @@ export type Database = {
           id?: string
           is_billable?: boolean | null
           is_running?: boolean | null
-          project_id?: string | null
           start_time?: string
           task_id?: string | null
           updated_at?: string
@@ -1348,13 +1265,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "time_entries_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
@@ -1465,7 +1375,6 @@ export type Database = {
       }
     }
     Enums: {
-      milestone_status: "created" | "completed"
       user_role: "admin" | "employee" | "client"
     }
     CompositeTypes: {
@@ -1582,7 +1491,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      milestone_status: ["created", "completed"],
       user_role: ["admin", "employee", "client"],
     },
   },
