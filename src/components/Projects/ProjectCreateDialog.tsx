@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -78,7 +77,7 @@ export const ProjectCreateDialog = ({
     defaultValues: {
       name: '',
       description: '',
-      value: '', // This stays as a string in the form and is transformed during submission
+      value: '', // Keep as string in the form but transform to number during submission via zod transform
       price_type: null,
       deadline: '',
     },

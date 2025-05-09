@@ -14,8 +14,8 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { AppearanceProvider } from '@/contexts/AppearanceContext';
 import { Home, Building, LineChart, CheckSquare, BarChart3, Clock, Wallet, FileText, Image, FolderKanban } from 'lucide-react';
 
-// Use only the properly cased version and avoid importing both
-import Index from '@/pages/Index';
+// Import using the correct case that matches the actual file on disk
+import Index from './pages/Index'; // Direct relative path to avoid casing issues
 import Auth from '@/pages/Auth';
 import SetPassword from '@/pages/SetPassword';
 import Dashboard from '@/pages/Dashboard';
