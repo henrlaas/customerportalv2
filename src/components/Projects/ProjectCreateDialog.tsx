@@ -131,10 +131,12 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
   
   const nextStep = () => {
     if (step === 1) {
-      const basicInfoValid = form.trigger(['name', 'company_id', 'price_type', 'value']);
-      if (basicInfoValid) {
-        setStep(2);
-      }
+      // Validate the first step fields
+      form.trigger(['name', 'company_id', 'price_type', 'value']).then(isValid => {
+        if (isValid) {
+          setStep(2);
+        }
+      });
     }
   };
   
@@ -349,7 +351,11 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
               </Button>
             )}
             {step === 1 ? (
-              <Button type="button" onClick={nextStep} className="bg-evergreen hover:bg-evergreen/90">
+              <Button 
+                type="button" 
+                onClick={nextStep} 
+                className="bg-evergreen hover:bg-evergreen/90"
+              >
                 Next
               </Button>
             ) : (
