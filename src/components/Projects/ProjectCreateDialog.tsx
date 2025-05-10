@@ -15,12 +15,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useCompanyNames } from "@/hooks/useCompanyNames";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MultiUserSelect } from "@/components/Projects/MultiUserSelect";
 import { useCreateMilestone } from "@/hooks/useCreateMilestone";
 import Select from "react-select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useCompanyList } from "@/hooks/useCompanyList";
 
 // Define the form schema
 const projectSchema = z.object({
@@ -43,9 +44,10 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   const { profile } = useAuth();
-  const { data: companies = [], isLoading: companiesLoading } = useCompanyNames();
   const { createMilestone } = useCreateMilestone();
+  const { companies = [], isLoading: companiesLoading } = useCompanyList(showSubsidiaries);
   
   const totalSteps = 2; // Total number of steps in the form
   
@@ -153,7 +155,8 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
   // Format companies for react-select
   const companyOptions = companies.map(company => ({
     value: company.id,
-    label: company.name
+    label: company.name,
+    isSubsidiary: !!company.parent_id
   }));
 
   return (
@@ -205,32 +208,51 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
               
               <div className="space-y-2">
                 <Label htmlFor="company_id">Company</Label>
-                <Select
-                  className="react-select-container"
-                  classNamePrefix="react-select"
-                  options={companyOptions}
-                  isLoading={companiesLoading}
-                  placeholder="Select a company"
-                  onChange={(option) => option && setValue("company_id", option.value)}
-                  styles={{
-                    control: (base) => ({
-                      ...base,
-                      borderRadius: 'var(--radius)',
-                      borderColor: 'hsl(var(--input))',
-                      '&:hover': {
-                        borderColor: 'hsl(var(--input))'
-                      },
-                      boxShadow: 'none',
-                      padding: '2px'
-                    }),
-                    menu: (base) => ({
-                      ...base,
-                      borderRadius: 'var(--radius)',
-                      overflow: 'hidden',
-                      zIndex: 50
-                    })
-                  }}
-                />
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="show-subsidiaries"
+                      checked={showSubsidiaries}
+                      onCheckedChange={(checked) => setShowSubsidiaries(!!checked)}
+                    />
+                    <Label htmlFor="show-subsidiaries" className="text-sm cursor-pointer">
+                      Show subsidiaries
+                    </Label>
+                  </div>
+                  
+                  <Select
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    options={companyOptions}
+                    isLoading={companiesLoading}
+                    placeholder="Select a company"
+                    onChange={(option) => option && setValue("company_id", option.value)}
+                    formatOptionLabel={({ label, isSubsidiary }) => (
+                      <div>
+                        {isSubsidiary && <span className="text-muted-foreground">↳ </span>}
+                        {label}
+                      </div>
+                    )}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        borderRadius: 'var(--radius)',
+                        borderColor: 'hsl(var(--input))',
+                        '&:hover': {
+                          borderColor: 'hsl(var(--input))'
+                        },
+                        boxShadow: 'none',
+                        padding: '2px'
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        borderRadius: 'var(--radius)',
+                        overflow: 'hidden',
+                        zIndex: 50
+                      })
+                    }}
+                  />
+                </div>
                 {errors.company_id && <p className="text-sm text-red-500">{errors.company_id.message}</p>}
               </div>
               
