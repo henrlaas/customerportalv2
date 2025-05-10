@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,7 +41,7 @@ import {
   FormDescription,
 } from '@/components/ui/form';
 import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
-import { Company as CompanyType } from '@/types/company'; // Import the full Company type
+import { Company as CompanyType } from '@/types/company';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
 
 // Time entry form schema
@@ -93,14 +93,14 @@ export const TimeEntryForm = ({
   const totalSteps = 2;
   
   // Format dates properly for input fields
-  const formatDateForInput = (dateString: string | null) => {
+  const formatDateForInput = useCallback((dateString: string | null) => {
     if (!dateString) return '';
     // Format date to yyyy-MM-ddThh:mm format for datetime-local input
     const date = new Date(dateString);
     return date.toISOString().substring(0, 16);
-  };
+  }, []);
 
-  // Use the useCompanyList hook directly which returns the right Company type
+  // Use the useCompanyList hook with memoized results
   const { data: allCompanies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companyList', { showSubsidiaries }],
     queryFn: async () => {
@@ -150,7 +150,7 @@ export const TimeEntryForm = ({
     }
   }, [selectedCompanyId, form, isBillable]);
 
-  // Filter campaigns based on selected company
+  // Filter campaigns based on selected company - optimized to reduce unnecessary operations
   useEffect(() => {
     if (selectedCompanyId && selectedCompanyId !== 'no-company') {
       const filtered = campaigns.filter(campaign => campaign.company_id === selectedCompanyId);
@@ -162,12 +162,12 @@ export const TimeEntryForm = ({
         form.setValue('campaign_id', undefined);
       }
 
-      // Fetch and filter tasks for the selected company
+      // Fetch and filter tasks for the selected company - with optimized query
       const fetchTasks = async () => {
         try {
           const { data: companyTasks, error } = await supabase
             .from('tasks')
-            .select('*')
+            .select('id,title')
             .eq('company_id', selectedCompanyId);
             
           if (error) throw error;
@@ -194,24 +194,27 @@ export const TimeEntryForm = ({
     }
   }, [selectedCompanyId, campaigns, form]);
 
-  // Create time entry mutation
+  // Create time entry mutation - optimized to reduce payload size
   const createMutation = useMutation({
     mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
       if (!user) throw new Error('You must be logged in to create time entries');
       
+      // Prepare a clean object with only necessary fields
+      const timeEntryData = {
+        description: values.description || null,
+        start_time: values.start_time,
+        end_time: values.end_time || null,
+        task_id: values.task_id === 'no-task' ? null : values.task_id || null,
+        user_id: user.id,
+        is_billable: values.is_billable,
+        company_id: values.company_id === 'no-company' ? null : values.company_id || null,
+        campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
+      };
+      
       const { data, error } = await supabase
         .from('time_entries')
-        .insert([{
-          description: values.description || null,
-          start_time: values.start_time,
-          end_time: values.end_time || null,
-          task_id: values.task_id === 'no-task' ? null : values.task_id || null,
-          user_id: user.id,
-          is_billable: values.is_billable,
-          company_id: values.company_id === 'no-company' ? null : values.company_id || null,
-          campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
-        }])
-        .select();
+        .insert(timeEntryData)
+        .select('id'); // Only select the ID to minimize data transfer
       
       if (error) throw error;
       return data;
@@ -237,24 +240,27 @@ export const TimeEntryForm = ({
     },
   });
 
-  // Update time entry mutation
+  // Update time entry mutation - optimized
   const updateMutation = useMutation({
     mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
       if (!currentEntry) return null;
       
+      // Prepare a clean object with only necessary fields
+      const timeEntryData = {
+        description: values.description || null,
+        start_time: values.start_time,
+        end_time: values.end_time || null,
+        task_id: values.task_id === 'no-task' ? null : values.task_id || null,
+        is_billable: values.is_billable,
+        company_id: values.company_id === 'no-company' ? null : values.company_id || null,
+        campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
+      };
+      
       const { data, error } = await supabase
         .from('time_entries')
-        .update({
-          description: values.description || null,
-          start_time: values.start_time,
-          end_time: values.end_time || null,
-          task_id: values.task_id === 'no-task' ? null : values.task_id || null,
-          is_billable: values.is_billable,
-          company_id: values.company_id === 'no-company' ? null : values.company_id || null,
-          campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
-        })
+        .update(timeEntryData)
         .eq('id', currentEntry.id)
-        .select();
+        .select('id'); // Only select the ID to minimize data transfer
       
       if (error) throw error;
       return data;
@@ -282,17 +288,17 @@ export const TimeEntryForm = ({
   });
 
   // Handle steps
-  const goToNextStep = () => {
+  const goToNextStep = useCallback(() => {
     setCurrentStep(prev => Math.min(prev + 1, totalSteps));
-  };
+  }, [totalSteps]);
 
-  const goToPreviousStep = () => {
+  const goToPreviousStep = useCallback(() => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
+  }, []);
 
-  // Submit handler for the form
-  const onSubmit = (values: z.infer<typeof timeEntrySchema>) => {
-    // If on first step and company not selected, directly submit
+  // Submit handler for the form - refactored for better performance
+  const onSubmit = useCallback((values: z.infer<typeof timeEntrySchema>) => {
+    // If on first step and no company selected, directly submit (skip stage 2)
     if (currentStep === 1) {
       if (!values.company_id || values.company_id === 'no-company') {
         // Ensure that billable is false if there's no company
@@ -317,7 +323,7 @@ export const TimeEntryForm = ({
     } else {
       createMutation.mutate(values);
     }
-  };
+  }, [currentStep, isEditing, currentEntry, goToNextStep, updateMutation, createMutation]);
 
   // Set dialog title based on context
   const dialogTitle = isCompletingTracking 
@@ -334,7 +340,7 @@ export const TimeEntryForm = ({
     : 'Add a manual time entry with specific start and end times.';
 
   // Step 1 content - Basic Details
-  const renderStep1 = () => (
+  const renderStep1 = useCallback(() => (
     <>
       <FormField
         control={form.control}
@@ -384,7 +390,7 @@ export const TimeEntryForm = ({
         name="company_id"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Company</FormLabel>
+            <FormLabel>Company (optional)</FormLabel>
             <FormControl>
               <CompanySelector
                 companies={allCompanies}
@@ -395,15 +401,18 @@ export const TimeEntryForm = ({
                 isLoading={isLoadingCompanies}
               />
             </FormControl>
+            <FormDescription>
+              If no company is selected, the time entry will be non-billable
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
       />
     </>
-  );
+  ), [form, allCompanies, showSubsidiaries, isLoadingCompanies]);
 
   // Step 2 content - Additional Details
-  const renderStep2 = () => (
+  const renderStep2 = useCallback(() => (
     <>
       <FormField
         control={form.control}
@@ -494,11 +503,6 @@ export const TimeEntryForm = ({
                     {task.title}
                   </SelectItem>
                 ))}
-                {!selectedCompanyId && tasks.map(task => (
-                  <SelectItem key={task.id} value={task.id}>
-                    {task.title}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
             <FormMessage />
@@ -506,9 +510,9 @@ export const TimeEntryForm = ({
         )}
       />
     </>
-  );
+  ), [form, selectedCompanyId, isBillable, canBeBillable, filteredCampaigns, filteredTasks]);
 
-  // Dialog for creating or editing a time entry
+  // Dialog content with optimized rendering
   const dialogContent = (
     <DialogContent className="max-w-md">
       <DialogHeader>
