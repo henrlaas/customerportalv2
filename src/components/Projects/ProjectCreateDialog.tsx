@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, ChevronRight } from "lucide-react";
+import { CalendarIcon, Check } from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MultiUserSelect } from "@/components/Projects/MultiUserSelect";
 import { useCreateMilestone } from "@/hooks/useCreateMilestone";
+import Select from "react-select";
 
 // Define the form schema
 const projectSchema = z.object({
@@ -26,7 +28,7 @@ const projectSchema = z.object({
   description: z.string().optional(),
   company_id: z.string().min(1, "Company is required"),
   value: z.coerce.number().min(0, "Value must be a positive number"),
-  price_type: z.enum(["fixed", "hourly"]),
+  price_type: z.enum(["fixed", "estimated"]),
   deadline: z.date().optional(),
 });
 
@@ -45,6 +47,8 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
   const { data: companies = [], isLoading: companiesLoading } = useCompanyNames();
   const { createMilestone } = useCreateMilestone();
   
+  const totalSteps = 2; // Total number of steps in the form
+  
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
@@ -55,7 +59,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
     },
   });
   
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = form;
+  const { register, handleSubmit, formState: { errors }, watch, setValue, control } = form;
   
   const handleUsersChange = (userIds: string[]) => {
     setSelectedUserIds(userIds);
@@ -145,64 +149,119 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
     setSelectedUserIds([]);
     onClose();
   };
+  
+  // Format companies for react-select
+  const companyOptions = companies.map(company => ({
+    value: company.id,
+    label: company.name
+  }));
 
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Create New Project</DialogTitle>
         </DialogHeader>
+        
+        {/* Progress bar */}
+        <div className="relative mb-6 mt-2">
+          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-gray-200">
+            <div 
+              style={{ width: `${(step / totalSteps) * 100}%` }}
+              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-evergreen transition-all duration-500"
+            ></div>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Basic Info</span>
+            <span>Additional Details</span>
+          </div>
+          <div className="flex justify-center mt-2">
+            <div className="flex items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-evergreen text-white' : 'bg-gray-200'}`}>
+                {step > 1 ? <Check className="h-4 w-4" /> : 1}
+              </div>
+              <div className={`w-10 h-1 ${step >= 2 ? 'bg-evergreen' : 'bg-gray-200'}`}></div>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-evergreen text-white' : 'bg-gray-200'}`}>
+                2
+              </div>
+            </div>
+          </div>
+        </div>
         
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* Step 1: Basic Project Info */}
           {step === 1 && (
             <div className="space-y-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="name">Project Name</Label>
-                <Input id="name" {...register("name")} />
+                <Input 
+                  id="name" 
+                  placeholder="Enter project name" 
+                  {...register("name")} 
+                  className="w-full"
+                />
                 {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
               </div>
               
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="company_id">Company</Label>
-                <select
-                  id="company_id"
-                  className="w-full p-2 border rounded"
-                  {...register("company_id")}
-                  disabled={companiesLoading}
-                >
-                  <option value="">Select a company</option>
-                  {companies.map((company) => (
-                    <option key={company.id} value={company.id}>
-                      {company.name}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  options={companyOptions}
+                  isLoading={companiesLoading}
+                  placeholder="Select a company"
+                  onChange={(option) => option && setValue("company_id", option.value)}
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      borderRadius: 'var(--radius)',
+                      borderColor: 'hsl(var(--input))',
+                      '&:hover': {
+                        borderColor: 'hsl(var(--input))'
+                      },
+                      boxShadow: 'none',
+                      padding: '2px'
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      borderRadius: 'var(--radius)',
+                      overflow: 'hidden',
+                      zIndex: 50
+                    })
+                  }}
+                />
                 {errors.company_id && <p className="text-sm text-red-500">{errors.company_id.message}</p>}
               </div>
               
-              <div>
+              <div className="space-y-2">
                 <Label>Price Type</Label>
                 <RadioGroup
                   defaultValue="fixed"
-                  className="flex gap-4"
-                  onValueChange={(value) => setValue("price_type", value as "fixed" | "hourly")}
+                  className="flex gap-6"
+                  onValueChange={(value) => setValue("price_type", value as "fixed" | "estimated")}
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="fixed" id="fixed" />
-                    <Label htmlFor="fixed">Fixed Price</Label>
+                    <Label htmlFor="fixed" className="cursor-pointer">Fixed</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hourly" id="hourly" />
-                    <Label htmlFor="hourly">Hourly</Label>
+                    <RadioGroupItem value="estimated" id="estimated" />
+                    <Label htmlFor="estimated" className="cursor-pointer">Estimated</Label>
                   </div>
                 </RadioGroup>
                 {errors.price_type && <p className="text-sm text-red-500">{errors.price_type.message}</p>}
               </div>
               
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="value">Project Value (NOK)</Label>
-                <Input id="value" type="number" {...register("value")} />
+                <Input 
+                  id="value" 
+                  type="number" 
+                  placeholder="0" 
+                  {...register("value")} 
+                  className="w-full"
+                />
                 {errors.value && <p className="text-sm text-red-500">{errors.value.message}</p>}
               </div>
             </div>
@@ -211,7 +270,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
           {/* Step 2: Additional Details */}
           {step === 2 && (
             <div className="space-y-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea 
                   id="description" 
@@ -221,7 +280,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
                 />
               </div>
               
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="deadline">Deadline (Optional)</Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -250,8 +309,8 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
                 </Popover>
               </div>
               
-              <div>
-                <Label>Assign Team Members (Optional)</Label>
+              <div className="space-y-2">
+                <Label>Assign Team Members</Label>
                 <MultiUserSelect 
                   selectedUserIds={selectedUserIds}
                   onChange={handleUsersChange}
@@ -261,18 +320,22 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
             </div>
           )}
           
-          <DialogFooter className="mt-6">
+          <DialogFooter className="mt-6 gap-2">
             {step > 1 && (
               <Button type="button" variant="outline" onClick={prevStep}>
-                Back
+                Previous
               </Button>
             )}
             {step === 1 ? (
-              <Button type="button" onClick={nextStep}>
-                Next <ChevronRight className="ml-1 h-4 w-4" />
+              <Button type="button" onClick={nextStep} className="bg-evergreen hover:bg-evergreen/90">
+                Next
               </Button>
             ) : (
-              <Button type="submit" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="bg-evergreen hover:bg-evergreen/90"
+              >
                 {isSubmitting ? "Creating..." : "Create Project"}
               </Button>
             )}

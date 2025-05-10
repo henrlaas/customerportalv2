@@ -34,6 +34,17 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
     return 'U';
   };
 
+  // Helper function to get creator full name
+  const getCreatorName = (project: ProjectWithRelations) => {
+    if (project.creator) {
+      const firstName = project.creator.first_name || '';
+      const lastName = project.creator.last_name || '';
+      const name = `${firstName} ${lastName}`.trim();
+      return name || 'Unknown User';
+    }
+    return 'Unknown User';
+  };
+
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden w-full">
       <div className="overflow-x-auto">
@@ -77,11 +88,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                       <AvatarImage src={project.creator?.avatar_url || undefined} />
                       <AvatarFallback>{getCreatorInitials(project)}</AvatarFallback>
                     </Avatar>
-                    <span>
-                      {project.creator 
-                        ? `${project.creator.first_name || ''} ${project.creator.last_name || ''}`.trim() || 'Unknown'
-                        : 'Unknown'}
-                    </span>
+                    <span>{getCreatorName(project)}</span>
                   </div>
                 </TableCell>
                 <TableCell>{format(new Date(project.created_at), 'MMM dd, yyyy')}</TableCell>

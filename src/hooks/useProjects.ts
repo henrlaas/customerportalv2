@@ -64,7 +64,7 @@ export const useProjects = () => {
 
             return {
               ...project,
-              creator: creatorData
+              creator: creatorData || null
             } as ProjectWithRelations;
           }
 
