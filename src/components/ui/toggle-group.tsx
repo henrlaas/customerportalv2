@@ -23,7 +23,7 @@ const ToggleGroup = React.forwardRef<
 
 ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName;
 
-// Define custom toggle item variants including "tab"
+// Define custom toggle item variants
 const toggleItemVariants = cva("", {
   variants: {
     variant: {

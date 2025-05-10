@@ -8,6 +8,7 @@ import { UserManagementTab } from "@/components/WorkspaceManagement/UserManageme
 import { EmailToolsTab } from "@/components/WorkspaceManagement/EmailToolsTab";
 import { SmsToolsTab } from "@/components/WorkspaceManagement/SmsToolsTab";
 import { AppearanceTab } from "@/components/WorkspaceManagement/AppearanceTab";
+import { ContractTemplateEditor } from "@/components/ContractTemplateEditor";
 import {
   Settings,
   Users,
@@ -15,13 +16,14 @@ import {
   UserCog,
   Cog,
   MessageSquare,
-  Palette
+  Palette,
+  FileText
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { EmployeeManagementTab } from "@/components/WorkspaceManagement/EmployeeManagementTab";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 // Helper to filter settings by category
 const filterSettingsByCategory = (settings: WorkspaceSetting[], category: string) => {
@@ -156,6 +158,10 @@ const WorkspaceManagementPage = () => {
             <Palette className="h-4 w-4 mr-2" />
             Appearance
           </TabsTrigger>
+          <TabsTrigger value="contracts">
+            <FileText className="h-4 w-4 mr-2" />
+            Contracts
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all-settings" className="space-y-4">
@@ -209,6 +215,23 @@ const WorkspaceManagementPage = () => {
 
         <TabsContent value="appearance">
           <AppearanceTab />
+        </TabsContent>
+
+        <TabsContent value="contracts">
+          <div className="grid gap-6">
+            <div className="grid gap-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Contract Templates
+              </h2>
+              <p className="text-muted-foreground">
+                Manage contract templates used throughout the application.
+              </p>
+              <Separator />
+            </div>
+            
+            <ContractTemplateEditor />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
