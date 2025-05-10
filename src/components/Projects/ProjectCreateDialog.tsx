@@ -193,7 +193,8 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
           </div>
         </div>
         
-        <form onSubmit={handleSubmit(onSubmit)}>
+        {/* Important: Wrap each step in its own div and don't use handleSubmit here */}
+        <div className="space-y-4">
           {/* Step 1: Basic Project Info */}
           {step === 1 && (
             <div className="space-y-4">
@@ -360,7 +361,8 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
               </Button>
             ) : (
               <Button 
-                type="submit" 
+                type="button"
+                onClick={handleSubmit(onSubmit)} 
                 disabled={isSubmitting} 
                 className="bg-evergreen hover:bg-evergreen/90"
               >
@@ -368,7 +370,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
               </Button>
             )}
           </DialogFooter>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
