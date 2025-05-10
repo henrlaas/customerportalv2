@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { PlusCircle, AlertCircle } from 'lucide-react';
+import { PlusCircle, AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/form';
 import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
 import { Company as CompanyType } from '@/types/company'; // Import the full Company type
+import { ProgressStepper } from '@/components/ui/progress-stepper';
 
 // Time entry form schema
 const timeEntrySchema = z.object({
@@ -88,7 +89,9 @@ export const TimeEntryForm = ({
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   const [canBeBillable, setCanBeBillable] = useState(false);
-
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 2;
+  
   // Format dates properly for input fields
   const formatDateForInput = (dateString: string | null) => {
     if (!dateString) return '';
@@ -223,6 +226,7 @@ export const TimeEntryForm = ({
       setIsCreating(false);
       onComplete();
       form.reset();
+      setCurrentStep(1); // Reset step
     },
     onError: (error) => {
       toast({
@@ -266,6 +270,7 @@ export const TimeEntryForm = ({
       onCancelEdit();
       onComplete();
       form.reset();
+      setCurrentStep(1); // Reset step
     },
     onError: (error: any) => {
       toast({
@@ -276,8 +281,37 @@ export const TimeEntryForm = ({
     },
   });
 
+  // Handle steps
+  const goToNextStep = () => {
+    setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+  };
+
+  const goToPreviousStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
   // Submit handler for the form
   const onSubmit = (values: z.infer<typeof timeEntrySchema>) => {
+    // If on first step and company not selected, directly submit
+    if (currentStep === 1) {
+      if (!values.company_id || values.company_id === 'no-company') {
+        // Ensure that billable is false if there's no company
+        values.is_billable = false;
+        
+        if (isEditing && currentEntry) {
+          updateMutation.mutate(values);
+        } else {
+          createMutation.mutate(values);
+        }
+        return;
+      }
+      
+      // If company selected, go to next step
+      goToNextStep();
+      return;
+    }
+    
+    // If on final step, submit form
     if (isEditing && currentEntry) {
       updateMutation.mutate(values);
     } else {
@@ -299,200 +333,248 @@ export const TimeEntryForm = ({
     ? 'Update the details for your time entry.'
     : 'Add a manual time entry with specific start and end times.';
 
+  // Step 1 content - Basic Details
+  const renderStep1 = () => (
+    <>
+      <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Description</FormLabel>
+            <FormControl>
+              <Textarea placeholder="What were you working on?" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="start_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Start Time</FormLabel>
+              <FormControl>
+                <Input type="datetime-local" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="end_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>End Time</FormLabel>
+              <FormControl>
+                <Input type="datetime-local" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <FormField
+        control={form.control}
+        name="company_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Company</FormLabel>
+            <FormControl>
+              <CompanySelector
+                companies={allCompanies}
+                selectedCompanyId={field.value || null}
+                onSelect={(companyId) => field.onChange(companyId)}
+                showSubsidiaries={showSubsidiaries}
+                onToggleSubsidiaries={setShowSubsidiaries}
+                isLoading={isLoadingCompanies}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
+  );
+
+  // Step 2 content - Additional Details
+  const renderStep2 = () => (
+    <>
+      <FormField
+        control={form.control}
+        name="is_billable"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <FormLabel>Billable</FormLabel>
+              <FormDescription>
+                Mark this time entry as billable 
+                {!canBeBillable && 
+                  <span className="text-destructive"> (requires a company)</span>
+                }
+              </FormDescription>
+            </div>
+            <FormControl>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                disabled={!canBeBillable}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+
+      {!canBeBillable && isBillable && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            A company must be selected for billable entries.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <FormField
+        control={form.control}
+        name="campaign_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Campaign</FormLabel>
+            <Select
+              onValueChange={field.onChange}
+              value={field.value}
+              defaultValue={field.value}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0}
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a campaign (optional)" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="no-campaign">No campaign</SelectItem>
+                {filteredCampaigns.map(campaign => (
+                  <SelectItem key={campaign.id} value={campaign.id}>
+                    {campaign.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="task_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Related Task</FormLabel>
+            <Select
+              onValueChange={field.onChange}
+              value={field.value}
+              defaultValue={field.value}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Link to a task (optional)" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="no-task">No related task</SelectItem>
+                {selectedCompanyId && filteredTasks.map(task => (
+                  <SelectItem key={task.id} value={task.id}>
+                    {task.title}
+                  </SelectItem>
+                ))}
+                {!selectedCompanyId && tasks.map(task => (
+                  <SelectItem key={task.id} value={task.id}>
+                    {task.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
+  );
+
   // Dialog for creating or editing a time entry
   const dialogContent = (
     <DialogContent className="max-w-md">
       <DialogHeader>
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogDescription>
-          {dialogDescription}
+          {currentStep === 1 ? 'Basic information' : 'Additional details'}
         </DialogDescription>
       </DialogHeader>
+      
+      <ProgressStepper 
+        currentStep={currentStep} 
+        totalSteps={totalSteps} 
+      />
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea placeholder="What were you working on?" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="start_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start Time</FormLabel>
-                  <FormControl>
-                    <Input type="datetime-local" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="end_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>End Time</FormLabel>
-                  <FormControl>
-                    <Input type="datetime-local" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
 
-          <FormField
-            control={form.control}
-            name="company_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Company</FormLabel>
-                <FormControl>
-                  <CompanySelector
-                    companies={allCompanies}
-                    selectedCompanyId={field.value || null}
-                    onSelect={(companyId) => field.onChange(companyId)}
-                    showSubsidiaries={showSubsidiaries}
-                    onToggleSubsidiaries={setShowSubsidiaries}
-                    isLoading={isLoadingCompanies}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="is_billable"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <FormLabel>Billable</FormLabel>
-                  <FormDescription>
-                    Mark this time entry as billable 
-                    {!canBeBillable && 
-                      <span className="text-destructive"> (requires a company)</span>
-                    }
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={!canBeBillable}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          {!canBeBillable && isBillable && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                A company must be selected for billable entries.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <FormField
-            control={form.control}
-            name="campaign_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Campaign</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  defaultValue={field.value}
-                  disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0}
+          <DialogFooter className="flex justify-between pt-4 sm:justify-between">
+            <div>
+              {currentStep > 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={goToPreviousStep}
+                  className="flex items-center gap-1"
                 >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a campaign (optional)" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="no-campaign">No campaign</SelectItem>
-                    {filteredCampaigns.map(campaign => (
-                      <SelectItem key={campaign.id} value={campaign.id}>
-                        {campaign.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="task_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Related Task</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  defaultValue={field.value}
-                  disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Link to a task (optional)" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="no-task">No related task</SelectItem>
-                    {selectedCompanyId && filteredTasks.map(task => (
-                      <SelectItem key={task.id} value={task.id}>
-                        {task.title}
-                      </SelectItem>
-                    ))}
-                    {!selectedCompanyId && tasks.map(task => (
-                      <SelectItem key={task.id} value={task.id}>
-                        {task.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline" onClick={onCancelEdit}>
-                Cancel
+                  <ArrowLeft className="h-4 w-4" /> Back
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <DialogClose asChild>
+                <Button variant="outline" onClick={() => {
+                  onCancelEdit();
+                  setCurrentStep(1);
+                }}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button 
+                type="submit" 
+                disabled={
+                  createMutation.isPending || 
+                  updateMutation.isPending || 
+                  (currentStep === 2 && isBillable && !canBeBillable)
+                }
+                className="flex items-center gap-1"
+              >
+                {createMutation.isPending || updateMutation.isPending 
+                  ? 'Saving...' 
+                  : currentStep === 1
+                    ? selectedCompanyId && selectedCompanyId !== 'no-company'
+                      ? (
+                        <>
+                          Next <ArrowRight className="h-4 w-4" />
+                        </>
+                      )
+                      : "Save"
+                    : isEditing 
+                      ? 'Save Changes' 
+                      : 'Create Entry'
+                }
               </Button>
-            </DialogClose>
-            <Button 
-              type="submit" 
-              disabled={
-                createMutation.isPending || 
-                updateMutation.isPending || 
-                (isBillable && !canBeBillable)
-              }
-            >
-              {createMutation.isPending || updateMutation.isPending 
-                ? 'Saving...' 
-                : isEditing ? 'Save Changes' : 'Create Entry'}
-            </Button>
+            </div>
           </DialogFooter>
         </form>
       </Form>
@@ -502,7 +584,10 @@ export const TimeEntryForm = ({
   // Dialog for creating a new time entry
   if (isCreating) {
     return (
-      <Dialog open={isCreating} onOpenChange={setIsCreating}>
+      <Dialog open={isCreating} onOpenChange={(open) => {
+        setIsCreating(open);
+        if (!open) setCurrentStep(1);
+      }}>
         {dialogContent}
       </Dialog>
     );
@@ -511,7 +596,10 @@ export const TimeEntryForm = ({
   // Dialog for editing an existing time entry
   if (isEditing) {
     return (
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+      <Dialog open={isEditing} onOpenChange={(open) => {
+        setIsEditing(open);
+        if (!open) setCurrentStep(1);
+      }}>
         {dialogContent}
       </Dialog>
     );
