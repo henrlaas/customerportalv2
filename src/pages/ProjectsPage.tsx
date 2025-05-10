@@ -11,7 +11,6 @@ import { ProjectMilestonesPanel } from '@/components/Projects/ProjectMilestonesP
 import { useProjectMilestones } from '@/hooks/useProjectMilestones';
 import { ProjectListView } from '@/components/Projects/ProjectListView';
 import { ProjectsSummaryCards } from '@/components/Projects/ProjectsSummaryCards';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Input } from '@/components/ui/input';
 
 const ProjectsPage = () => {
@@ -60,7 +59,7 @@ const ProjectsPage = () => {
       {/* Summary Cards */}
       <ProjectsSummaryCards projects={projects} isLoading={projectsLoading} />
       
-      {/* Search and Filters row - styled like the Contracts page from screenshots */}
+      {/* Search and Filters row - styled like the Contracts page */}
       <div className="flex justify-between items-center my-6">
         <div className="relative w-full max-w-sm">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -73,16 +72,29 @@ const ProjectsPage = () => {
         </div>
         
         <div className="flex items-center gap-4">
-          <ToggleGroup 
-            type="single" 
-            value={filter} 
-            onValueChange={(value) => value && setFilter(value as 'all' | 'signed' | 'unsigned')}
-            variant="tab"
-          >
-            <ToggleGroupItem value="all">All</ToggleGroupItem>
-            <ToggleGroupItem value="unsigned">Unsigned</ToggleGroupItem>
-            <ToggleGroupItem value="signed">Signed</ToggleGroupItem>
-          </ToggleGroup>
+          {/* Filter tabs with green underline styling */}
+          <div className="border-b border-border">
+            <nav className="flex space-x-6" aria-label="Filter">
+              <button
+                onClick={() => setFilter('all')}
+                className={`pb-2 px-1 text-sm font-medium ${filter === 'all' ? 'text-evergreen border-b-2 border-evergreen' : 'text-muted-foreground'}`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter('unsigned')}
+                className={`pb-2 px-1 text-sm font-medium ${filter === 'unsigned' ? 'text-evergreen border-b-2 border-evergreen' : 'text-muted-foreground'}`}
+              >
+                Unsigned
+              </button>
+              <button
+                onClick={() => setFilter('signed')}
+                className={`pb-2 px-1 text-sm font-medium ${filter === 'signed' ? 'text-evergreen border-b-2 border-evergreen' : 'text-muted-foreground'}`}
+              >
+                Signed
+              </button>
+            </nav>
+          </div>
 
           {(profile?.role === 'admin' || profile?.role === 'employee') && (
             <Button onClick={() => setShowCreateDialog(true)}>
