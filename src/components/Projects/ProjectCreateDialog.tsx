@@ -22,6 +22,7 @@ import { useCreateMilestone } from "@/hooks/useCreateMilestone";
 import Select from "react-select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCompanyList } from "@/hooks/useCompanyList";
+import { Progress } from "@/components/ui/progress";
 
 // Define the form schema
 const projectSchema = z.object({
@@ -168,28 +169,55 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
           <DialogTitle className="text-xl font-bold">Create New Project</DialogTitle>
         </DialogHeader>
         
-        {/* Progress bar */}
-        <div className="relative mb-6 mt-2">
-          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-gray-200">
-            <div 
-              style={{ width: `${(step / totalSteps) * 100}%` }}
-              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-evergreen transition-all duration-500"
-            ></div>
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Basic Info</span>
-            <span>Additional Details</span>
-          </div>
-          <div className="flex justify-center mt-2">
-            <div className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-evergreen text-white' : 'bg-gray-200'}`}>
-                {step > 1 ? <Check className="h-4 w-4" /> : 1}
-              </div>
-              <div className={`w-10 h-1 ${step >= 2 ? 'bg-evergreen' : 'bg-gray-200'}`}></div>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-evergreen text-white' : 'bg-gray-200'}`}>
-                2
+        {/* Enhanced Progress bar */}
+        <div className="relative mb-8 mt-4">
+          {/* Glowing progress track */}
+          <div className="h-3 bg-gray-100 rounded-full overflow-hidden relative">
+            {/* Glowing effect overlay */}
+            <div className="absolute inset-0 rounded-full overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-300/20 to-emerald-500/20" />
+            </div>
+            
+            {/* Progress fill with animation */}
+            <div className="relative">
+              <div 
+                className="h-3 bg-evergreen rounded-full transition-all duration-500 relative overflow-hidden"
+                style={{ width: `${(step / totalSteps) * 100}%` }}
+              >
+                {/* Animated shine effect */}
+                <div className="absolute top-0 left-0 right-0 bottom-0">
+                  <div className="absolute top-0 left-[-100%] h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shine_3s_ease-in-out_infinite]" />
+                </div>
+                
+                {/* Subtle pulse glow effect */}
+                <div className="absolute top-0 left-0 right-0 bottom-0 bg-evergreen/40 rounded-full animate-[pulse_2s_infinite] blur-sm -z-10 scale-105" />
               </div>
             </div>
+          </div>
+          
+          {/* Step indicators */}
+          <div className="flex justify-between mt-1 px-1">
+            {Array.from({length: totalSteps}, (_, i) => (
+              <div 
+                key={i}
+                className={`flex flex-col items-center transition-opacity ${step > i + 1 ? 'opacity-100' : step === i + 1 ? 'opacity-100' : 'opacity-50'}`}
+              >
+                <div 
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs 
+                    ${step > i + 1 
+                      ? 'bg-evergreen text-white' 
+                      : step === i + 1 
+                        ? 'bg-evergreen text-white ring-4 ring-evergreen/20' 
+                        : 'bg-gray-200 text-gray-500'
+                    } transition-all duration-300`}
+                >
+                  {step > i + 1 ? <Check className="h-3 w-3" /> : i + 1}
+                </div>
+                <span className="text-xs mt-1 font-medium">
+                  {i === 0 ? 'Basic Info' : 'Details'}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
         
