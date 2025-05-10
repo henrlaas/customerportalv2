@@ -1,6 +1,5 @@
 
-import React from 'react';
-import { Progress } from '@/components/ui/progress';
+import { ProgressStepper as BaseProgressStepper } from '@/components/ui/progress-stepper';
 
 interface ProgressStepperProps {
   currentStep: number;
@@ -11,15 +10,7 @@ export const ProgressStepper: React.FC<ProgressStepperProps> = ({
   currentStep,
   totalSteps,
 }) => {
-  // Calculate progress percentage
-  const progress = (currentStep / totalSteps) * 100;
-  
   return (
-    <div className="space-y-2 mb-6">
-      <div className="flex justify-between text-sm text-muted-foreground">
-        <span>Step {currentStep} of {totalSteps}</span>
-      </div>
-      <Progress value={progress} className="h-2" />
-    </div>
+    <BaseProgressStepper currentStep={currentStep} totalSteps={totalSteps} />
   );
 };

@@ -18,7 +18,7 @@ import { Form } from '@/components/ui/form';
 import { CampaignDetailsForm } from '../CreateCampaignDialog/CampaignDetailsForm';
 import { CompanySelectionForm } from '../CreateCampaignDialog/CompanySelectionForm';
 import { UserSelectionForm } from '../CreateCampaignDialog/UserSelectionForm';
-import { ProgressStepper } from '../CreateCampaignDialog/ProgressStepper';
+import { ProgressStepper } from '@/components/ui/progress-stepper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { Campaign, CampaignStatus } from '../types/campaign';

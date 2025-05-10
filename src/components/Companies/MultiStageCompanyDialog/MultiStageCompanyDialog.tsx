@@ -1,4 +1,3 @@
-
 // ----- Imports
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -23,6 +22,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './types';
 import { useAuth } from '@/contexts/AuthContext';
+import { ProgressStepper } from '@/components/ui/progress-stepper';
 // Newly added componentized stages and constants
 import { BasicInfoStage } from './BasicInfoStage';
 import { ContactDetailsStage } from './ContactDetailsStage';
@@ -163,13 +163,7 @@ export function MultiStageCompanyDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Progress bar */}
-        <div className="w-full bg-muted rounded-full h-2.5 mb-4">
-          <div
-            className="bg-primary h-2.5 rounded-full transition-all duration-300"
-            style={{ width: `${(stage / totalStages) * 100}%` }}
-          ></div>
-        </div>
+        <ProgressStepper currentStep={stage} totalSteps={totalStages} />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
