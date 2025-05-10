@@ -93,14 +93,14 @@ export const TimeEntryForm = ({
   const totalSteps = 2;
   
   // Format dates properly for input fields
-  const formatDateForInput = useCallback((dateString: string | null) => {
+  const formatDateForInput = (dateString: string | null) => {
     if (!dateString) return '';
     // Format date to yyyy-MM-ddThh:mm format for datetime-local input
     const date = new Date(dateString);
     return date.toISOString().substring(0, 16);
-  }, []);
+  };
 
-  // Use the useCompanyList hook with memoized results
+  // Use the useCompanyList hook with memoized results - performance improvement by only fetching when needed
   const { data: allCompanies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companyList', { showSubsidiaries }],
     queryFn: async () => {
@@ -140,58 +140,54 @@ export const TimeEntryForm = ({
   const selectedCompanyId = form.watch('company_id');
   const isBillable = form.watch('is_billable');
   
-  // Check if entry can be billable (when company is selected)
+  // Check if entry can be billable (when company is selected) - This was causing infinite re-renders
   useEffect(() => {
-    setCanBeBillable(!!selectedCompanyId && selectedCompanyId !== 'no-company');
+    const companyId = selectedCompanyId;
+    const canBill = !!companyId && companyId !== 'no-company';
+    
+    setCanBeBillable(canBill);
     
     // If company is removed but billable is true, set to false
-    if ((!selectedCompanyId || selectedCompanyId === 'no-company') && isBillable) {
+    if ((!companyId || companyId === 'no-company') && isBillable) {
       form.setValue('is_billable', false);
     }
   }, [selectedCompanyId, form, isBillable]);
 
   // Filter campaigns based on selected company - optimized to reduce unnecessary operations
   useEffect(() => {
-    if (selectedCompanyId && selectedCompanyId !== 'no-company') {
-      const filtered = campaigns.filter(campaign => campaign.company_id === selectedCompanyId);
-      setFilteredCampaigns(filtered);
-      
-      // If the current campaign is not for this company, reset it
-      const currentCampaignId = form.getValues('campaign_id');
-      if (currentCampaignId && !filtered.some(c => c.id === currentCampaignId)) {
-        form.setValue('campaign_id', undefined);
-      }
-
-      // Fetch and filter tasks for the selected company - with optimized query
-      const fetchTasks = async () => {
-        try {
-          const { data: companyTasks, error } = await supabase
-            .from('tasks')
-            .select('id,title')
-            .eq('company_id', selectedCompanyId);
-            
-          if (error) throw error;
-          
-          setFilteredTasks(companyTasks || []);
-          
-          // Reset task if not associated with this company
-          const currentTaskId = form.getValues('task_id');
-          if (currentTaskId && !companyTasks?.some(t => t.id === currentTaskId)) {
-            form.setValue('task_id', undefined);
-          }
-        } catch (error) {
-          console.error('Error fetching tasks by company:', error);
-          setFilteredTasks([]);
-        }
-      };
-
-      fetchTasks();
-    } else {
+    if (!selectedCompanyId || selectedCompanyId === 'no-company') {
       setFilteredCampaigns([]);
       setFilteredTasks([]);
-      form.setValue('campaign_id', undefined);
-      form.setValue('task_id', undefined);
+      return;
     }
+    
+    // Filter campaigns from prop rather than re-fetching
+    setFilteredCampaigns(campaigns.filter(campaign => campaign.company_id === selectedCompanyId));
+    
+    // Fetch tasks for the selected company - only when company changes
+    const fetchTasks = async () => {
+      try {
+        const { data: companyTasks, error } = await supabase
+          .from('tasks')
+          .select('id,title')
+          .eq('company_id', selectedCompanyId);
+          
+        if (error) throw error;
+        
+        setFilteredTasks(companyTasks || []);
+        
+        // Reset task if not associated with this company
+        const currentTaskId = form.getValues('task_id');
+        if (currentTaskId && !companyTasks?.some(t => t.id === currentTaskId)) {
+          form.setValue('task_id', undefined);
+        }
+      } catch (error) {
+        console.error('Error fetching tasks by company:', error);
+        setFilteredTasks([]);
+      }
+    };
+
+    fetchTasks();
   }, [selectedCompanyId, campaigns, form]);
 
   // Create time entry mutation - optimized to reduce payload size
@@ -206,7 +202,7 @@ export const TimeEntryForm = ({
         end_time: values.end_time || null,
         task_id: values.task_id === 'no-task' ? null : values.task_id || null,
         user_id: user.id,
-        is_billable: values.is_billable,
+        is_billable: values.company_id && values.company_id !== 'no-company' ? values.is_billable : false,
         company_id: values.company_id === 'no-company' ? null : values.company_id || null,
         campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
       };
@@ -251,7 +247,7 @@ export const TimeEntryForm = ({
         start_time: values.start_time,
         end_time: values.end_time || null,
         task_id: values.task_id === 'no-task' ? null : values.task_id || null,
-        is_billable: values.is_billable,
+        is_billable: values.company_id && values.company_id !== 'no-company' ? values.is_billable : false,
         company_id: values.company_id === 'no-company' ? null : values.company_id || null,
         campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
       };
@@ -288,21 +284,23 @@ export const TimeEntryForm = ({
   });
 
   // Handle steps
-  const goToNextStep = useCallback(() => {
+  const goToNextStep = () => {
     setCurrentStep(prev => Math.min(prev + 1, totalSteps));
-  }, [totalSteps]);
+  };
 
-  const goToPreviousStep = useCallback(() => {
+  const goToPreviousStep = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
-  }, []);
+  };
 
-  // Submit handler for the form - refactored for better performance
-  const onSubmit = useCallback((values: z.infer<typeof timeEntrySchema>) => {
+  // Submit handler for the form - refactored for better performance and skip second step if no company
+  const onSubmit = (values: z.infer<typeof timeEntrySchema>) => {
     // If on first step and no company selected, directly submit (skip stage 2)
     if (currentStep === 1) {
       if (!values.company_id || values.company_id === 'no-company') {
         // Ensure that billable is false if there's no company
         values.is_billable = false;
+        values.campaign_id = undefined;
+        values.task_id = undefined;
         
         if (isEditing && currentEntry) {
           updateMutation.mutate(values);
@@ -323,7 +321,7 @@ export const TimeEntryForm = ({
     } else {
       createMutation.mutate(values);
     }
-  }, [currentStep, isEditing, currentEntry, goToNextStep, updateMutation, createMutation]);
+  };
 
   // Set dialog title based on context
   const dialogTitle = isCompletingTracking 
@@ -340,7 +338,7 @@ export const TimeEntryForm = ({
     : 'Add a manual time entry with specific start and end times.';
 
   // Step 1 content - Basic Details
-  const renderStep1 = useCallback(() => (
+  const renderStep1 = () => (
     <>
       <FormField
         control={form.control}
@@ -409,10 +407,10 @@ export const TimeEntryForm = ({
         )}
       />
     </>
-  ), [form, allCompanies, showSubsidiaries, isLoadingCompanies]);
+  );
 
   // Step 2 content - Additional Details
-  const renderStep2 = useCallback(() => (
+  const renderStep2 = () => (
     <>
       <FormField
         control={form.control}
@@ -510,7 +508,7 @@ export const TimeEntryForm = ({
         )}
       />
     </>
-  ), [form, selectedCompanyId, isBillable, canBeBillable, filteredCampaigns, filteredTasks]);
+  );
 
   // Dialog content with optimized rendering
   const dialogContent = (
