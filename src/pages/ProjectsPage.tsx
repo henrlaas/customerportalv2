@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -47,22 +46,20 @@ const ProjectsPage = () => {
       {/* Summary Cards */}
       <ProjectsSummaryCards projects={projects} isLoading={projectsLoading} />
       
-      {/* Filter and Create Button in a single row */}
+      {/* Create Button and Filters in same row, styled like the Contracts page */}
       <div className="flex justify-between items-center my-6">
-        <div className="flex items-center space-x-4">
-          <ToggleGroup type="single" value={filter} onValueChange={(value) => value && setFilter(value as 'all' | 'signed' | 'unsigned')}>
-            <ToggleGroupItem value="all">All</ToggleGroupItem>
-            <ToggleGroupItem value="signed">Signed</ToggleGroupItem>
-            <ToggleGroupItem value="unsigned">Unsigned</ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-        
         {(profile?.role === 'admin' || profile?.role === 'employee') && (
           <Button onClick={() => setShowCreateDialog(true)}>
             <PlusIcon className="h-4 w-4 mr-2" />
             Create Project
           </Button>
         )}
+        
+        <ToggleGroup type="single" value={filter} onValueChange={(value) => value && setFilter(value as 'all' | 'signed' | 'unsigned')}>
+          <ToggleGroupItem value="all">All</ToggleGroupItem>
+          <ToggleGroupItem value="signed">Signed</ToggleGroupItem>
+          <ToggleGroupItem value="unsigned">Unsigned</ToggleGroupItem>
+        </ToggleGroup>
       </div>
       
       {projectsLoading ? (
