@@ -16,7 +16,7 @@ export function ProgressStepper({
   const progress = (currentStep / totalSteps) * 100;
   
   return (
-    <div className={`space-y-1 mb-5 ${className}`}>
+    <div className={`space-y-1 mb-4 ${className}`}>
       {/* Simple step indicator text closer to the progress bar */}
       <p className="text-sm text-gray-500">Step {currentStep} of {totalSteps}</p>
       
