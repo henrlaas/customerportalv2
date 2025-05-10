@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { PlusIcon, ClockIcon, FileTextIcon } from 'lucide-react';
+import { PlusIcon, ClockIcon, FileTextIcon, SearchIcon } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectCreateDialog } from '@/components/Projects/ProjectCreateDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,12 +12,14 @@ import { useProjectMilestones } from '@/hooks/useProjectMilestones';
 import { ProjectListView } from '@/components/Projects/ProjectListView';
 import { ProjectsSummaryCards } from '@/components/Projects/ProjectsSummaryCards';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Input } from '@/components/ui/input';
 
 const ProjectsPage = () => {
   const { profile } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'signed' | 'unsigned'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const { projects, isLoading: projectsLoading } = useProjects();
   const { milestones } = useProjectMilestones(selectedProjectId);
 
@@ -26,13 +28,24 @@ const ProjectsPage = () => {
     setSelectedProjectId(projectId === selectedProjectId ? null : projectId);
   };
 
-  // Filter projects based on contract status
+  // Filter projects based on contract status and search query
   const filteredProjects = projects ? projects.filter(project => {
-    if (filter === 'all') return true;
+    // First apply status filter
+    if (filter !== 'all') {
+      // Note: This is a placeholder - we would need to implement contract status tracking in projects
+      // For now, we're treating all projects as unsigned
+      if (filter === 'signed') return false;
+    }
     
-    // Note: This is a placeholder - we would need to implement contract status tracking in projects
-    // For now, we're treating all projects as unsigned
-    return filter === 'unsigned';
+    // Then apply search filter if there's a search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return project.name.toLowerCase().includes(query) || 
+             project.description?.toLowerCase().includes(query) ||
+             project.company?.name.toLowerCase().includes(query);
+    }
+    
+    return true;
   }) : [];
 
   // Get selected project details
@@ -47,20 +60,37 @@ const ProjectsPage = () => {
       {/* Summary Cards */}
       <ProjectsSummaryCards projects={projects} isLoading={projectsLoading} />
       
-      {/* Filters and Create Button in same row, styled like the Contracts page */}
+      {/* Search and Filters row - styled like the Contracts page from screenshots */}
       <div className="flex justify-between items-center my-6">
-        <ToggleGroup type="single" value={filter} onValueChange={(value) => value && setFilter(value as 'all' | 'signed' | 'unsigned')}>
-          <ToggleGroupItem value="all">All</ToggleGroupItem>
-          <ToggleGroupItem value="signed">Signed</ToggleGroupItem>
-          <ToggleGroupItem value="unsigned">Unsigned</ToggleGroupItem>
-        </ToggleGroup>
+        <div className="relative w-full max-w-sm">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Search projects..."
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <ToggleGroup 
+            type="single" 
+            value={filter} 
+            onValueChange={(value) => value && setFilter(value as 'all' | 'signed' | 'unsigned')}
+            variant="tab"
+          >
+            <ToggleGroupItem value="all">All</ToggleGroupItem>
+            <ToggleGroupItem value="unsigned">Unsigned</ToggleGroupItem>
+            <ToggleGroupItem value="signed">Signed</ToggleGroupItem>
+          </ToggleGroup>
 
-        {(profile?.role === 'admin' || profile?.role === 'employee') && (
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Create Project
-          </Button>
-        )}
+          {(profile?.role === 'admin' || profile?.role === 'employee') && (
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Create Project
+            </Button>
+          )}
+        </div>
       </div>
       
       {/* Projects List */}
@@ -78,11 +108,13 @@ const ProjectsPage = () => {
         <Card className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-center items-center h-40">
             <p className="text-gray-500">
-              {filter === 'all' 
-                ? 'No projects created yet. Projects will appear here once created.' 
-                : filter === 'signed' 
-                  ? 'No signed projects found.' 
-                  : 'No unsigned projects found.'}
+              {searchQuery 
+                ? 'No matching projects found. Try a different search term.'
+                : filter === 'all' 
+                  ? 'No projects created yet. Projects will appear here once created.' 
+                  : filter === 'signed' 
+                    ? 'No signed projects found.' 
+                    : 'No unsigned projects found.'}
             </p>
           </div>
         </Card>
