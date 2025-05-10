@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, Check } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,8 @@ import { MultiUserSelect } from "@/components/Projects/MultiUserSelect";
 import { useCreateMilestone } from "@/hooks/useCreateMilestone";
 import Select from "react-select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useCompanyList } from "@/hooks/useCompanyList";
 import { Progress } from "@/components/ui/progress";
+import { useCompanyList } from "@/hooks/useCompanyList";
 
 // Define the form schema
 const projectSchema = z.object({
@@ -169,8 +169,11 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
           <DialogTitle className="text-xl font-bold">Create New Project</DialogTitle>
         </DialogHeader>
         
+        {/* Simple step indicator text */}
+        <p className="text-sm text-gray-500 mb-2">Step {step} of {totalSteps}</p>
+        
         {/* Enhanced Progress bar */}
-        <div className="relative mb-8 mt-4">
+        <div className="relative mb-8">
           {/* Glowing progress track */}
           <div className="h-3 bg-gray-100 rounded-full overflow-hidden relative">
             {/* Glowing effect overlay */}
@@ -193,31 +196,6 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
                 <div className="absolute top-0 left-0 right-0 bottom-0 bg-evergreen/40 rounded-full animate-[pulse_2s_infinite] blur-sm -z-10 scale-105" />
               </div>
             </div>
-          </div>
-          
-          {/* Step indicators */}
-          <div className="flex justify-between mt-1 px-1">
-            {Array.from({length: totalSteps}, (_, i) => (
-              <div 
-                key={i}
-                className={`flex flex-col items-center transition-opacity ${step > i + 1 ? 'opacity-100' : step === i + 1 ? 'opacity-100' : 'opacity-50'}`}
-              >
-                <div 
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs 
-                    ${step > i + 1 
-                      ? 'bg-evergreen text-white' 
-                      : step === i + 1 
-                        ? 'bg-evergreen text-white ring-4 ring-evergreen/20' 
-                        : 'bg-gray-200 text-gray-500'
-                    } transition-all duration-300`}
-                >
-                  {step > i + 1 ? <Check className="h-3 w-3" /> : i + 1}
-                </div>
-                <span className="text-xs mt-1 font-medium">
-                  {i === 0 ? 'Basic Info' : 'Details'}
-                </span>
-              </div>
-            ))}
           </div>
         </div>
         
@@ -343,6 +321,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
                         "w-full justify-start text-left font-normal",
                         !watch("deadline") && "text-muted-foreground"
                       )}
+                      type="button"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {watch("deadline") ? 
