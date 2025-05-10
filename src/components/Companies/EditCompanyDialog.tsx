@@ -1,3 +1,5 @@
+
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,14 +15,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
-import { useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ProgressStepper } from '@/components/ui/progress-stepper';
+import { cn } from '@/lib/utils';
 
 // Form schema
 const companyFormSchema = z.object({
@@ -44,6 +51,8 @@ export const EditCompanyDialog = ({
   onClose,
   companyId,
 }: EditCompanyDialogProps) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 2;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -89,6 +98,7 @@ export const EditCompanyDialog = ({
       queryClient.invalidateQueries({ queryKey: ['company', companyId] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['childCompanies'] });
+      setCurrentStep(1); // Reset step
       onClose();
     },
     onError: (error: Error) => {
@@ -100,98 +110,162 @@ export const EditCompanyDialog = ({
     },
   });
   
+  const goToNextStep = () => {
+    setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+  };
+
+  const goToPreviousStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+  
   const onSubmit = (values: CompanyFormValues) => {
+    if (currentStep < totalSteps) {
+      goToNextStep();
+      return;
+    }
     updateCompanyMutation.mutate(values);
   };
   
+  // Render basic info step (step 1)
+  const renderBasicInfoStep = () => (
+    <>
+      <FormField
+        control={form.control}
+        name="name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Company Name</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={form.control}
+        name="website"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Website</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
+  );
+  
+  // Render contact details step (step 2)
+  const renderContactDetailsStep = () => (
+    <>
+      <FormField
+        control={form.control}
+        name="phone"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Phone Number</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={form.control}
+        name="address"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Address</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={form.control}
+        name="logo_url"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Logo URL</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormDescription>
+              Direct URL to company logo image
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
+  );
+  
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        setCurrentStep(1); // Reset to first step when closing
+      }
+      onClose();
+    }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Company</DialogTitle>
+          <DialogDescription>
+            Step {currentStep} of {totalSteps}: {
+              currentStep === 1 ? 'Basic Information' : 'Contact Details'
+            }
+          </DialogDescription>
         </DialogHeader>
+        
+        <ProgressStepper currentStep={currentStep} totalSteps={totalSteps} />
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {currentStep === 1 && renderBasicInfoStep()}
+            {currentStep === 2 && renderContactDetailsStep()}
             
-            <FormField
-              control={form.control}
-              name="website"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Website</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="logo_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Logo URL</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-              <Button 
-                type="submit" 
-                disabled={updateCompanyMutation.isPending}
-              >
-                {updateCompanyMutation.isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
+            <DialogFooter className="flex justify-between pt-4 sm:justify-between">
+              <div>
+                {currentStep > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={goToPreviousStep}
+                    className="flex items-center gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Back
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                <Button 
+                  type="submit" 
+                  className="flex items-center gap-1"
+                  disabled={updateCompanyMutation.isPending}
+                >
+                  {updateCompanyMutation.isPending 
+                    ? 'Saving...' 
+                    : currentStep === totalSteps 
+                      ? 'Save Changes' 
+                      : (
+                        <>
+                          Next <ChevronRight className="h-4 w-4" />
+                        </>
+                      )
+                  }
+                </Button>
+              </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

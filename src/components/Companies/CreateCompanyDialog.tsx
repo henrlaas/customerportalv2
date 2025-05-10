@@ -23,9 +23,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
+import { ProgressStepper } from '@/components/ui/progress-stepper';
+import { ChevronLeft, ChevronRight, Globe, Building } from 'lucide-react';
 import type { Company } from '@/types/company';
-import { Globe, Building } from 'lucide-react';
 
 // Form schema - simplified for subsidiaries
 const companyFormSchema = z.object({
@@ -52,6 +54,8 @@ export const CreateCompanyDialog = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [logo, setLogo] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 2;
   
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
@@ -81,6 +85,15 @@ export const CreateCompanyDialog = ({
       fetchLogo();
     }
   }, [website]);
+  
+  // Handle steps navigation
+  const goToNextStep = () => {
+    setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+  };
+
+  const goToPreviousStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
   
   // Create company mutation
   const createCompanyMutation = useMutation({
@@ -122,6 +135,7 @@ export const CreateCompanyDialog = ({
       }
       form.reset();
       setLogo(null);
+      setCurrentStep(1);
       onClose();
     },
     onError: (error: Error) => {
@@ -134,95 +148,145 @@ export const CreateCompanyDialog = ({
   });
   
   const onSubmit = (values: CompanyFormValues) => {
+    if (currentStep < totalSteps) {
+      goToNextStep();
+      return;
+    }
     createCompanyMutation.mutate(values);
   };
   
+  // Render basic info step (step 1)
+  const renderBasicInfoStep = () => (
+    <>
+      <div className="flex items-start gap-4">
+        <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
+          {logo ? (
+            <img 
+              src={logo} 
+              alt="Company Logo" 
+              className="h-12 w-12 object-contain"
+            />
+          ) : (
+            <Building className="h-8 w-8 text-gray-400" />
+          )}
+        </div>
+        <div className="flex-1">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Company Name*</FormLabel>
+                <FormControl>
+                  <Input placeholder="Subsidiary Name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
+      
+      <FormField
+        control={form.control}
+        name="organization_number"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Organization Number</FormLabel>
+            <FormControl>
+              <Input placeholder="123456-7890" {...field} />
+            </FormControl>
+            <FormDescription>
+              Official registration number of the subsidiary
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
+  );
+  
+  // Render website step (step 2)
+  const renderWebsiteStep = () => (
+    <>
+      <FormField
+        control={form.control}
+        name="website"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <Globe className="h-4 w-4" /> Website
+            </FormLabel>
+            <FormControl>
+              <Input placeholder="https://subsidiary.example.com" {...field} />
+            </FormControl>
+            <FormDescription>
+              Company website (logo will be automatically fetched)
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
+  );
+  
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        setCurrentStep(1); // Reset to first step when closing
+      }
+      onClose();
+    }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Subsidiary</DialogTitle>
           <DialogDescription>
-            Add a new subsidiary to this company. Address and contact details will be copied from the parent company.
+            Step {currentStep} of {totalSteps}: {
+              currentStep === 1 ? 'Basic Information' : 'Website'
+            }
           </DialogDescription>
         </DialogHeader>
         
+        <ProgressStepper currentStep={currentStep} totalSteps={totalSteps} />
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
-                {logo ? (
-                  <img 
-                    src={logo} 
-                    alt="Company Logo" 
-                    className="h-12 w-12 object-contain"
-                  />
-                ) : (
-                  <Building className="h-8 w-8 text-gray-400" />
+            {currentStep === 1 && renderBasicInfoStep()}
+            {currentStep === 2 && renderWebsiteStep()}
+            
+            <DialogFooter className="flex justify-between pt-4 sm:justify-between">
+              <div>
+                {currentStep > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={goToPreviousStep}
+                    className="flex items-center gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Back
+                  </Button>
                 )}
               </div>
-              <div className="flex-1">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company Name*</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Subsidiary Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                <Button 
+                  type="submit"
+                  className="flex items-center gap-1"
+                  disabled={createCompanyMutation.isPending}
+                >
+                  {createCompanyMutation.isPending 
+                    ? 'Creating...' 
+                    : currentStep === totalSteps 
+                      ? 'Create Subsidiary' 
+                      : (
+                        <>
+                          Next <ChevronRight className="h-4 w-4" />
+                        </>
+                      )
+                  }
+                </Button>
               </div>
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="organization_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Organization Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="123456-7890" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Official registration number of the subsidiary
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="website"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Globe className="h-4 w-4" /> Website
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://subsidiary.example.com" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Company website (logo will be automatically fetched)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-              <Button 
-                type="submit" 
-                disabled={createCompanyMutation.isPending}
-              >
-                {createCompanyMutation.isPending ? 'Creating...' : 'Create Subsidiary'}
-              </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>
