@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -397,7 +398,7 @@ export const TasksPage = () => {
   };
 
   return (
-    <div className="w-full max-w-full px-4 sm:px-6 py-6 overflow-x-hidden">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4 py-8">
       <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Tasks</h1>
