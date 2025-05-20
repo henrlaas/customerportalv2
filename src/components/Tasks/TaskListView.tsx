@@ -18,6 +18,7 @@ interface Task {
   priority: string;
   creator_id: string | null;
   campaign_id: string | null;
+  project_id: string | null;
   due_date: string | null;
   related_type: string | null;
   client_visible: boolean | null;
@@ -36,7 +37,8 @@ interface TaskListViewProps {
   getStatusBadge: (status: string) => React.ReactNode;
   getPriorityBadge: (priority: string) => React.ReactNode;
   getTaskAssignees: (task: Task) => Contact[];
-  getCampaignName: (campaignId: string | null) => string;
+  getCampaignName: (campaignId: string | null) => string | null;
+  getProjectName: (projectId: string | null) => string | null;
   profiles: Contact[];
   onTaskClick: (taskId: string) => void;
 }
@@ -47,6 +49,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   getPriorityBadge,
   getTaskAssignees,
   getCampaignName,
+  getProjectName,
   profiles,
   onTaskClick,
 }) => {
@@ -96,6 +99,10 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                   {task.campaign_id ? (
                     <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
                       Campaign: {getCampaignName(task.campaign_id)}
+                    </Badge>
+                  ) : task.project_id ? (
+                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                      Project: {getProjectName(task.project_id)}
                     </Badge>
                   ) : task.related_type ? (
                     <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
