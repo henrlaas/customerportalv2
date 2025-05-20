@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -158,7 +157,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
           </CardContent>
         </Card>
       ) : (
-        <div className="flex flex-wrap items-start gap-2">
+        <div className="flex flex-wrap items-start gap-2 mt-6">
           {orderedMilestones.map((milestone, index) => (
             <React.Fragment key={milestone.id}>
               <Card 
