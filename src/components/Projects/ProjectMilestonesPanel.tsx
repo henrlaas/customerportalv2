@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -106,7 +105,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
         <div className="flex flex-wrap items-start gap-2">
           {orderedMilestones.map((milestone, index) => (
             <React.Fragment key={milestone.id}>
-              <Card className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-52`}>
+              <Card className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72`}>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-base">{milestone.name}</CardTitle>
@@ -198,4 +197,3 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
     </div>
   );
 };
-
