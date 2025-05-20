@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -48,6 +49,7 @@ import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } fr
 import type { Company } from '@/types/company';
 import { useAuth } from '@/contexts/AuthContext';
 import { PhoneInput } from '@/components/ui/phone-input';
+import { ProgressStepper } from '@/components/ui/progress-stepper';
 
 const CLIENT_TYPES = {
   MARKETING: 'Marketing',
@@ -202,13 +204,8 @@ export function MultiStageCompanyDialog({
           </DialogDescription>
         </DialogHeader>
         
-        {/* Progress bar */}
-        <div className="w-full bg-muted rounded-full h-2.5 mb-4">
-          <div 
-            className="bg-primary h-2.5 rounded-full transition-all duration-300"
-            style={{ width: `${(stage / totalStages) * 100}%` }}
-          ></div>
-        </div>
+        {/* Replace old progress bar with ProgressStepper component */}
+        <ProgressStepper currentStep={stage} totalSteps={totalStages} />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -591,7 +588,7 @@ export function MultiStageCompanyDialog({
                 >
                   {createCompanyMutation.isPending 
                     ? 'Creating...' 
-                    : stage === totalStages 
+                    : stage === totalSteps 
                       ? 'Create Company' 
                       : (
                         <>
