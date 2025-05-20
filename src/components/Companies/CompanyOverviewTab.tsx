@@ -20,15 +20,6 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-white shadow-md">
           <CardHeader>
-            <CardTitle className="text-lg">Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-500">No recent activity to display.</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-white shadow-md">
-          <CardHeader>
             <CardTitle className="text-lg">Company Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -141,6 +132,15 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
               <div className="font-medium">Partner:</div>
               <div className="col-span-2">{company.is_partner ? 'Yes' : 'No'}</div>
             </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white shadow-md">
+          <CardHeader>
+            <CardTitle className="text-lg">Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-500">No recent activity to display.</p>
           </CardContent>
         </Card>
       </div>
