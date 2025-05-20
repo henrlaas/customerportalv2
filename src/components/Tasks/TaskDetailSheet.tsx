@@ -78,32 +78,109 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     queryFn: async () => {
       if (!taskId) return null;
 
-      // Update the query to use the proper syntax and handle errors better
-      const { data, error } = await supabase
+      // Modified query to fetch task data without using join syntax
+      const { data: taskData, error: taskError } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          assignees:task_assignees(id, user_id),
-          company:company_id(*),
-          campaign:campaign_id(*),
-          project:project_id(*),
-          creator:creator_id(*)
-        `)
+        .select('*')
         .eq('id', taskId)
         .single();
 
-      if (error) {
-        console.error('Error fetching task:', error);
+      if (taskError) {
+        console.error('Error fetching task:', taskError);
         toast({
           title: 'Error fetching task',
-          description: error.message,
+          description: taskError.message,
           variant: 'destructive',
         });
         return null;
       }
 
-      console.log('Task data:', data);
-      return data;
+      // Fetch assignees separately
+      const { data: assigneesData, error: assigneesError } = await supabase
+        .from('task_assignees')
+        .select('id, user_id')
+        .eq('task_id', taskId);
+
+      if (assigneesError) {
+        console.error('Error fetching task assignees:', assigneesError);
+      }
+
+      // Fetch company data if company_id exists
+      let companyData = null;
+      if (taskData.company_id) {
+        const { data: company, error: companyError } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', taskData.company_id)
+          .single();
+        
+        if (!companyError) {
+          companyData = company;
+        } else {
+          console.error('Error fetching company:', companyError);
+        }
+      }
+
+      // Fetch campaign data if campaign_id exists
+      let campaignData = null;
+      if (taskData.campaign_id) {
+        const { data: campaign, error: campaignError } = await supabase
+          .from('campaigns')
+          .select('*')
+          .eq('id', taskData.campaign_id)
+          .single();
+        
+        if (!campaignError) {
+          campaignData = campaign;
+        } else {
+          console.error('Error fetching campaign:', campaignError);
+        }
+      }
+
+      // Fetch project data if project_id exists
+      let projectData = null;
+      if (taskData.project_id) {
+        const { data: project, error: projectError } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('id', taskData.project_id)
+          .single();
+        
+        if (!projectError) {
+          projectData = project;
+        } else {
+          console.error('Error fetching project:', projectError);
+        }
+      }
+
+      // Fetch creator profile if creator_id exists
+      let creatorData = null;
+      if (taskData.creator_id) {
+        const { data: creator, error: creatorError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', taskData.creator_id)
+          .single();
+        
+        if (!creatorError) {
+          creatorData = creator;
+        } else {
+          console.error('Error fetching creator:', creatorError);
+        }
+      }
+
+      // Combine all data
+      const completeTaskData = {
+        ...taskData,
+        assignees: assigneesData || [],
+        company: companyData,
+        campaign: campaignData,
+        project: projectData,
+        creator: creatorData
+      };
+
+      console.log('Task data:', completeTaskData);
+      return completeTaskData;
     },
     enabled: !!taskId && isOpen,
   });
