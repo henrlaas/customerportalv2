@@ -24,49 +24,6 @@ interface TaskDetailSheetProps {
   taskId: string | null;
 }
 
-// Define more specific types for our related entities
-interface TaskProject {
-  id: string;
-  name: string;
-}
-
-interface TaskCompany {
-  id: string;
-  name: string;
-}
-
-interface TaskCampaign {
-  id: string;
-  name: string;
-}
-
-interface TaskCreator {
-  id: string;
-  first_name?: string | null;
-  last_name?: string | null;
-  avatar_url?: string | null;
-}
-
-// Type for project reference that might be an error
-type ProjectReference = TaskProject | null | { error: true } & Record<string, unknown>;
-type CreatorReference = TaskCreator | null | { error: true } & Record<string, unknown>;
-
-interface TaskData {
-  id: string;
-  title: string;
-  description?: string | null;
-  status: string;
-  priority: string;
-  due_date?: string | null;
-  company?: TaskCompany | null;
-  campaign?: TaskCampaign | null;
-  project?: ProjectReference;
-  creator?: CreatorReference;
-  created_at: string;
-  assignees?: { id: string; user_id: string }[];
-  subtasks?: any[];
-}
-
 export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   isOpen,
   onOpenChange,
@@ -104,7 +61,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         return null;
       }
 
-      return data as unknown as TaskData;
+      return data;
     },
     enabled: !!taskId && isOpen,
   });
@@ -182,16 +139,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     }
   };
 
-  // Helper function to check if a project object is valid
-  const isValidProject = (project: ProjectReference): project is TaskProject => {
-    return !!project && !('error' in project) && 'id' in project && 'name' in project;
-  };
-
-  // Helper function to check if a creator object is valid
-  const isValidCreator = (creator: CreatorReference): creator is TaskCreator => {
-    return !!creator && !('error' in creator) && 'id' in creator;
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -261,8 +208,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         <div>{task.campaign.name}</div>
                       </div>
                     )}
-                    {/* Display project only if it's a valid project object */}
-                    {task.project && isValidProject(task.project) && (
+                    {task.project && (
                       <div>
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Project</h3>
                         <div>{task.project.name}</div>
@@ -271,17 +217,16 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     <div>
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Created by</h3>
                       <div className="flex items-center">
-                        {/* Handle creator based on whether it's valid */}
-                        {task.creator && isValidCreator(task.creator) ? (
+                        {task.creator ? (
                           <>
                             <Avatar className="h-6 w-6 mr-2">
                               <AvatarFallback>
-                                {(task.creator.first_name?.[0] || '?')}
-                                {(task.creator.last_name?.[0] || '')}
+                                {task.creator.first_name?.[0] || '?'}
+                                {task.creator.last_name?.[0] || ''}
                               </AvatarFallback>
                             </Avatar>
                             <span>
-                              {task.creator.first_name || ''} {task.creator.last_name || ''}
+                              {task.creator.first_name} {task.creator.last_name}
                             </span>
                           </>
                         ) : (
