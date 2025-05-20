@@ -3,11 +3,15 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FileTextIcon, ClockIcon, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectMilestones } from '@/hooks/useProjectMilestones';
 import { ProjectMilestonesPanel } from '@/components/Projects/ProjectMilestonesPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { TaskListView } from '@/components/Tasks/TaskListView';
+import { Badge } from '@/components/ui/badge';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -17,6 +21,96 @@ const ProjectDetailsPage = () => {
 
   // Get selected project details
   const selectedProject = projects?.find(p => p.id === projectId);
+
+  // Fetch tasks related to this project
+  const { data: projectTasks, isLoading: isLoadingTasks } = useQuery({
+    queryKey: ['project-tasks', projectId],
+    queryFn: async () => {
+      if (!projectId) return [];
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          assignees:task_assignees(id, user_id),
+          creator:creator_id(id, first_name, last_name, avatar_url)
+        `)
+        .eq('project_id', projectId);
+      
+      if (error) {
+        console.error('Error fetching project tasks:', error);
+        throw error;
+      }
+      
+      return data || [];
+    },
+    enabled: !!projectId
+  });
+
+  // Fetch profiles for task assignees
+  const { data: profiles = [] } = useQuery({
+    queryKey: ['profiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url');
+      
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        throw error;
+      }
+      
+      return data || [];
+    }
+  });
+
+  // Helper functions for the TaskListView component
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'todo':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">To Do</Badge>;
+      case 'in_progress':
+        return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">In Progress</Badge>;
+      case 'completed':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Completed</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">High</Badge>;
+      case 'medium':
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Medium</Badge>;
+      case 'low':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Low</Badge>;
+      default:
+        return <Badge variant="outline">{priority}</Badge>;
+    }
+  };
+
+  const getTaskAssignees = (task: any) => {
+    if (!task.assignees) return [];
+    
+    return task.assignees.map((assignee: any) => {
+      const profile = profiles.find((p: any) => p.id === assignee.user_id);
+      return profile || { id: assignee.user_id };
+    });
+  };
+
+  const getCampaignName = (campaignId: string | null) => {
+    return campaignId ? "Campaign" : "";
+  };
+
+  const getProjectName = (projectId: string | null) => {
+    return selectedProject?.name || "";
+  };
+
+  const handleTaskClick = (taskId: string) => {
+    navigate(`/tasks/${taskId}`);
+  };
 
   if (!selectedProject) {
     return (
@@ -49,7 +143,7 @@ const ProjectDetailsPage = () => {
       </div>
       
       <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <div>
             <h3 className="font-semibold text-lg mb-2">Project Information</h3>
             <p className="text-gray-700 mb-1"><span className="font-medium">Company:</span> {selectedProject?.company?.name}</p>
@@ -65,33 +159,16 @@ const ProjectDetailsPage = () => {
               <span className="font-medium">Created:</span> {selectedProject && new Date(selectedProject.created_at).toLocaleDateString()}
             </p>
           </div>
-
-          <div>
-            <h3 className="font-semibold text-lg mb-2">Actions</h3>
-            <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" onClick={() => navigate(`/tasks?projectId=${selectedProject?.id}`)}>
-                <FileTextIcon className="mr-2 h-4 w-4" />
-                View Associated Tasks
-              </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => navigate(`/time-tracking?projectId=${selectedProject?.id}`)}>
-                <ClockIcon className="mr-2 h-4 w-4" />
-                View Time Entries
-              </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => navigate(`/contracts?projectId=${selectedProject?.id}`)}>
-                <FileTextIcon className="mr-2 h-4 w-4" />
-                View Contracts
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Milestones and Tasks Tabs */}
+      {/* Updated Tabs */}
       <Tabs defaultValue="milestones">
         <TabsList>
           <TabsTrigger value="milestones">Milestones</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="time">Time Tracking</TabsTrigger>
+          <TabsTrigger value="time">Time Entries</TabsTrigger>
+          <TabsTrigger value="contracts">Contracts</TabsTrigger>
         </TabsList>
         
         <TabsContent value="milestones">
@@ -102,14 +179,43 @@ const ProjectDetailsPage = () => {
         </TabsContent>
         
         <TabsContent value="tasks">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p>Associated tasks will appear here. Click 'View Associated Tasks' to see all tasks.</p>
-          </div>
+          {isLoadingTasks ? (
+            <div className="flex justify-center items-center p-12">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>
+          ) : projectTasks && projectTasks.length > 0 ? (
+            <TaskListView 
+              tasks={projectTasks}
+              getStatusBadge={getStatusBadge}
+              getPriorityBadge={getPriorityBadge}
+              getTaskAssignees={getTaskAssignees}
+              getCampaignName={getCampaignName}
+              profiles={profiles}
+              onTaskClick={handleTaskClick}
+              getProjectName={getProjectName}
+            />
+          ) : (
+            <div className="bg-white rounded-lg shadow p-6 text-center">
+              <p className="text-gray-500">No tasks associated with this project yet.</p>
+              <Button 
+                className="mt-4" 
+                onClick={() => navigate('/tasks/new?projectId=' + projectId)}
+              >
+                Create a Task
+              </Button>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="time">
           <div className="bg-white rounded-lg shadow p-6">
-            <p>Time tracking information will appear here. Click 'View Time Entries' to see all entries.</p>
+            <p className="text-center text-gray-500">Time tracking entries for this project will appear here.</p>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="contracts">
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-center text-gray-500">Contracts related to this project will appear here.</p>
           </div>
         </TabsContent>
       </Tabs>
