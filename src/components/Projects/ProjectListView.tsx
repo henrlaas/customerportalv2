@@ -73,7 +73,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                 onClick={() => handleProjectClick(project.id)}
               >
                 <TableCell className="font-medium">{project.name}</TableCell>
-                <TableCell>{project.company?.name || 'Unknown'}</TableCell>
+                <TableCell>{project.company?.name || 'No Company'}</TableCell>
                 <TableCell>{project.value?.toLocaleString() || 'N/A'} NOK</TableCell>
                 <TableCell>
                   <Badge 
