@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,18 +72,42 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
     if (!projectId) return;
     
     try {
-      await completeMilestone({
-        milestoneId: milestoneId,
-        status: status
-      });
-      
-      toast({
-        title: status === 'completed' ? "Milestone completed" : "Milestone status reset",
-        description: status === 'completed' 
-          ? "The milestone has been marked as completed." 
-          : "The milestone is now marked as not completed.",
-        duration: 3000
-      });
+      if (status === 'created') {
+        // Find the index of the current milestone in the ordered list
+        const currentIndex = orderedMilestones.findIndex(m => m.id === milestoneId);
+        
+        // Get all milestones that come after this one in the sequence
+        const milestonesToUpdate = orderedMilestones
+          .filter((_, index) => index >= currentIndex)
+          .filter(m => m.status === 'completed')
+          .map(m => m.id);
+        
+        // Update each milestone status sequentially
+        for (const mId of milestonesToUpdate) {
+          await completeMilestone({
+            milestoneId: mId,
+            status: 'created'
+          });
+        }
+        
+        toast({
+          title: "Milestones updated",
+          description: "The selected milestone and all subsequent milestones have been marked as not completed.",
+          duration: 3000
+        });
+      } else {
+        // For marking as completed, just update this single milestone
+        await completeMilestone({
+          milestoneId: milestoneId,
+          status: status
+        });
+        
+        toast({
+          title: "Milestone completed",
+          description: "The milestone has been marked as completed.",
+          duration: 3000
+        });
+      }
     } catch (error) {
       console.error("Error updating milestone status:", error);
       toast({
