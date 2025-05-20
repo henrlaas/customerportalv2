@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { format } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -62,6 +62,19 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
       return name || 'Unknown User';
     }
     return 'Unknown User';
+  };
+  
+  // Helper function to safely format dates
+  const safeFormatDate = (dateString: string | null) => {
+    if (!dateString) return 'No date';
+    
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? format(date, 'MMM dd, yyyy') : 'Invalid date';
+    } catch (error) {
+      console.error(`Error formatting date: ${dateString}`, error);
+      return 'Invalid date';
+    }
   };
 
   const handleProjectClick = (projectId: string) => {
@@ -150,12 +163,8 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                       <span>{getCreatorName(project)}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{format(new Date(project.created_at), 'MMM dd, yyyy')}</TableCell>
-                  <TableCell>
-                    {project.deadline 
-                      ? format(new Date(project.deadline), 'MMM dd, yyyy')
-                      : 'No deadline'}
-                  </TableCell>
+                  <TableCell>{safeFormatDate(project.created_at)}</TableCell>
+                  <TableCell>{safeFormatDate(project.deadline)}</TableCell>
                   <TableCell>
                     <Button 
                       variant="ghost" 
@@ -201,3 +210,4 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
     </>
   );
 };
+
