@@ -1,3 +1,4 @@
+
 // ----- Imports
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -136,28 +137,27 @@ export function MultiStageCompanyDialog({
     },
   });
 
+  const handleNextStage = async () => {
+    if (stage === 1) {
+      // Validate only basic info fields
+      const result = await form.trigger(['name', 'organization_number', 'client_types']);
+      if (result) {
+        setStage(2);
+      }
+    } else if (stage === 2) {
+      // Validate only contact details fields
+      const result = await form.trigger(['website', 'phone', 'invoice_email']);
+      if (result) {
+        setStage(3);
+      }
+    }
+  };
+
   const onSubmit = async (values: CompanyFormValues) => {
     if (stage < totalStages) {
-      // Validate just the current stage fields before proceeding
-      try {
-        if (stage === 1) {
-          // Validate basic info fields
-          await form.trigger(['name', 'organization_number', 'client_types']);
-          if (form.formState.errors.name || form.formState.errors.organization_number || form.formState.errors.client_types) {
-            return; // Don't proceed if there are errors
-          }
-        } else if (stage === 2) {
-          // Validate contact details fields
-          await form.trigger(['website', 'phone', 'invoice_email']);
-          if (form.formState.errors.website || form.formState.errors.phone || form.formState.errors.invoice_email) {
-            return; // Don't proceed if there are errors
-          }
-        }
-        setStage(stage + 1);
-      } catch (error) {
-        console.error('Validation error:', error);
-      }
+      await handleNextStage();
     } else {
+      // If we're on the final stage, submit the form
       createCompanyMutation.mutate(values);
     }
   };
@@ -207,25 +207,23 @@ export function MultiStageCompanyDialog({
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  className={cn(
-                    "flex items-center gap-1 bg-black hover:bg-black/90",
-                    stage === totalStages ? "" : "bg-black hover:bg-black/90"
-                  )}
-                  disabled={createCompanyMutation.isPending}
-                >
-                  {createCompanyMutation.isPending
-                    ? 'Creating...'
-                    : stage === totalStages
-                      ? 'Create Company'
-                      : (
-                        <>
-                          Next <ChevronRight className="h-4 w-4" />
-                        </>
-                      )
-                  }
-                </Button>
+                {stage < totalStages ? (
+                  <Button
+                    type="button"
+                    className="flex items-center gap-1 bg-black hover:bg-black/90"
+                    onClick={handleNextStage}
+                  >
+                    Next <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    className="flex items-center gap-1 bg-black hover:bg-black/90"
+                    disabled={createCompanyMutation.isPending}
+                  >
+                    {createCompanyMutation.isPending ? 'Creating...' : 'Create Company'}
+                  </Button>
+                )}
               </div>
             </DialogFooter>
           </form>
