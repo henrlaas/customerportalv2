@@ -57,7 +57,7 @@ const CompaniesPage = () => {
   };
   
   return (
-    <div className="w-full max-w-full px-4 sm:px-6 py-6 space-y-6">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Companies</h1>
         {canModify && (
