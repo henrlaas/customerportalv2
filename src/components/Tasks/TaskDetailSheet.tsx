@@ -14,10 +14,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar, Check, Clock, Link2, Pencil, Plus, Trash2, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { TaskForm } from './TaskForm';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TaskTimer } from './TaskTimer';
 import { TaskAttachments } from './TaskAttachments';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface TaskDetailSheetProps {
   isOpen: boolean;
@@ -74,6 +75,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const queryClient = useQueryClient();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: task, isLoading } = useQuery({
     queryKey: ['task', taskId],
@@ -223,6 +225,43 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     },
   });
 
+  // Delete task mutation
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+      
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast({
+        title: 'Task deleted',
+        description: 'The task has been successfully deleted',
+      });
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error deleting task',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Handle delete task
+  const handleDeleteTask = () => {
+    if (taskId) {
+      deleteTaskMutation.mutate(taskId);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
   // Function to get assignee names
   const getAssigneeNames = () => {
     if (!task?.assignees) return 'Unassigned';
@@ -280,6 +319,15 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   <Pencil className="h-4 w-4 mr-1" />
                   Edit
                 </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-red-600 hover:bg-red-50"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
               </div>
             </SheetHeader>
             
@@ -291,102 +339,109 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   <div className="h-20 bg-gray-200 rounded"></div>
                 </div>
               ) : task ? (
-                <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="details">Details</TabsTrigger>
-                    <TabsTrigger value="time">Time Tracking</TabsTrigger>
-                    <TabsTrigger value="attachments">Attachments</TabsTrigger>
-                  </TabsList>
+                <>
+                  {/* Status and Priority section - Always visible */}
+                  <div className="mb-4 flex flex-wrap gap-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">Status</h3>
+                      <div>{getStatusBadge(task.status)}</div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">Priority</h3>
+                      <div>{getPriorityBadge(task.priority)}</div>
+                    </div>
+                  </div>
                   
-                  {/* Details Tab */}
-                  <TabsContent value="details" className="mt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Status</h3>
-                        <div>{getStatusBadge(task.status)}</div>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Priority</h3>
-                        <div>{getPriorityBadge(task.priority)}</div>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Assigned to</h3>
-                        <div className="flex items-center">
-                          <UserPlus className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>{getAssigneeNames()}</span>
-                        </div>
-                      </div>
-                      {task.due_date && (
+                  {/* Description section - Always visible */}
+                  {task.description && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">Description</h3>
+                      <div className="bg-gray-50 p-3 rounded whitespace-pre-wrap">{task.description}</div>
+                    </div>
+                  )}
+                  
+                  <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="details">Details</TabsTrigger>
+                      <TabsTrigger value="time">Time Tracking</TabsTrigger>
+                      <TabsTrigger value="attachments">Attachments</TabsTrigger>
+                    </TabsList>
+                    
+                    {/* Details Tab */}
+                    <TabsContent value="details" className="mt-0">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                          <h3 className="text-sm font-medium text-gray-500 mb-1">Due date</h3>
+                          <h3 className="text-sm font-medium text-gray-500 mb-1">Assigned to</h3>
                           <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                            <span>{format(new Date(task.due_date), 'PPP')}</span>
+                            <UserPlus className="h-4 w-4 mr-2 text-gray-400" />
+                            <span>{getAssigneeNames()}</span>
                           </div>
                         </div>
-                      )}
-                      {isValidCompany(task.company) && (
+                        {task.due_date && (
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-500 mb-1">Due date</h3>
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                              <span>{format(new Date(task.due_date), 'PPP')}</span>
+                            </div>
+                          </div>
+                        )}
+                        {isValidCompany(task.company) && (
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-500 mb-1">Company</h3>
+                            <div>{task.company.name}</div>
+                          </div>
+                        )}
+                        {isValidCampaign(task.campaign) && (
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-500 mb-1">Campaign</h3>
+                            <div>{task.campaign.name}</div>
+                          </div>
+                        )}
+                        {isValidProject(task.project) && (
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-500 mb-1">Project</h3>
+                            <div>{task.project.name}</div>
+                          </div>
+                        )}
                         <div>
-                          <h3 className="text-sm font-medium text-gray-500 mb-1">Company</h3>
-                          <div>{task.company.name}</div>
+                          <h3 className="text-sm font-medium text-gray-500 mb-1">Created by</h3>
+                          <div className="flex items-center">
+                            {isValidCreator(task.creator) ? (
+                              <>
+                                <Avatar className="h-6 w-6 mr-2">
+                                  <AvatarFallback>
+                                    {task.creator.first_name?.[0] || '?'}
+                                    {task.creator.last_name?.[0] || ''}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>
+                                  {task.creator.first_name} {task.creator.last_name}
+                                </span>
+                              </>
+                            ) : (
+                              <span>Unknown</span>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      {isValidCampaign(task.campaign) && (
                         <div>
-                          <h3 className="text-sm font-medium text-gray-500 mb-1">Campaign</h3>
-                          <div>{task.campaign.name}</div>
-                        </div>
-                      )}
-                      {isValidProject(task.project) && (
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500 mb-1">Project</h3>
-                          <div>{task.project.name}</div>
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Created by</h3>
-                        <div className="flex items-center">
-                          {isValidCreator(task.creator) ? (
-                            <>
-                              <Avatar className="h-6 w-6 mr-2">
-                                <AvatarFallback>
-                                  {task.creator.first_name?.[0] || '?'}
-                                  {task.creator.last_name?.[0] || ''}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span>
-                                {task.creator.first_name} {task.creator.last_name}
-                              </span>
-                            </>
-                          ) : (
-                            <span>Unknown</span>
-                          )}
+                          <h3 className="text-sm font-medium text-gray-500 mb-1">Created</h3>
+                          <div>{format(new Date(task.created_at), 'PPP')}</div>
                         </div>
                       </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Created</h3>
-                        <div>{format(new Date(task.created_at), 'PPP')}</div>
-                      </div>
-                    </div>
-                  
-                    {task.description && (
-                      <div className="mb-6">
-                        <h3 className="text-sm font-medium text-gray-500 mb-2">Description</h3>
-                        <div className="bg-gray-50 p-3 rounded whitespace-pre-wrap">{task.description}</div>
-                      </div>
-                    )}
-                  </TabsContent>
-                  
-                  {/* Time Tracking Tab */}
-                  <TabsContent value="time" className="mt-0">
-                    <TaskTimer taskId={task.id} />
-                  </TabsContent>
-                  
-                  {/* Attachments Tab */}
-                  <TabsContent value="attachments" className="mt-0">
-                    <TaskAttachments taskId={task.id} />
-                  </TabsContent>
-                </Tabs>
+                    </TabsContent>
+                    
+                    {/* Time Tracking Tab */}
+                    <TabsContent value="time" className="mt-0">
+                      <TaskTimer taskId={task.id} />
+                    </TabsContent>
+                    
+                    {/* Attachments Tab */}
+                    <TabsContent value="attachments" className="mt-0">
+                      <TaskAttachments taskId={task.id} />
+                    </TabsContent>
+                  </Tabs>
+                </>
               ) : (
                 <div className="text-center p-6">
                   <p>Task not found</p>
@@ -396,6 +451,27 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Delete Task Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this task? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={handleDeleteTask}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Task Dialog */}
       {task && (
