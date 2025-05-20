@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -588,7 +587,7 @@ export function MultiStageCompanyDialog({
                 >
                   {createCompanyMutation.isPending 
                     ? 'Creating...' 
-                    : stage === totalSteps 
+                    : stage === totalStages 
                       ? 'Create Company' 
                       : (
                         <>
