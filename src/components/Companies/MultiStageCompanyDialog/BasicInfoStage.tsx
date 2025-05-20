@@ -25,7 +25,7 @@ export function BasicInfoStage({ form, logo }: { form: any; logo: string | null 
               <FormItem>
                 <FormLabel>Company Name*</FormLabel>
                 <FormControl>
-                  <Input placeholder="Acme Corporation" {...field} required />
+                  <Input placeholder="Acme Corporation" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -38,9 +38,9 @@ export function BasicInfoStage({ form, logo }: { form: any; logo: string | null 
         name="organization_number"
         render={({ field }: any) => (
           <FormItem>
-            <FormLabel>Organization Number*</FormLabel>
+            <FormLabel>Organization Number</FormLabel>
             <FormControl>
-              <Input placeholder="123456-7890" {...field} required />
+              <Input placeholder="123456-7890" {...field} />
             </FormControl>
             <FormDescription>
               Official registration number of the company
