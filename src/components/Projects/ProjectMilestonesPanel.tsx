@@ -162,7 +162,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
           {orderedMilestones.map((milestone, index) => (
             <React.Fragment key={milestone.id}>
               <Card 
-                className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72 min-h-[180px] ${
+                className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72 h-[140px] ${
                   milestone.id === lastCompletedMilestoneId ? 'milestone-shine relative overflow-hidden' : ''
                 }`}
               >
@@ -174,7 +174,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="flex flex-col justify-between h-[calc(100%-64px)]">
+                <CardContent className="flex flex-col h-[calc(100%-64px)]">
                   {milestone.due_date && (
                     <div className="flex items-center text-sm text-muted-foreground mb-4">
                       <Calendar className="h-4 w-4 mr-1" />
