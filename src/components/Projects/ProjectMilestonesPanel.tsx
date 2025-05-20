@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
 import { useCreateMilestone } from '@/hooks/useCreateMilestone';
 import { useToast } from '@/hooks/use-toast';
-import '../components/Campaigns/animations.css';
+import '@/components/Campaigns/animations.css';
 
 interface ProjectMilestonesPanelProps {
   projectId: string | null;
