@@ -18,6 +18,28 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TaskTimer } from './TaskTimer';
 import { TaskAttachments } from './TaskAttachments';
 
+// Define types for related data structure
+interface TaskProject {
+  id: string;
+  name: string;
+}
+
+interface TaskCreator {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+}
+
+// Helper type guard functions
+function isValidProject(project: any): project is TaskProject {
+  return project && typeof project === 'object' && 'name' in project;
+}
+
+function isValidCreator(creator: any): creator is TaskCreator {
+  return creator && typeof creator === 'object' && 'id' in creator;
+}
+
 interface TaskDetailSheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -208,7 +230,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         <div>{task.campaign.name}</div>
                       </div>
                     )}
-                    {task.project && (
+                    {isValidProject(task.project) && (
                       <div>
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Project</h3>
                         <div>{task.project.name}</div>
@@ -217,7 +239,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     <div>
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Created by</h3>
                       <div className="flex items-center">
-                        {task.creator ? (
+                        {isValidCreator(task.creator) ? (
                           <>
                             <Avatar className="h-6 w-6 mr-2">
                               <AvatarFallback>
