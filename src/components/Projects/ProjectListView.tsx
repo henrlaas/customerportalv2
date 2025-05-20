@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -15,15 +16,15 @@ import { ProjectWithRelations } from '@/hooks/useProjects';
 
 interface ProjectListViewProps {
   projects: ProjectWithRelations[];
-  onProjectSelect: (projectId: string) => void;
   selectedProjectId: string | null;
 }
 
 export const ProjectListView: React.FC<ProjectListViewProps> = ({
   projects,
-  onProjectSelect,
   selectedProjectId,
 }) => {
+  const navigate = useNavigate();
+
   // Helper function to get creator initials
   const getCreatorInitials = (project: ProjectWithRelations) => {
     if (project.creator && (project.creator.first_name || project.creator.last_name)) {
@@ -43,6 +44,10 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
       return name || 'Unknown User';
     }
     return 'Unknown User';
+  };
+
+  const handleProjectClick = (projectId: string) => {
+    navigate(`/projects/${projectId}`);
   };
 
   return (
@@ -65,11 +70,11 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
               <TableRow 
                 key={project.id}
                 className={`cursor-pointer hover:bg-gray-100 ${project.id === selectedProjectId ? 'bg-muted' : ''}`}
-                onClick={() => onProjectSelect(project.id)}
+                onClick={() => handleProjectClick(project.id)}
               >
                 <TableCell className="font-medium">{project.name}</TableCell>
                 <TableCell>{project.company?.name || 'Unknown'}</TableCell>
-                <TableCell>{project.value.toLocaleString()} NOK</TableCell>
+                <TableCell>{project.value?.toLocaleString() || 'N/A'} NOK</TableCell>
                 <TableCell>
                   <Badge 
                     variant={project.price_type === 'fixed' ? 'default' : 'secondary'} 

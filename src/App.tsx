@@ -27,6 +27,7 @@ import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 import SetPassword from './pages/SetPassword';
 import ProjectsPage from './pages/ProjectsPage';
+import ProjectDetailsPage from './pages/ProjectDetailsPage';
 
 import { ProtectedRoute } from './components/providers/ProtectedRoute';
 import { ClientProtectedRoute } from './components/ClientProtectedRoute';
@@ -94,6 +95,7 @@ function App() {
                   <Route path="/campaigns/:campaignId/adsets/:adsetId/ads/:adId" element={<AdDetailsPage />} />
                   <Route path="/deals" element={<DealsPage />} />
                   <Route path="/projects" element={<ProjectsPage />} />
+                  <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
                   
                   {/* Update task routes to use our TaskRedirect component */}
                   <Route path="/tasks" element={<TasksPage />} />
