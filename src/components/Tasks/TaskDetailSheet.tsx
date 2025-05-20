@@ -78,21 +78,22 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     queryFn: async () => {
       if (!taskId) return null;
 
+      // Update the query to use the proper syntax and handle errors better
       const { data, error } = await supabase
         .from('tasks')
         .select(`
           *,
           assignees:task_assignees(id, user_id),
-          company:company_id(id, name),
-          campaign:campaign_id(id, name),
-          project:project_id(id, name),
-          creator:creator_id(id, first_name, last_name, avatar_url),
-          subtasks(*)
+          company:company_id(*),
+          campaign:campaign_id(*),
+          project:project_id(*),
+          creator:creator_id(*)
         `)
         .eq('id', taskId)
         .single();
 
       if (error) {
+        console.error('Error fetching task:', error);
         toast({
           title: 'Error fetching task',
           description: error.message,
@@ -101,6 +102,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         return null;
       }
 
+      console.log('Task data:', data);
       return data;
     },
     enabled: !!taskId && isOpen,
