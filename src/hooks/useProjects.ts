@@ -16,6 +16,7 @@ export interface ProjectWithRelations {
   company: {
     id: string;
     name: string;
+    website?: string | null;
   } | null;
   creator: {
     id: string;
@@ -37,7 +38,8 @@ export const useProjects = () => {
           *,
           company:company_id (
             id,
-            name
+            name,
+            website
           )
         `)
         .order('created_at', { ascending: false });
@@ -114,6 +116,23 @@ export const useProjects = () => {
     refetch();
     return data;
   };
+  
+  // Function to delete a project by id
+  const deleteProject = async (projectId: string) => {
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', projectId);
+
+    if (error) {
+      console.error('Error deleting project:', error);
+      throw error;
+    }
+
+    // Refetch projects to update the list
+    refetch();
+    return true;
+  };
 
   // Function to get a project by id with all related data
   const getProject = async (projectId: string): Promise<ProjectWithRelations> => {
@@ -160,6 +179,7 @@ export const useProjects = () => {
     isLoading,
     error,
     createProject,
+    deleteProject,
     getProject,
     refetch,
   };

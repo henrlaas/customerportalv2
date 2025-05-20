@@ -9,13 +9,14 @@ import { ProjectCreateDialog } from '@/components/Projects/ProjectCreateDialog';
 import { ProjectListView } from '@/components/Projects/ProjectListView';
 import { ProjectsSummaryCards } from '@/components/Projects/ProjectsSummaryCards';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 const ProjectsPage = () => {
   const { profile } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filter, setFilter] = useState<'all' | 'signed' | 'unsigned'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const { projects, isLoading: projectsLoading } = useProjects();
+  const { projects, isLoading: projectsLoading, refetch } = useProjects();
 
   // Filter projects based on contract status and search query
   const filteredProjects = projects ? projects.filter(project => {
@@ -36,6 +37,20 @@ const ProjectsPage = () => {
     
     return true;
   }) : [];
+
+  const handleDeleteProject = async (projectId: string) => {
+    const { deleteProject } = useProjects();
+    
+    try {
+      await deleteProject(projectId);
+      refetch(); // Refresh the projects list after deletion
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Failed to delete project');
+      return Promise.reject(error);
+    }
+  };
 
   return (
     <div className="container p-6 mx-auto">
@@ -101,6 +116,7 @@ const ProjectsPage = () => {
         <ProjectListView 
           projects={filteredProjects} 
           selectedProjectId={null}
+          onDeleteProject={handleDeleteProject}
         />
       ) : (
         <Card className="bg-white rounded-lg shadow p-6">
