@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Milestone } from '@/hooks/useProjectMilestones';
-import { Calendar, ChevronRight, Plus } from 'lucide-react';
+import { Calendar, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
 import { useCreateMilestone } from '@/hooks/useCreateMilestone';
@@ -108,6 +108,9 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Milestones</h3>
+        <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+          Add Milestone
+        </Button>
       </div>
 
       {orderedMilestones.length === 0 ? (
@@ -117,11 +120,11 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
           </CardContent>
         </Card>
       ) : (
-        <div className="flex flex-wrap items-start gap-4">
+        <div className="flex flex-wrap items-start gap-2">
           {orderedMilestones.map((milestone, index) => (
             <React.Fragment key={milestone.id}>
               <Card 
-                className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72 min-h-[180px] ${
+                className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72 ${
                   milestone.id === lastCompletedMilestoneId ? 'milestone-shine relative overflow-hidden' : ''
                 }`}
               >
@@ -135,7 +138,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
                 </CardHeader>
                 <CardContent>
                   {milestone.due_date && (
-                    <div className="flex items-center text-sm text-muted-foreground mb-6">
+                    <div className="flex items-center text-sm text-muted-foreground mb-4">
                       <Calendar className="h-4 w-4 mr-1" />
                       <span>Due: {format(new Date(milestone.due_date), 'MMM dd, yyyy')}</span>
                     </div>
@@ -145,7 +148,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="w-full mt-4"
+                      className="w-full"
                       onClick={() => handleCompleteMilestone(milestone.id, 'created')}
                       disabled={isCompleting}
                     >
@@ -155,7 +158,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="w-full mt-4"
+                      className="w-full"
                       onClick={() => handleCompleteMilestone(milestone.id, 'completed')}
                       disabled={isCompleting}
                     >
@@ -175,17 +178,6 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
           ))}
         </div>
       )}
-      
-      <div className="mt-6 flex justify-center">
-        <Button 
-          onClick={() => setIsAddDialogOpen(true)} 
-          size="sm"
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add Milestone
-        </Button>
-      </div>
 
       {/* Add Milestone Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
