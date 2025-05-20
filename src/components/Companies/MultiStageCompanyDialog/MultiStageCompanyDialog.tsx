@@ -1,4 +1,3 @@
-
 // ----- Imports
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -70,6 +69,7 @@ export function MultiStageCompanyDialog({
       mrr: 0,
       ...defaultValues,
     },
+    mode: 'onChange', // Enable validation as fields change
   });
 
   const website = form.watch('website');
@@ -136,9 +136,27 @@ export function MultiStageCompanyDialog({
     },
   });
 
-  const onSubmit = (values: CompanyFormValues) => {
+  const onSubmit = async (values: CompanyFormValues) => {
     if (stage < totalStages) {
-      setStage(stage + 1);
+      // Validate just the current stage fields before proceeding
+      try {
+        if (stage === 1) {
+          // Validate basic info fields
+          await form.trigger(['name', 'organization_number', 'client_types']);
+          if (form.formState.errors.name || form.formState.errors.organization_number || form.formState.errors.client_types) {
+            return; // Don't proceed if there are errors
+          }
+        } else if (stage === 2) {
+          // Validate contact details fields
+          await form.trigger(['website', 'phone', 'invoice_email']);
+          if (form.formState.errors.website || form.formState.errors.phone || form.formState.errors.invoice_email) {
+            return; // Don't proceed if there are errors
+          }
+        }
+        setStage(stage + 1);
+      } catch (error) {
+        console.error('Validation error:', error);
+      }
     } else {
       createCompanyMutation.mutate(values);
     }

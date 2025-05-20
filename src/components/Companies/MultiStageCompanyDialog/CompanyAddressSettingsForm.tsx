@@ -1,4 +1,3 @@
-
 import { MapPin, User } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { 
@@ -50,9 +49,9 @@ export const CompanyAddressSettingsForm = ({
             name="street_address"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Street Address</FormLabel>
+                <FormLabel>Street Address*</FormLabel>
                 <FormControl>
-                  <Input placeholder="123 Main St" {...field} />
+                  <Input placeholder="123 Main St" {...field} required />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -64,9 +63,9 @@ export const CompanyAddressSettingsForm = ({
             name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>City</FormLabel>
+                <FormLabel>City*</FormLabel>
                 <FormControl>
-                  <Input placeholder="Oslo" {...field} />
+                  <Input placeholder="Oslo" {...field} required />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -78,9 +77,9 @@ export const CompanyAddressSettingsForm = ({
             name="postal_code"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Postal Code</FormLabel>
+                <FormLabel>Postal Code*</FormLabel>
                 <FormControl>
-                  <Input placeholder="0123" {...field} />
+                  <Input placeholder="0123" {...field} required />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -92,7 +91,7 @@ export const CompanyAddressSettingsForm = ({
             name="country"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Country</FormLabel>
+                <FormLabel>Country*</FormLabel>
                 <FormControl>
                   <div className="flex items-center gap-2 h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
                     🇳🇴 Norge
@@ -113,11 +112,12 @@ export const CompanyAddressSettingsForm = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="flex items-center gap-2">
-                <User className="h-4 w-4" /> Advisor
+                <User className="h-4 w-4" /> Advisor*
               </FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
+                required
               >
                 <FormControl>
                   <SelectTrigger>
@@ -146,13 +146,14 @@ export const CompanyAddressSettingsForm = ({
             name="mrr"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Monthly Recurring Revenue</FormLabel>
+                <FormLabel>Monthly Recurring Revenue*</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
                     placeholder="1000"
                     {...field}
                     onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    required
                   />
                 </FormControl>
                 <FormDescription>
