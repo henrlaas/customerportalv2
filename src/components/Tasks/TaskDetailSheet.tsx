@@ -47,6 +47,10 @@ interface TaskCreator {
   avatar_url?: string | null;
 }
 
+// Type for project reference that might be an error
+type ProjectReference = TaskProject | null | { error: true } & Record<string, unknown>;
+type CreatorReference = TaskCreator | null | { error: true } & Record<string, unknown>;
+
 interface TaskData {
   id: string;
   title: string;
@@ -56,8 +60,8 @@ interface TaskData {
   due_date?: string | null;
   company?: TaskCompany | null;
   campaign?: TaskCampaign | null;
-  project?: TaskProject | null;
-  creator?: TaskCreator | null;
+  project?: ProjectReference;
+  creator?: CreatorReference;
   created_at: string;
   assignees?: { id: string; user_id: string }[];
   subtasks?: any[];
@@ -100,7 +104,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         return null;
       }
 
-      return data as TaskData;
+      return data as unknown as TaskData;
     },
     enabled: !!taskId && isOpen,
   });
@@ -178,6 +182,16 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     }
   };
 
+  // Helper function to check if a project object is valid
+  const isValidProject = (project: ProjectReference): project is TaskProject => {
+    return !!project && !('error' in project) && 'id' in project && 'name' in project;
+  };
+
+  // Helper function to check if a creator object is valid
+  const isValidCreator = (creator: CreatorReference): creator is TaskCreator => {
+    return !!creator && !('error' in creator) && 'id' in creator;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -247,18 +261,18 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         <div>{task.campaign.name}</div>
                       </div>
                     )}
-                    {/* Properly type-checked project display */}
-                    {task.project && 'name' in task.project && (
+                    {/* Display project only if it's a valid project object */}
+                    {task.project && isValidProject(task.project) && (
                       <div>
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Project</h3>
-                        <div>{String(task.project.name)}</div>
+                        <div>{task.project.name}</div>
                       </div>
                     )}
                     <div>
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Created by</h3>
                       <div className="flex items-center">
-                        {/* Handle potential missing creator or creator properties */}
-                        {task.creator && 'first_name' in task.creator ? (
+                        {/* Handle creator based on whether it's valid */}
+                        {task.creator && isValidCreator(task.creator) ? (
                           <>
                             <Avatar className="h-6 w-6 mr-2">
                               <AvatarFallback>
