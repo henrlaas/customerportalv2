@@ -1,4 +1,3 @@
-
 // Time entry type matching our database schema
 export type TimeEntry = {
   id: string;
@@ -28,6 +27,13 @@ export type Company = {
 
 // Campaign type for selecting related campaigns
 export type Campaign = {
+  id: string;
+  name: string;
+  company_id: string;
+};
+
+// Project type for selecting related projects
+export type Project = {
   id: string;
   name: string;
   company_id: string;

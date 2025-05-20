@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,6 +38,7 @@ import { CompanySelector } from './CompanySelector';
 import { useCompanyList } from '@/hooks/useCompanyList';
 import { Company } from '@/types/company';
 import { cn } from '@/lib/utils';
+import { Project } from '@/types/timeTracking';
 
 // Define types
 type Contact = {
@@ -75,6 +75,7 @@ const taskSchema = z.object({
   client_visible: z.boolean().default(false),
   related_type: z.enum(['none', 'campaign', 'project']).default('none'),
   company_id: z.string().nullable().optional(),
+  project_id: z.string().nullable().optional(), // Added project_id field
 });
 
 export const TaskForm: React.FC<TaskFormProps> = ({
@@ -140,12 +141,40 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       client_visible: initialData?.client_visible || false,
       related_type: initialData?.related_type || 'none',
       company_id: initialData?.company_id || null,
+      project_id: initialData?.project_id || null,
     },
   });
 
-  // Watch for company_id changes to filter campaigns
+  // Watch for company_id changes to filter campaigns and projects
   const selectedCompanyId = form.watch('company_id');
   const relatedType = form.watch('related_type');
+
+  // Fetch projects based on selected company
+  const { data: projects = [], isLoading: isLoadingProjects } = useQuery({
+    queryKey: ['projects', selectedCompanyId],
+    queryFn: async () => {
+      if (!selectedCompanyId) return [];
+      
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, company_id')
+        .eq('company_id', selectedCompanyId)
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching projects:', error);
+        toast({
+          title: 'Error fetching projects',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return [];
+      }
+      
+      return data as Project[];
+    },
+    enabled: !!selectedCompanyId, // Only run query if company is selected
+  });
 
   // Filter campaigns based on selected company
   const filteredCampaigns = campaigns.filter(campaign => 
@@ -161,8 +190,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Reset related fields when company changes
   useEffect(() => {
-    if (form.getValues('related_type') === 'campaign') {
+    if (form.getValues('related_type') !== 'none') {
       form.setValue('campaign_id', '');
+      form.setValue('project_id', '');
       form.setValue('related_type', 'none');
     }
   }, [selectedCompanyId, form]);
@@ -195,9 +225,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         due_date: data.due_date || null,
         creator_id: user?.id || null, // Set creator_id to current user ID
         campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
+        project_id: data.related_type === 'project' ? data.project_id : null, // Set project_id if related_type is 'project'
         client_visible: data.client_visible,
         related_type: data.related_type === 'none' ? null : data.related_type,
-        company_id: data.company_id || null, // Add company_id field
+        company_id: data.company_id || null,
       };
       
       let taskResult;
@@ -493,7 +524,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   <SelectContent>
                     <SelectItem value="none">Not Related</SelectItem>
                     <SelectItem value="campaign">Campaign</SelectItem>
-                    <SelectItem value="project">Project (Coming Soon)</SelectItem>
+                    <SelectItem value="project">Project</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -502,7 +533,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           />
         )}
 
-        {/* Only show Campaign selector when related_type is 'campaign' and a company is selected */}
+        {/* Show Campaign selector when related_type is 'campaign' and a company is selected */}
         {selectedCompanyId && relatedType === 'campaign' && (
           <FormField
             control={form.control}
@@ -520,15 +551,52 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {/* If there are no filtered campaigns, provide a default option */}
-                    {filteredCampaigns.length === 0 && (
-                      <SelectItem value="no-campaigns">No campaigns available for this company</SelectItem>
+                    {filteredCampaigns.length === 0 ? (
+                      <SelectItem value="no-campaigns" disabled>No campaigns available for this company</SelectItem>
+                    ) : (
+                      filteredCampaigns.map((campaign) => (
+                        <SelectItem key={campaign.id} value={campaign.id}>
+                          {campaign.name}
+                        </SelectItem>
+                      ))
                     )}
-                    {filteredCampaigns.map((campaign) => (
-                      <SelectItem key={campaign.id} value={campaign.id}>
-                        {campaign.name}
-                      </SelectItem>
-                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {/* Show Project selector when related_type is 'project' and a company is selected */}
+        {selectedCompanyId && relatedType === 'project' && (
+          <FormField
+            control={form.control}
+            name="project_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Project</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingProjects ? (
+                      <SelectItem value="loading" disabled>Loading projects...</SelectItem>
+                    ) : projects.length === 0 ? (
+                      <SelectItem value="no-projects" disabled>No projects available for this company</SelectItem>
+                    ) : (
+                      projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />

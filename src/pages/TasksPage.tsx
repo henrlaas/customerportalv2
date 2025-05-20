@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -516,6 +515,7 @@ export const TasksPage = () => {
           getPriorityBadge={getPriorityBadge}
           getTaskAssignees={getTaskAssignees}
           getCampaignName={getCampaignName}
+          getProjectName={getProjectName}
           profiles={profiles}
           onTaskClick={handleTaskClick}
         />
