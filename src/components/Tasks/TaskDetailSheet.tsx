@@ -208,7 +208,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         <div>{task.campaign.name}</div>
                       </div>
                     )}
-                    {task.project && (
+                    {/* Check if the project property exists and has a name property */}
+                    {task.project && typeof task.project === 'object' && 'name' in task.project && (
                       <div>
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Project</h3>
                         <div>{task.project.name}</div>
@@ -217,7 +218,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     <div>
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Created by</h3>
                       <div className="flex items-center">
-                        {task.creator ? (
+                        {task.creator && typeof task.creator === 'object' && 'first_name' in task.creator && 'last_name' in task.creator ? (
                           <>
                             <Avatar className="h-6 w-6 mr-2">
                               <AvatarFallback>
