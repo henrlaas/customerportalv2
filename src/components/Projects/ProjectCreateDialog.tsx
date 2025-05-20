@@ -93,10 +93,17 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
         return;
       }
       
-      // Create initial milestone (Created)
+      // Create initial milestone (Started) - changed from Created to Started
       await createMilestone({
         projectId: projectData.id,
-        name: "Created",
+        name: "Started",
+        status: "created",
+      });
+      
+      // Create final milestone (Finished)
+      await createMilestone({
+        projectId: projectData.id,
+        name: "Finished",
         status: "created",
       });
       

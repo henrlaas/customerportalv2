@@ -44,7 +44,7 @@ const ProjectDetailsPage = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Projects
           </Button>
-          <h1 className="text-2xl font-bold">{selectedProject.name}</h1>
+          <h1 className="text-2xl font-bold">{selectedProject?.name}</h1>
         </div>
       </div>
       
@@ -52,32 +52,32 @@ const ProjectDetailsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h3 className="font-semibold text-lg mb-2">Project Information</h3>
-            <p className="text-gray-700 mb-1"><span className="font-medium">Company:</span> {selectedProject.company?.name}</p>
-            <p className="text-gray-700 mb-1"><span className="font-medium">Description:</span> {selectedProject.description}</p>
-            <p className="text-gray-700 mb-1"><span className="font-medium">Value:</span> {selectedProject.value?.toLocaleString() || 'N/A'} NOK</p>
-            <p className="text-gray-700 mb-1"><span className="font-medium">Price Type:</span> {selectedProject.price_type}</p>
-            {selectedProject.deadline && (
+            <p className="text-gray-700 mb-1"><span className="font-medium">Company:</span> {selectedProject?.company?.name}</p>
+            <p className="text-gray-700 mb-1"><span className="font-medium">Description:</span> {selectedProject?.description}</p>
+            <p className="text-gray-700 mb-1"><span className="font-medium">Value:</span> {selectedProject?.value?.toLocaleString() || 'N/A'} NOK</p>
+            <p className="text-gray-700 mb-1"><span className="font-medium">Price Type:</span> {selectedProject?.price_type}</p>
+            {selectedProject?.deadline && (
               <p className="text-gray-700 mb-1">
                 <span className="font-medium">Deadline:</span> {new Date(selectedProject.deadline).toLocaleDateString()}
               </p>
             )}
             <p className="text-gray-700 mb-1">
-              <span className="font-medium">Created:</span> {new Date(selectedProject.created_at).toLocaleDateString()}
+              <span className="font-medium">Created:</span> {selectedProject && new Date(selectedProject.created_at).toLocaleDateString()}
             </p>
           </div>
 
           <div>
             <h3 className="font-semibold text-lg mb-2">Actions</h3>
             <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" onClick={() => navigate(`/tasks?projectId=${selectedProject.id}`)}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => navigate(`/tasks?projectId=${selectedProject?.id}`)}>
                 <FileTextIcon className="mr-2 h-4 w-4" />
                 View Associated Tasks
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => navigate(`/time-tracking?projectId=${selectedProject.id}`)}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => navigate(`/time-tracking?projectId=${selectedProject?.id}`)}>
                 <ClockIcon className="mr-2 h-4 w-4" />
                 View Time Entries
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => navigate(`/contracts?projectId=${selectedProject.id}`)}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => navigate(`/contracts?projectId=${selectedProject?.id}`)}>
                 <FileTextIcon className="mr-2 h-4 w-4" />
                 View Contracts
               </Button>
