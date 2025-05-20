@@ -24,6 +24,45 @@ interface TaskDetailSheetProps {
   taskId: string | null;
 }
 
+// Define more specific types for our related entities
+interface TaskProject {
+  id: string;
+  name: string;
+}
+
+interface TaskCompany {
+  id: string;
+  name: string;
+}
+
+interface TaskCampaign {
+  id: string;
+  name: string;
+}
+
+interface TaskCreator {
+  id: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  avatar_url?: string | null;
+}
+
+interface TaskData {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: string;
+  priority: string;
+  due_date?: string | null;
+  company?: TaskCompany | null;
+  campaign?: TaskCampaign | null;
+  project?: TaskProject | null;
+  creator?: TaskCreator | null;
+  created_at: string;
+  assignees?: { id: string; user_id: string }[];
+  subtasks?: any[];
+}
+
 export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   isOpen,
   onOpenChange,
@@ -61,7 +100,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         return null;
       }
 
-      return data;
+      return data as TaskData;
     },
     enabled: !!taskId && isOpen,
   });
@@ -208,27 +247,27 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         <div>{task.campaign.name}</div>
                       </div>
                     )}
-                    {/* Fixed: Proper null checking for task.project */}
+                    {/* Properly type-checked project display */}
                     {task.project && 'name' in task.project && (
                       <div>
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Project</h3>
-                        <div>{task.project.name}</div>
+                        <div>{String(task.project.name)}</div>
                       </div>
                     )}
                     <div>
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Created by</h3>
                       <div className="flex items-center">
-                        {/* Fixed: Proper null checking for task.creator */}
+                        {/* Handle potential missing creator or creator properties */}
                         {task.creator && 'first_name' in task.creator ? (
                           <>
                             <Avatar className="h-6 w-6 mr-2">
                               <AvatarFallback>
-                                {task.creator.first_name?.[0] || '?'}
-                                {task.creator.last_name?.[0] || ''}
+                                {(task.creator.first_name?.[0] || '?')}
+                                {(task.creator.last_name?.[0] || '')}
                               </AvatarFallback>
                             </Avatar>
                             <span>
-                              {task.creator.first_name} {task.creator.last_name}
+                              {task.creator.first_name || ''} {task.creator.last_name || ''}
                             </span>
                           </>
                         ) : (

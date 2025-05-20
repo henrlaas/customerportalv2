@@ -18,7 +18,7 @@ interface Task {
   priority: string;
   creator_id: string | null;
   campaign_id: string | null;
-  project_id: string | null; // Added project_id
+  project_id: string | null;
   due_date: string | null;
   related_type: string | null;
   client_visible: boolean | null;
@@ -38,7 +38,7 @@ interface TaskListViewProps {
   getPriorityBadge: (priority: string) => React.ReactNode;
   getTaskAssignees: (task: Task) => Contact[];
   getCampaignName: (campaignId: string | null) => string | null;
-  getProjectName: (projectId: string | null) => string | null; // Added getProjectName prop
+  getProjectName: (projectId: string | null) => string | null;
   profiles: Contact[];
   onTaskClick: (taskId: string) => void;
 }
