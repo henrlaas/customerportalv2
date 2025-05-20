@@ -124,7 +124,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
           {orderedMilestones.map((milestone, index) => (
             <React.Fragment key={milestone.id}>
               <Card 
-                className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72 ${
+                className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72 min-h-[180px] flex flex-col ${
                   milestone.id === lastCompletedMilestoneId ? 'milestone-shine relative overflow-hidden' : ''
                 }`}
               >
@@ -136,7 +136,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 flex flex-col justify-between">
                   {milestone.due_date && (
                     <div className="flex items-center text-sm text-muted-foreground mb-4">
                       <Calendar className="h-4 w-4 mr-1" />
@@ -144,27 +144,29 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
                     </div>
                   )}
                   
-                  {milestone.status === 'completed' ? (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handleCompleteMilestone(milestone.id, 'created')}
-                      disabled={isCompleting}
-                    >
-                      Unmark as Completed
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handleCompleteMilestone(milestone.id, 'completed')}
-                      disabled={isCompleting}
-                    >
-                      Mark as Completed
-                    </Button>
-                  )}
+                  <div className="mt-auto pt-4">
+                    {milestone.status === 'completed' ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => handleCompleteMilestone(milestone.id, 'created')}
+                        disabled={isCompleting}
+                      >
+                        Unmark as Completed
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => handleCompleteMilestone(milestone.id, 'completed')}
+                        disabled={isCompleting}
+                      >
+                        Mark as Completed
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
               
