@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { format } from 'date-fns';
 import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
 import { useCreateMilestone } from '@/hooks/useCreateMilestone';
 import { useToast } from '@/hooks/use-toast';
+import '../components/Campaigns/animations.css';
 
 interface ProjectMilestonesPanelProps {
   projectId: string | null;
@@ -23,6 +25,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
   const { createMilestone, isLoading: isCreating } = useCreateMilestone();
   const [orderedMilestones, setOrderedMilestones] = useState<Milestone[]>([]);
   const { toast } = useToast();
+  const [lastCompletedMilestoneId, setLastCompletedMilestoneId] = useState<string | null>(null);
 
   // Order milestones to ensure "Started" is first and "Finished" is last
   useEffect(() => {
@@ -42,6 +45,21 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
     if (finishMilestone) ordered.push(finishMilestone);
     
     setOrderedMilestones(ordered);
+
+    // Find the last completed milestone
+    const completedMilestones = ordered.filter(m => m.status === 'completed');
+    if (completedMilestones.length > 0) {
+      // Get the most recently completed milestone (based on updated_at if available, or created_at)
+      const lastCompleted = completedMilestones.reduce((latest, current) => {
+        const latestDate = new Date(latest.updated_at || latest.created_at);
+        const currentDate = new Date(current.updated_at || current.created_at);
+        return currentDate > latestDate ? current : latest;
+      }, completedMilestones[0]);
+      
+      setLastCompletedMilestoneId(lastCompleted.id);
+    } else {
+      setLastCompletedMilestoneId(null);
+    }
   }, [milestones]);
 
   const handleCompleteMilestone = async (milestoneId: string, status: 'completed' | 'created') => {
@@ -105,7 +123,11 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
         <div className="flex flex-wrap items-start gap-2">
           {orderedMilestones.map((milestone, index) => (
             <React.Fragment key={milestone.id}>
-              <Card className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72`}>
+              <Card 
+                className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72 ${
+                  milestone.id === lastCompletedMilestoneId ? 'milestone-shine relative overflow-hidden' : ''
+                }`}
+              >
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-base">{milestone.name}</CardTitle>
