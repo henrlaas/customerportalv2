@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Milestone } from '@/hooks/useProjectMilestones';
-import { Calendar, ChevronRight } from 'lucide-react';
+import { Calendar, ChevronRight, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
 import { useCreateMilestone } from '@/hooks/useCreateMilestone';
+import { useDeleteMilestone } from '@/hooks/useDeleteMilestone';
 import { useToast } from '@/hooks/use-toast';
 import '@/components/Campaigns/animations.css';
 
@@ -20,9 +22,13 @@ interface ProjectMilestonesPanelProps {
 
 export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilestonesPanelProps) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
+  const [selectedMilestoneName, setSelectedMilestoneName] = useState<string>('');
   const [newMilestoneName, setNewMilestoneName] = useState('');
   const { completeMilestone, isLoading: isCompleting } = useCompleteMilestone();
   const { createMilestone, isLoading: isCreating } = useCreateMilestone();
+  const { deleteMilestone, isLoading: isDeleting } = useDeleteMilestone();
   const [orderedMilestones, setOrderedMilestones] = useState<Milestone[]>([]);
   const { toast } = useToast();
   const [lastCompletedMilestoneId, setLastCompletedMilestoneId] = useState<string | null>(null);
@@ -102,6 +108,38 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
     setIsAddDialogOpen(false);
   };
 
+  const openDeleteDialog = (milestone: Milestone) => {
+    setSelectedMilestoneId(milestone.id);
+    setSelectedMilestoneName(milestone.name);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteMilestone = async () => {
+    if (!selectedMilestoneId) return;
+    
+    try {
+      await deleteMilestone({
+        milestoneId: selectedMilestoneId
+      });
+      
+      toast({
+        title: "Milestone deleted",
+        description: `The milestone "${selectedMilestoneName}" has been deleted.`,
+        duration: 3000
+      });
+      
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting milestone:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete the milestone",
+        variant: "destructive",
+        duration: 3000
+      });
+    }
+  };
+
   if (!projectId) return null;
 
   return (
@@ -124,7 +162,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
           {orderedMilestones.map((milestone, index) => (
             <React.Fragment key={milestone.id}>
               <Card 
-                className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72 ${
+                className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72 min-h-[180px] ${
                   milestone.id === lastCompletedMilestoneId ? 'milestone-shine relative overflow-hidden' : ''
                 }`}
               >
@@ -136,7 +174,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex flex-col justify-between h-[calc(100%-64px)]">
                   {milestone.due_date && (
                     <div className="flex items-center text-sm text-muted-foreground mb-4">
                       <Calendar className="h-4 w-4 mr-1" />
@@ -144,27 +182,42 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
                     </div>
                   )}
                   
-                  {milestone.status === 'completed' ? (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handleCompleteMilestone(milestone.id, 'created')}
-                      disabled={isCompleting}
-                    >
-                      Unmark as Completed
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handleCompleteMilestone(milestone.id, 'completed')}
-                      disabled={isCompleting}
-                    >
-                      Mark as Completed
-                    </Button>
-                  )}
+                  <div className="flex items-center justify-between mt-auto gap-2">
+                    {milestone.status === 'completed' ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleCompleteMilestone(milestone.id, 'created')}
+                        disabled={isCompleting}
+                      >
+                        Unmark as Completed
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleCompleteMilestone(milestone.id, 'completed')}
+                        disabled={isCompleting}
+                      >
+                        Mark as Completed
+                      </Button>
+                    )}
+                    
+                    {/* Only allow deletion of custom milestones, not system ones like "Started" and "Finished" */}
+                    {milestone.name !== "Started" && milestone.name !== "Created" && milestone.name !== "Finished" && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => openDeleteDialog(milestone)}
+                        disabled={isDeleting}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
               
@@ -216,6 +269,28 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Milestone Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Milestone</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the milestone "{selectedMilestoneName}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteMilestone}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
