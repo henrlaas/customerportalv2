@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -12,6 +11,7 @@ import {
   fetchContractTemplates,
   replacePlaceholders
 } from '@/utils/contractUtils';
+import { ProgressStepper } from '@/components/ui/progress-stepper';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -818,23 +818,8 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
         </DialogHeader>
         
         <div className="py-4">
-          {/* Stepper indicator */}
-          <div className="flex justify-between items-center mb-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                  step === i
-                    ? 'bg-primary text-primary-foreground'
-                    : step > i
-                    ? 'bg-primary/20 text-primary'
-                    : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {step > i ? <Check className="h-4 w-4" /> : i}
-              </div>
-            ))}
-          </div>
+          {/* Replace old stepper with ProgressStepper */}
+          <ProgressStepper currentStep={step} totalSteps={6} className="mb-6" />
 
           {/* Step content */}
           {stepContent()}
@@ -867,4 +852,3 @@ export function CreateContractDialog({ onContractCreated }: CreateContractDialog
     </Dialog>
   );
 }
-
