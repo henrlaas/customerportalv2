@@ -307,13 +307,7 @@ const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
   getProjectName
 }) => {
   // Set up droppable container for this status column
-  const { setNodeRef, isOver } = useDroppable({ id });
-
-  // Add a visual indicator when dragging over this column
-  const columnStyle = {
-    backgroundColor: isOver ? 'rgba(0, 0, 0, 0.05)' : '',
-    transition: 'background-color 0.2s ease',
-  };
+  const { setNodeRef } = useDroppable({ id });
 
   return (
     <div id={id} className="bg-muted/30 rounded-lg p-4">
@@ -324,7 +318,6 @@ const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
       <div 
         ref={setNodeRef}  
         className="space-y-2 min-h-[300px]"
-        style={columnStyle}
       >
         <SortableContext 
           items={tasks.map(task => task.id)}
@@ -356,4 +349,3 @@ const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
     </div>
   );
 };
-
