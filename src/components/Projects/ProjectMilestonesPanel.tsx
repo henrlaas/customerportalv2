@@ -10,6 +10,7 @@ import { Calendar, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
 import { useCreateMilestone } from '@/hooks/useCreateMilestone';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProjectMilestonesPanelProps {
   projectId: string | null;
@@ -22,6 +23,7 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
   const { completeMilestone, isLoading: isCompleting } = useCompleteMilestone();
   const { createMilestone, isLoading: isCreating } = useCreateMilestone();
   const [orderedMilestones, setOrderedMilestones] = useState<Milestone[]>([]);
+  const { toast } = useToast();
 
   // Order milestones to ensure "Started" is first and "Finished" is last
   useEffect(() => {
@@ -43,9 +45,31 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
     setOrderedMilestones(ordered);
   }, [milestones]);
 
-  const handleCompleteMilestone = async (milestoneId: string) => {
+  const handleCompleteMilestone = async (milestoneId: string, status: 'completed' | 'created') => {
     if (!projectId) return;
-    await completeMilestone(milestoneId);
+    
+    try {
+      await completeMilestone({
+        milestoneId: milestoneId,
+        status: status
+      });
+      
+      toast({
+        title: status === 'completed' ? "Milestone completed" : "Milestone status reset",
+        description: status === 'completed' 
+          ? "The milestone has been marked as completed." 
+          : "The milestone is now marked as not completed.",
+        duration: 3000
+      });
+    } catch (error) {
+      console.error("Error updating milestone status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update milestone status",
+        variant: "destructive",
+        duration: 3000
+      });
+    }
   };
 
   const handleAddMilestone = async () => {
@@ -82,12 +106,12 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
         <div className="flex flex-wrap items-start gap-2">
           {orderedMilestones.map((milestone, index) => (
             <React.Fragment key={milestone.id}>
-              <Card className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} flex-1 min-w-[250px]`}>
+              <Card className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-52`}>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-base">{milestone.name}</CardTitle>
                     <Badge variant={milestone.status === 'completed' ? 'default' : 'secondary'}>
-                      {milestone.status === 'completed' ? 'Completed' : 'In Progress'}
+                      {milestone.status === 'completed' ? 'Completed' : 'Not completed'}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -99,12 +123,22 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
                     </div>
                   )}
                   
-                  {milestone.status !== 'completed' && (
+                  {milestone.status === 'completed' ? (
                     <Button 
                       variant="outline" 
                       size="sm" 
                       className="w-full"
-                      onClick={() => handleCompleteMilestone(milestone.id)}
+                      onClick={() => handleCompleteMilestone(milestone.id, 'created')}
+                      disabled={isCompleting}
+                    >
+                      Unmark as Completed
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleCompleteMilestone(milestone.id, 'completed')}
                       disabled={isCompleting}
                     >
                       Mark as Completed
@@ -164,3 +198,4 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
     </div>
   );
 };
+
