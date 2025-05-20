@@ -24,6 +24,46 @@ interface TaskDetailSheetProps {
   taskId: string | null;
 }
 
+// Define interfaces for related objects
+interface TaskProject {
+  id: string;
+  name: string;
+}
+
+interface TaskCompany {
+  id: string;
+  name: string;
+}
+
+interface TaskCampaign {
+  id: string;
+  name: string;
+}
+
+interface TaskCreator {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+}
+
+// Define helper type guards
+const isValidProject = (project: any): project is TaskProject => {
+  return project && typeof project === 'object' && 'name' in project;
+};
+
+const isValidCompany = (company: any): company is TaskCompany => {
+  return company && typeof company === 'object' && 'name' in company;
+};
+
+const isValidCampaign = (campaign: any): campaign is TaskCampaign => {
+  return campaign && typeof campaign === 'object' && 'name' in campaign;
+};
+
+const isValidCreator = (creator: any): creator is TaskCreator => {
+  return creator && typeof creator === 'object' && 'id' in creator;
+};
+
 export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   isOpen,
   onOpenChange,
@@ -196,19 +236,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         </div>
                       </div>
                     )}
-                    {task.company && (
+                    {isValidCompany(task.company) && (
                       <div>
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Company</h3>
                         <div>{task.company.name}</div>
                       </div>
                     )}
-                    {task.campaign && (
+                    {isValidCampaign(task.campaign) && (
                       <div>
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Campaign</h3>
                         <div>{task.campaign.name}</div>
                       </div>
                     )}
-                    {task.project && (
+                    {isValidProject(task.project) && (
                       <div>
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Project</h3>
                         <div>{task.project.name}</div>
@@ -217,7 +257,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     <div>
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Created by</h3>
                       <div className="flex items-center">
-                        {task.creator ? (
+                        {isValidCreator(task.creator) ? (
                           <>
                             <Avatar className="h-6 w-6 mr-2">
                               <AvatarFallback>
