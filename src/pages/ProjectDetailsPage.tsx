@@ -37,31 +37,50 @@ const ProjectDetailsPage = () => {
       console.log('Fetching tasks for project ID:', projectId);
       
       try {
-        const { data, error } = await supabase
+        // First fetch tasks
+        const { data: tasksData, error: tasksError } = await supabase
           .from('tasks')
-          .select(`
-            *,
-            assignees:task_assignees(id, user_id),
-            creator:profiles!tasks_creator_id_fkey(id, first_name, last_name, avatar_url)
-          `)
+          .select('*')
           .eq('project_id', projectId)
           .order('created_at', { ascending: false });
         
-        if (error) {
-          console.error('Error fetching project tasks:', error);
+        if (tasksError) {
+          console.error('Error fetching project tasks:', tasksError);
           toast.error('Failed to load tasks');
-          throw error;
+          throw tasksError;
         }
         
         // Debug the returned tasks
-        console.log('Found tasks:', data?.length, data);
+        console.log('Found tasks:', tasksData?.length, tasksData);
         
-        // Additional check to verify project_id matches
-        if (data && data.length > 0) {
-          console.log('Task project IDs:', data.map(task => task.project_id));
-        }
+        // For each task, fetch its assignees and creator info separately
+        const tasksWithDetails = await Promise.all((tasksData || []).map(async (task) => {
+          // Fetch assignees for this task
+          const { data: assigneesData } = await supabase
+            .from('task_assignees')
+            .select('id, user_id')
+            .eq('task_id', task.id);
+            
+          // Fetch creator info if creator_id exists
+          let creatorData = null;
+          if (task.creator_id) {
+            const { data: creator } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name, avatar_url')
+              .eq('id', task.creator_id)
+              .single();
+              
+            creatorData = creator;
+          }
+          
+          return {
+            ...task,
+            assignees: assigneesData || [],
+            creator: creatorData
+          };
+        }));
         
-        return data || [];
+        return tasksWithDetails || [];
       } catch (error) {
         console.error('Error in project tasks query:', error);
         return [];
