@@ -23,6 +23,12 @@ interface Task {
   related_type: string | null;
   client_visible: boolean | null;
   assignees?: { id: string; user_id: string }[];
+  creator?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  };
 }
 
 interface Contact {
@@ -70,55 +76,69 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tasks.map(task => (
-              <TableRow 
-                key={task.id}
-                className="cursor-pointer hover:bg-muted/60"
-                onClick={() => onTaskClick(task.id)}
-              >
-                <TableCell className="font-medium">{task.title}</TableCell>
-                <TableCell>{getStatusBadge(task.status)}</TableCell>
-                <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                <TableCell>
-                  <UserAvatarGroup 
-                    users={getTaskAssignees(task)}
-                    size="sm"
-                  />
-                </TableCell>
-                <TableCell>
-                  {task.creator_id && (
+            {tasks && tasks.length > 0 ? (
+              tasks.map(task => (
+                <TableRow 
+                  key={task.id}
+                  className="cursor-pointer hover:bg-muted/60"
+                  onClick={() => onTaskClick(task.id)}
+                >
+                  <TableCell className="font-medium">{task.title}</TableCell>
+                  <TableCell>{getStatusBadge(task.status)}</TableCell>
+                  <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+                  <TableCell>
                     <UserAvatarGroup 
-                      users={[profiles.find(p => p.id === task.creator_id)].filter((p): p is Contact => !!p)}
+                      users={getTaskAssignees(task)}
                       size="sm"
                     />
-                  )}
-                  {!task.creator_id && 'Unassigned'}
-                </TableCell>
-                <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
-                <TableCell>
-                  {task.project_id ? (
-                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                      Project: {getProjectName(task.project_id)}
-                    </Badge>
-                  ) : task.campaign_id ? (
-                    <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-                      Campaign: {getCampaignName(task.campaign_id)}
-                    </Badge>
-                  ) : task.related_type ? (
-                    <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
-                      {task.related_type}
-                    </Badge>
-                  ) : 'None'}
-                </TableCell>
-                <TableCell>
-                  {task.client_visible ? (
-                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Visible</Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200">Hidden</Badge>
-                  )}
+                  </TableCell>
+                  <TableCell>
+                    {task.creator ? (
+                      <UserAvatarGroup 
+                        users={[{
+                          id: task.creator.id,
+                          first_name: task.creator.first_name,
+                          last_name: task.creator.last_name,
+                          avatar_url: task.creator.avatar_url
+                        }]}
+                        size="sm"
+                      />
+                    ) : (
+                      'Unassigned'
+                    )}
+                  </TableCell>
+                  <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
+                  <TableCell>
+                    {task.project_id ? (
+                      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                        Project: {getProjectName(task.project_id)}
+                      </Badge>
+                    ) : task.campaign_id ? (
+                      <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
+                        Campaign: {getCampaignName(task.campaign_id)}
+                      </Badge>
+                    ) : task.related_type ? (
+                      <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
+                        {task.related_type}
+                      </Badge>
+                    ) : 'None'}
+                  </TableCell>
+                  <TableCell>
+                    {task.client_visible ? (
+                      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Visible</Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200">Hidden</Badge>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-4">
+                  No tasks found
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>

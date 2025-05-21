@@ -28,12 +28,14 @@ const ProjectDetailsPage = () => {
     queryFn: async () => {
       if (!projectId) return [];
       
+      console.log('Fetching tasks for project:', projectId);
+      
       const { data, error } = await supabase
         .from('tasks')
         .select(`
           *,
           assignees:task_assignees(id, user_id),
-          creator:creator_id(id, first_name, last_name, avatar_url)
+          creator:profiles!tasks_creator_id_fkey(id, first_name, last_name, avatar_url)
         `)
         .eq('project_id', projectId);
       
@@ -42,6 +44,7 @@ const ProjectDetailsPage = () => {
         throw error;
       }
       
+      console.log('Found tasks:', data?.length, data);
       return data || [];
     },
     enabled: !!projectId
@@ -184,21 +187,30 @@ const ProjectDetailsPage = () => {
               <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
             </div>
           ) : projectTasks && projectTasks.length > 0 ? (
-            <TaskListView 
-              tasks={projectTasks}
-              getStatusBadge={getStatusBadge}
-              getPriorityBadge={getPriorityBadge}
-              getTaskAssignees={getTaskAssignees}
-              getCampaignName={getCampaignName}
-              profiles={profiles}
-              onTaskClick={handleTaskClick}
-              getProjectName={getProjectName}
-            />
+            <>
+              <div className="mb-4 flex justify-between items-center">
+                <h3 className="text-lg font-medium">Project Tasks</h3>
+                <Button 
+                  onClick={() => navigate('/tasks/new?projectId=' + projectId)}
+                >
+                  Create Task
+                </Button>
+              </div>
+              <TaskListView 
+                tasks={projectTasks}
+                getStatusBadge={getStatusBadge}
+                getPriorityBadge={getPriorityBadge}
+                getTaskAssignees={getTaskAssignees}
+                getCampaignName={getCampaignName}
+                profiles={profiles}
+                onTaskClick={handleTaskClick}
+                getProjectName={getProjectName}
+              />
+            </>
           ) : (
             <div className="bg-white rounded-lg shadow p-6 text-center">
-              <p className="text-gray-500">No tasks associated with this project yet.</p>
+              <p className="text-gray-500 mb-4">No tasks associated with this project yet.</p>
               <Button 
-                className="mt-4" 
                 onClick={() => navigate('/tasks/new?projectId=' + projectId)}
               >
                 Create a Task
