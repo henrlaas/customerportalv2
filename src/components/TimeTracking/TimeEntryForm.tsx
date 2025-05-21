@@ -167,6 +167,20 @@ export const TimeEntryForm = ({
       setFilteredCampaigns([]);
       setFilteredTasks([]);
       setFilteredProjects([]);
+      
+      // Clear related fields if company is deselected
+      if (form.getValues('campaign_id')) {
+        form.setValue('campaign_id', undefined);
+      }
+      
+      if (form.getValues('project_id')) {
+        form.setValue('project_id', undefined);
+      }
+      
+      if (form.getValues('task_id')) {
+        form.setValue('task_id', undefined);
+      }
+      
       return;
     }
     
@@ -176,6 +190,10 @@ export const TimeEntryForm = ({
     
     setFilteredCampaigns(companyCampaigns);
     setFilteredProjects(companyProjects);
+    
+    console.log('Filtered projects:', companyProjects);
+    console.log('All projects:', projects);
+    console.log('Selected company ID:', selectedCompanyId);
     
     // Fetch tasks for the selected company - only when company changes
     const fetchTasks = async () => {
