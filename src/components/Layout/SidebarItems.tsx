@@ -27,7 +27,9 @@ export function getSidebarItems() {
       icon: LayoutDashboard,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Campaigns'),
@@ -35,7 +37,9 @@ export function getSidebarItems() {
       icon: BookOpen,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Tasks'),
@@ -43,7 +47,9 @@ export function getSidebarItems() {
       icon: CheckSquare,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Deals'),
@@ -51,7 +57,9 @@ export function getSidebarItems() {
       icon: Tag,
       roles: ['admin', 'employee'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Time Tracking'),
@@ -59,7 +67,9 @@ export function getSidebarItems() {
       icon: Clock,
       roles: ['admin', 'employee'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Companies'),
@@ -67,7 +77,9 @@ export function getSidebarItems() {
       icon: Users,
       roles: ['admin', 'employee'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Contracts'),
@@ -75,7 +87,9 @@ export function getSidebarItems() {
       icon: FileText,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Projects'),
@@ -83,7 +97,9 @@ export function getSidebarItems() {
       icon: FileClock,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Media'),
@@ -91,7 +107,9 @@ export function getSidebarItems() {
       icon: FolderArchive,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Finance'),
@@ -99,7 +117,9 @@ export function getSidebarItems() {
       icon: DollarSign,
       roles: ['admin', 'employee'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: true,
+      tooltip: "This is not available yet"
     },
     {
       title: t('Management'),
@@ -107,7 +127,9 @@ export function getSidebarItems() {
       icon: Sliders,
       roles: ['admin'],
       category: 'MENU',
-      hasDropdown: false
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
   ];
 

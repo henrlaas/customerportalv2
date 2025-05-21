@@ -40,6 +40,7 @@ import TasksPage from './pages/TasksPage';
 
 // Import TaskDetailSheet for the TaskRedirect component
 import { TaskDetailSheet } from './components/Tasks/TaskDetailSheet';
+import { toast } from './components/ui/use-toast';
 
 // Create a redirect component for task URLs
 const TaskRedirect = () => {
@@ -64,6 +65,22 @@ const TaskRedirect = () => {
       />
     </>
   );
+};
+
+// Finance page redirect component
+const FinanceRedirect = () => {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    toast({
+      title: "Feature not available",
+      description: "The Finance page is not available yet.",
+      variant: "destructive",
+    });
+    navigate('/dashboard');
+  }, [navigate]);
+  
+  return null;
 };
 
 function App() {
@@ -104,7 +121,8 @@ function App() {
                   <Route path="/tasks/:taskId" element={<TaskRedirect />} />
                   
                   <Route path="/time-tracking" element={<TimeTrackingPage />} />
-                  <Route path="/finance" element={<FinancePage />} />
+                  {/* Replace the Finance page with the redirect component */}
+                  <Route path="/finance" element={<FinanceRedirect />} />
                   <Route path="/contracts" element={<ContractsPage />} />
                   <Route path="/contracts/:contractId" element={<ContractDetailsPage />} />
                   <Route path="/media" element={<MediaPage />} />
