@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
 import {
   PieChart,
   Pie,
@@ -117,7 +116,7 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
   });
 
   if (isLoading) {
-    return <Skeleton className="h-[200px] w-full" />;
+    return <Skeleton className="h-[300px] w-full" />;
   }
 
   if (error) {
@@ -127,16 +126,18 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
   // If there are no time entries yet
   if (!data?.pieData || data.pieData.length === 0) {
     return (
-      <Card className="bg-muted/50">
+      <Card className="bg-muted/50 w-full h-[300px]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center text-md font-medium">
             <ChartLine className="h-4 w-4 mr-2 text-muted-foreground" />
             Project Financial Overview
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-center p-6 text-muted-foreground text-sm">
-          <p>No time entries found for this project.</p>
-          <p>Financial data will be displayed once team members log time.</p>
+        <CardContent className="flex items-center justify-center h-[240px]">
+          <div className="text-center text-muted-foreground text-sm">
+            <p>No time entries found for this project.</p>
+            <p>Financial data will be displayed once team members log time.</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -159,36 +160,31 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
   const COLORS = ['#22c55e', '#ef4444'];
 
   return (
-    <Card className="bg-muted/50">
+    <Card className="bg-muted/50 w-full h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center text-md font-medium">
-          <ChartLine className="h-4 w-4 mr-2 text-muted-foreground" />
-          Project Financial Overview
+        <CardTitle className="flex items-center justify-between text-md font-medium">
+          <div className="flex items-center">
+            <ChartLine className="h-4 w-4 mr-2 text-muted-foreground" />
+            Project Financial Overview
+          </div>
+          <div className="flex gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground mr-1">Value:</span>
+              <span className="font-semibold">{formatCurrency(projectValue || 0)}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground mr-1">Cost:</span>
+              <span className="font-semibold">{formatCurrency(data.totalCost)}</span>
+            </div>
+            <div className={profit >= 0 ? 'text-green-600' : 'text-red-600'}>
+              <span className="text-muted-foreground mr-1">Profit:</span>
+              <span className="font-semibold">{formatCurrency(profit)} ({profitPercentage.toFixed(0)}%)</span>
+            </div>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-background rounded-md p-2 shadow-sm">
-            <div className="text-xs text-muted-foreground">Project Value</div>
-            <div className="text-xl font-semibold">
-              {formatCurrency(projectValue || 0)}
-            </div>
-          </div>
-          <div className="bg-background rounded-md p-2 shadow-sm">
-            <div className="text-xs text-muted-foreground">Cost to Date</div>
-            <div className="text-xl font-semibold">
-              {formatCurrency(data.totalCost)}
-            </div>
-          </div>
-          <div className={`bg-background rounded-md p-2 shadow-sm ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            <div className="text-xs text-muted-foreground">Projected Profit</div>
-            <div className="text-xl font-semibold">
-              {formatCurrency(profit)} ({profitPercentage.toFixed(0)}%)
-            </div>
-          </div>
-        </div>
-
-        <div className="h-[200px] w-full">
+        <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -196,7 +192,7 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                outerRadius={80}
+                outerRadius={120}
                 fill="#8884d8"
                 dataKey="value"
                 label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
