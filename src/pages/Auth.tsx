@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -175,10 +174,6 @@ const Auth = () => {
             </Button>
           </form>
         </Form>
-
-        <p className="mt-6 text-center text-sm text-gray-500">
-          {t('Contact your advisor if you have not received access to Workspace.')}
-        </p>
       </div>
       
       {/* Help button in bottom right corner */}
