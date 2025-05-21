@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { ProjectWithRelations } from '@/hooks/useProjects';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { Trash2 } from 'lucide-react';
@@ -25,8 +25,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProjectListViewProps {
   projects: ProjectWithRelations[];
@@ -43,26 +45,55 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [projectToDelete, setProjectToDelete] = React.useState<string | null>(null);
 
-  // Helper function to get creator initials
-  const getCreatorInitials = (project: ProjectWithRelations) => {
-    if (project.creator && (project.creator.first_name || project.creator.last_name)) {
-      const first = project.creator.first_name?.[0] || '';
-      const last = project.creator.last_name?.[0] || '';
-      return (first + last).toUpperCase();
-    }
-    return 'U';
-  };
+  // Fetch project assignees for all projects
+  const { data: projectAssignees } = useQuery({
+    queryKey: ['project-assignees-all'],
+    queryFn: async () => {
+      if (!projects.length) return {};
+      
+      const projectIds = projects.map(project => project.id);
+      
+      const { data, error } = await supabase
+        .from('project_assignees')
+        .select(`
+          project_id,
+          user_id,
+          profiles:user_id (
+            id,
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
+        .in('project_id', projectIds);
+      
+      if (error) {
+        console.error('Error fetching project assignees:', error);
+        return {};
+      }
 
-  // Helper function to get creator full name
-  const getCreatorName = (project: ProjectWithRelations) => {
-    if (project.creator) {
-      const firstName = project.creator.first_name || '';
-      const lastName = project.creator.last_name || '';
-      const name = `${firstName} ${lastName}`.trim();
-      return name || 'Unknown User';
-    }
-    return 'Unknown User';
-  };
+      // Group assignees by project_id
+      const assigneesByProject = data.reduce((acc, item) => {
+        if (!acc[item.project_id]) {
+          acc[item.project_id] = [];
+        }
+        
+        if (item.profiles) {
+          acc[item.project_id].push({
+            id: item.user_id,
+            first_name: item.profiles.first_name,
+            last_name: item.profiles.last_name,
+            avatar_url: item.profiles.avatar_url
+          });
+        }
+        
+        return acc;
+      }, {});
+      
+      return assigneesByProject;
+    },
+    enabled: projects.length > 0
+  });
   
   // Helper function to safely format dates
   const safeFormatDate = (dateString: string | null) => {
@@ -112,7 +143,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                 <TableHead>Company</TableHead>
                 <TableHead>Value</TableHead>
                 <TableHead>Price Type</TableHead>
-                <TableHead>Created By</TableHead>
+                <TableHead>Assigned</TableHead>
                 <TableHead>Created At</TableHead>
                 <TableHead>Deadline</TableHead>
                 <TableHead className="w-10">Actions</TableHead>
@@ -155,13 +186,14 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6 text-xs">
-                        <AvatarImage src={project.creator?.avatar_url || undefined} />
-                        <AvatarFallback>{getCreatorInitials(project)}</AvatarFallback>
-                      </Avatar>
-                      <span>{getCreatorName(project)}</span>
-                    </div>
+                    {projectAssignees && projectAssignees[project.id] && projectAssignees[project.id].length > 0 ? (
+                      <UserAvatarGroup 
+                        users={projectAssignees[project.id]} 
+                        size="sm"
+                      />
+                    ) : (
+                      <span className="text-gray-500 text-sm">Not assigned</span>
+                    )}
                   </TableCell>
                   <TableCell>{safeFormatDate(project.created_at)}</TableCell>
                   <TableCell>{safeFormatDate(project.deadline)}</TableCell>
@@ -210,4 +242,3 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
     </>
   );
 };
-
