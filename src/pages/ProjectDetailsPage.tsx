@@ -17,6 +17,7 @@ import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { CreateProjectContractDialog } from '@/components/Contracts/CreateProjectContractDialog';
+import { CreateProjectTaskDialog } from '@/components/Projects/CreateProjectTaskDialog';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -25,6 +26,7 @@ const ProjectDetailsPage = () => {
   const { milestones } = useProjectMilestones(projectId || null);
   const { assignees } = useProjectAssignees(projectId);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
 
   // Get selected project details
   const selectedProject = projects?.find(p => p.id === projectId);
@@ -407,9 +409,7 @@ const ProjectDetailsPage = () => {
             <>
               <div className="mb-4 flex justify-between items-center">
                 <h3 className="text-lg font-medium">Project Tasks ({projectTasks.length})</h3>
-                <Button 
-                  onClick={() => navigate('/tasks/new?projectId=' + projectId)}
-                >
+                <Button onClick={() => setIsTaskDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" /> Create Task
                 </Button>
               </div>
@@ -430,9 +430,7 @@ const ProjectDetailsPage = () => {
                 <ClipboardList className="h-12 w-12 text-gray-400 mb-2" />
                 <p className="text-gray-500 mb-4">No tasks associated with this project yet.</p>
               </div>
-              <Button 
-                onClick={() => navigate('/tasks/new?projectId=' + projectId)}
-              >
+              <Button onClick={() => setIsTaskDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Create Task
               </Button>
             </div>
@@ -513,6 +511,17 @@ const ProjectDetailsPage = () => {
           projectId={projectId || ''}
           companyId={selectedProject.company_id}
           projectName={selectedProject.name}
+        />
+      )}
+
+      {/* Task creation dialog */}
+      {isTaskDialogOpen && selectedProject && (
+        <CreateProjectTaskDialog
+          isOpen={isTaskDialogOpen}
+          onClose={() => setIsTaskDialogOpen(false)}
+          projectId={projectId || ''}
+          companyId={selectedProject.company_id}
+          projectAssignees={assignees || []}
         />
       )}
     </div>
