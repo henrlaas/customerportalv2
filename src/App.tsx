@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -133,10 +132,8 @@ function App() {
               </Route>
               <Route element={<ClientProtectedRoute />}>
                 <Route element={<ClientLayout />}>
-                  {/* Fix client routes - ensure they match what's being redirected to */}
                   <Route path="/client" element={<ClientDashboardPage />} />
                   <Route path="/client/companies/:companyId" element={<ClientCompanyDetailsPage />} />
-                  {/* Add additional client routes */}
                   <Route path="/client/tasks" element={<TasksPage />} />
                   <Route path="/client/contracts" element={<ContractsPage />} />
                 </Route>

@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,10 +18,11 @@ export const ClientProtectedRoute = () => {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Check if user is a client
-  if (profile && !profile.is_client) {
+  // Check if user is a client (using isClient flag from profile or checking role)
+  if (!profile?.is_client && profile?.role !== 'client') {
     return <Navigate to="/unauthorized" replace />;
   }
 
   return <Outlet />;
 };
+

@@ -106,6 +106,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       ...data,
       is_admin: data.role === 'admin',
       is_employee: ['admin', 'employee', 'manager'].includes(data.role),
+      is_client: data.is_client === true || data.role === 'client',
     };
     
     setProfile(userData);
@@ -140,8 +141,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Determine role-based flags
   const isAdmin = profile?.is_admin || false;
-  const isEmployee = profile?.is_employee || false;
-  const isClient = profile?.is_client || false;
+  const isEmployee = profile?.is_employee || false; 
+  const isClient = profile?.is_client || profile?.role === 'client' || false;
 
   const value = {
     user,

@@ -15,7 +15,7 @@ export const ProtectedRoute = () => {
   }
 
   // If user is a client, redirect to client dashboard
-  if (profile && profile.role === 'client') {
+  if (profile && (profile.is_client || profile.role === 'client')) {
     return <Navigate to="/client" replace />;
   }
 
