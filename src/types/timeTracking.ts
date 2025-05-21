@@ -1,3 +1,4 @@
+
 // Time entry type matching our database schema
 export type TimeEntry = {
   id: string;
@@ -11,12 +12,14 @@ export type TimeEntry = {
   is_billable: boolean;
   company_id: string | null;
   campaign_id: string | null;
+  project_id: string | null;
 };
 
 // Task type for selecting related tasks
 export type Task = {
   id: string;
   title: string;
+  company_id?: string;
 };
 
 // Company type for selecting related companies

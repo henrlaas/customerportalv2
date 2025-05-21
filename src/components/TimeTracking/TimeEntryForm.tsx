@@ -53,6 +53,7 @@ const timeEntrySchema = z.object({
   is_billable: z.boolean().default(false),
   company_id: z.string().optional(),
   campaign_id: z.string().optional(),
+  project_id: z.string().optional(),
 });
 
 type TimeEntryFormProps = {
@@ -66,6 +67,7 @@ type TimeEntryFormProps = {
   tasks?: Task[];
   companies?: CompanyType[];
   campaigns?: Campaign[];
+  projects?: Project[];
   isCompletingTracking?: boolean;
 };
 
@@ -80,6 +82,7 @@ export const TimeEntryForm = ({
   tasks = [],
   companies = [],
   campaigns = [],
+  projects = [],
   isCompletingTracking = false
 }: TimeEntryFormProps) => {
   const { toast } = useToast();
@@ -87,10 +90,12 @@ export const TimeEntryForm = ({
   const queryClient = useQueryClient();
   const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   const [canBeBillable, setCanBeBillable] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 2;
+  const [associationType, setAssociationType] = useState<'none' | 'company' | 'project' | 'task' | 'campaign'>('none');
   
   // Format dates properly for input fields
   const formatDateForInput = (dateString: string | null) => {
@@ -121,6 +126,24 @@ export const TimeEntryForm = ({
       return data as CompanyType[];
     },
   });
+  
+  // Fetch projects
+  const { data: allProjects = [], isLoading: isLoadingProjects } = useQuery({
+    queryKey: ['projectsList'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, company_id')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching projects:', error);
+        throw error;
+      }
+      
+      return data as Project[];
+    },
+  });
 
   // Form for creating/editing time entries
   const form = useForm({
@@ -133,12 +156,38 @@ export const TimeEntryForm = ({
       is_billable: currentEntry?.is_billable !== undefined ? currentEntry.is_billable : false,
       company_id: currentEntry?.company_id || undefined,
       campaign_id: currentEntry?.campaign_id || undefined,
+      project_id: currentEntry?.project_id || undefined,
     },
   });
 
-  // Watch company_id to filter campaigns and tasks
+  // Watch company_id to filter campaigns, tasks, and projects
   const selectedCompanyId = form.watch('company_id');
+  const selectedProjectId = form.watch('project_id');
+  const selectedTaskId = form.watch('task_id');
+  const selectedCampaignId = form.watch('campaign_id');
   const isBillable = form.watch('is_billable');
+  
+  // Handle mutual exclusivity between project, task, and campaign
+  useEffect(() => {
+    // Set association type
+    if (selectedProjectId && selectedProjectId !== 'no-project') {
+      setAssociationType('project');
+      if (selectedTaskId && selectedTaskId !== 'no-task') form.setValue('task_id', 'no-task');
+      if (selectedCampaignId && selectedCampaignId !== 'no-campaign') form.setValue('campaign_id', 'no-campaign');
+    } else if (selectedTaskId && selectedTaskId !== 'no-task') {
+      setAssociationType('task');
+      if (selectedProjectId && selectedProjectId !== 'no-project') form.setValue('project_id', 'no-project');
+      if (selectedCampaignId && selectedCampaignId !== 'no-campaign') form.setValue('campaign_id', 'no-campaign');
+    } else if (selectedCampaignId && selectedCampaignId !== 'no-campaign') {
+      setAssociationType('campaign');
+      if (selectedProjectId && selectedProjectId !== 'no-project') form.setValue('project_id', 'no-project');
+      if (selectedTaskId && selectedTaskId !== 'no-task') form.setValue('task_id', 'no-task');
+    } else if (selectedCompanyId && selectedCompanyId !== 'no-company') {
+      setAssociationType('company');
+    } else {
+      setAssociationType('none');
+    }
+  }, [selectedProjectId, selectedTaskId, selectedCampaignId, selectedCompanyId, form]);
   
   // Check if entry can be billable (when company is selected) - This was causing infinite re-renders
   useEffect(() => {
@@ -158,18 +207,22 @@ export const TimeEntryForm = ({
     if (!selectedCompanyId || selectedCompanyId === 'no-company') {
       setFilteredCampaigns([]);
       setFilteredTasks([]);
+      setFilteredProjects([]);
       return;
     }
     
     // Filter campaigns from prop rather than re-fetching
     setFilteredCampaigns(campaigns.filter(campaign => campaign.company_id === selectedCompanyId));
     
+    // Filter projects from props
+    setFilteredProjects(allProjects.filter(project => project.company_id === selectedCompanyId));
+    
     // Fetch tasks for the selected company - only when company changes
     const fetchTasks = async () => {
       try {
         const { data: companyTasks, error } = await supabase
           .from('tasks')
-          .select('id,title')
+          .select('id,title,company_id')
           .eq('company_id', selectedCompanyId);
           
         if (error) throw error;
@@ -188,7 +241,7 @@ export const TimeEntryForm = ({
     };
 
     fetchTasks();
-  }, [selectedCompanyId, campaigns, form]);
+  }, [selectedCompanyId, campaigns, form, allProjects]);
 
   // Create time entry mutation - optimized to reduce payload size
   const createMutation = useMutation({
@@ -205,6 +258,7 @@ export const TimeEntryForm = ({
         is_billable: values.company_id && values.company_id !== 'no-company' ? values.is_billable : false,
         company_id: values.company_id === 'no-company' ? null : values.company_id || null,
         campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
+        project_id: values.project_id === 'no-project' ? null : values.project_id || null,
       };
       
       const { data, error } = await supabase
@@ -250,6 +304,7 @@ export const TimeEntryForm = ({
         is_billable: values.company_id && values.company_id !== 'no-company' ? values.is_billable : false,
         company_id: values.company_id === 'no-company' ? null : values.company_id || null,
         campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
+        project_id: values.project_id === 'no-project' ? null : values.project_id || null,
       };
       
       const { data, error } = await supabase
@@ -301,6 +356,7 @@ export const TimeEntryForm = ({
         values.is_billable = false;
         values.campaign_id = undefined;
         values.task_id = undefined;
+        values.project_id = undefined;
         
         if (isEditing && currentEntry) {
           updateMutation.mutate(values);
@@ -446,67 +502,142 @@ export const TimeEntryForm = ({
         </Alert>
       )}
 
-      <FormField
-        control={form.control}
-        name="campaign_id"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Campaign</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              value={field.value}
-              defaultValue={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a campaign (optional)" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="no-campaign">No campaign</SelectItem>
-                {filteredCampaigns.map(campaign => (
-                  <SelectItem key={campaign.id} value={campaign.id}>
-                    {campaign.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="space-y-4">
+        <div className="mb-4">
+          <h3 className="text-sm font-medium mb-2">Associate Time Entry With</h3>
+          <p className="text-xs text-muted-foreground mb-2">Select one of the following options</p>
+          <div className="space-y-2">
+            {/* Project selector */}
+            <FormField
+              control={form.control}
+              name="project_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // If project is selected, clear other selections
+                      if (value !== 'no-project') {
+                        form.setValue('task_id', 'no-task');
+                        form.setValue('campaign_id', 'no-campaign');
+                      }
+                    }}
+                    value={field.value}
+                    defaultValue={field.value}
+                    disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || associationType === 'task' || associationType === 'campaign'}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a project (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="no-project">No project</SelectItem>
+                      {filteredProjects.map(project => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    {associationType === 'task' || associationType === 'campaign' ? 
+                      'You cannot select a project when a task or campaign is selected' : ''}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <FormField
-        control={form.control}
-        name="task_id"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Related Task</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              value={field.value}
-              defaultValue={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Link to a task (optional)" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="no-task">No related task</SelectItem>
-                {selectedCompanyId && filteredTasks.map(task => (
-                  <SelectItem key={task.id} value={task.id}>
-                    {task.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+            {/* Campaign selector */}
+            <FormField
+              control={form.control}
+              name="campaign_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Campaign</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // If campaign is selected, clear other selections
+                      if (value !== 'no-campaign') {
+                        form.setValue('task_id', 'no-task');
+                        form.setValue('project_id', 'no-project');
+                      }
+                    }}
+                    value={field.value}
+                    defaultValue={field.value}
+                    disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0 || associationType === 'task' || associationType === 'project'}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a campaign (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="no-campaign">No campaign</SelectItem>
+                      {filteredCampaigns.map(campaign => (
+                        <SelectItem key={campaign.id} value={campaign.id}>
+                          {campaign.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    {associationType === 'task' || associationType === 'project' ? 
+                      'You cannot select a campaign when a task or project is selected' : ''}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Task selector */}
+            <FormField
+              control={form.control}
+              name="task_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Related Task</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // If task is selected, clear other selections
+                      if (value !== 'no-task') {
+                        form.setValue('project_id', 'no-project');
+                        form.setValue('campaign_id', 'no-campaign');
+                      }
+                    }}
+                    value={field.value}
+                    defaultValue={field.value}
+                    disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || associationType === 'project' || associationType === 'campaign'}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Link to a task (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="no-task">No related task</SelectItem>
+                      {selectedCompanyId && filteredTasks.map(task => (
+                        <SelectItem key={task.id} value={task.id}>
+                          {task.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    {associationType === 'project' || associationType === 'campaign' ? 
+                      'You cannot select a task when a project or campaign is selected' : ''}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+      </div>
     </>
   );
 

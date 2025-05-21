@@ -1,134 +1,134 @@
 
-import { format, formatDistance } from 'date-fns';
-import { Calendar, Clock, Pencil, Building, Tag, Briefcase, DollarSign, Trash2 } from 'lucide-react';
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { 
+  MoreVertical, 
+  Clock, 
+  Briefcase, 
+  ClipboardList, 
+  Megaphone,
+  FileText,
+  Building
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { TimeEntry } from '@/types/timeTracking';
 import { Badge } from '@/components/ui/badge';
-import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
-import { Company } from '@/types/company';
 
-type TimeEntryCardProps = {
+interface TimeEntryCardProps {
   entry: TimeEntry;
-  tasks: Task[];
-  companies: Company[];
-  campaigns: Campaign[];
-  onEdit: (entry: TimeEntry) => void;
-  onDelete: (entry: TimeEntry) => void;
-  highlighted?: boolean;
-};
+  duration: string;
+  companyName: string;
+  taskTitle: string;
+  campaignName: string;
+  projectName?: string;
+  onEdit: () => void;
+  onDelete: () => void;
+}
 
-export const TimeEntryCard = ({ 
-  entry, 
-  tasks, 
-  companies, 
-  campaigns, 
+export function TimeEntryCard({
+  entry,
+  duration,
+  companyName,
+  taskTitle,
+  campaignName,
+  projectName = '',
   onEdit,
   onDelete,
-  highlighted = false
-}: TimeEntryCardProps) => {
-  // Find related data
-  const task = entry.task_id ? tasks.find(t => t.id === entry.task_id) : null;
-  const company = entry.company_id ? companies.find(c => c.id === entry.company_id) : null;
-  const campaign = entry.campaign_id ? campaigns.find(c => c.id === entry.campaign_id) : null;
-  
-  // Format times and calculate duration
-  const startTime = new Date(entry.start_time);
-  const endTime = entry.end_time ? new Date(entry.end_time) : null;
-  
-  let duration = '-- : --';
-  if (endTime) {
-    const durationMs = endTime.getTime() - startTime.getTime();
-    const hours = Math.floor(durationMs / (1000 * 60 * 60));
-    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    duration = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  } else {
-    // For ongoing time tracking, show continuous updating
-    duration = 'In progress';
-  }
-  
+}: TimeEntryCardProps) {
+  // Format time for display
+  const formatTime = (dateString: string | null): string => {
+    if (!dateString) return 'In progress';
+    return new Date(dateString).toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow">
-      <div className="p-4">
-        <div className="flex items-center justify-between">
-          {/* Left side - Task description and metadata */}
-          <div className="flex-grow mr-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-base font-medium truncate">
-                {entry.description || 'No description'}
-              </h3>
-            </div>
-            
-            <div className="flex flex-wrap items-center text-sm text-gray-500 gap-3">
-              {company && (
-                <div className="flex items-center gap-1">
-                  <Building className="h-3.5 w-3.5" />
-                  <span className="truncate max-w-[120px]">{company.name}</span>
-                </div>
-              )}
-              
-              {campaign && (
-                <div className="flex items-center gap-1">
-                  <Tag className="h-3.5 w-3.5" />
-                  <span className="truncate max-w-[120px]">{campaign.name}</span>
-                </div>
-              )}
-              
-              {task && (
-                <div className="flex items-center gap-1">
-                  <Briefcase className="h-3.5 w-3.5" />
-                  <span className="truncate max-w-[120px]">{task.title}</span>
-                </div>
+    <Card className={`transition-all ${!entry.end_time ? 'border-primary border-2' : ''}`}>
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+            <div className="font-medium">
+              {entry.description || 'No description'}
+              {!entry.end_time && (
+                <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20">
+                  Running
+                </Badge>
               )}
             </div>
-          </div>
-          
-          {/* Center - Badge always vertically centered */}
-          <div className="flex items-center self-center mx-3">
-            <Badge 
-              variant={entry.is_billable ? "default" : "outline"} 
-              className={`flex items-center gap-1 ${entry.is_billable ? 'bg-green-700 hover:bg-green-800' : ''}`}
-            >
-              <DollarSign className="h-3 w-3" />
-              {entry.is_billable ? 'Billable' : 'Non-billable'}
-            </Badge>
-          </div>
-          
-          {/* Middle - Date and time information */}
-          <div className="flex items-center gap-6 mr-4">
-            <div className="flex items-center gap-1 text-sm text-gray-600">
-              <Calendar className="h-3.5 w-3.5 text-gray-500" />
-              <span>{format(startTime, 'dd MMM')}</span>
-            </div>
-            
-            <div className="flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
-              <Clock className="h-3.5 w-3.5 text-gray-500" />
-              <span>
-                {format(startTime, 'HH:mm')} - {endTime ? format(endTime, 'HH:mm') : 'ongoing'}
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <span className="flex items-center">
+                <Clock className="mr-1 h-3 w-3" /> 
+                {formatTime(entry.start_time)} - {formatTime(entry.end_time)}
               </span>
+              <span>•</span>
+              <span>{duration}</span>
+              {entry.is_billable && (
+                <>
+                  <span>•</span>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                    Billable
+                  </Badge>
+                </>
+              )}
             </div>
             
-            <div className="font-mono text-sm font-medium whitespace-nowrap">
-              {duration}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {companyName && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Building className="h-3 w-3" />
+                  {companyName}
+                </Badge>
+              )}
+              
+              {projectName && (
+                <Badge variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
+                  <Briefcase className="h-3 w-3" />
+                  {projectName}
+                </Badge>
+              )}
+              
+              {taskTitle && (
+                <Badge variant="outline" className="flex items-center gap-1 bg-purple-50 text-purple-700 border-purple-200">
+                  <ClipboardList className="h-3 w-3" />
+                  {taskTitle}
+                </Badge>
+              )}
+              
+              {campaignName && (
+                <Badge variant="outline" className="flex items-center gap-1 bg-amber-50 text-amber-700 border-amber-200">
+                  <Megaphone className="h-3 w-3" />
+                  {campaignName}
+                </Badge>
+              )}
             </div>
           </div>
           
-          {/* Right side - Actions */}
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={(e) => {
-              e.stopPropagation();
-              onEdit(entry);
-            }}>
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={(e) => {
-              e.stopPropagation();
-              onDelete(entry);
-            }} className="text-destructive hover:text-destructive">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onEdit}>
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
-};
+}
