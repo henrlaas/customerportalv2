@@ -191,10 +191,6 @@ export const TimeEntryForm = ({
     setFilteredCampaigns(companyCampaigns);
     setFilteredProjects(companyProjects);
     
-    console.log('Filtered projects:', companyProjects);
-    console.log('All projects:', projects);
-    console.log('Selected company ID:', selectedCompanyId);
-    
     // Fetch tasks for the selected company - only when company changes
     const fetchTasks = async () => {
       try {
@@ -265,13 +261,20 @@ export const TimeEntryForm = ({
       return data;
     },
     onSuccess: () => {
+      // Immediately close the dialog first
+      setIsCreating(false);
+      
+      // Then show toast and update data
       toast({
         title: 'Time entry created',
         description: 'Your time entry has been created successfully.',
       });
+      
+      // Invalidate queries after UI updates
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
-      setIsCreating(false);
+      
+      // Complete other actions
       onComplete();
       form.reset();
       setCurrentStep(1); // Reset step
@@ -312,13 +315,20 @@ export const TimeEntryForm = ({
       return data;
     },
     onSuccess: () => {
+      // Immediately close the dialog first
+      setIsEditing(false);
+      
+      // Then show toast and update data
       toast({
         title: 'Time entry updated',
         description: 'Your time entry has been updated successfully.',
       });
+      
+      // Invalidate queries after UI updates
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
-      setIsEditing(false);
+      
+      // Complete other actions
       onCancelEdit();
       onComplete();
       form.reset();
@@ -682,8 +692,10 @@ export const TimeEntryForm = ({
   if (isCreating) {
     return (
       <Dialog open={isCreating} onOpenChange={(open) => {
-        setIsCreating(open);
-        if (!open) setCurrentStep(1);
+        if (!createMutation.isPending) {
+          setIsCreating(open);
+          if (!open) setCurrentStep(1);
+        }
       }}>
         {dialogContent}
       </Dialog>
@@ -694,8 +706,10 @@ export const TimeEntryForm = ({
   if (isEditing) {
     return (
       <Dialog open={isEditing} onOpenChange={(open) => {
-        setIsEditing(open);
-        if (!open) setCurrentStep(1);
+        if (!updateMutation.isPending) {
+          setIsEditing(open);
+          if (!open) setCurrentStep(1);
+        }
       }}>
         {dialogContent}
       </Dialog>
