@@ -119,19 +119,38 @@ export const useProjects = () => {
   
   // Function to delete a project by id
   const deleteProject = async (projectId: string) => {
-    const { error } = await supabase
-      .from('projects')
-      .delete()
-      .eq('id', projectId);
+    try {
+      // First delete any associated contracts
+      console.log(`Deleting contracts for project ID: ${projectId}`);
+      const { error: contractsError } = await supabase
+        .from('contracts')
+        .delete()
+        .eq('project_id', projectId);
+        
+      if (contractsError) {
+        console.error('Error deleting associated contracts:', contractsError);
+        throw contractsError;
+      }
+      
+      // Then delete the project
+      console.log(`Deleting project ID: ${projectId}`);
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId);
 
-    if (error) {
-      console.error('Error deleting project:', error);
+      if (error) {
+        console.error('Error deleting project:', error);
+        throw error;
+      }
+
+      // Refetch projects to update the list
+      refetch();
+      return true;
+    } catch (error) {
+      console.error('Error in deleteProject:', error);
       throw error;
     }
-
-    // Refetch projects to update the list
-    refetch();
-    return true;
   };
 
   // Function to get a project by id with all related data

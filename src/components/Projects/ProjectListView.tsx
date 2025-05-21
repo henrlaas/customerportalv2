@@ -205,7 +205,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                       onClick={(e) => handleDeleteClick(e, project.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -232,7 +232,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project and all associated data.
+              This action cannot be undone. This will permanently delete the project and all associated data including contracts.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

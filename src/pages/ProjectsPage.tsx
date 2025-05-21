@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,7 @@ const ProjectsPage = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filter, setFilter] = useState<'all' | 'signed' | 'unsigned'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const { projects, isLoading: projectsLoading, refetch } = useProjects();
+  const { projects, isLoading: projectsLoading, refetch, deleteProject } = useProjects();
 
   // Filter projects based on contract status and search query
   const filteredProjects = projects ? projects.filter(project => {
@@ -39,10 +38,9 @@ const ProjectsPage = () => {
   }) : [];
 
   const handleDeleteProject = async (projectId: string) => {
-    const { deleteProject } = useProjects();
-    
     try {
       await deleteProject(projectId);
+      toast.success('Project and associated contracts successfully deleted');
       refetch(); // Refresh the projects list after deletion
       return Promise.resolve();
     } catch (error) {
