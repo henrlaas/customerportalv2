@@ -506,12 +506,55 @@ const ProjectDetailsPage = () => {
 
             {/* Finance Tab */}
             {projectCardTab === 'finance' && (
-              <div className="col-span-2">
-                <div className="flex justify-center items-center h-[350px]">
-                  <ProjectFinancialChart 
-                    projectId={projectId || ''} 
-                    projectValue={selectedProject?.value || null}
-                  />
+              <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col justify-center">
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 gap-4">
+                      {/* Project Value Card */}
+                      <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
+                        <div className="text-sm text-gray-500 font-medium">Project Value</div>
+                        <div className="text-2xl font-bold">
+                          {formatCurrency(selectedProject?.value)}
+                        </div>
+                      </div>
+                      
+                      {/* Cost to Date Card */}
+                      <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
+                        <div className="text-sm text-gray-500 font-medium">Cost to Date</div>
+                        <div className="text-2xl font-bold">
+                          {isLoadingFinancial ? (
+                            <span className="text-lg">Loading...</span>
+                          ) : (
+                            formatCurrency(financialData?.totalCost || 0)
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Projected Profit Card */}
+                      <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
+                        <div className="text-sm text-gray-500 font-medium">Projected Profit</div>
+                        {isLoadingFinancial ? (
+                          <span className="text-lg">Loading...</span>
+                        ) : (
+                          <div className="text-2xl font-bold">
+                            <span className={calculateProjectProfit().profit >= 0 ? 'text-green-600' : 'text-red-600'}>
+                              {formatCurrency(calculateProjectProfit().profit)} 
+                              ({calculateProjectProfit().profitPercentage.toFixed(0)}%)
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-center items-center">
+                  <div className="w-full h-full">
+                    <ProjectFinancialChart 
+                      projectId={projectId || ''} 
+                      projectValue={selectedProject?.value || null}
+                    />
+                  </div>
                 </div>
               </div>
             )}
