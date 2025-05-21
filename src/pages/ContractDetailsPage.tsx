@@ -74,18 +74,12 @@ const ContractDetailsPage = () => {
           
         if (error) throw error;
         
-        // Ensure the contact property exists and has the required fields
-        // before assigning it to the contract state
         if (data) {
           // Create a properly typed object that matches ContractWithDetails
-          const contractData: ContractWithDetails = {
-            ...data,
-            company: data.company || { 
-              name: 'Unknown', 
-              organization_number: null,
-              website: null
-            },
-            contact: data.contact && typeof data.contact === 'object' ? {
+          // Use null check and type guard before accessing properties
+          const contactData = data.contact && 
+            typeof data.contact === 'object' && 
+            !('error' in data.contact) ? {
               id: data.contact?.id || '',
               user_id: data.contact?.user_id || '',
               position: data.contact?.position || null,
@@ -99,7 +93,16 @@ const ContractDetailsPage = () => {
               first_name: '',
               last_name: '',
               avatar_url: null
+            };
+          
+          const contractData: ContractWithDetails = {
+            ...data,
+            company: data.company || { 
+              name: 'Unknown', 
+              organization_number: null,
+              website: null
             },
+            contact: contactData,
             creator: data.creator || null
           };
           
@@ -207,15 +210,10 @@ const ContractDetailsPage = () => {
             if (error) throw error;
             
             if (data) {
-              // Create a properly typed object that matches ContractWithDetails
-              const contractData: ContractWithDetails = {
-                ...data,
-                company: data.company || { 
-                  name: 'Unknown', 
-                  organization_number: null,
-                  website: null
-                },
-                contact: data.contact && typeof data.contact === 'object' ? {
+              // Use null check and type guard before accessing properties
+              const contactData = data.contact && 
+                typeof data.contact === 'object' && 
+                !('error' in data.contact) ? {
                   id: data.contact?.id || '',
                   user_id: data.contact?.user_id || '',
                   position: data.contact?.position || null,
@@ -229,7 +227,16 @@ const ContractDetailsPage = () => {
                   first_name: '',
                   last_name: '',
                   avatar_url: null
+                };
+              
+              const contractData: ContractWithDetails = {
+                ...data,
+                company: data.company || { 
+                  name: 'Unknown', 
+                  organization_number: null,
+                  website: null
                 },
+                contact: contactData,
                 creator: data.creator || null
               };
               
