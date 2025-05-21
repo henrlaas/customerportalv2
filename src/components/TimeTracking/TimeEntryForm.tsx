@@ -104,6 +104,21 @@ export const TimeEntryForm = ({
     return date.toISOString().substring(0, 16);
   };
 
+  // Form for creating/editing time entries
+  const form = useForm({
+    resolver: zodResolver(timeEntrySchema),
+    defaultValues: {
+      description: currentEntry?.description || '',
+      start_time: formatDateForInput(currentEntry?.start_time) || new Date().toISOString().substring(0, 16),
+      end_time: formatDateForInput(currentEntry?.end_time) || '',
+      task_id: currentEntry?.task_id || undefined,
+      is_billable: currentEntry?.is_billable !== undefined ? currentEntry.is_billable : false,
+      company_id: currentEntry?.company_id || undefined,
+      campaign_id: currentEntry?.campaign_id || undefined,
+      project_id: currentEntry?.project_id || undefined,
+    },
+  });
+
   // Use the useCompanyList hook with memoized results - performance improvement by only fetching when needed
   const { data: allCompanies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companyList', { showSubsidiaries }],
@@ -126,21 +141,6 @@ export const TimeEntryForm = ({
     },
   });
 
-  // Form for creating/editing time entries
-  const form = useForm({
-    resolver: zodResolver(timeEntrySchema),
-    defaultValues: {
-      description: currentEntry?.description || '',
-      start_time: formatDateForInput(currentEntry?.start_time) || new Date().toISOString().substring(0, 16),
-      end_time: formatDateForInput(currentEntry?.end_time) || '',
-      task_id: currentEntry?.task_id || undefined,
-      is_billable: currentEntry?.is_billable !== undefined ? currentEntry.is_billable : false,
-      company_id: currentEntry?.company_id || undefined,
-      campaign_id: currentEntry?.campaign_id || undefined,
-      project_id: currentEntry?.project_id || undefined,
-    },
-  });
-
   // Watch company_id to filter campaigns and tasks
   const selectedCompanyId = form.watch('company_id');
   const isBillable = form.watch('is_billable');
@@ -148,7 +148,7 @@ export const TimeEntryForm = ({
   const selectedCampaignId = form.watch('campaign_id');
   const selectedProjectId = form.watch('project_id');
   
-  // Check if entry can be billable (when company is selected) - This was causing infinite re-renders
+  // Check if entry can be billable (when company is selected)
   useEffect(() => {
     const companyId = selectedCompanyId;
     const canBill = !!companyId && companyId !== 'no-company';
@@ -159,9 +159,9 @@ export const TimeEntryForm = ({
     if ((!companyId || companyId === 'no-company') && isBillable) {
       form.setValue('is_billable', false);
     }
-  }, [selectedCompanyId, form, isBillable]);
+  }, [selectedCompanyId, isBillable, form]);
 
-  // Filter campaigns based on selected company - optimized to reduce unnecessary operations
+  // Filter campaigns, projects and tasks based on selected company
   useEffect(() => {
     if (!selectedCompanyId || selectedCompanyId === 'no-company') {
       setFilteredCampaigns([]);
@@ -170,9 +170,12 @@ export const TimeEntryForm = ({
       return;
     }
     
-    // Filter campaigns from prop rather than re-fetching
-    setFilteredCampaigns(campaigns.filter(campaign => campaign.company_id === selectedCompanyId));
-    setFilteredProjects(projects.filter(project => project.company_id === selectedCompanyId));
+    // Filter campaigns and projects from props
+    const companyCampaigns = campaigns.filter(campaign => campaign.company_id === selectedCompanyId);
+    const companyProjects = projects.filter(project => project.company_id === selectedCompanyId);
+    
+    setFilteredCampaigns(companyCampaigns);
+    setFilteredProjects(companyProjects);
     
     // Fetch tasks for the selected company - only when company changes
     const fetchTasks = async () => {
@@ -201,39 +204,23 @@ export const TimeEntryForm = ({
   }, [selectedCompanyId, campaigns, projects, form]);
   
   // Handle mutual exclusivity between task, campaign, and project selections
-  useEffect(() => {
-    // If a task is selected, clear campaign and project selections
-    if (selectedTaskId && selectedTaskId !== 'no-task') {
-      if (selectedCampaignId && selectedCampaignId !== 'no-campaign') {
-        form.setValue('campaign_id', 'no-campaign');
-      }
-      if (selectedProjectId && selectedProjectId !== 'no-project') {
-        form.setValue('project_id', 'no-project');
-      }
-    }
-    
-    // If a campaign is selected, clear task and project selections
-    if (selectedCampaignId && selectedCampaignId !== 'no-campaign') {
-      if (selectedTaskId && selectedTaskId !== 'no-task') {
-        form.setValue('task_id', 'no-task');
-      }
-      if (selectedProjectId && selectedProjectId !== 'no-project') {
-        form.setValue('project_id', 'no-project');
+  const updateMutualExclusivity = useCallback((field: string, value: string) => {
+    if (value && value !== `no-${field}`) {
+      // Clear other fields if this one has a value
+      if (field === 'task') {
+        form.setValue('campaign_id', undefined);
+        form.setValue('project_id', undefined);
+      } else if (field === 'campaign') {
+        form.setValue('task_id', undefined);
+        form.setValue('project_id', undefined);
+      } else if (field === 'project') {
+        form.setValue('task_id', undefined);
+        form.setValue('campaign_id', undefined);
       }
     }
-    
-    // If a project is selected, clear task and campaign selections
-    if (selectedProjectId && selectedProjectId !== 'no-project') {
-      if (selectedTaskId && selectedTaskId !== 'no-task') {
-        form.setValue('task_id', 'no-task');
-      }
-      if (selectedCampaignId && selectedCampaignId !== 'no-campaign') {
-        form.setValue('campaign_id', 'no-campaign');
-      }
-    }
-  }, [selectedTaskId, selectedCampaignId, selectedProjectId, form]);
+  }, [form]);
 
-  // Create time entry mutation - optimized to reduce payload size
+  // Create time entry mutation
   const createMutation = useMutation({
     mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
       if (!user) throw new Error('You must be logged in to create time entries');
@@ -280,7 +267,7 @@ export const TimeEntryForm = ({
     },
   });
 
-  // Update time entry mutation - optimized
+  // Update time entry mutation
   const updateMutation = useMutation({
     mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
       if (!currentEntry) return null;
@@ -337,7 +324,7 @@ export const TimeEntryForm = ({
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  // Submit handler for the form - refactored for better performance and skip second step if no company
+  // Submit handler for the form
   const onSubmit = (values: z.infer<typeof timeEntrySchema>) => {
     // If on first step and no company selected, directly submit (skip stage 2)
     if (currentStep === 1) {
@@ -505,10 +492,7 @@ export const TimeEntryForm = ({
             <Select
               onValueChange={(value) => {
                 field.onChange(value);
-                if (value !== 'no-project') {
-                  form.setValue('campaign_id', 'no-campaign');
-                  form.setValue('task_id', 'no-task');
-                }
+                updateMutualExclusivity('project', value);
               }}
               value={field.value}
               defaultValue={field.value}
@@ -542,14 +526,11 @@ export const TimeEntryForm = ({
             <Select
               onValueChange={(value) => {
                 field.onChange(value);
-                if (value !== 'no-campaign') {
-                  form.setValue('project_id', 'no-project');
-                  form.setValue('task_id', 'no-task');
-                }
+                updateMutualExclusivity('campaign', value);
               }}
               value={field.value}
               defaultValue={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0 || (!!selectedProjectId && selectedProjectId !== 'no-project') || (!!selectedTaskId && selectedTaskId !== 'no-task')}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0}
             >
               <FormControl>
                 <SelectTrigger>
@@ -579,14 +560,11 @@ export const TimeEntryForm = ({
             <Select
               onValueChange={(value) => {
                 field.onChange(value);
-                if (value !== 'no-task') {
-                  form.setValue('project_id', 'no-project');
-                  form.setValue('campaign_id', 'no-campaign');
-                }
+                updateMutualExclusivity('task', value);
               }}
               value={field.value}
               defaultValue={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || (!!selectedProjectId && selectedProjectId !== 'no-project') || (!!selectedCampaignId && selectedCampaignId !== 'no-campaign')}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
             >
               <FormControl>
                 <SelectTrigger>
@@ -595,7 +573,7 @@ export const TimeEntryForm = ({
               </FormControl>
               <SelectContent>
                 <SelectItem value="no-task">No related task</SelectItem>
-                {selectedCompanyId && filteredTasks.map(task => (
+                {filteredTasks.map(task => (
                   <SelectItem key={task.id} value={task.id}>
                     {task.title}
                   </SelectItem>
@@ -609,7 +587,7 @@ export const TimeEntryForm = ({
     </>
   );
 
-  // Dialog content with optimized rendering
+  // Dialog content
   const dialogContent = (
     <DialogContent className="max-w-md">
       <DialogHeader>
