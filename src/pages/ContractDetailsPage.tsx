@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ContractWithDetails } from '@/utils/contractUtils';
@@ -48,19 +49,14 @@ const ContractDetailsPage = () => {
       
       try {
         setLoading(true);
+        // Modify the query to avoid the relationship error with created_by
         const { data, error } = await supabase
           .from('contracts')
           .select(`
             *,
             company:company_id (*),
-            creator:created_by (
-              id, 
-              first_name, 
-              last_name, 
-              avatar_url
-            ),
             contact:contact_id (
-              id,
+              id, 
               user_id,
               position,
               first_name,
@@ -74,26 +70,33 @@ const ContractDetailsPage = () => {
         if (error) throw error;
         
         if (data) {
-          // Get the safe contact data, checking for nulls and errors
-          const safeContact = data.contact && 
-            typeof data.contact === 'object' && 
-            !('error' in data.contact) ? {
-              id: data.contact.id || '',
-              user_id: data.contact.user_id || '',
-              position: data.contact.position || null,
-              first_name: data.contact.first_name || '',
-              last_name: data.contact.last_name || '',
-              avatar_url: data.contact.avatar_url || null
-            } : {
-              id: '',
-              user_id: '',
-              position: null,
-              first_name: '',
-              last_name: '',
-              avatar_url: null
-            };
+          // Initialize contact with default values to satisfy TypeScript
+          const safeContact = {
+            id: '',
+            user_id: '',
+            position: null,
+            first_name: '',
+            last_name: '',
+            avatar_url: null
+          };
           
-          // Create a properly typed contract object
+          // Only try to extract contact data if it exists and is an object
+          if (data.contact && 
+              typeof data.contact === 'object' && 
+              data.contact !== null && 
+              !Array.isArray(data.contact) &&
+              !('error' in data.contact)) {
+            
+            // Safely extract values with fallbacks
+            safeContact.id = data.contact.id || '';
+            safeContact.user_id = data.contact.user_id || '';
+            safeContact.position = data.contact.position || null;
+            safeContact.first_name = data.contact.first_name || '';
+            safeContact.last_name = data.contact.last_name || '';
+            safeContact.avatar_url = data.contact.avatar_url || null;
+          }
+          
+          // Create a properly typed contract object with safe defaults
           const contractData: ContractWithDetails = {
             ...data,
             company: data.company || { 
@@ -102,8 +105,29 @@ const ContractDetailsPage = () => {
               website: null
             },
             contact: safeContact,
-            creator: data.creator || null
+            creator: null // We handle creator separately since there's an error with the relationship
           };
+          
+          // Fetch creator data separately if we have created_by ID
+          if (data.created_by) {
+            try {
+              const { data: creatorData, error: creatorError } = await supabase
+                .from('profiles')
+                .select('first_name, last_name, avatar_url')
+                .eq('id', data.created_by)
+                .single();
+                
+              if (creatorData && !creatorError) {
+                contractData.creator = {
+                  first_name: creatorData.first_name || null,
+                  last_name: creatorData.last_name || null,
+                  avatar_url: creatorData.avatar_url || null
+                };
+              }
+            } catch (err) {
+              console.error('Error fetching creator details:', err);
+            }
+          }
           
           setContract(contractData);
         }
@@ -188,12 +212,6 @@ const ContractDetailsPage = () => {
               .select(`
                 *,
                 company:company_id (*),
-                creator:created_by (
-                  id, 
-                  first_name, 
-                  last_name, 
-                  avatar_url
-                ),
                 contact:contact_id (
                   id,
                   user_id,
@@ -209,26 +227,33 @@ const ContractDetailsPage = () => {
             if (error) throw error;
             
             if (data) {
-              // Get the safe contact data, checking for nulls and errors
-              const safeContact = data.contact && 
-                typeof data.contact === 'object' && 
-                !('error' in data.contact) ? {
-                  id: data.contact.id || '',
-                  user_id: data.contact.user_id || '',
-                  position: data.contact.position || null,
-                  first_name: data.contact.first_name || '',
-                  last_name: data.contact.last_name || '',
-                  avatar_url: data.contact.avatar_url || null
-                } : {
-                  id: '',
-                  user_id: '',
-                  position: null,
-                  first_name: '',
-                  last_name: '',
-                  avatar_url: null
-                };
+              // Initialize contact with default values to satisfy TypeScript
+              const safeContact = {
+                id: '',
+                user_id: '',
+                position: null,
+                first_name: '',
+                last_name: '',
+                avatar_url: null
+              };
               
-              // Create a properly typed contract object
+              // Only try to extract contact data if it exists and is an object
+              if (data.contact && 
+                  typeof data.contact === 'object' && 
+                  data.contact !== null && 
+                  !Array.isArray(data.contact) &&
+                  !('error' in data.contact)) {
+                
+                // Safely extract values with fallbacks
+                safeContact.id = data.contact.id || '';
+                safeContact.user_id = data.contact.user_id || '';
+                safeContact.position = data.contact.position || null;
+                safeContact.first_name = data.contact.first_name || '';
+                safeContact.last_name = data.contact.last_name || '';
+                safeContact.avatar_url = data.contact.avatar_url || null;
+              }
+              
+              // Create a properly typed contract object with safe defaults
               const contractData: ContractWithDetails = {
                 ...data,
                 company: data.company || { 
@@ -237,8 +262,29 @@ const ContractDetailsPage = () => {
                   website: null
                 },
                 contact: safeContact,
-                creator: data.creator || null
+                creator: null // Handle creator separately
               };
+              
+              // Fetch creator data separately if we have created_by ID
+              if (data.created_by) {
+                try {
+                  const { data: creatorData, error: creatorError } = await supabase
+                    .from('profiles')
+                    .select('first_name, last_name, avatar_url')
+                    .eq('id', data.created_by)
+                    .single();
+                    
+                  if (creatorData && !creatorError) {
+                    contractData.creator = {
+                      first_name: creatorData.first_name || null,
+                      last_name: creatorData.last_name || null,
+                      avatar_url: creatorData.avatar_url || null
+                    };
+                  }
+                } catch (err) {
+                  console.error('Error fetching creator details:', err);
+                }
+              }
               
               setContract(contractData);
             }
