@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/components/ui/button';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, HelpCircle } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -20,6 +20,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { AuthLogo } from '@/components/Layout/AuthLogo';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Define form schema for login
 const loginSchema = z.object({
@@ -37,6 +44,7 @@ const Auth = () => {
   const t = useTranslation();
   const [isProcessing, setIsProcessing] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
   
   // Check if user is coming with an invitation token
   useEffect(() => {
@@ -101,7 +109,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
         <div className="flex justify-center mb-8">
           <AuthLogo />
@@ -172,6 +180,31 @@ const Auth = () => {
           {t('Contact your advisor if you have not received access to Workspace.')}
         </p>
       </div>
+      
+      {/* Help button in bottom right corner */}
+      <div className="fixed bottom-6 right-6">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="rounded-full h-10 w-10 bg-white shadow-md border-gray-200 hover:bg-gray-100"
+          onClick={() => setHelpModalOpen(true)}
+        >
+          <HelpCircle className="h-5 w-5 text-gray-600" />
+        </Button>
+      </div>
+      
+      {/* Help Modal */}
+      <Dialog open={helpModalOpen} onOpenChange={setHelpModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Need help?</DialogTitle>
+          </DialogHeader>
+          <DialogDescription className="space-y-4">
+            <p>Contact our developer at henrik@box.no if you are experiencing any issues with the application.</p>
+            <p className="text-sm text-gray-500 pt-4">Box Workspace v5.2</p>
+          </DialogDescription>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
