@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Building, Calendar, FileText, DollarSign, Clock, User, Briefcase, Users, Plus, ClipboardList, FileContract, FileInput } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, FileText, DollarSign, Clock, User, Briefcase, Users, Plus, ClipboardList, FileInput } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectMilestones } from '@/hooks/useProjectMilestones';
 import { useProjectAssignees } from '@/hooks/useProjectAssignees';
@@ -462,7 +461,7 @@ const ProjectDetailsPage = () => {
                 <h3 className="text-lg font-medium">Project Contracts ({projectContracts.length})</h3>
                 {projectContracts.length < 1 && (
                   <Button onClick={() => setIsContractDialogOpen(true)}>
-                    <FileContract className="mr-2 h-4 w-4" /> Create Contract
+                    <FileInput className="mr-2 h-4 w-4" /> Create Contract
                   </Button>
                 )}
               </div>
@@ -495,11 +494,11 @@ const ProjectDetailsPage = () => {
           ) : (
             <div className="bg-white rounded-lg shadow p-6 text-center">
               <div className="mb-4 flex flex-col items-center">
-                <FileContract className="h-12 w-12 text-gray-400 mb-2" />
+                <FileInput className="h-12 w-12 text-gray-400 mb-2" />
                 <p className="text-gray-500 mb-4">No contracts associated with this project yet.</p>
               </div>
               <Button onClick={() => setIsContractDialogOpen(true)}>
-                <FileContract className="mr-2 h-4 w-4" /> Create Contract
+                <FileInput className="mr-2 h-4 w-4" /> Create Contract
               </Button>
             </div>
           )}
