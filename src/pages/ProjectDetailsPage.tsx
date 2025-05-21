@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Building, Calendar, FileText, DollarSign, Clock, User, Briefcase, Users } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, FileText, DollarSign, Clock, User, Briefcase, Users, Plus, ClipboardList } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectMilestones } from '@/hooks/useProjectMilestones';
 import { useProjectAssignees } from '@/hooks/useProjectAssignees';
@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
+import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -332,9 +333,7 @@ const ProjectDetailsPage = () => {
               </Button>
             </div>
           ) : isLoadingTasks ? (
-            <div className="flex justify-center items-center p-12">
-              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-            </div>
+            <CenteredSpinner />
           ) : projectTasks && projectTasks.length > 0 ? (
             <>
               <div className="mb-4 flex justify-between items-center">
@@ -342,7 +341,7 @@ const ProjectDetailsPage = () => {
                 <Button 
                   onClick={() => navigate('/tasks/new?projectId=' + projectId)}
                 >
-                  Create Task
+                  <Plus className="mr-2 h-4 w-4" /> Create Task
                 </Button>
               </div>
               <TaskListView 
@@ -358,11 +357,14 @@ const ProjectDetailsPage = () => {
             </>
           ) : (
             <div className="bg-white rounded-lg shadow p-6 text-center">
-              <p className="text-gray-500 mb-4">No tasks associated with this project yet.</p>
+              <div className="mb-4 flex flex-col items-center">
+                <ClipboardList className="h-12 w-12 text-gray-400 mb-2" />
+                <p className="text-gray-500 mb-4">No tasks associated with this project yet.</p>
+              </div>
               <Button 
                 onClick={() => navigate('/tasks/new?projectId=' + projectId)}
               >
-                Create a Task
+                <Plus className="mr-2 h-4 w-4" /> Create Task
               </Button>
             </div>
           )}
@@ -385,4 +387,3 @@ const ProjectDetailsPage = () => {
 };
 
 export default ProjectDetailsPage;
-
