@@ -63,6 +63,7 @@ const ContractDetailsPage = () => {
             contact:contact_id (
               id,
               user_id,
+              position,
               first_name,
               last_name,
               avatar_url
@@ -73,7 +74,37 @@ const ContractDetailsPage = () => {
           
         if (error) throw error;
         
-        setContract(data as ContractWithDetails);
+        // Ensure the contact property exists and has the required fields
+        // before assigning it to the contract state
+        if (data) {
+          // Create a properly typed object that matches ContractWithDetails
+          const contractData: ContractWithDetails = {
+            ...data,
+            company: data.company || { 
+              name: 'Unknown', 
+              organization_number: null,
+              website: null
+            },
+            contact: data.contact && typeof data.contact === 'object' ? {
+              id: data.contact.id || '',
+              user_id: data.contact.user_id || '',
+              position: data.contact.position || null,
+              first_name: data.contact.first_name || '',
+              last_name: data.contact.last_name || '',
+              avatar_url: data.contact.avatar_url || null
+            } : {
+              id: '',
+              user_id: '',
+              position: null,
+              first_name: '',
+              last_name: '',
+              avatar_url: null
+            },
+            creator: data.creator || null
+          };
+          
+          setContract(contractData);
+        }
       } catch (err: any) {
         console.error('Error fetching contract:', err);
         setError(err.message || 'Failed to load contract');
@@ -149,29 +180,64 @@ const ContractDetailsPage = () => {
       // Reload the contract data to show updated status
       if (contractId) {
         const fetchContract = async () => {
-          const { data } = await supabase
-            .from('contracts')
-            .select(`
-              *,
-              company:company_id (*),
-              creator:created_by (
-                id, 
-                first_name, 
-                last_name, 
-                avatar_url
-              ),
-              contact:contact_id (
-                id,
-                user_id,
-                first_name,
-                last_name,
-                avatar_url
-              )
-            `)
-            .eq('id', contractId)
-            .single();
-          
-          setContract(data as ContractWithDetails);
+          try {
+            const { data, error } = await supabase
+              .from('contracts')
+              .select(`
+                *,
+                company:company_id (*),
+                creator:created_by (
+                  id, 
+                  first_name, 
+                  last_name, 
+                  avatar_url
+                ),
+                contact:contact_id (
+                  id,
+                  user_id,
+                  position,
+                  first_name,
+                  last_name,
+                  avatar_url
+                )
+              `)
+              .eq('id', contractId)
+              .single();
+            
+            if (error) throw error;
+            
+            if (data) {
+              // Create a properly typed object that matches ContractWithDetails
+              const contractData: ContractWithDetails = {
+                ...data,
+                company: data.company || { 
+                  name: 'Unknown', 
+                  organization_number: null,
+                  website: null
+                },
+                contact: data.contact && typeof data.contact === 'object' ? {
+                  id: data.contact.id || '',
+                  user_id: data.contact.user_id || '',
+                  position: data.contact.position || null,
+                  first_name: data.contact.first_name || '',
+                  last_name: data.contact.last_name || '',
+                  avatar_url: data.contact.avatar_url || null
+                } : {
+                  id: '',
+                  user_id: '',
+                  position: null,
+                  first_name: '',
+                  last_name: '',
+                  avatar_url: null
+                },
+                creator: data.creator || null
+              };
+              
+              setContract(contractData);
+            }
+          } catch (err) {
+            console.error('Error reloading contract:', err);
+          }
         };
         
         fetchContract();
