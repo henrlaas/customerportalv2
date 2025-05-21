@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Play, Square, Clock, ListIcon, Calendar } from 'lucide-react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
@@ -117,8 +116,6 @@ export const TimeTrackerHeader = ({
         title: 'Time tracking stopped',
         description: 'Please provide additional details for your time entry.',
       });
-      
-      // Optimistically update the UI first
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
     },
