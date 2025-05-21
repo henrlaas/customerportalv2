@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Building, Calendar, FileText, DollarSign, Clock, User, Briefcase, Users, Plus, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, FileText, DollarSign, Clock, User, Briefcase, Users, Plus, ClipboardList, FileContract, FileInput } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectMilestones } from '@/hooks/useProjectMilestones';
 import { useProjectAssignees } from '@/hooks/useProjectAssignees';
@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
+import { CreateProjectContractDialog } from '@/components/Contracts/CreateProjectContractDialog';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -24,6 +25,7 @@ const ProjectDetailsPage = () => {
   const { projects } = useProjects();
   const { milestones } = useProjectMilestones(projectId || null);
   const { assignees } = useProjectAssignees(projectId);
+  const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
 
   // Get selected project details
   const selectedProject = projects?.find(p => p.id === projectId);
@@ -83,6 +85,38 @@ const ProjectDetailsPage = () => {
         return tasksWithDetails || [];
       } catch (error) {
         console.error('Error in project tasks query:', error);
+        return [];
+      }
+    },
+    enabled: !!projectId
+  });
+
+  // Fetch contracts related to this project
+  const { data: projectContracts, isLoading: isLoadingContracts, error: contractsError } = useQuery({
+    queryKey: ['project-contracts', projectId],
+    queryFn: async () => {
+      if (!projectId) return [];
+      
+      try {
+        const { data, error } = await supabase
+          .from('contracts')
+          .select(`
+            *,
+            company:company_id (name, organization_number),
+            contact:contact_id (id, user_id, position)
+          `)
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching project contracts:', error);
+          toast.error('Failed to load contracts');
+          throw error;
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error('Error in project contracts query:', error);
         return [];
       }
     },
@@ -158,6 +192,23 @@ const ProjectDetailsPage = () => {
 
   const handleTaskClick = (taskId: string) => {
     navigate(`/tasks/${taskId}`);
+  };
+
+  // Function to handle contract click
+  const handleContractClick = (contractId: string) => {
+    navigate(`/contracts/${contractId}`);
+  };
+
+  // Format contract status for display
+  const getContractStatusBadge = (status: string) => {
+    switch (status) {
+      case 'signed':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Signed</Badge>;
+      case 'unsigned':
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Unsigned</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   // Format price type for display
@@ -396,11 +447,75 @@ const ProjectDetailsPage = () => {
         </TabsContent>
         
         <TabsContent value="contracts">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-center text-gray-500">Contracts related to this project will appear here.</p>
-          </div>
+          {contractsError ? (
+            <div className="bg-white rounded-lg shadow p-6 text-center">
+              <p className="text-red-500 mb-4">Error loading contracts. Please try again.</p>
+              <Button variant="outline" onClick={() => refetchTasks()}>
+                Refresh
+              </Button>
+            </div>
+          ) : isLoadingContracts ? (
+            <CenteredSpinner />
+          ) : projectContracts && projectContracts.length > 0 ? (
+            <>
+              <div className="mb-4 flex justify-between items-center">
+                <h3 className="text-lg font-medium">Project Contracts ({projectContracts.length})</h3>
+                {projectContracts.length < 1 && (
+                  <Button onClick={() => setIsContractDialogOpen(true)}>
+                    <FileContract className="mr-2 h-4 w-4" /> Create Contract
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-4">
+                {projectContracts.map((contract) => (
+                  <Card 
+                    key={contract.id} 
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => handleContractClick(contract.id)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <FileInput className="h-5 w-5 text-blue-600" />
+                            <h3 className="font-medium text-lg">{contract.title}</h3>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <p>Company: {contract.company?.name}</p>
+                            <p>Created: {formatDate(contract.created_at)}</p>
+                          </div>
+                        </div>
+                        <div>{getContractStatusBadge(contract.status)}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="bg-white rounded-lg shadow p-6 text-center">
+              <div className="mb-4 flex flex-col items-center">
+                <FileContract className="h-12 w-12 text-gray-400 mb-2" />
+                <p className="text-gray-500 mb-4">No contracts associated with this project yet.</p>
+              </div>
+              <Button onClick={() => setIsContractDialogOpen(true)}>
+                <FileContract className="mr-2 h-4 w-4" /> Create Contract
+              </Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
+
+      {/* Contract creation dialog */}
+      {isContractDialogOpen && selectedProject && (
+        <CreateProjectContractDialog
+          isOpen={isContractDialogOpen}
+          onClose={() => setIsContractDialogOpen(false)}
+          projectId={projectId || ''}
+          companyId={selectedProject.company_id}
+          projectName={selectedProject.name}
+        />
+      )}
     </div>
   );
 };
