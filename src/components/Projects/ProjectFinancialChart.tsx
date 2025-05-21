@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
 import {
   PieChart,
   Pie,
@@ -31,7 +30,7 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
   const { data, isLoading, error } = useQuery({
     queryKey: ['project-financial-data', projectId],
     queryFn: async () => {
-      if (!projectId) return { timeEntries: [], totalHours: 0, totalCost: 0 };
+      if (!projectId) return { pieData: [], totalHours: 0, totalCost: 0 };
 
       // Get time entries for this project
       const { data: timeEntries, error: timeError } = await supabase
@@ -88,24 +87,19 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
         });
       }
 
-      // Prepare pie chart data
-      const pieData = [];
-      
-      // Only add income if we have a project value
-      if (projectValue) {
-        pieData.push({
+      // Always prepare pie chart data with at least two entries
+      const pieData = [
+        {
           name: "Income",
-          value: projectValue,
+          value: projectValue || 0,
           fill: "#22c55e"
-        });
-      }
-      
-      // Always add expenses
-      pieData.push({
-        name: "Expenses",
-        value: totalCost,
-        fill: "#ef4444"
-      });
+        },
+        {
+          name: "Expenses",
+          value: totalCost || 0,
+          fill: "#ef4444"
+        }
+      ];
 
       return {
         pieData,
@@ -117,15 +111,11 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
   });
 
   if (isLoading) {
-    return <Skeleton className="h-[200px] w-full" />;
+    return <Skeleton className="h-[300px] w-full" />;
   }
 
   if (error) {
-    return <p className="text-red-500">Error loading financial data</p>;
-  }
-
-  // If there are no time entries yet
-  if (!data?.pieData || data.pieData.length === 0) {
+    console.error('Error in financial chart:', error);
     return (
       <Card className="bg-muted/50">
         <CardHeader className="pb-2">
@@ -135,12 +125,18 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center p-6 text-muted-foreground text-sm">
-          <p>No time entries found for this project.</p>
-          <p>Financial data will be displayed once team members log time.</p>
+          <p>Error loading financial data.</p>
+          <p>Please try refreshing the page.</p>
         </CardContent>
       </Card>
     );
   }
+
+  // Always ensure we have data to display
+  const chartData = data?.pieData || [
+    { name: "Income", value: projectValue || 0, fill: "#22c55e" },
+    { name: "Expenses", value: 0, fill: "#ef4444" }
+  ];
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('en-US', {
@@ -152,8 +148,8 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
   };
 
   // Calculate project profit/loss
-  const profit = (projectValue || 0) - data.totalCost;
-  const profitPercentage = projectValue ? (profit / projectValue) * 100 : 0;
+  const profit = (projectValue || 0) - (data?.totalCost || 0);
+  const profitPercentage = projectValue && projectValue > 0 ? (profit / projectValue) * 100 : 0;
 
   // Prepare the colors for the pie chart
   const COLORS = ['#22c55e', '#ef4444'];
@@ -177,7 +173,7 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
           <div className="bg-background rounded-md p-2 shadow-sm">
             <div className="text-xs text-muted-foreground">Cost to Date</div>
             <div className="text-xl font-semibold">
-              {formatCurrency(data.totalCost)}
+              {formatCurrency(data?.totalCost || 0)}
             </div>
           </div>
           <div className={`bg-background rounded-md p-2 shadow-sm ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -188,20 +184,24 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
           </div>
         </div>
 
-        <div className="h-[200px] w-full">
+        <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={data.pieData}
+                data={chartData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                outerRadius={80}
+                outerRadius={120}
                 fill="#8884d8"
                 dataKey="value"
-                label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({name, percent}) => {
+                  // Only show label if percent is at least 1%
+                  if (percent < 0.01) return null;
+                  return `${name} ${(percent * 100).toFixed(0)}%`;
+                }}
               >
-                {data.pieData.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
