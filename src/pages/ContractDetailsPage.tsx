@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ContractWithDetails } from '@/utils/contractUtils';
@@ -75,17 +74,16 @@ const ContractDetailsPage = () => {
         if (error) throw error;
         
         if (data) {
-          // Create a properly typed object that matches ContractWithDetails
-          // Use null check and type guard before accessing properties
-          const contactData = data.contact && 
+          // Get the safe contact data, checking for nulls and errors
+          const safeContact = data.contact && 
             typeof data.contact === 'object' && 
             !('error' in data.contact) ? {
-              id: data.contact?.id || '',
-              user_id: data.contact?.user_id || '',
-              position: data.contact?.position || null,
-              first_name: data.contact?.first_name || '',
-              last_name: data.contact?.last_name || '',
-              avatar_url: data.contact?.avatar_url || null
+              id: data.contact.id || '',
+              user_id: data.contact.user_id || '',
+              position: data.contact.position || null,
+              first_name: data.contact.first_name || '',
+              last_name: data.contact.last_name || '',
+              avatar_url: data.contact.avatar_url || null
             } : {
               id: '',
               user_id: '',
@@ -95,6 +93,7 @@ const ContractDetailsPage = () => {
               avatar_url: null
             };
           
+          // Create a properly typed contract object
           const contractData: ContractWithDetails = {
             ...data,
             company: data.company || { 
@@ -102,7 +101,7 @@ const ContractDetailsPage = () => {
               organization_number: null,
               website: null
             },
-            contact: contactData,
+            contact: safeContact,
             creator: data.creator || null
           };
           
@@ -210,16 +209,16 @@ const ContractDetailsPage = () => {
             if (error) throw error;
             
             if (data) {
-              // Use null check and type guard before accessing properties
-              const contactData = data.contact && 
+              // Get the safe contact data, checking for nulls and errors
+              const safeContact = data.contact && 
                 typeof data.contact === 'object' && 
                 !('error' in data.contact) ? {
-                  id: data.contact?.id || '',
-                  user_id: data.contact?.user_id || '',
-                  position: data.contact?.position || null,
-                  first_name: data.contact?.first_name || '',
-                  last_name: data.contact?.last_name || '',
-                  avatar_url: data.contact?.avatar_url || null
+                  id: data.contact.id || '',
+                  user_id: data.contact.user_id || '',
+                  position: data.contact.position || null,
+                  first_name: data.contact.first_name || '',
+                  last_name: data.contact.last_name || '',
+                  avatar_url: data.contact.avatar_url || null
                 } : {
                   id: '',
                   user_id: '',
@@ -229,6 +228,7 @@ const ContractDetailsPage = () => {
                   avatar_url: null
                 };
               
+              // Create a properly typed contract object
               const contractData: ContractWithDetails = {
                 ...data,
                 company: data.company || { 
@@ -236,7 +236,7 @@ const ContractDetailsPage = () => {
                   organization_number: null,
                   website: null
                 },
-                contact: contactData,
+                contact: safeContact,
                 creator: data.creator || null
               };
               
