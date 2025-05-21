@@ -14,12 +14,9 @@ export const ProtectedRoute = () => {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // If there are role restrictions and user role doesn't match
+  // If user is a client, redirect to client dashboard
   if (profile && profile.role === 'client') {
-    // Redirect client users to client dashboard when they try to access restricted routes
-    if (!location.pathname.startsWith('/client-')) {
-      return <Navigate to="/client-dashboard" replace />;
-    }
+    return <Navigate to="/client" replace />;
   }
 
   return <Outlet />;

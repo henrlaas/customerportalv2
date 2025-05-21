@@ -13,19 +13,31 @@ import {
   CheckSquare,
   Tag,
   FileClock,
+  Building,
+  Home,
 } from "lucide-react";
 
 export function getSidebarItems() {
   const t = useTranslation();
-  const { isAdmin, isEmployee } = useAuth();
+  const { isAdmin, isEmployee, isClient } = useAuth();
 
   const items = [
     // MENU category items
     {
       title: t('Dashboard'),
-      href: '/dashboard',
-      icon: LayoutDashboard,
+      href: isClient ? '/client' : '/dashboard',
+      icon: isClient ? Home : LayoutDashboard,
       roles: ['admin', 'employee', 'client'],
+      category: 'MENU',
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
+    },
+    {
+      title: t('Companies'),
+      href: '/companies',
+      icon: Building,
+      roles: ['admin', 'employee'],
       category: 'MENU',
       hasDropdown: false,
       disabled: false,
@@ -43,7 +55,7 @@ export function getSidebarItems() {
     },
     {
       title: t('Tasks'),
-      href: '/tasks',
+      href: isClient ? '/client/tasks' : '/tasks',
       icon: CheckSquare,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
@@ -83,7 +95,7 @@ export function getSidebarItems() {
     },
     {
       title: t('Contracts'),
-      href: '/contracts',
+      href: isClient ? '/client/contracts' : '/contracts',
       icon: FileText,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',

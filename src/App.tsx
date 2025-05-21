@@ -133,8 +133,12 @@ function App() {
               </Route>
               <Route element={<ClientProtectedRoute />}>
                 <Route element={<ClientLayout />}>
+                  {/* Fix client routes - ensure they match what's being redirected to */}
                   <Route path="/client" element={<ClientDashboardPage />} />
-                  <Route path="/client/company" element={<ClientCompanyDetailsPage />} />
+                  <Route path="/client/companies/:companyId" element={<ClientCompanyDetailsPage />} />
+                  {/* Add additional client routes */}
+                  <Route path="/client/tasks" element={<TasksPage />} />
+                  <Route path="/client/contracts" element={<ContractsPage />} />
                 </Route>
               </Route>
               <Route path="/unauthorized" element={<Unauthorized />} />
