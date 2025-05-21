@@ -280,12 +280,24 @@ const ProjectDetailsPage = () => {
             <Briefcase className="h-5 w-5 text-primary" />
             Project Information
             <div className="ml-auto">
-              <Tabs value={projectCardTab} onValueChange={(value) => setProjectCardTab(value as 'info' | 'finance')} className="w-full">
-                <TabsList className="grid w-[200px] grid-cols-2">
-                  <TabsTrigger value="info">Information</TabsTrigger>
-                  <TabsTrigger value="finance">Finance</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <div className="flex items-center mr-2 bg-muted rounded-md p-1">
+                <button
+                  onClick={() => setProjectCardTab('info')}
+                  className={`px-3 py-1 rounded-sm text-sm ${
+                    projectCardTab === 'info' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                  }`}
+                >
+                  Information
+                </button>
+                <button
+                  onClick={() => setProjectCardTab('finance')}
+                  className={`px-3 py-1 rounded-sm text-sm ${
+                    projectCardTab === 'finance' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                  }`}
+                >
+                  Finance
+                </button>
+              </div>
             </div>
           </CardTitle>
         </CardHeader>
