@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { CreateProjectContractDialog } from '@/components/Contracts/CreateProjectContractDialog';
 import { CreateProjectTaskDialog } from '@/components/Projects/CreateProjectTaskDialog';
+import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -27,6 +29,10 @@ const ProjectDetailsPage = () => {
   const { assignees } = useProjectAssignees(projectId);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  
+  // Add state for task detail sheet
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isTaskDetailSheetOpen, setIsTaskDetailSheetOpen] = useState(false);
 
   // Get selected project details
   const selectedProject = projects?.find(p => p.id === projectId);
@@ -191,8 +197,10 @@ const ProjectDetailsPage = () => {
     return selectedProject?.name || "";
   };
 
+  // Update the task click handler to open the task detail sheet instead of navigating
   const handleTaskClick = (taskId: string) => {
-    navigate(`/tasks/${taskId}`);
+    setSelectedTaskId(taskId);
+    setIsTaskDetailSheetOpen(true);
   };
 
   // Function to handle contract click
@@ -524,6 +532,13 @@ const ProjectDetailsPage = () => {
           projectAssignees={assignees || []}
         />
       )}
+
+      {/* Add the TaskDetailSheet component */}
+      <TaskDetailSheet 
+        isOpen={isTaskDetailSheetOpen} 
+        onOpenChange={setIsTaskDetailSheetOpen}
+        taskId={selectedTaskId}
+      />
     </div>
   );
 };
