@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,6 +19,7 @@ import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { CreateProjectContractDialog } from '@/components/Contracts/CreateProjectContractDialog';
 import { CreateProjectTaskDialog } from '@/components/Projects/CreateProjectTaskDialog';
 import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
+import { ProjectTimeTrackingTab } from '@/components/TimeTracking/ProjectTimeTrackingTab';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -446,9 +446,10 @@ const ProjectDetailsPage = () => {
         </TabsContent>
         
         <TabsContent value="time">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-center text-gray-500">Time tracking entries for this project will appear here.</p>
-          </div>
+          <ProjectTimeTrackingTab 
+            projectId={projectId || ''} 
+            companyId={selectedProject?.company_id} 
+          />
         </TabsContent>
         
         <TabsContent value="contracts">
