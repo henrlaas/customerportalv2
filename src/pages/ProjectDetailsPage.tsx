@@ -30,22 +30,27 @@ const ProjectDetailsPage = () => {
       
       console.log('Fetching tasks for project:', projectId);
       
-      const { data, error } = await supabase
-        .from('tasks')
-        .select(`
-          *,
-          assignees:task_assignees(id, user_id),
-          creator:profiles!tasks_creator_id_fkey(id, first_name, last_name, avatar_url)
-        `)
-        .eq('project_id', projectId);
-      
-      if (error) {
-        console.error('Error fetching project tasks:', error);
-        throw error;
+      try {
+        const { data, error } = await supabase
+          .from('tasks')
+          .select(`
+            *,
+            assignees:task_assignees(id, user_id),
+            creator:profiles!tasks_creator_id_fkey(id, first_name, last_name, avatar_url)
+          `)
+          .eq('project_id', projectId);
+        
+        if (error) {
+          console.error('Error fetching project tasks:', error);
+          throw error;
+        }
+        
+        console.log('Found tasks:', data?.length, data);
+        return data || [];
+      } catch (error) {
+        console.error('Error in project tasks query:', error);
+        return [];
       }
-      
-      console.log('Found tasks:', data?.length, data);
-      return data || [];
     },
     enabled: !!projectId
   });
@@ -54,16 +59,21 @@ const ProjectDetailsPage = () => {
   const { data: profiles = [] } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, avatar_url');
-      
-      if (error) {
-        console.error('Error fetching profiles:', error);
-        throw error;
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url');
+        
+        if (error) {
+          console.error('Error fetching profiles:', error);
+          throw error;
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error('Error in profiles query:', error);
+        return [];
       }
-      
-      return data || [];
     }
   });
 

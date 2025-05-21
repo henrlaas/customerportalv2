@@ -28,7 +28,7 @@ interface Task {
     first_name: string | null;
     last_name: string | null;
     avatar_url: string | null;
-  };
+  } | { error: boolean } | null;
 }
 
 interface Contact {
@@ -59,6 +59,11 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   profiles,
   onTaskClick,
 }) => {
+  // Helper function to check if creator is valid
+  const isValidCreator = (creator: any): creator is { id: string; first_name: string | null; last_name: string | null; avatar_url: string | null } => {
+    return creator && typeof creator === 'object' && 'id' in creator && !('error' in creator);
+  };
+
   return (
     <div className="bg-white rounded-md border shadow-sm overflow-hidden w-full">
       <div className="overflow-x-auto">
@@ -93,7 +98,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                     />
                   </TableCell>
                   <TableCell>
-                    {task.creator ? (
+                    {isValidCreator(task.creator) ? (
                       <UserAvatarGroup 
                         users={[{
                           id: task.creator.id,
