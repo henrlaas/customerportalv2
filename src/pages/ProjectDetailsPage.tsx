@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { ArrowLeft, Building, Calendar, FileText, DollarSign, Clock, User, Briefcase } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectMilestones } from '@/hooks/useProjectMilestones';
 import { ProjectMilestonesPanel } from '@/components/Projects/ProjectMilestonesPanel';
@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { TaskListView } from '@/components/Tasks/TaskListView';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -136,6 +137,27 @@ const ProjectDetailsPage = () => {
     navigate(`/tasks/${taskId}`);
   };
 
+  // Format price type for display
+  const formatPriceType = (priceType: string | null) => {
+    if (!priceType) return 'Not specified';
+    
+    // Convert snake_case to Title Case
+    return priceType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Not specified';
+    return new Date(dateString).toLocaleDateString(undefined, { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
   if (!selectedProject) {
     return (
       <div className="container p-6 mx-auto">
@@ -166,25 +188,96 @@ const ProjectDetailsPage = () => {
         </div>
       </div>
       
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="grid grid-cols-1 gap-6">
-          <div>
-            <h3 className="font-semibold text-lg mb-2">Project Information</h3>
-            <p className="text-gray-700 mb-1"><span className="font-medium">Company:</span> {selectedProject?.company?.name}</p>
-            <p className="text-gray-700 mb-1"><span className="font-medium">Description:</span> {selectedProject?.description}</p>
-            <p className="text-gray-700 mb-1"><span className="font-medium">Value:</span> {selectedProject?.value?.toLocaleString() || 'N/A'} NOK</p>
-            <p className="text-gray-700 mb-1"><span className="font-medium">Price Type:</span> {selectedProject?.price_type}</p>
-            {selectedProject?.deadline && (
-              <p className="text-gray-700 mb-1">
-                <span className="font-medium">Deadline:</span> {new Date(selectedProject.deadline).toLocaleDateString()}
-              </p>
-            )}
-            <p className="text-gray-700 mb-1">
-              <span className="font-medium">Created:</span> {selectedProject && new Date(selectedProject.created_at).toLocaleDateString()}
-            </p>
+      <Card className="bg-gradient-to-br from-white to-gray-50 shadow-lg border-t-4 border-t-primary mb-6 overflow-hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <Briefcase className="h-5 w-5 text-primary" />
+            Project Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Building className="h-5 w-5 text-blue-600 shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">Company</p>
+                  <div className="flex items-center gap-2">
+                    {selectedProject?.company && (
+                      <CompanyFavicon 
+                        companyName={selectedProject.company.name} 
+                        website={selectedProject.company.website}
+                        size="sm"
+                      />
+                    )}
+                    <span className="font-semibold">{selectedProject?.company?.name || 'Not assigned'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-emerald-600 shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">Description</p>
+                  <p className="text-gray-800">{selectedProject?.description || 'No description provided'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <DollarSign className="h-5 w-5 text-green-600 shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">Value</p>
+                  <p className="text-gray-800 font-semibold">
+                    {selectedProject?.value ? (
+                      `${selectedProject.value.toLocaleString()} NOK`
+                    ) : (
+                      'Not specified'
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-orange-600 shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">Price Type</p>
+                  <p className="text-gray-800">{formatPriceType(selectedProject?.price_type)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-red-600 shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">Deadline</p>
+                  <p className="text-gray-800">{selectedProject?.deadline ? formatDate(selectedProject.deadline) : 'No deadline set'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-purple-600 shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">Created</p>
+                  <p className="text-gray-800">{formatDate(selectedProject?.created_at)}</p>
+                </div>
+              </div>
+
+              {selectedProject?.creator && (
+                <div className="flex items-center gap-3">
+                  <User className="h-5 w-5 text-indigo-600 shrink-0" />
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Created By</p>
+                    <p className="text-gray-800">
+                      {`${selectedProject.creator.first_name || ''} ${selectedProject.creator.last_name || ''}`.trim() || 'Unknown'}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Updated Tabs */}
       <Tabs defaultValue="milestones">
