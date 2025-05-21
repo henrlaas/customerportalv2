@@ -86,12 +86,12 @@ const ContractDetailsPage = () => {
               website: null
             },
             contact: data.contact && typeof data.contact === 'object' ? {
-              id: data.contact.id || '',
-              user_id: data.contact.user_id || '',
-              position: data.contact.position || null,
-              first_name: data.contact.first_name || '',
-              last_name: data.contact.last_name || '',
-              avatar_url: data.contact.avatar_url || null
+              id: data.contact?.id || '',
+              user_id: data.contact?.user_id || '',
+              position: data.contact?.position || null,
+              first_name: data.contact?.first_name || '',
+              last_name: data.contact?.last_name || '',
+              avatar_url: data.contact?.avatar_url || null
             } : {
               id: '',
               user_id: '',
@@ -216,12 +216,12 @@ const ContractDetailsPage = () => {
                   website: null
                 },
                 contact: data.contact && typeof data.contact === 'object' ? {
-                  id: data.contact.id || '',
-                  user_id: data.contact.user_id || '',
-                  position: data.contact.position || null,
-                  first_name: data.contact.first_name || '',
-                  last_name: data.contact.last_name || '',
-                  avatar_url: data.contact.avatar_url || null
+                  id: data.contact?.id || '',
+                  user_id: data.contact?.user_id || '',
+                  position: data.contact?.position || null,
+                  first_name: data.contact?.first_name || '',
+                  last_name: data.contact?.last_name || '',
+                  avatar_url: data.contact?.avatar_url || null
                 } : {
                   id: '',
                   user_id: '',
