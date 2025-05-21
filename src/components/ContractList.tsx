@@ -19,22 +19,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Download, Trash2, ClipboardList, FilePlus, FileCheck, CheckCircle, XCircle } from 'lucide-react';
 import { CreateContractDialog } from './CreateContractDialog';
-import { ViewContractDialog } from './ViewContractDialog';
 import { DeleteContractDialog } from './DeleteContractDialog';
 import { createPDF } from '@/utils/pdfUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Company } from '@/types/company';
+import { useNavigate } from 'react-router-dom';
 
 export const ContractList = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedContract, setSelectedContract] = useState<ContractWithDetails | null>(null);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'unsigned' | 'signed'>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -149,9 +147,9 @@ export const ContractList = () => {
   }, [toast, isDownloading]);
   
   const viewContract = useCallback((contract: ContractWithDetails) => {
-    setSelectedContract(contract);
-    setViewDialogOpen(true);
-  }, []);
+    // Navigate to contract details page instead of opening a dialog
+    navigate(`/contracts/${contract.id}`);
+  }, [navigate]);
   
   const handleDeleteClick = useCallback((contract: ContractWithDetails, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row click from opening view dialog
@@ -469,18 +467,6 @@ export const ContractList = () => {
         </Tabs>
       ) : (
         isLoading ? <TableSkeleton /> : <ContractTable contracts={filteredContracts} />
-      )}
-      
-      {selectedContract && (
-        <ViewContractDialog
-          contract={selectedContract}
-          isOpen={viewDialogOpen}
-          onClose={() => {
-            setViewDialogOpen(false);
-            setSelectedContract(null);
-          }}
-          onContractSigned={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })}
-        />
       )}
       
       {contractToDelete && (

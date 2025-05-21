@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -17,6 +18,7 @@ import DealsPage from './pages/DealsPage';
 import TimeTrackingPage from './pages/TimeTrackingPage';
 import FinancePage from './pages/FinancePage';
 import ContractsPage from './pages/ContractsPage';
+import ContractDetailsPage from './pages/ContractDetailsPage';
 import MediaPage from './pages/MediaPage';
 import SettingsPage from './pages/SettingsPage';
 import UserManagementPage from './pages/UserManagementPage';
@@ -104,6 +106,7 @@ function App() {
                   <Route path="/time-tracking" element={<TimeTrackingPage />} />
                   <Route path="/finance" element={<FinancePage />} />
                   <Route path="/contracts" element={<ContractsPage />} />
+                  <Route path="/contracts/:contractId" element={<ContractDetailsPage />} />
                   <Route path="/media" element={<MediaPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/users" element={<UserManagementPage />} />
