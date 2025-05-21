@@ -496,7 +496,7 @@ export const TimeEntryForm = ({
               }}
               value={field.value}
               defaultValue={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredProjects.length === 0}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
             >
               <FormControl>
                 <SelectTrigger>
@@ -530,7 +530,7 @@ export const TimeEntryForm = ({
               }}
               value={field.value}
               defaultValue={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
             >
               <FormControl>
                 <SelectTrigger>

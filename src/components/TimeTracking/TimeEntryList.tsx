@@ -108,6 +108,7 @@ export const TimeEntryList = ({
                   projects={projects}
                   onEdit={onEdit} 
                   onDelete={onDelete}
+                  className="animate-in fade-in-0 zoom-in-95 duration-300" // Added animation class
                 />
               ))}
             </CardContent>
