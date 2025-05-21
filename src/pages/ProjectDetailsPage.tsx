@@ -45,7 +45,14 @@ const ProjectDetailsPage = () => {
           throw error;
         }
         
+        // Debug the returned tasks
         console.log('Found tasks:', data?.length, data);
+        
+        // Additional check to verify project_id matches
+        if (data && data.length > 0) {
+          console.log('Task project IDs:', data.map(task => task.project_id));
+        }
+        
         return data || [];
       } catch (error) {
         console.error('Error in project tasks query:', error);

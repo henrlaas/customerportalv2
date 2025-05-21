@@ -64,6 +64,8 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
     return creator && typeof creator === 'object' && 'id' in creator && !('error' in creator);
   };
 
+  console.log('TaskListView received tasks:', tasks);
+
   return (
     <div className="bg-white rounded-md border shadow-sm overflow-hidden w-full">
       <div className="overflow-x-auto">
