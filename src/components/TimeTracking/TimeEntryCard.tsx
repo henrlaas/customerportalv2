@@ -16,7 +16,6 @@ type TimeEntryCardProps = {
   onEdit: (entry: TimeEntry) => void;
   onDelete: (entry: TimeEntry) => void;
   highlighted?: boolean;
-  className?: string; // Add className prop to the interface
 };
 
 export const TimeEntryCard = ({ 
@@ -27,8 +26,7 @@ export const TimeEntryCard = ({
   projects,
   onEdit,
   onDelete,
-  highlighted = false,
-  className = '' // Add default value for className
+  highlighted = false
 }: TimeEntryCardProps) => {
   // Find related data
   const task = entry.task_id ? tasks.find(t => t.id === entry.task_id) : null;
@@ -52,7 +50,7 @@ export const TimeEntryCard = ({
   }
   
   return (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow ${className}`}>
+    <Card className="shadow-sm hover:shadow-md transition-shadow">
       <div className="p-4">
         <div className="flex items-center justify-between">
           {/* Left side - Task description and metadata */}

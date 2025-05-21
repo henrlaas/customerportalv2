@@ -60,7 +60,6 @@ const TimeTrackingPage = () => {
       return data as TimeEntry[];
     },
     enabled: !!user,
-    staleTime: 10000, // Cache data for 10 seconds to improve initial loading performance
   });
   
   // Delete time entry mutation
@@ -79,14 +78,8 @@ const TimeTrackingPage = () => {
       return entryId;
     },
     onSuccess: (deletedEntryId) => {
-      // Optimistically update the UI
-      queryClient.setQueryData(['timeEntries'], (oldData: TimeEntry[] = []) => {
-        return oldData.filter(entry => entry.id !== deletedEntryId);
-      });
-      
       // Invalidate and refetch time entries
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
-      queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
       
       // Show success toast
       toast({
