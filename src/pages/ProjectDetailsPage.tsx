@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Building, Calendar, FileText, DollarSign, Clock, User, Briefcase } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, FileText, DollarSign, Clock, User, Briefcase, Users } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectMilestones } from '@/hooks/useProjectMilestones';
+import { useProjectAssignees } from '@/hooks/useProjectAssignees';
 import { ProjectMilestonesPanel } from '@/components/Projects/ProjectMilestonesPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,12 +15,14 @@ import { TaskListView } from '@/components/Tasks/TaskListView';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
+import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { projects } = useProjects();
   const { milestones } = useProjectMilestones(projectId || null);
+  const { assignees } = useProjectAssignees(projectId);
 
   // Get selected project details
   const selectedProject = projects?.find(p => p.id === projectId);
@@ -236,6 +239,31 @@ const ProjectDetailsPage = () => {
                   </p>
                 </div>
               </div>
+              
+              <div className="flex items-start gap-3">
+                <Users className="h-5 w-5 text-indigo-600 shrink-0 mt-1" />
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">Team Members</p>
+                  {assignees && assignees.length > 0 ? (
+                    <div className="mt-1">
+                      <UserAvatarGroup
+                        users={assignees.map(assignee => ({
+                          id: assignee.user_id,
+                          first_name: assignee.profiles?.first_name,
+                          last_name: assignee.profiles?.last_name,
+                          avatar_url: assignee.profiles?.avatar_url
+                        }))}
+                        size="md"
+                      />
+                      <div className="mt-1 text-xs text-gray-500">
+                        {assignees.length} {assignees.length === 1 ? 'member' : 'members'} assigned
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No team members assigned</p>
+                  )}
+                </div>
+              </div>
             </div>
             
             <div className="space-y-4">
@@ -357,3 +385,4 @@ const ProjectDetailsPage = () => {
 };
 
 export default ProjectDetailsPage;
+
