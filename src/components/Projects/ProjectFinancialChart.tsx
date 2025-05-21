@@ -4,22 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
   ResponsiveContainer,
   Legend,
   Tooltip,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { ChartLine } from 'lucide-react';
 
 interface ProjectFinancialChartProps {
@@ -57,7 +51,6 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
       }
 
       // Calculate time spent and cost
-      let chartData: any[] = [];
       let totalCost = 0;
       let totalHours = 0;
 
@@ -82,42 +75,40 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
           hourlyRates[emp.id] = emp.hourly_salary;
         });
 
-        // Group time entries by month for the chart
-        const entriesByMonth: Record<string, { hours: number, cost: number }> = {};
-
+        // Calculate total costs
         timeEntries.forEach(entry => {
           const startTime = new Date(entry.start_time);
           const endTime = entry.end_time ? new Date(entry.end_time) : new Date();
           const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-          const month = format(startTime, 'MMM yyyy');
           const hourlyRate = hourlyRates[entry.user_id] || 0;
           const cost = hours * hourlyRate;
 
           totalHours += hours;
           totalCost += cost;
-
-          if (!entriesByMonth[month]) {
-            entriesByMonth[month] = { hours: 0, cost: 0 };
-          }
-          entriesByMonth[month].hours += hours;
-          entriesByMonth[month].cost += cost;
-        });
-
-        // Convert to chart format
-        chartData = Object.entries(entriesByMonth).map(([month, data]) => ({
-          month,
-          outcome: parseFloat(data.cost.toFixed(2)),
-          income: projectValue ? parseFloat((projectValue / Object.keys(entriesByMonth).length).toFixed(2)) : 0,
-        }));
-
-        // Sort by date
-        chartData.sort((a, b) => {
-          return new Date(a.month).getTime() - new Date(b.month).getTime();
         });
       }
 
+      // Prepare pie chart data
+      const pieData = [];
+      
+      // Only add income if we have a project value
+      if (projectValue) {
+        pieData.push({
+          name: "Income",
+          value: projectValue,
+          fill: "#22c55e"
+        });
+      }
+      
+      // Always add expenses
+      pieData.push({
+        name: "Expenses",
+        value: totalCost,
+        fill: "#ef4444"
+      });
+
       return {
-        chartData,
+        pieData,
         totalHours,
         totalCost
       };
@@ -134,7 +125,7 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
   }
 
   // If there are no time entries yet
-  if (!data?.chartData || data.chartData.length === 0) {
+  if (!data?.pieData || data.pieData.length === 0) {
     return (
       <Card className="bg-muted/50">
         <CardHeader className="pb-2">
@@ -163,6 +154,9 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
   // Calculate project profit/loss
   const profit = (projectValue || 0) - data.totalCost;
   const profitPercentage = projectValue ? (profit / projectValue) * 100 : 0;
+
+  // Prepare the colors for the pie chart
+  const COLORS = ['#22c55e', '#ef4444'];
 
   return (
     <Card className="bg-muted/50">
@@ -195,30 +189,26 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
         </div>
 
         <div className="h-[200px] w-full">
-          <ChartContainer config={chartConfig}>
-            <LineChart data={data.chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis 
-                tickFormatter={(value) => `${value > 1000 ? `${(value/1000).toFixed(0)}k` : value}`} 
-              />
-              <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data.pieData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+              >
+                {data.pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value) => formatCurrency(value as number)} />
               <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="income" 
-                stroke="var(--color-income)" 
-                strokeWidth={2}
-                activeDot={{ r: 8 }} 
-              />
-              <Line 
-                type="monotone" 
-                dataKey="outcome" 
-                stroke="var(--color-outcome)" 
-                strokeWidth={2} 
-              />
-            </LineChart>
-          </ChartContainer>
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>
