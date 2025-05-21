@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ import { CreateProjectTaskDialog } from '@/components/Projects/CreateProjectTask
 import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
 import { ProjectTimeTrackingTab } from '@/components/TimeTracking/ProjectTimeTrackingTab';
 import { ProjectFinancialChart } from '@/components/Projects/ProjectFinancialChart';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -31,6 +33,7 @@ const ProjectDetailsPage = () => {
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [projectCardTab, setProjectCardTab] = useState<'info' | 'finance'>('info');
+  const { isAdmin } = useAuth(); // Get the user role from auth context
   
   // Add state for task detail sheet
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -381,14 +384,17 @@ const ProjectDetailsPage = () => {
                 >
                   Information
                 </button>
-                <button
-                  onClick={() => setProjectCardTab('finance')}
-                  className={`px-3 py-1 rounded-sm text-sm ${
-                    projectCardTab === 'finance' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
-                  }`}
-                >
-                  Finance
-                </button>
+                {/* Only show Finance tab button if user is admin */}
+                {isAdmin && (
+                  <button
+                    onClick={() => setProjectCardTab('finance')}
+                    className={`px-3 py-1 rounded-sm text-sm ${
+                      projectCardTab === 'finance' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                    }`}
+                  >
+                    Finance
+                  </button>
+                )}
               </div>
             </div>
           </CardTitle>
@@ -504,8 +510,8 @@ const ProjectDetailsPage = () => {
               </>
             )}
 
-            {/* Finance Tab */}
-            {projectCardTab === 'finance' && (
+            {/* Finance Tab - Only render if user is admin */}
+            {projectCardTab === 'finance' && isAdmin && (
               <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col justify-center">
                   <div className="space-y-6">
