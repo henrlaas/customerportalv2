@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -136,18 +135,14 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
   // If there are no time entries yet
   if (!data?.chartData || data.chartData.length === 0) {
     return (
-      <Card className="bg-muted/50">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center text-md font-medium">
-            <ChartLine className="h-4 w-4 mr-2 text-muted-foreground" />
-            Project Financial Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center p-6 text-muted-foreground text-sm">
-          <p>No time entries found for this project.</p>
-          <p>Financial data will be displayed once team members log time.</p>
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-lg p-6 text-center">
+        <div className="flex flex-col items-center gap-2 mb-4">
+          <ChartLine className="h-10 w-10 text-muted-foreground" />
+          <h3 className="text-lg font-medium">Project Financial Overview</h3>
+          <p className="text-muted-foreground">No time entries found for this project.</p>
+          <p className="text-muted-foreground">Financial data will be displayed once team members log time.</p>
+        </div>
+      </div>
     );
   }
 
@@ -165,62 +160,62 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
   const profitPercentage = projectValue ? (profit / projectValue) * 100 : 0;
 
   return (
-    <Card className="bg-muted/50">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center text-md font-medium">
-          <ChartLine className="h-4 w-4 mr-2 text-muted-foreground" />
-          Project Financial Overview
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-background rounded-md p-2 shadow-sm">
+    <div>
+      <div className="mb-6">
+        <h3 className="text-lg font-medium mb-4">Project Financial Summary</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-background rounded-md p-4 shadow-sm">
             <div className="text-xs text-muted-foreground">Project Value</div>
             <div className="text-xl font-semibold">
               {formatCurrency(projectValue || 0)}
             </div>
           </div>
-          <div className="bg-background rounded-md p-2 shadow-sm">
+          <div className="bg-background rounded-md p-4 shadow-sm">
             <div className="text-xs text-muted-foreground">Cost to Date</div>
             <div className="text-xl font-semibold">
               {formatCurrency(data.totalCost)}
             </div>
           </div>
-          <div className={`bg-background rounded-md p-2 shadow-sm ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`bg-background rounded-md p-4 shadow-sm ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             <div className="text-xs text-muted-foreground">Projected Profit</div>
             <div className="text-xl font-semibold">
               {formatCurrency(profit)} ({profitPercentage.toFixed(0)}%)
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="h-[200px] w-full">
-          <ChartContainer config={chartConfig}>
-            <LineChart data={data.chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis 
-                tickFormatter={(value) => `${value > 1000 ? `${(value/1000).toFixed(0)}k` : value}`} 
-              />
-              <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="income" 
-                stroke="var(--color-income)" 
-                strokeWidth={2}
-                activeDot={{ r: 8 }} 
-              />
-              <Line 
-                type="monotone" 
-                dataKey="outcome" 
-                stroke="var(--color-outcome)" 
-                strokeWidth={2} 
-              />
-            </LineChart>
-          </ChartContainer>
+      <div>
+        <h3 className="text-lg font-medium mb-4">Monthly Income vs Expenses</h3>
+        <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="h-[300px] w-full">
+            <ChartContainer config={chartConfig}>
+              <LineChart data={data.chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis 
+                  tickFormatter={(value) => `${value > 1000 ? `${(value/1000).toFixed(0)}k` : value}`} 
+                />
+                <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="income" 
+                  stroke="var(--color-income)" 
+                  strokeWidth={2}
+                  activeDot={{ r: 8 }} 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="outcome" 
+                  stroke="var(--color-outcome)" 
+                  strokeWidth={2} 
+                />
+              </LineChart>
+            </ChartContainer>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
