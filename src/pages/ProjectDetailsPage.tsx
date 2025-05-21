@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -156,6 +155,75 @@ const ProjectDetailsPage = () => {
     }
   });
 
+  // Fetch project financial data
+  const { data: financialData, isLoading: isLoadingFinancial } = useQuery({
+    queryKey: ['project-financial-data', projectId],
+    queryFn: async () => {
+      if (!projectId) return { totalHours: 0, totalCost: 0 };
+
+      // Get time entries for this project
+      const { data: timeEntries, error: timeError } = await supabase
+        .from('time_entries')
+        .select(`
+          id,
+          start_time,
+          end_time,
+          user_id,
+          is_billable
+        `)
+        .eq('project_id', projectId);
+
+      if (timeError) {
+        console.error('Error fetching time entries:', timeError);
+        throw timeError;
+      }
+
+      // Calculate time spent and cost
+      let totalCost = 0;
+      let totalHours = 0;
+
+      if (timeEntries && timeEntries.length > 0) {
+        // Get all unique user IDs
+        const userIds = [...new Set(timeEntries.map(entry => entry.user_id))];
+
+        // Fetch employee data for these users to get hourly rates
+        const { data: employees, error: empError } = await supabase
+          .from('employees')
+          .select('id, hourly_salary')
+          .in('id', userIds);
+
+        if (empError) {
+          console.error('Error fetching employee data:', empError);
+          throw empError;
+        }
+
+        // Create map of user_id to hourly_salary
+        const hourlyRates: Record<string, number> = {};
+        employees?.forEach(emp => {
+          hourlyRates[emp.id] = emp.hourly_salary;
+        });
+
+        // Calculate total costs
+        timeEntries.forEach(entry => {
+          const startTime = new Date(entry.start_time);
+          const endTime = entry.end_time ? new Date(entry.end_time) : new Date();
+          const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+          const hourlyRate = hourlyRates[entry.user_id] || 0;
+          const cost = hours * hourlyRate;
+
+          totalHours += hours;
+          totalCost += cost;
+        });
+      }
+
+      return {
+        totalHours,
+        totalCost
+      };
+    },
+    enabled: !!projectId,
+  });
+
   // Helper functions for the TaskListView component
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -198,6 +266,30 @@ const ProjectDetailsPage = () => {
 
   const getProjectName = (projectId: string | null) => {
     return selectedProject?.name || "";
+  };
+
+  // Format currency for display
+  const formatCurrency = (value: number | null) => {
+    if (value === null) return 'Not specified';
+    return value.toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'NOK',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+  };
+
+  // Calculate project profit/loss
+  const calculateProjectProfit = () => {
+    const projectValue = selectedProject?.value || 0;
+    const totalCost = financialData?.totalCost || 0;
+    const profit = projectValue - totalCost;
+    const profitPercentage = projectValue ? (profit / projectValue) * 100 : 0;
+    
+    return {
+      profit,
+      profitPercentage
+    };
   };
 
   // Update the task click handler to open the task detail sheet instead of navigating
@@ -418,29 +510,39 @@ const ProjectDetailsPage = () => {
                 <div className="flex flex-col justify-center">
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 gap-4">
+                      {/* Project Value Card */}
                       <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
                         <div className="text-sm text-gray-500 font-medium">Project Value</div>
                         <div className="text-2xl font-bold">
-                          {selectedProject?.value ? (
-                            `${selectedProject.value.toLocaleString()} NOK`
+                          {formatCurrency(selectedProject?.value)}
+                        </div>
+                      </div>
+                      
+                      {/* Cost to Date Card */}
+                      <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
+                        <div className="text-sm text-gray-500 font-medium">Cost to Date</div>
+                        <div className="text-2xl font-bold">
+                          {isLoadingFinancial ? (
+                            <span className="text-lg">Loading...</span>
                           ) : (
-                            'Not specified'
+                            formatCurrency(financialData?.totalCost || 0)
                           )}
                         </div>
                       </div>
                       
+                      {/* Projected Profit Card */}
                       <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
-                        <div className="text-sm text-gray-500 font-medium">Price Model</div>
-                        <div className="text-xl font-semibold">
-                          {formatPriceType(selectedProject?.price_type)}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
-                        <div className="text-sm text-gray-500 font-medium">Deadline</div>
-                        <div className="text-xl font-semibold">
-                          {selectedProject?.deadline ? formatDate(selectedProject.deadline) : 'No deadline set'}
-                        </div>
+                        <div className="text-sm text-gray-500 font-medium">Projected Profit</div>
+                        {isLoadingFinancial ? (
+                          <span className="text-lg">Loading...</span>
+                        ) : (
+                          <div className="text-2xl font-bold">
+                            <span className={calculateProjectProfit().profit >= 0 ? 'text-green-600' : 'text-red-600'}>
+                              {formatCurrency(calculateProjectProfit().profit)} 
+                              ({calculateProjectProfit().profitPercentage.toFixed(0)}%)
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
