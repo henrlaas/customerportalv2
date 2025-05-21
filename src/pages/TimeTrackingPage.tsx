@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { TimeEntry, Task, Campaign, ViewType } from '@/types/timeTracking';
+import { TimeEntry, Task, Campaign, ViewType, Project } from '@/types/timeTracking';
 import { Company } from '@/types/company';
 import { TimeTrackerHeader } from '@/components/TimeTracking/TimeTrackerHeader';
 import { TimeEntrySearch } from '@/components/TimeTracking/TimeEntrySearch';
@@ -169,6 +169,28 @@ const TimeTrackingPage = () => {
     },
   });
   
+  // Fetch projects for the dropdown
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, company_id')
+        .order('name');
+      
+      if (error) {
+        toast({
+          title: 'Error fetching projects',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return [];
+      }
+      
+      return data as Project[];
+    },
+  });
+  
   // Edit time entry
   const handleEdit = (entry: TimeEntry) => {
     setCurrentEntry(entry);
@@ -220,7 +242,8 @@ const TimeTrackingPage = () => {
     entry.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (entry.task_id && tasks.find(task => task.id === entry.task_id)?.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (entry.company_id && companies.find(company => company.id === entry.company_id)?.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (entry.campaign_id && campaigns.find(campaign => campaign.id === entry.campaign_id)?.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    (entry.campaign_id && campaigns.find(campaign => campaign.id === entry.campaign_id)?.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (entry.project_id && projects.find(project => project.id === entry.project_id)?.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
   
   return (
@@ -250,6 +273,7 @@ const TimeTrackingPage = () => {
             tasks={tasks}
             companies={companies}
             campaigns={campaigns}
+            projects={projects}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
@@ -264,6 +288,7 @@ const TimeTrackingPage = () => {
           tasks={tasks}
           companies={companies}
           campaigns={campaigns}
+          projects={projects}
         />
       )}
       
@@ -277,6 +302,7 @@ const TimeTrackingPage = () => {
           tasks={tasks}
           companies={companies}
           campaigns={campaigns}
+          projects={projects}
         />
       )}
       

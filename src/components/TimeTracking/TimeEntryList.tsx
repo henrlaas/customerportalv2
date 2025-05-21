@@ -2,7 +2,7 @@
 import { useMemo } from 'react';
 import { format, startOfWeek, parseISO, isThisWeek, differenceInWeeks } from 'date-fns';
 import { TimeEntryCard } from './TimeEntryCard';
-import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
+import { TimeEntry, Task, Campaign, Project } from '@/types/timeTracking';
 import { Company } from '@/types/company';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
@@ -12,6 +12,7 @@ type TimeEntryListProps = {
   tasks: Task[];
   companies: Company[];
   campaigns: Campaign[];
+  projects: Project[];
   onEdit: (entry: TimeEntry) => void;
   onDelete: (entry: TimeEntry) => void;
 };
@@ -22,6 +23,7 @@ export const TimeEntryList = ({
   tasks,
   companies,
   campaigns,
+  projects,
   onEdit,
   onDelete
 }: TimeEntryListProps) => {
@@ -103,6 +105,7 @@ export const TimeEntryList = ({
                   tasks={tasks}
                   companies={companies}
                   campaigns={campaigns}
+                  projects={projects}
                   onEdit={onEdit} 
                   onDelete={onDelete}
                 />

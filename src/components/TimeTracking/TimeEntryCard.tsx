@@ -1,10 +1,10 @@
 
 import { format, formatDistance } from 'date-fns';
-import { Calendar, Clock, Pencil, Building, Tag, Briefcase, DollarSign, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Pencil, Building, Tag, Briefcase, DollarSign, Trash2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
+import { TimeEntry, Task, Campaign, Project } from '@/types/timeTracking';
 import { Company } from '@/types/company';
 
 type TimeEntryCardProps = {
@@ -12,6 +12,7 @@ type TimeEntryCardProps = {
   tasks: Task[];
   companies: Company[];
   campaigns: Campaign[];
+  projects: Project[];
   onEdit: (entry: TimeEntry) => void;
   onDelete: (entry: TimeEntry) => void;
   highlighted?: boolean;
@@ -22,6 +23,7 @@ export const TimeEntryCard = ({
   tasks, 
   companies, 
   campaigns, 
+  projects,
   onEdit,
   onDelete,
   highlighted = false
@@ -30,6 +32,7 @@ export const TimeEntryCard = ({
   const task = entry.task_id ? tasks.find(t => t.id === entry.task_id) : null;
   const company = entry.company_id ? companies.find(c => c.id === entry.company_id) : null;
   const campaign = entry.campaign_id ? campaigns.find(c => c.id === entry.campaign_id) : null;
+  const project = entry.project_id ? projects.find(p => p.id === entry.project_id) : null;
   
   // Format times and calculate duration
   const startTime = new Date(entry.start_time);
@@ -63,6 +66,13 @@ export const TimeEntryCard = ({
                 <div className="flex items-center gap-1">
                   <Building className="h-3.5 w-3.5" />
                   <span className="truncate max-w-[120px]">{company.name}</span>
+                </div>
+              )}
+              
+              {project && (
+                <div className="flex items-center gap-1">
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  <span className="truncate max-w-[120px]">{project.name}</span>
                 </div>
               )}
               

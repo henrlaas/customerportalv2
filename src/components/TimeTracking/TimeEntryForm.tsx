@@ -40,7 +40,7 @@ import {
   FormMessage,
   FormDescription,
 } from '@/components/ui/form';
-import { TimeEntry, Task, Campaign } from '@/types/timeTracking';
+import { TimeEntry, Task, Campaign, Project } from '@/types/timeTracking';
 import { Company as CompanyType } from '@/types/company';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
 
@@ -53,6 +53,7 @@ const timeEntrySchema = z.object({
   is_billable: z.boolean().default(false),
   company_id: z.string().optional(),
   campaign_id: z.string().optional(),
+  project_id: z.string().optional(),
 });
 
 type TimeEntryFormProps = {
@@ -66,6 +67,7 @@ type TimeEntryFormProps = {
   tasks?: Task[];
   companies?: CompanyType[];
   campaigns?: Campaign[];
+  projects?: Project[];
   isCompletingTracking?: boolean;
 };
 
@@ -80,6 +82,7 @@ export const TimeEntryForm = ({
   tasks = [],
   companies = [],
   campaigns = [],
+  projects = [],
   isCompletingTracking = false
 }: TimeEntryFormProps) => {
   const { toast } = useToast();
@@ -87,6 +90,7 @@ export const TimeEntryForm = ({
   const queryClient = useQueryClient();
   const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   const [canBeBillable, setCanBeBillable] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -133,12 +137,16 @@ export const TimeEntryForm = ({
       is_billable: currentEntry?.is_billable !== undefined ? currentEntry.is_billable : false,
       company_id: currentEntry?.company_id || undefined,
       campaign_id: currentEntry?.campaign_id || undefined,
+      project_id: currentEntry?.project_id || undefined,
     },
   });
 
   // Watch company_id to filter campaigns and tasks
   const selectedCompanyId = form.watch('company_id');
   const isBillable = form.watch('is_billable');
+  const selectedTaskId = form.watch('task_id');
+  const selectedCampaignId = form.watch('campaign_id');
+  const selectedProjectId = form.watch('project_id');
   
   // Check if entry can be billable (when company is selected) - This was causing infinite re-renders
   useEffect(() => {
@@ -158,11 +166,13 @@ export const TimeEntryForm = ({
     if (!selectedCompanyId || selectedCompanyId === 'no-company') {
       setFilteredCampaigns([]);
       setFilteredTasks([]);
+      setFilteredProjects([]);
       return;
     }
     
     // Filter campaigns from prop rather than re-fetching
     setFilteredCampaigns(campaigns.filter(campaign => campaign.company_id === selectedCompanyId));
+    setFilteredProjects(projects.filter(project => project.company_id === selectedCompanyId));
     
     // Fetch tasks for the selected company - only when company changes
     const fetchTasks = async () => {
@@ -188,7 +198,40 @@ export const TimeEntryForm = ({
     };
 
     fetchTasks();
-  }, [selectedCompanyId, campaigns, form]);
+  }, [selectedCompanyId, campaigns, projects, form]);
+  
+  // Handle mutual exclusivity between task, campaign, and project selections
+  useEffect(() => {
+    // If a task is selected, clear campaign and project selections
+    if (selectedTaskId && selectedTaskId !== 'no-task') {
+      if (selectedCampaignId && selectedCampaignId !== 'no-campaign') {
+        form.setValue('campaign_id', 'no-campaign');
+      }
+      if (selectedProjectId && selectedProjectId !== 'no-project') {
+        form.setValue('project_id', 'no-project');
+      }
+    }
+    
+    // If a campaign is selected, clear task and project selections
+    if (selectedCampaignId && selectedCampaignId !== 'no-campaign') {
+      if (selectedTaskId && selectedTaskId !== 'no-task') {
+        form.setValue('task_id', 'no-task');
+      }
+      if (selectedProjectId && selectedProjectId !== 'no-project') {
+        form.setValue('project_id', 'no-project');
+      }
+    }
+    
+    // If a project is selected, clear task and campaign selections
+    if (selectedProjectId && selectedProjectId !== 'no-project') {
+      if (selectedTaskId && selectedTaskId !== 'no-task') {
+        form.setValue('task_id', 'no-task');
+      }
+      if (selectedCampaignId && selectedCampaignId !== 'no-campaign') {
+        form.setValue('campaign_id', 'no-campaign');
+      }
+    }
+  }, [selectedTaskId, selectedCampaignId, selectedProjectId, form]);
 
   // Create time entry mutation - optimized to reduce payload size
   const createMutation = useMutation({
@@ -205,6 +248,7 @@ export const TimeEntryForm = ({
         is_billable: values.company_id && values.company_id !== 'no-company' ? values.is_billable : false,
         company_id: values.company_id === 'no-company' ? null : values.company_id || null,
         campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
+        project_id: values.project_id === 'no-project' ? null : values.project_id || null,
       };
       
       const { data, error } = await supabase
@@ -250,6 +294,7 @@ export const TimeEntryForm = ({
         is_billable: values.company_id && values.company_id !== 'no-company' ? values.is_billable : false,
         company_id: values.company_id === 'no-company' ? null : values.company_id || null,
         campaign_id: values.campaign_id === 'no-campaign' ? null : values.campaign_id || null,
+        project_id: values.project_id === 'no-project' ? null : values.project_id || null,
       };
       
       const { data, error } = await supabase
@@ -301,6 +346,7 @@ export const TimeEntryForm = ({
         values.is_billable = false;
         values.campaign_id = undefined;
         values.task_id = undefined;
+        values.project_id = undefined;
         
         if (isEditing && currentEntry) {
           updateMutation.mutate(values);
@@ -446,6 +492,47 @@ export const TimeEntryForm = ({
         </Alert>
       )}
 
+      <div className="text-sm text-muted-foreground mb-2">
+        Select only one of the following options:
+      </div>
+
+      <FormField
+        control={form.control}
+        name="project_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Project</FormLabel>
+            <Select
+              onValueChange={(value) => {
+                field.onChange(value);
+                if (value !== 'no-project') {
+                  form.setValue('campaign_id', 'no-campaign');
+                  form.setValue('task_id', 'no-task');
+                }
+              }}
+              value={field.value}
+              defaultValue={field.value}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredProjects.length === 0}
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="no-project">No project</SelectItem>
+                {filteredProjects.map(project => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <FormField
         control={form.control}
         name="campaign_id"
@@ -453,14 +540,20 @@ export const TimeEntryForm = ({
           <FormItem>
             <FormLabel>Campaign</FormLabel>
             <Select
-              onValueChange={field.onChange}
+              onValueChange={(value) => {
+                field.onChange(value);
+                if (value !== 'no-campaign') {
+                  form.setValue('project_id', 'no-project');
+                  form.setValue('task_id', 'no-task');
+                }
+              }}
               value={field.value}
               defaultValue={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0 || (!!selectedProjectId && selectedProjectId !== 'no-project') || (!!selectedTaskId && selectedTaskId !== 'no-task')}
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a campaign (optional)" />
+                  <SelectValue placeholder="Select a campaign" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -484,14 +577,20 @@ export const TimeEntryForm = ({
           <FormItem>
             <FormLabel>Related Task</FormLabel>
             <Select
-              onValueChange={field.onChange}
+              onValueChange={(value) => {
+                field.onChange(value);
+                if (value !== 'no-task') {
+                  form.setValue('project_id', 'no-project');
+                  form.setValue('campaign_id', 'no-campaign');
+                }
+              }}
               value={field.value}
               defaultValue={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || (!!selectedProjectId && selectedProjectId !== 'no-project') || (!!selectedCampaignId && selectedCampaignId !== 'no-campaign')}
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Link to a task (optional)" />
+                  <SelectValue placeholder="Link to a task" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
