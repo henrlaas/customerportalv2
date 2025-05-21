@@ -20,6 +20,7 @@ import { CreateProjectContractDialog } from '@/components/Contracts/CreateProjec
 import { CreateProjectTaskDialog } from '@/components/Projects/CreateProjectTaskDialog';
 import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
 import { ProjectTimeTrackingTab } from '@/components/TimeTracking/ProjectTimeTrackingTab';
+import { ProjectFinancialChart } from '@/components/Projects/ProjectFinancialChart';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -383,6 +384,14 @@ const ProjectDetailsPage = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Add the financial chart here */}
+          <div className="mt-6">
+            <ProjectFinancialChart 
+              projectId={projectId || ''} 
+              projectValue={selectedProject?.value || null}
+            />
           </div>
         </CardContent>
       </Card>
