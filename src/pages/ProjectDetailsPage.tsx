@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { TaskListView } from '@/components/Tasks/TaskListView';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -23,7 +23,7 @@ const ProjectDetailsPage = () => {
   const selectedProject = projects?.find(p => p.id === projectId);
 
   // Fetch tasks related to this project
-  const { data: projectTasks, isLoading: isLoadingTasks } = useQuery({
+  const { data: projectTasks, isLoading: isLoadingTasks, error: tasksError } = useQuery({
     queryKey: ['project-tasks', projectId],
     queryFn: async () => {
       if (!projectId) return [];
@@ -38,10 +38,12 @@ const ProjectDetailsPage = () => {
             assignees:task_assignees(id, user_id),
             creator:profiles!tasks_creator_id_fkey(id, first_name, last_name, avatar_url)
           `)
-          .eq('project_id', projectId);
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false });
         
         if (error) {
           console.error('Error fetching project tasks:', error);
+          toast.error('Failed to load tasks');
           throw error;
         }
         
@@ -73,6 +75,7 @@ const ProjectDetailsPage = () => {
         
         if (error) {
           console.error('Error fetching profiles:', error);
+          toast.error('Failed to load user profiles');
           throw error;
         }
         
@@ -199,14 +202,21 @@ const ProjectDetailsPage = () => {
         </TabsContent>
         
         <TabsContent value="tasks">
-          {isLoadingTasks ? (
+          {tasksError ? (
+            <div className="bg-white rounded-lg shadow p-6 text-center">
+              <p className="text-red-500 mb-4">Error loading tasks. Please try again.</p>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Refresh
+              </Button>
+            </div>
+          ) : isLoadingTasks ? (
             <div className="flex justify-center items-center p-12">
               <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
             </div>
           ) : projectTasks && projectTasks.length > 0 ? (
             <>
               <div className="mb-4 flex justify-between items-center">
-                <h3 className="text-lg font-medium">Project Tasks</h3>
+                <h3 className="text-lg font-medium">Project Tasks ({projectTasks.length})</h3>
                 <Button 
                   onClick={() => navigate('/tasks/new?projectId=' + projectId)}
                 >

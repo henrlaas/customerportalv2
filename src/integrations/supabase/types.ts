@@ -1192,6 +1192,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_tasks_project_id"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tasks_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
