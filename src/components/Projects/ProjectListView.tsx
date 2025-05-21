@@ -53,42 +53,46 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
       
       const projectIds = projects.map(project => project.id);
       
-      const { data, error } = await supabase
+      // First, fetch the project assignees
+      const { data: assigneesData, error: assigneesError } = await supabase
         .from('project_assignees')
-        .select(`
-          project_id,
-          user_id,
-          profiles:user_id (
-            id,
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
+        .select('project_id, user_id')
         .in('project_id', projectIds);
       
-      if (error) {
-        console.error('Error fetching project assignees:', error);
+      if (assigneesError) {
+        console.error('Error fetching project assignees:', assigneesError);
         return {};
       }
-
-      // Group assignees by project_id
-      const assigneesByProject = data.reduce((acc, item) => {
-        if (!acc[item.project_id]) {
-          acc[item.project_id] = [];
+      
+      // Then, fetch the profile information for each user
+      const assigneesByProject = {};
+      
+      // Group assignees by project_id first
+      for (const assignee of assigneesData) {
+        if (!assigneesByProject[assignee.project_id]) {
+          assigneesByProject[assignee.project_id] = [];
         }
         
-        if (item.profiles) {
-          acc[item.project_id].push({
-            id: item.user_id,
-            first_name: item.profiles.first_name,
-            last_name: item.profiles.last_name,
-            avatar_url: item.profiles.avatar_url
+        // Fetch profile data for this user
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .eq('id', assignee.user_id)
+          .single();
+        
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Error fetching profile:', profileError);
+        }
+        
+        if (profileData) {
+          assigneesByProject[assignee.project_id].push({
+            id: assignee.user_id,
+            first_name: profileData.first_name,
+            last_name: profileData.last_name,
+            avatar_url: profileData.avatar_url
           });
         }
-        
-        return acc;
-      }, {});
+      }
       
       return assigneesByProject;
     },
