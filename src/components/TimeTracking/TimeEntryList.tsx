@@ -108,6 +108,7 @@ export const TimeEntryList = ({
                   projects={projects}
                   onEdit={onEdit} 
                   onDelete={onDelete}
+                  className="animate-enter"
                 />
               ))}
             </CardContent>

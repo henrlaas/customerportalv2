@@ -144,9 +144,6 @@ export const TimeEntryForm = ({
   // Watch company_id to filter campaigns and tasks
   const selectedCompanyId = form.watch('company_id');
   const isBillable = form.watch('is_billable');
-  const selectedTaskId = form.watch('task_id');
-  const selectedCampaignId = form.watch('campaign_id');
-  const selectedProjectId = form.watch('project_id');
   
   // Check if entry can be billable (when company is selected)
   useEffect(() => {
@@ -220,7 +217,7 @@ export const TimeEntryForm = ({
     }
   }, [form]);
 
-  // Create time entry mutation
+  // Create time entry mutation with optimized error handling and caching
   const createMutation = useMutation({
     mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
       if (!user) throw new Error('You must be logged in to create time entries');
@@ -241,18 +238,26 @@ export const TimeEntryForm = ({
       const { data, error } = await supabase
         .from('time_entries')
         .insert(timeEntryData)
-        .select('id'); // Only select the ID to minimize data transfer
+        .select('*'); // Select all fields to get the complete entry for optimistic updates
       
       if (error) throw error;
-      return data;
+      return data[0] as TimeEntry;
     },
-    onSuccess: () => {
+    onSuccess: (newEntry) => {
+      // Add new entry to the cache for immediate UI update
+      queryClient.setQueryData(['timeEntries'], (oldData: TimeEntry[] = []) => {
+        return [newEntry, ...oldData];
+      });
+      
       toast({
         title: 'Time entry created',
         description: 'Your time entry has been created successfully.',
       });
+      
+      // Invalidate queries more efficiently
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
+      
       setIsCreating(false);
       onComplete();
       form.reset();
@@ -267,7 +272,7 @@ export const TimeEntryForm = ({
     },
   });
 
-  // Update time entry mutation
+  // Update time entry mutation with optimized error handling and caching
   const updateMutation = useMutation({
     mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
       if (!currentEntry) return null;
@@ -288,18 +293,30 @@ export const TimeEntryForm = ({
         .from('time_entries')
         .update(timeEntryData)
         .eq('id', currentEntry.id)
-        .select('id'); // Only select the ID to minimize data transfer
+        .select('*'); // Select all fields to get the complete entry for cache updates
       
       if (error) throw error;
-      return data;
+      return data[0] as TimeEntry;
     },
-    onSuccess: () => {
+    onSuccess: (updatedEntry) => {
+      if (!updatedEntry) return;
+      
+      // Update the entry in the cache for immediate UI update
+      queryClient.setQueryData(['timeEntries'], (oldData: TimeEntry[] = []) => {
+        return oldData.map(entry => 
+          entry.id === updatedEntry.id ? updatedEntry : entry
+        );
+      });
+      
       toast({
         title: 'Time entry updated',
         description: 'Your time entry has been updated successfully.',
       });
+      
+      // Invalidate queries more efficiently
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
+      
       setIsEditing(false);
       onCancelEdit();
       onComplete();
@@ -496,7 +513,7 @@ export const TimeEntryForm = ({
               }}
               value={field.value}
               defaultValue={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredProjects.length === 0}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
             >
               <FormControl>
                 <SelectTrigger>
@@ -530,7 +547,7 @@ export const TimeEntryForm = ({
               }}
               value={field.value}
               defaultValue={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || filteredCampaigns.length === 0}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
             >
               <FormControl>
                 <SelectTrigger>
