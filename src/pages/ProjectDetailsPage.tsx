@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -23,12 +24,12 @@ const ProjectDetailsPage = () => {
   const selectedProject = projects?.find(p => p.id === projectId);
 
   // Fetch tasks related to this project
-  const { data: projectTasks, isLoading: isLoadingTasks, error: tasksError } = useQuery({
+  const { data: projectTasks, isLoading: isLoadingTasks, error: tasksError, refetch: refetchTasks } = useQuery({
     queryKey: ['project-tasks', projectId],
     queryFn: async () => {
       if (!projectId) return [];
       
-      console.log('Fetching tasks for project:', projectId);
+      console.log('Fetching tasks for project ID:', projectId);
       
       try {
         const { data, error } = await supabase
@@ -205,7 +206,7 @@ const ProjectDetailsPage = () => {
           {tasksError ? (
             <div className="bg-white rounded-lg shadow p-6 text-center">
               <p className="text-red-500 mb-4">Error loading tasks. Please try again.</p>
-              <Button variant="outline" onClick={() => window.location.reload()}>
+              <Button variant="outline" onClick={() => refetchTasks()}>
                 Refresh
               </Button>
             </div>
