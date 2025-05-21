@@ -70,7 +70,23 @@ const ContractDetailsPage = () => {
         if (error) throw error;
         
         if (data) {
-          // Initialize contact with default values to satisfy TypeScript
+          // Create a safe company object with required properties
+          const safeCompany = {
+            name: (data.company && typeof data.company === 'object') 
+              ? (data.company as any).name || 'Unknown' 
+              : 'Unknown',
+            organization_number: (data.company && typeof data.company === 'object') 
+              ? (data.company as any).organization_number || null 
+              : null,
+            website: (data.company && typeof data.company === 'object') 
+              ? (data.company as any).website || null 
+              : null,
+            logo_url: (data.company && typeof data.company === 'object') 
+              ? (data.company as any).logo_url || null 
+              : null
+          };
+          
+          // Create a safe contact object with required properties
           const safeContact = {
             id: '',
             user_id: '',
@@ -84,26 +100,27 @@ const ContractDetailsPage = () => {
           if (data.contact && 
               typeof data.contact === 'object' && 
               data.contact !== null && 
-              !Array.isArray(data.contact) &&
-              !('error' in data.contact)) {
+              !Array.isArray(data.contact)) {
+            
+            const contactData = data.contact as any;
             
             // Safely extract values with fallbacks
-            safeContact.id = data.contact.id || '';
-            safeContact.user_id = data.contact.user_id || '';
-            safeContact.position = data.contact.position || null;
-            safeContact.first_name = data.contact.first_name || '';
-            safeContact.last_name = data.contact.last_name || '';
-            safeContact.avatar_url = data.contact.avatar_url || null;
+            safeContact.id = contactData.id || '';
+            safeContact.user_id = contactData.user_id || '';
+            safeContact.position = contactData.position || null;
+            safeContact.first_name = contactData.first_name || '';
+            safeContact.last_name = contactData.last_name || '';
+            safeContact.avatar_url = contactData.avatar_url || null;
           }
+          
+          // Ensure status is either "signed" or "unsigned"
+          const status = data.status === 'signed' ? 'signed' : 'unsigned';
           
           // Create a properly typed contract object with safe defaults
           const contractData: ContractWithDetails = {
             ...data,
-            company: data.company || { 
-              name: 'Unknown', 
-              organization_number: null,
-              website: null
-            },
+            status: status as 'signed' | 'unsigned', // Explicitly cast to the union type
+            company: safeCompany,
             contact: safeContact,
             creator: null // We handle creator separately since there's an error with the relationship
           };
@@ -227,7 +244,23 @@ const ContractDetailsPage = () => {
             if (error) throw error;
             
             if (data) {
-              // Initialize contact with default values to satisfy TypeScript
+              // Create a safe company object with required properties
+              const safeCompany = {
+                name: (data.company && typeof data.company === 'object') 
+                  ? (data.company as any).name || 'Unknown' 
+                  : 'Unknown',
+                organization_number: (data.company && typeof data.company === 'object') 
+                  ? (data.company as any).organization_number || null 
+                  : null,
+                website: (data.company && typeof data.company === 'object') 
+                  ? (data.company as any).website || null 
+                  : null,
+                logo_url: (data.company && typeof data.company === 'object') 
+                  ? (data.company as any).logo_url || null 
+                  : null
+              };
+              
+              // Create a safe contact object with required properties
               const safeContact = {
                 id: '',
                 user_id: '',
@@ -241,26 +274,27 @@ const ContractDetailsPage = () => {
               if (data.contact && 
                   typeof data.contact === 'object' && 
                   data.contact !== null && 
-                  !Array.isArray(data.contact) &&
-                  !('error' in data.contact)) {
+                  !Array.isArray(data.contact)) {
+                
+                const contactData = data.contact as any;
                 
                 // Safely extract values with fallbacks
-                safeContact.id = data.contact.id || '';
-                safeContact.user_id = data.contact.user_id || '';
-                safeContact.position = data.contact.position || null;
-                safeContact.first_name = data.contact.first_name || '';
-                safeContact.last_name = data.contact.last_name || '';
-                safeContact.avatar_url = data.contact.avatar_url || null;
+                safeContact.id = contactData.id || '';
+                safeContact.user_id = contactData.user_id || '';
+                safeContact.position = contactData.position || null;
+                safeContact.first_name = contactData.first_name || '';
+                safeContact.last_name = contactData.last_name || '';
+                safeContact.avatar_url = contactData.avatar_url || null;
               }
+              
+              // Ensure status is either "signed" or "unsigned"
+              const status = data.status === 'signed' ? 'signed' : 'unsigned';
               
               // Create a properly typed contract object with safe defaults
               const contractData: ContractWithDetails = {
                 ...data,
-                company: data.company || { 
-                  name: 'Unknown', 
-                  organization_number: null,
-                  website: null
-                },
+                status: status as 'signed' | 'unsigned', // Explicitly cast to the union type
+                company: safeCompany,
                 contact: safeContact,
                 creator: null // Handle creator separately
               };
@@ -610,8 +644,8 @@ const ContractDetailsPage = () => {
       
       {/* Delete Contract Dialog */}
       <DeleteContractDialog
-        contractId={contract.id}
-        contractName={`${contract.template_type} for ${contract.company?.name || 'Unknown Company'}`}
+        contractId={contract?.id || ''}
+        contractName={`${contract?.template_type || ''} for ${contract?.company?.name || 'Unknown Company'}`}
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onDeleted={handleContractDeleted}
