@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,21 +48,39 @@ const contractFormSchema = z.object({
 type ContractFormValues = z.infer<typeof contractFormSchema>;
 
 interface CreateContractDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  companyId: string;
+  isOpen?: boolean;
+  onClose?: () => void;
+  companyId?: string;
+  onContractCreated?: () => void | Promise<void>;
 }
 
 export function CreateContractDialog({ 
   isOpen, 
   onClose, 
-  companyId 
+  companyId,
+  onContractCreated
 }: CreateContractDialogProps) {
+  const [open, setOpen] = useState(isOpen || false);
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(companyId || null);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedTemplateContent, setSelectedTemplateContent] = useState('');
   const [previewContent, setPreviewContent] = useState('');
+  
+  // Handle controlled/uncontrolled state
+  useEffect(() => {
+    if (isOpen !== undefined) {
+      setOpen(isOpen);
+    }
+  }, [isOpen]);
+  
+  // Handle company ID prop changes
+  useEffect(() => {
+    if (companyId) {
+      setSelectedCompany(companyId);
+    }
+  }, [companyId]);
   
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractFormSchema),
@@ -70,6 +89,32 @@ export function CreateContractDialog({
       contact_id: '',
       title: '',
     },
+  });
+
+  // Function to handle dialog close
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      setOpen(false);
+    }
+    form.reset();
+    setSelectedTemplateContent('');
+    setPreviewContent('');
+  };
+  
+  // Fetch company list for standalone dialog
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !companyId && open,
   });
 
   // Fetch contract templates
@@ -83,11 +128,12 @@ export function CreateContractDialog({
       if (error) throw error;
       return data;
     },
+    enabled: open,
   });
 
   // Fetch company contacts
   const { data: contacts = [], isLoading: isLoadingContacts } = useQuery({
-    queryKey: ['company-contacts', companyId],
+    queryKey: ['company-contacts', selectedCompany],
     queryFn: async () => {
       try {
         // Get contacts for this company
@@ -98,7 +144,7 @@ export function CreateContractDialog({
             position,
             user_id
           `)
-          .eq('company_id', companyId);
+          .eq('company_id', selectedCompany);
         
         if (contactsError) throw contactsError;
         
@@ -129,7 +175,7 @@ export function CreateContractDialog({
         throw error;
       }
     },
-    enabled: !!companyId,
+    enabled: !!selectedCompany && open,
   });
 
   // Handle template selection change
@@ -148,7 +194,7 @@ export function CreateContractDialog({
       const { data: company } = await supabase
         .from('companies')
         .select('*, advisor:advisor_id(first_name, last_name)')
-        .eq('id', companyId)
+        .eq('id', selectedCompany)
         .single();
       
       // Get selected contact info
@@ -181,7 +227,7 @@ export function CreateContractDialog({
       const { data: company } = await supabase
         .from('companies')
         .select('*, advisor:advisor_id(first_name, last_name)')
-        .eq('id', companyId)
+        .eq('id', selectedCompany)
         .single();
       
       // Get selected contact info
@@ -197,6 +243,12 @@ export function CreateContractDialog({
       const processedContent = replacePlaceholders(selectedTemplateContent, placeholderData);
       setPreviewContent(processedContent);
     }
+  };
+
+  // Handle company selection change (for standalone dialog)
+  const handleCompanyChange = (companyId: string) => {
+    setSelectedCompany(companyId);
+    form.setValue('contact_id', '');
   };
 
   // Watch for changes in template_id and contact_id
@@ -216,6 +268,7 @@ export function CreateContractDialog({
   const createContractMutation = useMutation({
     mutationFn: async (values: ContractFormValues) => {
       if (!user) throw new Error("You must be logged in to create a contract");
+      if (!selectedCompany) throw new Error("No company selected");
       
       // First get the template
       const template = await fetchContractTemplate(values.template_id);
@@ -224,7 +277,7 @@ export function CreateContractDialog({
       const { data: company } = await supabase
         .from('companies')
         .select('*, advisor:advisor_id(first_name, last_name)')
-        .eq('id', companyId)
+        .eq('id', selectedCompany)
         .single();
       
       // Get selected contact info
@@ -241,7 +294,7 @@ export function CreateContractDialog({
       
       // Create the contract
       const contractData = await createContract({
-        company_id: companyId,
+        company_id: selectedCompany,
         contact_id: values.contact_id,
         template_type: template.type, // Keep original case
         content: processedContent,
@@ -256,9 +309,16 @@ export function CreateContractDialog({
         title: 'Contract created',
         description: 'The contract has been created successfully',
       });
-      queryClient.invalidateQueries({ queryKey: ['company-contracts', companyId] });
+      queryClient.invalidateQueries({ queryKey: ['company-contracts', selectedCompany] });
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      
+      // Call the onContractCreated callback if provided
+      if (onContractCreated) {
+        onContractCreated();
+      }
+      
       form.reset();
-      onClose();
+      handleClose();
     },
     onError: (error: Error) => {
       toast({
@@ -274,113 +334,163 @@ export function CreateContractDialog({
     createContractMutation.mutate(values);
   };
 
+  // For standalone usage
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      handleClose();
+    } else {
+      setOpen(true);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Create Contract</DialogTitle>
-          <DialogDescription>
-            Generate a new contract for the selected company.
-          </DialogDescription>
-        </DialogHeader>
-        
-        {templates.length === 0 && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>No Templates Available</AlertTitle>
-            <AlertDescription>
-              No contract templates found. Please create a template first.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
+    <>
+      {/* Only render button if not being used as a controlled component */}
+      {isOpen === undefined && (
+        <Button onClick={() => setOpen(true)}>Create Contract</Button>
+      )}
+      
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create Contract</DialogTitle>
+            <DialogDescription>
+              Generate a new contract for the selected company.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {templates.length === 0 && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>No Templates Available</AlertTitle>
+              <AlertDescription>
+                No contract templates found. Please create a template first.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* Show company selection only in standalone mode */}
+              {!companyId && (
+                <FormField
+                  control={form.control}
+                  name="company_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleCompanyChange(value);
+                        }} 
+                        value={selectedCompany || undefined}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a company" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {companies.map((company) => (
+                            <SelectItem key={company.id} value={company.id}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract Title (optional)</FormLabel>
+                    <Input placeholder="Enter contract title" {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="template_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract Template</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a template" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {templates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contact_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Contact</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedCompany}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={selectedCompany ? "Select a contact" : "Select a company first"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {contacts.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            {`${contact.first_name} ${contact.last_name}`} {contact.position ? `- ${contact.position}` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {previewContent && (
                 <FormItem>
-                  <FormLabel>Contract Title (optional)</FormLabel>
-                  <Input placeholder="Enter contract title" {...field} />
-                  <FormMessage />
+                  <FormLabel>Contract Preview</FormLabel>
+                  <div className="border rounded-md p-4 bg-gray-50 min-h-[200px] max-h-[300px] overflow-y-auto whitespace-pre-wrap">
+                    {previewContent}
+                  </div>
                 </FormItem>
               )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="template_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contract Template</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a template" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {templates.map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="contact_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Contact</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a contact" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {contacts.map((contact) => (
-                        <SelectItem key={contact.id} value={contact.id}>
-                          {`${contact.first_name} ${contact.last_name}`} {contact.position ? `- ${contact.position}` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {previewContent && (
-              <FormItem>
-                <FormLabel>Contract Preview</FormLabel>
-                <div className="border rounded-md p-4 bg-gray-50 min-h-[200px] max-h-[300px] overflow-y-auto whitespace-pre-wrap">
-                  {previewContent}
-                </div>
-              </FormItem>
-            )}
-            
-            <DialogFooter className="pt-6">
-              <Button variant="outline" type="button" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={createContractMutation.isPending || templates.length === 0}
-              >
-                {createContractMutation.isPending ? 'Creating...' : 'Create Contract'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+              
+              <DialogFooter className="pt-6">
+                <Button variant="outline" type="button" onClick={handleClose}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={createContractMutation.isPending || templates.length === 0 || !selectedCompany}
+                >
+                  {createContractMutation.isPending ? 'Creating...' : 'Create Contract'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
