@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ContractWithDetails } from '@/utils/contractUtils';
@@ -674,13 +675,12 @@ const ContractDetailsPage = () => {
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Related Project</p>
                     <div className="flex flex-col">
-                      <p className="font-medium mb-1">{projectData?.name || 'Loading project...'}</p>
                       <Button 
                         variant="link" 
-                        className="px-0 text-primary" 
+                        className="px-0 h-auto font-medium text-primary text-left justify-start"
                         onClick={() => navigate(`/projects/${contract.project_id}`)}
                       >
-                        View Project
+                        {projectData?.name || 'Loading project...'}
                       </Button>
                     </div>
                   </div>
