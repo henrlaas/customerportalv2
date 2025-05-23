@@ -424,7 +424,7 @@ export function replacePlaceholders(text: string, data: Record<string, any>) {
   const placeholders: Record<string, string | null> = {
     companyname: data.company?.name || null,
     organizationnumber: data.company?.organization_number || null,
-    address: data.company?.street_address || null,
+    address: data.company?.street_address || data.company?.address || null,
     zipcode: data.company?.postal_code || null,
     city: data.company?.city || null,
     country: data.company?.country || null,
@@ -443,7 +443,7 @@ export function replacePlaceholders(text: string, data: Record<string, any>) {
   
   // Replace all placeholders with their values or remove them if null
   for (const [placeholder, value] of Object.entries(placeholders)) {
-    const regex = new RegExp(`{{${placeholder}}}`, 'g');
+    const regex = new RegExp(`{{${placeholder}}}`, 'gi');
     if (value === null) {
       // If the value is null, remove the placeholder entirely
       processed = processed.replace(regex, '');

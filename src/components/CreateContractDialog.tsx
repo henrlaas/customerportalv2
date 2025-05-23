@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -190,10 +189,10 @@ export function CreateContractDialog({
       const template = await fetchContractTemplate(templateId);
       setSelectedTemplateContent(template.content);
       
-      // Get company info for placeholders
+      // Get company info for placeholders with all needed fields
       const { data: company } = await supabase
         .from('companies')
-        .select('*, advisor:advisor_id(first_name, last_name)')
+        .select('*, advisor:advisor_id(first_name, last_name), name, organization_number, street_address, address, postal_code, city, country, website, logo_url, mrr')
         .eq('id', selectedCompany)
         .single();
       
@@ -223,10 +222,10 @@ export function CreateContractDialog({
   // Handle contact selection change
   const handleContactChange = async (contactId: string) => {
     if (selectedTemplateContent && contactId) {
-      // Get company info for placeholders
+      // Get company info for placeholders with all needed fields
       const { data: company } = await supabase
         .from('companies')
-        .select('*, advisor:advisor_id(first_name, last_name)')
+        .select('*, advisor:advisor_id(first_name, last_name), name, organization_number, street_address, address, postal_code, city, country, website, logo_url, mrr')
         .eq('id', selectedCompany)
         .single();
       
@@ -273,10 +272,10 @@ export function CreateContractDialog({
       // First get the template
       const template = await fetchContractTemplate(values.template_id);
       
-      // Get company info for placeholders
+      // Get company info for placeholders with all needed fields
       const { data: company } = await supabase
         .from('companies')
-        .select('*, advisor:advisor_id(first_name, last_name)')
+        .select('*, advisor:advisor_id(first_name, last_name), name, organization_number, street_address, address, postal_code, city, country, website, logo_url, mrr')
         .eq('id', selectedCompany)
         .single();
       
@@ -482,4 +481,3 @@ export function CreateContractDialog({
     </>
   );
 }
-
