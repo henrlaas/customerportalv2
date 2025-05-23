@@ -85,7 +85,7 @@ export function CreateProjectContractDialog({
       const { data, error } = await supabase
         .from('contract_templates')
         .select('*')
-        .eq('type', 'project') // Only fetch project-related templates
+        .or('type.eq.project,type.eq.Project') // Look for both 'project' and 'Project' types (case-insensitive)
         .order('name');
       if (error) throw error;
       return data;
@@ -275,7 +275,7 @@ export function CreateProjectContractDialog({
         company_id: companyId,
         contact_id: values.contact_id,
         project_id: projectId,
-        template_type: template.type,
+        template_type: template.type, // Keep original case
         content: processedContent,
         title: values.title,
         created_by: user.id
@@ -336,7 +336,7 @@ export function CreateProjectContractDialog({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>No Templates Available</AlertTitle>
             <AlertDescription>
-              No project contract templates found. Please create a template with type 'project' first.
+              No project contract templates found. Please create a template with type 'project' or 'Project' first.
             </AlertDescription>
           </Alert>
         )}
