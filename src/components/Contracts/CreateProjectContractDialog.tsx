@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -154,11 +153,11 @@ export function CreateProjectContractDialog({
       // Get company info for placeholders
       const { data: company } = await supabase
         .from('companies')
-        .select('*')
+        .select('*, advisor:advisor_id(first_name, last_name)')
         .eq('id', companyId)
         .single();
         
-      // Get project info
+      // Get project info with deadline field
       const { data: project } = await supabase
         .from('projects')
         .select('*')
@@ -195,11 +194,11 @@ export function CreateProjectContractDialog({
       // Get company info for placeholders
       const { data: company } = await supabase
         .from('companies')
-        .select('*')
+        .select('*, advisor:advisor_id(first_name, last_name)')
         .eq('id', companyId)
         .single();
         
-      // Get project info
+      // Get project info with deadline field
       const { data: project } = await supabase
         .from('projects')
         .select('*')
@@ -246,11 +245,11 @@ export function CreateProjectContractDialog({
       // Get company info for placeholders
       const { data: company } = await supabase
         .from('companies')
-        .select('*')
+        .select('*, advisor:advisor_id(first_name, last_name)')
         .eq('id', companyId)
         .single();
         
-      // Get project info
+      // Get project info with deadline field
       const { data: project } = await supabase
         .from('projects')
         .select('*')

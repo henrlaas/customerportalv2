@@ -416,26 +416,41 @@ export async function signContract(id: string, signatureData: string) {
 
 // Replace placeholders in contract text with actual data
 export function replacePlaceholders(text: string, data: Record<string, any>) {
+  if (!text) return '';
+  
   let processed = text;
   
   // Define all possible placeholders and their replacements
   const placeholders: Record<string, string | null> = {
-    companyname: data.company?.name || '',
-    organizationnumber: data.company?.organization_number || '',
-    address: data.company?.address || '',
-    postal_code: data.company?.postal_code || '',
-    city: data.company?.city || '',
-    country: data.company?.country || '',
-    contactfullname: `${data.contact?.first_name || ''} ${data.contact?.last_name || ''}`.trim(),
-    contactposition: data.contact?.position || '',
+    companyname: data.company?.name || null,
+    organizationnumber: data.company?.organization_number || null,
+    address: data.company?.street_address || null,
+    zipcode: data.company?.postal_code || null,
+    city: data.company?.city || null,
+    country: data.company?.country || null,
+    contactfullname: data.contact && (data.contact.first_name || data.contact.last_name) 
+      ? `${data.contact.first_name || ''} ${data.contact.last_name || ''}`.trim()
+      : null,
+    contactposition: data.contact?.position || null,
     todaydate: format(new Date(), 'dd.MM.yyyy'),
-    mrrprice: data.company?.mrr ? `${data.company.mrr} NOK` : ''
+    mrrprice: data.company?.mrr ? `${data.company.mrr} NOK` : null,
+    description: data.project?.description || null,
+    deadline: data.project?.deadline 
+      ? format(new Date(data.project.deadline), 'dd.MM.yyyy')
+      : null,
+    price: data.project?.value ? `${data.project.value} NOK` : null
   };
   
-  // Replace all placeholders with their values
+  // Replace all placeholders with their values or remove them if null
   for (const [placeholder, value] of Object.entries(placeholders)) {
     const regex = new RegExp(`{{${placeholder}}}`, 'g');
-    processed = processed.replace(regex, value || '');
+    if (value === null) {
+      // If the value is null, remove the placeholder entirely
+      processed = processed.replace(regex, '');
+    } else {
+      // Otherwise replace with the value
+      processed = processed.replace(regex, value);
+    }
   }
   
   return processed;
