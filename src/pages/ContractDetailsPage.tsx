@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ContractWithDetails } from '@/utils/contractUtils';
@@ -7,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { createPDF } from '@/utils/pdfUtils';
 import SignaturePad from 'signature_pad';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { signContract } from '@/utils/contractUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -42,6 +41,28 @@ const ContractDetailsPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const queryClient = useQueryClient();
+  
+  // Fetch project details if contract has project_id
+  const { data: projectData } = useQuery({
+    queryKey: ['project', contract?.project_id],
+    queryFn: async () => {
+      if (!contract?.project_id) return null;
+      
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('id', contract.project_id)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching project:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!contract?.project_id,
+  });
   
   useEffect(() => {
     const fetchContract = async () => {
@@ -652,13 +673,16 @@ const ContractDetailsPage = () => {
                 {contract.project_id && (
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Related Project</p>
-                    <Button 
-                      variant="link" 
-                      className="px-0 text-primary" 
-                      onClick={() => navigate(`/projects/${contract.project_id}`)}
-                    >
-                      View Project
-                    </Button>
+                    <div className="flex flex-col">
+                      <p className="font-medium mb-1">{projectData?.name || 'Loading project...'}</p>
+                      <Button 
+                        variant="link" 
+                        className="px-0 text-primary" 
+                        onClick={() => navigate(`/projects/${contract.project_id}`)}
+                      >
+                        View Project
+                      </Button>
+                    </div>
                   </div>
                 )}
                 
