@@ -373,36 +373,24 @@ export function CreateContractDialog({
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {/* Show company selection only in standalone mode */}
               {!companyId && (
-                <FormField
-                  control={form.control}
-                  name="company_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          handleCompanyChange(value);
-                        }} 
-                        value={selectedCompany || undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a company" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {companies.map((company) => (
-                            <SelectItem key={company.id} value={company.id}>
-                              {company.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="form-item">
+                  <FormLabel>Company</FormLabel>
+                  <Select 
+                    onValueChange={handleCompanyChange} 
+                    value={selectedCompany || undefined}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             
               <FormField
@@ -494,3 +482,4 @@ export function CreateContractDialog({
     </>
   );
 }
+
