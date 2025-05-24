@@ -47,7 +47,7 @@ export function MultiStageCompanyDialog({
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const totalStages = 4; // Method selection + 3 original stages
+  const totalStages = 5; // Method selection + 4 original stages (basic info, contact, address/settings)
 
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
@@ -191,7 +191,8 @@ export function MultiStageCompanyDialog({
     if (stage === 1) return 'Search Company Registry';
     if (stage === 2) return 'Basic Information';
     if (stage === 3) return 'Contact Details';
-    return 'Address & Settings';
+    if (stage === 4) return 'Address & Settings';
+    return 'Create Company';
   };
 
   const renderStageContent = () => {
