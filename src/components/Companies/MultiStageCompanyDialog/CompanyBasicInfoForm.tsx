@@ -47,7 +47,7 @@ export const CompanyBasicInfoForm = ({ form, logo }: CompanyBasicInfoFormProps) 
               <FormItem>
                 <FormLabel>Company Name*</FormLabel>
                 <FormControl>
-                  <Input placeholder="Acme Corporation" {...field} />
+                  <Input placeholder="Apple AS" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -63,7 +63,7 @@ export const CompanyBasicInfoForm = ({ form, logo }: CompanyBasicInfoFormProps) 
           <FormItem>
             <FormLabel>Organization Number</FormLabel>
             <FormControl>
-              <Input placeholder="123456-7890" {...field} />
+              <Input placeholder="123456789" {...field} />
             </FormControl>
             <FormDescription>
               Official registration number of the company
