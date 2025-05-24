@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { PlusIcon, SearchIcon } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectCreateDialog } from '@/components/Projects/ProjectCreateDialog';
 import { ProjectListView } from '@/components/Projects/ProjectListView';
+import { ProjectListViewSkeleton } from '@/components/Projects/ProjectListViewSkeleton';
 import { ProjectsSummaryCards } from '@/components/Projects/ProjectsSummaryCards';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -107,9 +109,7 @@ const ProjectsPage = () => {
       
       {/* Projects List */}
       {projectsLoading ? (
-        <div className="flex justify-center items-center h-40">
-          <p className="text-gray-500">Loading projects...</p>
-        </div>
+        <ProjectListViewSkeleton />
       ) : filteredProjects && filteredProjects.length > 0 ? (
         <ProjectListView 
           projects={filteredProjects} 
