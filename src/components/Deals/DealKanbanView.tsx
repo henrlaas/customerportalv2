@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -21,6 +20,7 @@ import {
 import ReactConfetti from 'react-confetti';
 import { Deal, Stage, Company, Profile } from '@/components/Deals/types/deal';
 import { DealCard } from './DealCard';
+import { DealKanbanViewSkeleton } from './DealKanbanViewSkeleton';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvertTempCompanyDialog } from './ConvertTempCompanyDialog';
@@ -35,6 +35,7 @@ interface DealKanbanViewProps {
   onEdit: (deal: Deal) => void;
   onDelete: (id: string) => void;
   onMove: (dealId: string, newStageId: string) => void;
+  isLoading?: boolean;
 }
 
 export function DealKanbanView({
@@ -46,6 +47,7 @@ export function DealKanbanView({
   onEdit,
   onDelete,
   onMove,
+  isLoading = false,
 }: DealKanbanViewProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -82,6 +84,10 @@ export function DealKanbanView({
       return data || [];
     },
   });
+
+  if (isLoading) {
+    return <DealKanbanViewSkeleton />;
+  }
 
   const handleDragStart = (event: DragStartEvent) => {
     console.log("Drag started:", event.active.id);

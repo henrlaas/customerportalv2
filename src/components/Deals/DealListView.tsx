@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Deal, Stage, Company, Profile } from '@/components/Deals/types/deal';
 import { DealCard } from './DealCard';
+import { DealListViewSkeleton } from './DealListViewSkeleton';
 
 interface DealListViewProps {
   deals: Deal[];
@@ -12,6 +13,7 @@ interface DealListViewProps {
   onEdit: (deal: Deal) => void;
   onDelete: (id: string) => void;
   onMove: (dealId: string, newStageId: string) => void;
+  isLoading?: boolean;
 }
 
 export function DealListView({
@@ -23,6 +25,7 @@ export function DealListView({
   onEdit,
   onDelete,
   onMove,
+  isLoading = false,
 }: DealListViewProps) {
   // Track optimistic updates locally
   const [localDeals, setLocalDeals] = useState<Deal[]>(deals);
@@ -45,6 +48,10 @@ export function DealListView({
     // Then persist to database
     onMove(dealToMove.id, newStageId);
   };
+
+  if (isLoading) {
+    return <DealListViewSkeleton />;
+  }
 
   return (
     <div className="space-y-4 w-full">

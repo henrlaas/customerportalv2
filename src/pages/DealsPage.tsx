@@ -359,6 +359,7 @@ const DealsPage = () => {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onMove={handleMoveStage}
+              isLoading={isLoading}
             />
           ) : (
             <DealListView
@@ -370,6 +371,7 @@ const DealsPage = () => {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onMove={handleMoveStage}
+              isLoading={isLoading}
             />
           )}
         </>
