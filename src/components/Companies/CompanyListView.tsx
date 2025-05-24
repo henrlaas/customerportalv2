@@ -85,6 +85,7 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
     return {
       name: `${advisor.user_metadata?.first_name || ''} ${advisor.user_metadata?.last_name || ''}`.trim() || advisor.email,
       email: advisor.email,
+      avatar_url: advisor.user_metadata?.avatar_url || null,
       // Use initials for avatar fallback
       initials: getInitials(advisor.user_metadata?.first_name, advisor.user_metadata?.last_name)
     };
@@ -97,6 +98,9 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
     if (lastName) initials += lastName.charAt(0).toUpperCase();
     return initials || '??';
   };
+  
+  // Log users data to debug avatar_url
+  console.log('Users data:', users);
   
   return (
     <div className="overflow-x-auto rounded-md border">
@@ -190,7 +194,7 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
                         <AvatarImage 
-                          src={users.find(user => user.id === company.advisor_id)?.user_metadata?.avatar_url} 
+                          src={advisorDetails.avatar_url} 
                           alt={advisorDetails.name} 
                         />
                         <AvatarFallback className="text-xs">
@@ -239,3 +243,4 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
     </div>
   );
 };
+
