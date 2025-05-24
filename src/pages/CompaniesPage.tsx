@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Building, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
+import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog/MultiStageCompanyDialog';
 import { CompanyFilters } from '@/components/Companies/CompanyFilters';
 import { CompanyListView } from '@/components/Companies/CompanyListView';
 import { CompanyCardView } from '@/components/Companies/CompanyCardView';
@@ -13,6 +12,7 @@ import { Company } from '@/types/company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { useCompanyList } from '@/hooks/useCompanyList';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -157,6 +157,3 @@ const CompaniesPage = () => {
 };
 
 export default CompaniesPage;
-
-// Add missing imports
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';

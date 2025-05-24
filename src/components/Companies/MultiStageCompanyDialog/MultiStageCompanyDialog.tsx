@@ -66,7 +66,7 @@ export function MultiStageCompanyDialog({
       street_address: '',
       city: '',
       postal_code: '',
-      country: '',
+      country: '', // Remove default "Norge"
       parent_id: parentId || '',
       trial_period: false,
       is_partner: false,
@@ -121,7 +121,7 @@ export function MultiStageCompanyDialog({
         client_types: values.client_types,
         mrr: hasMarketingType ? values.mrr : null,
         name: values.name,
-        country: values.country || 'Norge',
+        country: values.country || null,
       };
       if (dealId) {
         return await companyService.convertTempCompany(companyData, dealId);
