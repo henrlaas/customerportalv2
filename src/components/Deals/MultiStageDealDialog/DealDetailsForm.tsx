@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import Select from 'react-select';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -16,13 +17,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   RadioGroup,
   RadioGroupItem,
@@ -77,6 +71,15 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
   const eligibleProfiles = profiles.filter(
     (profile: any) => profile.role === 'admin' || profile.role === 'employee'
   );
+
+  // Format profiles for react-select
+  const assigneeOptions = [
+    { value: 'unassigned', label: 'Unassigned' },
+    ...eligibleProfiles.map((profile: any) => ({
+      value: profile.id,
+      label: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'
+    }))
+  ];
 
   return (
     <Form {...form}>
@@ -201,24 +204,74 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assigned To (optional)</FormLabel>
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a team member" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {eligibleProfiles.map((profile: any) => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {profile.first_name} {profile.last_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <Select
+                  options={assigneeOptions}
+                  value={assigneeOptions.find(option => option.value === field.value)}
+                  onChange={(selectedOption) => field.onChange(selectedOption?.value || 'unassigned')}
+                  placeholder="Select a team member..."
+                  isClearable
+                  isSearchable
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  styles={{
+                    control: (baseStyles, state) => ({
+                      ...baseStyles,
+                      borderColor: state.isFocused ? 'hsl(var(--ring))' : 'hsl(var(--input))',
+                      backgroundColor: 'hsl(var(--background))',
+                      borderRadius: 'calc(var(--radius) - 2px)',
+                      boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
+                      '&:hover': {
+                        borderColor: 'hsl(var(--input))'
+                      },
+                      minHeight: '40px'
+                    }),
+                    placeholder: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--muted-foreground))'
+                    }),
+                    menu: (baseStyles) => ({
+                      ...baseStyles,
+                      backgroundColor: 'hsl(var(--background))',
+                      borderColor: 'hsl(var(--border))',
+                      zIndex: 50
+                    }),
+                    option: (baseStyles, { isFocused, isSelected }) => ({
+                      ...baseStyles,
+                      backgroundColor: isFocused 
+                        ? 'hsl(var(--accent) / 0.1)' 
+                        : isSelected 
+                          ? 'hsl(var(--accent))'
+                          : undefined,
+                      color: isSelected 
+                        ? 'hsl(var(--accent-foreground))'
+                        : 'hsl(var(--foreground))'
+                    }),
+                    input: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--foreground))'
+                    }),
+                    singleValue: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--foreground))'
+                    }),
+                    dropdownIndicator: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--foreground) / 0.5)',
+                      '&:hover': {
+                        color: 'hsl(var(--foreground) / 0.8)'
+                      }
+                    }),
+                    clearIndicator: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--foreground) / 0.5)',
+                      '&:hover': {
+                        color: 'hsl(var(--foreground) / 0.8)'
+                      }
+                    })
+                  }}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
