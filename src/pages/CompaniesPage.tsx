@@ -1,4 +1,6 @@
+
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { CompanyCardView } from '@/components/Companies/CompanyCardView';
@@ -15,12 +17,13 @@ import type { Company } from '@/types/company';
 type ViewMode = 'grid' | 'list';
 
 export default function CompaniesPage() {
+  const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedClientTypes, setSelectedClientTypes] = useState<string[]>([]);
-  const [selectedAdvisor, setSelectedAdvisor] = useState<string>('');
-  const { t } = useTranslation();
+  const [clientTypeFilter, setClientTypeFilter] = useState('all');
+  const [showSubsidiaries, setShowSubsidiaries] = useState(false);
+  const t = useTranslation();
 
   const { data: companies = [], isLoading, error } = useQuery({
     queryKey: ['companies'],
@@ -29,14 +32,12 @@ export default function CompaniesPage() {
 
   const filteredCompanies = companies.filter((company: Company) => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesClientTypes = selectedClientTypes.length === 0 || 
-      selectedClientTypes.some(type => 
-        (type === 'Marketing' && company.is_marketing_client) ||
-        (type === 'Web' && company.is_web_client)
-      );
-    const matchesAdvisor = !selectedAdvisor || company.advisor_id === selectedAdvisor;
+    const matchesClientTypes = clientTypeFilter === 'all' || 
+      (clientTypeFilter === 'Marketing' && company.is_marketing_client) ||
+      (clientTypeFilter === 'Web' && company.is_web_client);
+    const matchesSubsidiaries = showSubsidiaries || !company.parent_id;
     
-    return matchesSearch && matchesClientTypes && matchesAdvisor;
+    return matchesSearch && matchesClientTypes && matchesSubsidiaries;
   });
 
   const totalCompanies = companies.length;
@@ -45,6 +46,10 @@ export default function CompaniesPage() {
   const totalMrr = companies.reduce((sum: number, company: Company) => {
     return sum + (company.mrr || 0);
   }, 0);
+
+  const handleCompanyClick = (company: Company) => {
+    navigate(`/companies/${company.id}`);
+  };
 
   if (isLoading) {
     return <div className="p-6">Loading companies...</div>;
@@ -111,11 +116,13 @@ export default function CompaniesPage() {
       <div className="flex items-center justify-between">
         <CompanyFilters
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          selectedClientTypes={selectedClientTypes}
-          onClientTypesChange={setSelectedClientTypes}
-          selectedAdvisor={selectedAdvisor}
-          onAdvisorChange={setSelectedAdvisor}
+          setSearchQuery={setSearchQuery}
+          clientTypeFilter={clientTypeFilter}
+          setClientTypeFilter={setClientTypeFilter}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          showSubsidiaries={showSubsidiaries}
+          setShowSubsidiaries={setShowSubsidiaries}
         />
         <div className="flex items-center gap-2">
           <Button
@@ -145,25 +152,25 @@ export default function CompaniesPage() {
         
         <TabsContent value="all" className="space-y-4">
           {viewMode === 'grid' ? (
-            <CompanyCardView companies={filteredCompanies} />
+            <CompanyCardView companies={filteredCompanies} onCompanyClick={handleCompanyClick} />
           ) : (
-            <CompanyListView companies={filteredCompanies} />
+            <CompanyListView companies={filteredCompanies} onCompanyClick={handleCompanyClick} />
           )}
         </TabsContent>
         
         <TabsContent value="marketing" className="space-y-4">
           {viewMode === 'grid' ? (
-            <CompanyCardView companies={filteredCompanies.filter(c => c.is_marketing_client)} />
+            <CompanyCardView companies={filteredCompanies.filter(c => c.is_marketing_client)} onCompanyClick={handleCompanyClick} />
           ) : (
-            <CompanyListView companies={filteredCompanies.filter(c => c.is_marketing_client)} />
+            <CompanyListView companies={filteredCompanies.filter(c => c.is_marketing_client)} onCompanyClick={handleCompanyClick} />
           )}
         </TabsContent>
         
         <TabsContent value="web" className="space-y-4">
           {viewMode === 'grid' ? (
-            <CompanyCardView companies={filteredCompanies.filter(c => c.is_web_client)} />
+            <CompanyCardView companies={filteredCompanies.filter(c => c.is_web_client)} onCompanyClick={handleCompanyClick} />
           ) : (
-            <CompanyListView companies={filteredCompanies.filter(c => c.is_web_client)} />
+            <CompanyListView companies={filteredCompanies.filter(c => c.is_web_client)} onCompanyClick={handleCompanyClick} />
           )}
         </TabsContent>
       </Tabs>
