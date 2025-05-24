@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Badge } from '@/components/ui/badge';
 
 interface CompanyFiltersProps {
   searchQuery: string;
@@ -55,25 +55,32 @@ export const CompanyFilters = ({
           </Label>
         </div>
         
-        {/* Client Type Filter with Toggle Group */}
+        {/* Client Type Filter with Clickable Badges */}
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">Type:</span>
-          <ToggleGroup 
-            type="single" 
-            value={clientTypeFilter} 
-            onValueChange={(value) => setClientTypeFilter(value || 'all')}
-            className="border rounded-md"
-          >
-            <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm">
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={clientTypeFilter === 'all' ? 'default' : 'outline'}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setClientTypeFilter('all')}
+            >
               All
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Marketing" className="px-3 py-1.5 text-sm">
+            </Badge>
+            <Badge
+              variant={clientTypeFilter === 'Marketing' ? 'marketing' : 'outline'}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setClientTypeFilter('Marketing')}
+            >
               Marketing
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Web" className="px-3 py-1.5 text-sm">
+            </Badge>
+            <Badge
+              variant={clientTypeFilter === 'Web' ? 'web' : 'outline'}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setClientTypeFilter('Web')}
+            >
               Web
-            </ToggleGroupItem>
-          </ToggleGroup>
+            </Badge>
+          </div>
         </div>
         
         <div className="flex rounded-md border">
