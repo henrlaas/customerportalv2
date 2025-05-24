@@ -1,14 +1,12 @@
+
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   Building,
-  ArrowUpDown,
   Globe,
   CheckCircle,
-  User,
-  Users,
   Trash,
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,15 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Company } from '@/types/company';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { companyService } from '@/services/companyService';
 import { userService } from '@/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +26,7 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from '@/components/ui/pagination';
+import { DeleteCompanyDialog } from './DeleteCompanyDialog';
 
 interface CompanyListViewProps {
   companies: Company[];
@@ -53,6 +43,10 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   const totalPages = Math.ceil(companies.length / itemsPerPage);
+  
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
   
   // Get companies for current page
   const paginatedCompanies = companies.slice(
@@ -79,6 +73,8 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
         description: 'The company has been successfully deleted',
       });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
+      setDeleteDialogOpen(false);
+      setCompanyToDelete(null);
     },
     onError: (error: any) => {
       toast({
@@ -89,9 +85,14 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
     },
   });
   
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this company? This will also delete all associated data.')) {
-      deleteCompanyMutation.mutate(id);
+  const handleDeleteClick = (company: Company) => {
+    setCompanyToDelete(company);
+    setDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteConfirm = () => {
+    if (companyToDelete) {
+      deleteCompanyMutation.mutate(companyToDelete.id);
     }
   };
   
@@ -299,30 +300,16 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <span className="sr-only">Open menu</span>
-                              <ArrowUpDown className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                              <DropdownMenuItem onClick={() => navigate(`/companies/${company.id}`)}>
-                                <Users className="mr-2 h-4 w-4" />
-                                <span>View Details</span>
-                              </DropdownMenuItem>
-                              {canModify && (
-                                <DropdownMenuItem onClick={() => handleDelete(company.id)}>
-                                  <Trash className="mr-2 h-4 w-4" />
-                                  <span>Delete</span>
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuGroup>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {canModify && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDeleteClick(company)}
+                            className="text-gray-500 hover:text-red-600"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -380,6 +367,18 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
           </PaginationContent>
         </Pagination>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteCompanyDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setCompanyToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        company={companyToDelete}
+        isDeleting={deleteCompanyMutation.isPending}
+      />
     </div>
   );
 };
