@@ -17,10 +17,10 @@ export function ContactDetailsStage({ form }: { form: any }) {
               <Globe className="h-4 w-4" /> Website
             </FormLabel>
             <FormControl>
-              <Input placeholder="https://example.com" {...field} />
+              <Input placeholder="https://example.no" {...field} />
             </FormControl>
             <FormDescription>
-              Company website (logo will be automatically fetched)
+              Company website
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -84,7 +84,7 @@ export function ContactDetailsStage({ form }: { form: any }) {
               <Mail className="h-4 w-4" /> Invoice Email
             </FormLabel>
             <FormControl>
-              <Input placeholder="invoices@example.com" {...field} />
+              <Input placeholder="apple@ebilag.com" {...field} />
             </FormControl>
             <FormDescription>
               Email address for sending invoices
