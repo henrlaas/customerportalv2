@@ -195,11 +195,7 @@ export function MultiStageCompanyDialog({
         <DialogHeader>
           <DialogTitle>{parentId ? 'Add Subsidiary' : 'New Company'}</DialogTitle>
           <DialogDescription>
-            Step {stage} of {totalStages}: {
-              stage === 1 ? 'Basic Information' : 
-              stage === 2 ? 'Contact Details' : 
-              'Address & Settings'
-            }
+            Fill out the form below to create a new company
           </DialogDescription>
         </DialogHeader>
         
