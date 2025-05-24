@@ -1,7 +1,6 @@
 
-import { Search, Briefcase, Layers, Building } from 'lucide-react';
+import { Search, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +10,6 @@ interface CompanyFiltersProps {
   setSearchQuery: (query: string) => void;
   clientTypeFilter: string;
   setClientTypeFilter: (type: string) => void;
-  viewMode: 'list' | 'card';
-  setViewMode: (mode: 'list' | 'card') => void;
   showSubsidiaries: boolean;
   setShowSubsidiaries: (show: boolean) => void;
 }
@@ -22,8 +19,6 @@ export const CompanyFilters = ({
   setSearchQuery, 
   clientTypeFilter, 
   setClientTypeFilter,
-  viewMode,
-  setViewMode,
   showSubsidiaries,
   setShowSubsidiaries
 }: CompanyFiltersProps) => {
@@ -81,25 +76,6 @@ export const CompanyFilters = ({
               Web
             </Badge>
           </div>
-        </div>
-        
-        <div className="flex rounded-md border">
-          <Button
-            variant="ghost"
-            size="icon"
-            className={viewMode === 'list' ? 'bg-accent' : ''}
-            onClick={() => setViewMode('list')}
-          >
-            <Briefcase className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={viewMode === 'card' ? 'bg-accent' : ''}
-            onClick={() => setViewMode('card')}
-          >
-            <Layers className="h-4 w-4" />
-          </Button>
         </div>
       </div>
     </div>

@@ -17,7 +17,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
   const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   
@@ -76,8 +75,6 @@ const CompaniesPage = () => {
           setSearchQuery={setSearchQuery}
           clientTypeFilter={clientTypeFilter}
           setClientTypeFilter={setClientTypeFilter}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
           showSubsidiaries={showSubsidiaries}
           setShowSubsidiaries={setShowSubsidiaries}
         />
@@ -132,18 +129,13 @@ const CompaniesPage = () => {
               </Button>
             )}
           </div>
-        ) : viewMode === 'list' ? (
+        ) : (
           <div className="w-full">
             <CompanyListView 
               companies={filteredCompanies} 
               onCompanyClick={handleCompanyClick} 
             />
           </div>
-        ) : (
-          <CompanyCardView 
-            companies={filteredCompanies} 
-            onCompanyClick={handleCompanyClick} 
-          />
         )}
       </div>
       
