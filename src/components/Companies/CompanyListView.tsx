@@ -85,7 +85,7 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
     return {
       name: `${advisor.user_metadata?.first_name || ''} ${advisor.user_metadata?.last_name || ''}`.trim() || advisor.email,
       email: advisor.email,
-      // Use initials for avatar fallback since we don't have avatar_url in user_metadata
+      // Use initials for avatar fallback
       initials: getInitials(advisor.user_metadata?.first_name, advisor.user_metadata?.last_name)
     };
   };
@@ -189,7 +189,11 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
                   {advisorDetails ? (
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
-                        <AvatarFallback>
+                        <AvatarImage 
+                          src={users.find(user => user.id === company.advisor_id)?.user_metadata?.avatar_url} 
+                          alt={advisorDetails.name} 
+                        />
+                        <AvatarFallback className="text-xs">
                           {advisorDetails.initials}
                         </AvatarFallback>
                       </Avatar>
