@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -52,7 +51,7 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 25;
+  const itemsPerPage = 12;
   const totalPages = Math.ceil(companies.length / itemsPerPage);
   
   // Get companies for current page
@@ -130,28 +129,6 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
     });
   };
   
-  // Render loading skeleton for table rows
-  const renderSkeletonRows = () => {
-    return Array(5).fill(0).map((_, index) => (
-      <TableRow key={`skeleton-${index}`}>
-        <TableCell>
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-8 w-8 rounded-full" />
-            <div>
-              <Skeleton className="h-4 w-40 mb-2" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          </div>
-        </TableCell>
-        <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-        <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-        <TableCell><Skeleton className="h-6 w-36" /></TableCell>
-        <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
-      </TableRow>
-    ));
-  };
-  
   // Calculate page numbers to display
   const getPagination = () => {
     const pages = [];
@@ -209,7 +186,25 @@ export const CompanyListView = ({ companies, onCompanyClick }: CompanyListViewPr
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              renderSkeletonRows()
+              // Render loading skeleton for table rows
+              Array(5).fill(0).map((_, index) => (
+                <TableRow key={`skeleton-${index}`}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div>
+                        <Skeleton className="h-4 w-40 mb-2" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-36" /></TableCell>
+                  <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                </TableRow>
+              ))
             ) : (
               paginatedCompanies.map((company) => {
                 const advisorDetails = getAdvisorDetails(company.advisor_id);
