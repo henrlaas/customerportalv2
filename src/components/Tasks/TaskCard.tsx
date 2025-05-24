@@ -93,9 +93,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   
   const relatedItemName = getRelatedItemName();
   
-  // Truncate description to 40 characters
-  const truncatedDescription = task.description && task.description.length > 40
-    ? `${task.description.substring(0, 40)}...`
+  // Truncate description to 30 characters (reduced from 40)
+  const truncatedDescription = task.description && task.description.length > 30
+    ? `${task.description.substring(0, 30)}...`
     : task.description;
 
   return (
@@ -116,11 +116,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       {...attributes}
       {...listeners}
     >
-      <CardContent className="p-4">
-        <div className="flex flex-col gap-2">
+      <CardContent className="p-3">
+        <div className="flex flex-col gap-1">
           <div className="flex justify-between items-start">
             <h4 className={cn(
-              "font-medium text-sm",
+              "font-medium text-xs",
               task.status === 'completed' ? "text-green-800" : 
               isOverdue ? "text-red-800" : ""
             )}>
@@ -143,9 +143,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             </p>
           )}
           
-          <div className="flex items-center justify-between mt-1 gap-2">
+          <div className="flex items-center justify-between mt-1 gap-1">
             {/* Due date and Company name next to each other */}
-            <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-1 text-xs">
               {task.due_date && (
                 <div className={cn(
                   "flex items-center gap-1",
@@ -163,7 +163,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               {companyName && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Building className="h-3 w-3" />
-                  <span className="truncate max-w-[120px]">{companyName}</span>
+                  <span className="truncate max-w-[100px]">{companyName}</span>
                 </div>
               )}
             </div>
@@ -173,7 +173,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {relatedItemName && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Link className="h-3 w-3" />
-              <span className="truncate max-w-[180px]">
+              <span className="truncate max-w-[160px]">
                 {task.related_type === 'campaign' ? 'Campaign: ' : 'Project: '}
                 {relatedItemName}
               </span>
@@ -182,7 +182,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
       </CardContent>
       
-      <CardFooter className="p-4 pt-0 flex justify-between items-center">
+      <CardFooter className="p-3 pt-0 flex justify-between items-center">
         {/* Assignees */}
         <UserAvatarGroup 
           users={assignees}
@@ -191,7 +191,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         
         {/* Creator avatar */}
         {creator && (
-          <Avatar className="h-6 w-6" title={`Created by: ${creator.first_name || ''} ${creator.last_name || ''}`}>
+          <Avatar className="h-5 w-5" title={`Created by: ${creator.first_name || ''} ${creator.last_name || ''}`}>
             {creator.avatar_url ? (
               <AvatarImage src={creator.avatar_url} />
             ) : (

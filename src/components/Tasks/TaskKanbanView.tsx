@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -202,7 +203,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   // Loading skeleton for Kanban columns
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Todo column skeleton */}
         <KanbanColumnSkeleton title="Todo" />
         
@@ -223,7 +224,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
       onDragEnd={handleDragEnd}
       collisionDetection={closestCorners}
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Todo column */}
         <TaskStatusColumn 
           id="todo"
@@ -276,7 +277,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
       {/* Add a DragOverlay component to show the task being dragged */}
       <DragOverlay>
         {activeTask ? (
-          <div className="opacity-80 w-full max-w-[300px]">
+          <div className="opacity-80 w-full max-w-[220px]">
             <TaskCard 
               task={activeTask}
               getPriorityBadge={getPriorityBadge}
@@ -298,11 +299,11 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
 // Kanban column skeleton component
 const KanbanColumnSkeleton: React.FC<{ title: string }> = ({ title }) => {
   return (
-    <div className="bg-muted/30 rounded-lg p-4">
-      <div className="flex items-center mb-4">
-        <h3 className="font-medium">{title}</h3>
+    <div className="bg-muted/30 rounded-lg p-3">
+      <div className="flex items-center mb-3">
+        <h3 className="font-medium text-sm">{title}</h3>
         <Badge variant="secondary" className="ml-2">
-          <Skeleton className="h-4 w-6" />
+          <Skeleton className="h-3 w-5" />
         </Badge>
       </div>
       <div className="space-y-2 min-h-[300px]">
@@ -310,17 +311,17 @@ const KanbanColumnSkeleton: React.FC<{ title: string }> = ({ title }) => {
           <Card key={`skeleton-card-${i}`} className="overflow-hidden">
             <CardContent className="p-3">
               <div className="space-y-2">
-                <Skeleton className="h-5 w-full mb-1" />
+                <Skeleton className="h-4 w-full mb-1" />
                 <div className="flex justify-between">
-                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="h-4 w-20" />
                   <div className="flex -space-x-2">
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-6 w-6 rounded-full" />
                   </div>
                 </div>
                 <div className="flex justify-between items-center pt-2">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-3 w-20" />
                 </div>
               </div>
             </CardContent>
