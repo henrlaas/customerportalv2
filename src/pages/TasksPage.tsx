@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -398,8 +397,8 @@ export const TasksPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-6 max-w-6xl">
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-8">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Tasks</h1>
           <p className="text-muted-foreground">Manage and track your tasks</p>
@@ -457,7 +456,7 @@ export const TasksPage = () => {
       </div>
       
       {/* Search and filters */}
-      <div className="mb-6 flex items-center gap-4 flex-wrap">
+      <div className="flex items-center gap-4 flex-wrap">
         <div className="relative flex-1 min-w-[250px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -480,7 +479,7 @@ export const TasksPage = () => {
       
       {/* Filter panel */}
       {showFilters && (
-        <Card className="mb-6 w-full">
+        <Card className="w-full">
           <CardContent className="pt-6">
             <TaskFilters 
               filters={filters}
