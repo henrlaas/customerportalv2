@@ -11,15 +11,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { CompanyFormValues } from './types';
+import { AdvisorSelect } from './AdvisorSelect';
 import React from 'react';
 
 interface CompanyAddressSettingsFormProps {
@@ -115,23 +108,12 @@ export const CompanyAddressSettingsForm = ({
               <FormLabel className="flex items-center gap-2">
                 <User className="h-4 w-4" /> Advisor
               </FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an advisor" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.user_metadata?.first_name} {user.user_metadata?.last_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <AdvisorSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              </FormControl>
               <FormDescription>
                 Employee responsible for this client
               </FormDescription>
@@ -151,6 +133,7 @@ export const CompanyAddressSettingsForm = ({
                   <Input 
                     type="number" 
                     placeholder="1000"
+                    min="0"
                     {...field}
                     onChange={(e) => field.onChange(e.target.valueAsNumber)}
                   />

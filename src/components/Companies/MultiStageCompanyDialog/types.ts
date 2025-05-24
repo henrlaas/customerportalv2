@@ -6,7 +6,7 @@ import type { Company } from '@/types/company';
 export const companyFormSchema = z.object({
   // Stage 1: Basic Info
   name: z.string().min(1, { message: 'Company name is required' }),
-  organization_number: z.string().optional(),
+  organization_number: z.string().min(1, { message: 'Organization number is required' }),
   client_types: z.array(z.string()).min(1, { message: 'At least one client type is required' }),
   
   // Stage 2: Contact Details
@@ -23,7 +23,7 @@ export const companyFormSchema = z.object({
   trial_period: z.boolean().default(false),
   is_partner: z.boolean().default(false),
   advisor_id: z.string().optional(),
-  mrr: z.coerce.number().optional(),
+  mrr: z.coerce.number().min(0, { message: 'MRR cannot be negative' }).optional(),
 });
 
 export type CompanyFormValues = z.infer<typeof companyFormSchema>;

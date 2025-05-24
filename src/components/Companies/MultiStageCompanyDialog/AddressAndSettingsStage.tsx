@@ -3,8 +3,7 @@ import { MapPin, User } from 'lucide-react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { CLIENT_TYPES } from './ClientTypes';
+import { AdvisorSelect } from './AdvisorSelect';
 
 export function AddressAndSettingsStage({ form, users, hasMarketingType }: { form: any; users: any[]; hasMarketingType: boolean }) {
   return (
@@ -78,20 +77,12 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
               <FormLabel className="flex items-center gap-2">
                 <User className="h-4 w-4" /> Advisor
               </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an advisor" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {users.map((user: any) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.user_metadata?.first_name} {user.user_metadata?.last_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <AdvisorSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              </FormControl>
               <FormDescription>
                 Employee responsible for this client
               </FormDescription>
@@ -110,6 +101,7 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
                   <Input
                     type="number"
                     placeholder="1000"
+                    min="0"
                     {...field}
                     onChange={(e) => field.onChange(e.target.valueAsNumber)}
                   />
