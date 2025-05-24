@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import {
   Dialog,
   DialogContent,
@@ -33,7 +35,8 @@ export function EditUserDialog({ isOpen, onClose, user }: EditUserDialogProps) {
     defaultValues: {
       email: '',
       firstName: '',
-      lastName: ''
+      lastName: '',
+      phone: ''
     },
   });
 
@@ -43,7 +46,8 @@ export function EditUserDialog({ isOpen, onClose, user }: EditUserDialogProps) {
       form.reset({
         email: user.email || '',
         firstName: user.user_metadata?.first_name || '',
-        lastName: user.user_metadata?.last_name || ''
+        lastName: user.user_metadata?.last_name || '',
+        phone: user.user_metadata?.phone_number || ''
       });
     }
   }, [user, form]);
@@ -124,6 +128,54 @@ export function EditUserDialog({ isOpen, onClose, user }: EditUserDialogProps) {
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <PhoneInput
+                      country={'no'}
+                      value={field.value}
+                      onChange={field.onChange}
+                      inputStyle={{
+                        width: '100%',
+                        height: '40px',
+                        fontSize: '14px',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px',
+                        paddingLeft: '48px',
+                        backgroundColor: 'hsl(var(--background))',
+                        color: 'hsl(var(--foreground))',
+                      }}
+                      buttonStyle={{
+                        border: '1px solid hsl(var(--border))',
+                        borderRight: 'none',
+                        borderRadius: '6px 0 0 6px',
+                        backgroundColor: 'hsl(var(--background))',
+                      }}
+                      dropdownStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                        zIndex: 50,
+                      }}
+                      searchStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '4px',
+                        color: 'hsl(var(--foreground))',
+                      }}
+                      placeholder="Enter phone number"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <DialogFooter className="pt-4">
               <Button

@@ -2,6 +2,8 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -12,7 +14,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PhoneInput } from '@/components/ui/phone-input';
 import { contactFormSchema, ContactFormValues } from '@/components/Deals/types/deal';
 
 interface ContactFormProps {
@@ -93,7 +94,41 @@ export const ContactForm: React.FC<ContactFormProps> = ({
             <FormItem>
               <FormLabel>Phone</FormLabel>
               <FormControl>
-                <PhoneInput placeholder="Enter phone number" {...field} />
+                <PhoneInput
+                  country={'no'}
+                  value={field.value}
+                  onChange={field.onChange}
+                  inputStyle={{
+                    width: '100%',
+                    height: '40px',
+                    fontSize: '14px',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '6px',
+                    paddingLeft: '48px',
+                    backgroundColor: 'hsl(var(--background))',
+                    color: 'hsl(var(--foreground))',
+                  }}
+                  buttonStyle={{
+                    border: '1px solid hsl(var(--border))',
+                    borderRight: 'none',
+                    borderRadius: '6px 0 0 6px',
+                    backgroundColor: 'hsl(var(--background))',
+                  }}
+                  dropdownStyle={{
+                    backgroundColor: 'hsl(var(--background))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '6px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    zIndex: 50,
+                  }}
+                  searchStyle={{
+                    backgroundColor: 'hsl(var(--background))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '4px',
+                    color: 'hsl(var(--foreground))',
+                  }}
+                  placeholder="Enter phone number"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
