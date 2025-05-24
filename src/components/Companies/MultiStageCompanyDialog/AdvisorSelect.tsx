@@ -18,19 +18,6 @@ interface AdvisorSelectProps {
   onChange: (value: string) => void;
 }
 
-const { data: users = [] } = useQuery({
-  queryKey: ['advisors'],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, avatar_url, role')
-      .in('role', ['admin', 'employee']);
-    
-    if (error) throw error;
-    return data || [];
-  },
-});
-
 const Option = (props: any) => {
   const { data } = props;
   return (
@@ -66,6 +53,19 @@ const SingleValueComponent = (props: any) => {
 };
 
 export function AdvisorSelect({ value, onChange }: AdvisorSelectProps) {
+  const { data: users = [] } = useQuery({
+    queryKey: ['advisors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url, role')
+        .in('role', ['admin', 'employee']);
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const options = users.map(user => ({
     value: user.id,
     label: `${user.first_name} ${user.last_name}`,
