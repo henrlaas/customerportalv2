@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -22,6 +21,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { TaskCard } from '@/components/Tasks/TaskCard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Task {
   id: string;
@@ -62,6 +62,7 @@ interface TaskKanbanViewProps {
   getCompanyName: (companyId: string | null) => string | null;
   getCampaignName: (campaignId: string | null) => string | null;
   getProjectName: (projectId: string | null) => string | null;
+  isLoading?: boolean;
 }
 
 export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
@@ -75,7 +76,8 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   getCreatorInfo,
   getCompanyName,
   getCampaignName,
-  getProjectName
+  getProjectName,
+  isLoading = false
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [localTasks, setLocalTasks] = useState<{
@@ -197,6 +199,22 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
 
   const activeTask = getActiveTask();
 
+  // Loading skeleton for Kanban columns
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Todo column skeleton */}
+        <KanbanColumnSkeleton title="Todo" />
+        
+        {/* In Progress column skeleton */}
+        <KanbanColumnSkeleton title="In Progress" />
+        
+        {/* Completed column skeleton */}
+        <KanbanColumnSkeleton title="Completed" />
+      </div>
+    );
+  }
+
   return (
     <DndContext 
       sensors={sensors}
@@ -274,6 +292,42 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
         ) : null}
       </DragOverlay>
     </DndContext>
+  );
+};
+
+// Kanban column skeleton component
+const KanbanColumnSkeleton: React.FC<{ title: string }> = ({ title }) => {
+  return (
+    <div className="bg-muted/30 rounded-lg p-4">
+      <div className="flex items-center mb-4">
+        <h3 className="font-medium">{title}</h3>
+        <Badge variant="secondary" className="ml-2">
+          <Skeleton className="h-4 w-6" />
+        </Badge>
+      </div>
+      <div className="space-y-2 min-h-[300px]">
+        {Array(3).fill(0).map((_, i) => (
+          <Card key={`skeleton-card-${i}`} className="overflow-hidden">
+            <CardContent className="p-3">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-full mb-1" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-5 w-24" />
+                  <div className="flex -space-x-2">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center pt-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 };
 

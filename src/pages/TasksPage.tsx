@@ -493,22 +493,7 @@ export const TasksPage = () => {
       )}
       
       {/* Tasks content based on view mode */}
-      {isLoadingTasks ? (
-        <CenteredSpinner />
-      ) : tasks.length === 0 ? (
-        <div className="text-center p-12 border rounded-lg bg-muted/50">
-          <h3 className="text-lg font-medium mb-2">No tasks found</h3>
-          <p className="text-muted-foreground mb-4">
-            {filters.showOnlyMyTasks 
-              ? "You don't have any assigned tasks"
-              : "No tasks match your filters"}
-          </p>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Task
-          </Button>
-        </div>
-      ) : viewMode === 'list' ? (
+      {viewMode === 'list' ? (
         <TaskListView 
           tasks={tasks}
           getStatusBadge={getStatusBadge}
@@ -518,6 +503,7 @@ export const TasksPage = () => {
           getProjectName={getProjectName}
           profiles={profiles}
           onTaskClick={handleTaskClick}
+          isLoading={isLoadingTasks}
         />
       ) : (
         <TaskKanbanView 
@@ -532,6 +518,7 @@ export const TasksPage = () => {
           getCompanyName={getCompanyName}
           getCampaignName={getCampaignName}
           getProjectName={getProjectName}
+          isLoading={isLoadingTasks}
         />
       )}
       
