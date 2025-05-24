@@ -289,7 +289,7 @@ export const CompanyListView = ({ companies, onCompanyClick, onCompanyDeleted }:
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
                             <AvatarImage 
-                              src={advisorDetails.avatar_url} 
+                              src={advisorDetails.avatar_url || undefined} 
                               alt={advisorDetails.name} 
                             />
                             <AvatarFallback className="text-xs">
