@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -104,7 +103,7 @@ const TimeTrackingPage = () => {
   });
   
   // Fetch tasks for the dropdown
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [], isLoading: isLoadingTasks } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -126,7 +125,7 @@ const TimeTrackingPage = () => {
   });
 
   // Fetch companies for the dropdown
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -148,7 +147,7 @@ const TimeTrackingPage = () => {
   });
 
   // Fetch campaigns for the dropdown
-  const { data: campaigns = [] } = useQuery({
+  const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ['campaigns'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -170,7 +169,7 @@ const TimeTrackingPage = () => {
   });
   
   // Fetch projects for the dropdown
-  const { data: projects = [] } = useQuery({
+  const { data: projects = [], isLoading: isLoadingProjects } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -237,6 +236,9 @@ const TimeTrackingPage = () => {
     return () => clearInterval(interval);
   }, [isTracking, activeEntry]);
   
+  // Calculate combined loading state
+  const isLoadingData = isLoading || isLoadingTasks || isLoadingCompanies || isLoadingCampaigns || isLoadingProjects;
+  
   // Filter entries by search query
   const filteredEntries = timeEntries.filter(entry => 
     entry.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -269,7 +271,7 @@ const TimeTrackingPage = () => {
           
           <TimeEntryList
             timeEntries={filteredEntries}
-            isLoading={isLoading}
+            isLoading={isLoadingData}
             tasks={tasks}
             companies={companies}
             campaigns={campaigns}
@@ -289,6 +291,7 @@ const TimeTrackingPage = () => {
           companies={companies}
           campaigns={campaigns}
           projects={projects}
+          isLoading={isLoadingData}
         />
       )}
       

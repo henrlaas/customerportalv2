@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TimeEntry, Task, Campaign, Project } from '@/types/timeTracking';
 import { Company } from '@/types/company';
 import { TimeEntryCard } from './TimeEntryCard';
+import { CalendarViewSkeleton } from './CalendarViewSkeleton';
 
 type CalendarViewProps = {
   timeEntries: TimeEntry[];
@@ -17,6 +18,7 @@ type CalendarViewProps = {
   companies: Company[];
   campaigns: Campaign[];
   projects: Project[];
+  isLoading?: boolean;
 };
 
 export const CalendarView = ({ 
@@ -26,7 +28,8 @@ export const CalendarView = ({
   tasks,
   companies,
   campaigns,
-  projects
+  projects,
+  isLoading = false
 }: CalendarViewProps) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -38,6 +41,10 @@ export const CalendarView = ({
   const handleNextMonth = () => {
     setCurrentMonth(prev => addMonths(prev, 1));
   };
+
+  if (isLoading) {
+    return <CalendarViewSkeleton />;
+  }
 
   // Get entries for selected date
   const selectedDateEntries = selectedDate 

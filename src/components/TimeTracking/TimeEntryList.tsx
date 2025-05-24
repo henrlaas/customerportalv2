@@ -2,6 +2,7 @@
 import { useMemo } from 'react';
 import { format, startOfWeek, parseISO, isThisWeek, differenceInWeeks } from 'date-fns';
 import { TimeEntryCard } from './TimeEntryCard';
+import { TimeEntryListSkeleton } from './TimeEntryListSkeleton';
 import { TimeEntry, Task, Campaign, Project } from '@/types/timeTracking';
 import { Company } from '@/types/company';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -60,11 +61,7 @@ export const TimeEntryList = ({
   }, [timeEntries]);
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center p-8">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
-    );
+    return <TimeEntryListSkeleton />;
   }
 
   if (timeEntries.length === 0) {
@@ -108,7 +105,6 @@ export const TimeEntryList = ({
                   projects={projects}
                   onEdit={onEdit} 
                   onDelete={onDelete}
-                  className="animate-in fade-in-0 zoom-in-95 duration-300" // Added animation class
                 />
               ))}
             </CardContent>
