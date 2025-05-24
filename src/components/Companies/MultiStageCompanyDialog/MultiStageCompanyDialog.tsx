@@ -21,10 +21,12 @@ import {
 } from '@/components/ui/dialog';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './types';
+import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps, CreationMethod, BrregCompany } from './types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
 // Newly added componentized stages and constants
+import { CreationMethodStage } from './CreationMethodStage';
+import { BrunnøysundSearchStage } from './BrunnøysundSearchStage';
 import { BasicInfoStage } from './BasicInfoStage';
 import { ContactDetailsStage } from './ContactDetailsStage';
 import { AddressAndSettingsStage } from './AddressAndSettingsStage';
@@ -37,13 +39,15 @@ export function MultiStageCompanyDialog({
   defaultValues,
   dealId,
 }: MultiStageCompanyDialogProps) {
-  const [stage, setStage] = useState(1);
+  const [stage, setStage] = useState(0); // Start at 0 for method selection
   const [logo, setLogo] = useState<string | null>(null);
+  const [creationMethod, setCreationMethod] = useState<CreationMethod | null>(null);
+  const [selectedBrregCompany, setSelectedBrregCompany] = useState<BrregCompany | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const totalStages = 3;
+  const totalStages = 4; // Method selection + 3 original stages
 
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
@@ -62,7 +66,7 @@ export function MultiStageCompanyDialog({
       street_address: '',
       city: '',
       postal_code: '',
-      country: 'Norge',
+      country: '',
       parent_id: parentId || '',
       trial_period: false,
       is_partner: false,
@@ -92,6 +96,22 @@ export function MultiStageCompanyDialog({
     }
   }, [website]);
 
+  // Prefill form when Brunnøysund company is selected
+  useEffect(() => {
+    if (selectedBrregCompany) {
+      const address = selectedBrregCompany.forretningsadresse;
+      form.setValue('name', selectedBrregCompany.navn);
+      form.setValue('organization_number', selectedBrregCompany.organisasjonsnummer);
+      
+      if (address) {
+        if (address.land) form.setValue('country', address.land);
+        if (address.postnummer) form.setValue('postal_code', address.postnummer);
+        if (address.poststed) form.setValue('city', address.poststed);
+        if (address.adresse) form.setValue('street_address', address.adresse.join(', '));
+      }
+    }
+  }, [selectedBrregCompany, form]);
+
   const createCompanyMutation = useMutation({
     mutationFn: async (values: CompanyFormValues) => {
       const companyData = {
@@ -101,7 +121,7 @@ export function MultiStageCompanyDialog({
         client_types: values.client_types,
         mrr: hasMarketingType ? values.mrr : null,
         name: values.name,
-        country: 'Norge',
+        country: values.country || 'Norge',
       };
       if (dealId) {
         return await companyService.convertTempCompany(companyData, dealId);
@@ -123,7 +143,9 @@ export function MultiStageCompanyDialog({
         queryClient.invalidateQueries({ queryKey: ['companies'] });
       }
       form.reset();
-      setStage(1);
+      setStage(0);
+      setCreationMethod(null);
+      setSelectedBrregCompany(null);
       setLogo(null);
       onClose();
     },
@@ -137,7 +159,7 @@ export function MultiStageCompanyDialog({
   });
 
   const onSubmit = (values: CompanyFormValues) => {
-    if (stage < totalStages) {
+    if (stage < totalStages - 1) {
       setStage(stage + 1);
     } else {
       createCompanyMutation.mutate(values);
@@ -145,9 +167,50 @@ export function MultiStageCompanyDialog({
   };
 
   const goBack = () => {
-    if (stage > 1) {
+    if (stage > 0) {
       setStage(stage - 1);
     }
+  };
+
+  const handleMethodSelect = (method: CreationMethod) => {
+    setCreationMethod(method);
+    if (method === 'manual') {
+      setStage(2); // Skip search stage, go directly to basic info
+    } else {
+      setStage(1); // Go to search stage
+    }
+  };
+
+  const handleBrregCompanySelect = (company: BrregCompany) => {
+    setSelectedBrregCompany(company);
+    setStage(2); // Go to basic info stage
+  };
+
+  const getStageTitle = () => {
+    if (stage === 0) return 'Creation Method';
+    if (stage === 1) return 'Search Company Registry';
+    if (stage === 2) return 'Basic Information';
+    if (stage === 3) return 'Contact Details';
+    return 'Address & Settings';
+  };
+
+  const renderStageContent = () => {
+    if (stage === 0) {
+      return <CreationMethodStage onSelect={handleMethodSelect} />;
+    }
+    if (stage === 1) {
+      return <BrunnøysundSearchStage onCompanySelect={handleBrregCompanySelect} />;
+    }
+    if (stage === 2) {
+      return <BasicInfoStage form={form} logo={logo} />;
+    }
+    if (stage === 3) {
+      return <ContactDetailsStage form={form} />;
+    }
+    if (stage === 4) {
+      return <AddressAndSettingsStage form={form} users={users} hasMarketingType={hasMarketingType} />;
+    }
+    return null;
   };
 
   return (
@@ -156,60 +219,58 @@ export function MultiStageCompanyDialog({
         <DialogHeader>
           <DialogTitle>{parentId ? 'Add Subsidiary' : 'New Company'}</DialogTitle>
           <DialogDescription>
-            Step {stage} of {totalStages}: {
-              stage === 1 ? 'Basic Information' :
-              stage === 2 ? 'Contact Details' :
-              'Address & Settings'
-            }
+            {getStageTitle()}
           </DialogDescription>
         </DialogHeader>
 
-        <ProgressStepper currentStep={stage} totalSteps={totalStages} />
+        {stage > 0 && <ProgressStepper currentStep={stage} totalSteps={totalStages} />}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {stage === 1 && <BasicInfoStage form={form} logo={logo} />}
-            {stage === 2 && <ContactDetailsStage form={form} />}
-            {stage === 3 && <AddressAndSettingsStage form={form} users={users} hasMarketingType={hasMarketingType} />}
+            {renderStageContent()}
 
-            <DialogFooter className="flex justify-between pt-4 sm:justify-between">
-              <div>
-                {stage > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={goBack}
-                    className="flex items-center gap-1"
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Back
-                  </Button>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className={cn(
-                    "flex items-center gap-1 bg-black hover:bg-black/90",
-                    stage === totalStages ? "" : "bg-black hover:bg-black/90"
+            {stage > 0 && (
+              <DialogFooter className="flex justify-between pt-4 sm:justify-between">
+                <div>
+                  {stage > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={goBack}
+                      className="flex items-center gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" /> Back
+                    </Button>
                   )}
-                  disabled={createCompanyMutation.isPending}
-                >
-                  {createCompanyMutation.isPending
-                    ? 'Creating...'
-                    : stage === totalStages
-                      ? 'Create Company'
-                      : (
-                        <>
-                          Next <ChevronRight className="h-4 w-4" />
-                        </>
-                      )
-                  }
-                </Button>
-              </div>
-            </DialogFooter>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={onClose}>
+                    Cancel
+                  </Button>
+                  {stage >= 2 && (
+                    <Button
+                      type="submit"
+                      className={cn(
+                        "flex items-center gap-1 bg-black hover:bg-black/90",
+                        stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
+                      )}
+                      disabled={createCompanyMutation.isPending}
+                    >
+                      {createCompanyMutation.isPending
+                        ? 'Creating...'
+                        : stage === totalStages - 1
+                          ? 'Create Company'
+                          : (
+                            <>
+                              Next <ChevronRight className="h-4 w-4" />
+                            </>
+                          )
+                      }
+                    </Button>
+                  )}
+                </div>
+              </DialogFooter>
+            )}
           </form>
         </Form>
       </DialogContent>

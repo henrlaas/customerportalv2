@@ -36,3 +36,23 @@ export interface MultiStageCompanyDialogProps {
   defaultValues?: Partial<CompanyFormValues>;
   dealId?: string;
 }
+
+// Brunnøysund API types
+export interface BrregCompany {
+  organisasjonsnummer: string;
+  navn: string;
+  forretningsadresse?: {
+    land?: string;
+    postnummer?: string;
+    poststed?: string;
+    adresse?: string[];
+  };
+}
+
+export interface BrregResponse {
+  _embedded?: {
+    enheter: BrregCompany[];
+  };
+}
+
+export type CreationMethod = 'manual' | 'brunnøysund';

@@ -56,13 +56,11 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
           <FormField
             control={form.control}
             name="country"
-            render={() => (
+            render={({ field }: any) => (
               <FormItem>
                 <FormLabel>Country</FormLabel>
                 <FormControl>
-                  <div className="flex items-center gap-2 h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
-                    🇳🇴 Norge
-                  </div>
+                  <Input placeholder="Norge" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
