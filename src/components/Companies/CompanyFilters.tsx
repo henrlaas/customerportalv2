@@ -2,17 +2,9 @@
 import { Search, Briefcase, Layers, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { 
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface CompanyFiltersProps {
   searchQuery: string;
@@ -49,7 +41,8 @@ export const CompanyFilters = ({
           />
         </div>
       </div>
-      <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-center">
+      
+      <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
         <div className="flex items-center gap-2 mr-2">
           <Switch
             id="show-subsidiaries"
@@ -62,22 +55,27 @@ export const CompanyFilters = ({
           </Label>
         </div>
         
-        <Select
-          value={clientTypeFilter}
-          onValueChange={setClientTypeFilter}
-        >
-          <SelectTrigger className="w-full md:w-[180px]">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Client Type</SelectLabel>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="Marketing">Marketing</SelectItem>
-              <SelectItem value="Web">Web</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        {/* Client Type Filter with Toggle Group */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700">Type:</span>
+          <ToggleGroup 
+            type="single" 
+            value={clientTypeFilter} 
+            onValueChange={(value) => setClientTypeFilter(value || 'all')}
+            className="border rounded-md"
+          >
+            <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm">
+              All
+            </ToggleGroupItem>
+            <ToggleGroupItem value="Marketing" className="px-3 py-1.5 text-sm">
+              Marketing
+            </ToggleGroupItem>
+            <ToggleGroupItem value="Web" className="px-3 py-1.5 text-sm">
+              Web
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+        
         <div className="flex rounded-md border">
           <Button
             variant="ghost"
