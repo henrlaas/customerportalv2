@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog/MultiStageCompanyDialog';
 import { CompanyFilters } from '@/components/Companies/CompanyFilters';
 import { CompanyListView } from '@/components/Companies/CompanyListView';
-import { CompanyCardView } from '@/components/Companies/CompanyCardView';
 import { Company } from '@/types/company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
@@ -59,17 +57,17 @@ const CompaniesPage = () => {
     }
   };
 
-  // Handle company creation success
-  const handleCompanyCreated = () => {
-    setIsCreating(false);
+  // Handle company deletion success
+  const handleCompanyDeleted = () => {
     // Invalidate queries to refresh the list
     queryClient.invalidateQueries({ queryKey: ['companyList'] });
     queryClient.invalidateQueries({ queryKey: ['companies'] });
   };
 
-  // Handle company deletion success
-  const handleCompanyDeleted = () => {
-    // Invalidate queries to refresh the list
+  // Handle dialog close
+  const handleDialogClose = () => {
+    setIsCreating(false);
+    // Invalidate queries to refresh the list when dialog closes
     queryClient.invalidateQueries({ queryKey: ['companyList'] });
     queryClient.invalidateQueries({ queryKey: ['companies'] });
   };
@@ -161,8 +159,7 @@ const CompaniesPage = () => {
       {/* Multi-Stage Company Creation Dialog */}
       <MultiStageCompanyDialog
         isOpen={isCreating}
-        onClose={() => setIsCreating(false)}
-        onSuccess={handleCompanyCreated}
+        onClose={handleDialogClose}
       />
     </div>
   );
