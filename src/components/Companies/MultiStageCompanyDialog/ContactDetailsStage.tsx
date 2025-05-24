@@ -1,5 +1,7 @@
 
 import { Globe, Phone, Mail } from 'lucide-react';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
@@ -33,7 +35,41 @@ export function ContactDetailsStage({ form }: { form: any }) {
               <Phone className="h-4 w-4" /> Phone Number
             </FormLabel>
             <FormControl>
-              <Input placeholder="+1 (555) 123-4567" {...field} />
+              <PhoneInput
+                country={'no'}
+                value={field.value}
+                onChange={field.onChange}
+                inputStyle={{
+                  width: '100%',
+                  height: '40px',
+                  fontSize: '14px',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '6px',
+                  paddingLeft: '48px',
+                  backgroundColor: 'hsl(var(--background))',
+                  color: 'hsl(var(--foreground))',
+                }}
+                buttonStyle={{
+                  border: '1px solid hsl(var(--border))',
+                  borderRight: 'none',
+                  borderRadius: '6px 0 0 6px',
+                  backgroundColor: 'hsl(var(--background))',
+                }}
+                dropdownStyle={{
+                  backgroundColor: 'hsl(var(--background))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                  zIndex: 50,
+                }}
+                searchStyle={{
+                  backgroundColor: 'hsl(var(--background))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '4px',
+                  color: 'hsl(var(--foreground))',
+                }}
+                placeholder="Enter phone number"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
