@@ -1,162 +1,177 @@
-
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Building, Plus } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
-import { CompanyFilters } from '@/components/Companies/CompanyFilters';
-import { CompanyListView } from '@/components/Companies/CompanyListView';
+import { useQuery } from '@tanstack/react-query';
+import { companyService } from '@/services/companyService';
 import { CompanyCardView } from '@/components/Companies/CompanyCardView';
-import { Company } from '@/types/company';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
-import { useCompanyList } from '@/hooks/useCompanyList';
+import { CompanyListView } from '@/components/Companies/CompanyListView';
+import { CompanyFilters } from '@/components/Companies/CompanyFilters';
+import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Building2, Users, TrendingUp, LayoutGrid, List } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { Company } from '@/types/company';
 
-const CompaniesPage = () => {
-  const [isCreating, setIsCreating] = useState(false);
+type ViewMode = 'grid' | 'list';
+
+export default function CompaniesPage() {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
-  const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
-  const [showSubsidiaries, setShowSubsidiaries] = useState(false);
-  
-  const { isAdmin, isEmployee } = useAuth();
-  const navigate = useNavigate();
-  
-  // Use the proper hook for fetching companies with subsidiary filtering
-  const { companies, isLoading } = useCompanyList(showSubsidiaries);
-  
-  // Filter companies by search query and type
-  const filteredCompanies = companies.filter(company => {
-    const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (company.address && company.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (company.country && company.country.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    // Handle client type filtering using the boolean fields directly
-    const matchesType = 
-      clientTypeFilter === 'all' || 
-      (clientTypeFilter === 'Marketing' && company.is_marketing_client) ||
-      (clientTypeFilter === 'Web' && company.is_web_client);
-    
-    return matchesSearch && matchesType;
+  const [selectedClientTypes, setSelectedClientTypes] = useState<string[]>([]);
+  const [selectedAdvisor, setSelectedAdvisor] = useState<string>('');
+  const { t } = useTranslation();
+
+  const { data: companies = [], isLoading, error } = useQuery({
+    queryKey: ['companies'],
+    queryFn: companyService.fetchCompanies,
   });
-  
-  // Check if user can modify companies (admin or employee)
-  const canModify = isAdmin || isEmployee;
-  
-  // Handle company click - navigate to details page or parent company if it's a subsidiary
-  const handleCompanyClick = async (company: Company) => {
-    if (company.parent_id) {
-      // If it's a subsidiary, navigate to the parent company
-      navigate(`/companies/${company.parent_id}`);
-    } else {
-      // Otherwise navigate to the company details
-      navigate(`/companies/${company.id}`);
-    }
-  };
-  
+
+  const filteredCompanies = companies.filter((company: Company) => {
+    const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesClientTypes = selectedClientTypes.length === 0 || 
+      selectedClientTypes.some(type => 
+        (type === 'Marketing' && company.is_marketing_client) ||
+        (type === 'Web' && company.is_web_client)
+      );
+    const matchesAdvisor = !selectedAdvisor || company.advisor_id === selectedAdvisor;
+    
+    return matchesSearch && matchesClientTypes && matchesAdvisor;
+  });
+
+  const totalCompanies = companies.length;
+  const marketingClients = companies.filter((c: Company) => c.is_marketing_client).length;
+  const webClients = companies.filter((c: Company) => c.is_web_client).length;
+  const totalMrr = companies.reduce((sum: number, company: Company) => {
+    return sum + (company.mrr || 0);
+  }, 0);
+
+  if (isLoading) {
+    return <div className="p-6">Loading companies...</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-red-600">Error loading companies: {error.message}</div>;
+  }
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Companies</h1>
-        {canModify && (
-          <Button onClick={() => setIsCreating(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Company
-          </Button>
-        )}
-      </div>
-      
-      {/* Search and filters */}
-      <div className="bg-background p-4 rounded-lg">
-        <CompanyFilters 
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          clientTypeFilter={clientTypeFilter}
-          setClientTypeFilter={setClientTypeFilter}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          showSubsidiaries={showSubsidiaries}
-          setShowSubsidiaries={setShowSubsidiaries}
-        />
+    <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{t('companies.title')}</h1>
+          <p className="text-muted-foreground">{t('companies.subtitle')}</p>
+        </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-black hover:bg-black/90">
+          <Plus className="mr-2 h-4 w-4" />
+          {t('companies.newCompany')}
+        </Button>
       </div>
 
-      {/* Companies list */}
-      <div className="w-full">
-        {isLoading ? (
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[250px]">Company</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Website</TableHead>
-                  <TableHead>Partner</TableHead>
-                  <TableHead>Advisor</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array(5).fill(0).map((_, index) => (
-                  <TableRow key={`skeleton-${index}`}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="h-8 w-8 rounded-full" />
-                        <div>
-                          <Skeleton className="h-4 w-40 mb-2" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-36" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : filteredCompanies.length === 0 ? (
-          <div className="text-center p-8 bg-muted/10 rounded-lg">
-            <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-600 mb-2">No companies found</p>
-            <p className="text-gray-500 mb-4">Try adjusting your search or filters</p>
-            {canModify && (
-              <Button variant="outline" onClick={() => setIsCreating(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Company
-              </Button>
-            )}
-          </div>
-        ) : viewMode === 'list' ? (
-          <div className="w-full">
-            <CompanyListView 
-              companies={filteredCompanies} 
-              onCompanyClick={handleCompanyClick} 
-            />
-          </div>
-        ) : (
-          <CompanyCardView 
-            companies={filteredCompanies} 
-            onCompanyClick={handleCompanyClick} 
-          />
-        )}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('companies.totalCompanies')}</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalCompanies}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('companies.marketingClients')}</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{marketingClients}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('companies.webClients')}</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{webClients}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('companies.totalMrr')}</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalMrr.toLocaleString()} kr</div>
+          </CardContent>
+        </Card>
       </div>
-      
-      {/* Multi-Stage Company Creation Dialog */}
+
+      {/* Filters and View Toggle */}
+      <div className="flex items-center justify-between">
+        <CompanyFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedClientTypes={selectedClientTypes}
+          onClientTypesChange={setSelectedClientTypes}
+          selectedAdvisor={selectedAdvisor}
+          onAdvisorChange={setSelectedAdvisor}
+        />
+        <div className="flex items-center gap-2">
+          <Button
+            variant={viewMode === 'grid' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Company Content */}
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList>
+          <TabsTrigger value="all">{t('companies.tabs.all')}</TabsTrigger>
+          <TabsTrigger value="marketing">{t('companies.tabs.marketing')}</TabsTrigger>
+          <TabsTrigger value="web">{t('companies.tabs.web')}</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="all" className="space-y-4">
+          {viewMode === 'grid' ? (
+            <CompanyCardView companies={filteredCompanies} />
+          ) : (
+            <CompanyListView companies={filteredCompanies} />
+          )}
+        </TabsContent>
+        
+        <TabsContent value="marketing" className="space-y-4">
+          {viewMode === 'grid' ? (
+            <CompanyCardView companies={filteredCompanies.filter(c => c.is_marketing_client)} />
+          ) : (
+            <CompanyListView companies={filteredCompanies.filter(c => c.is_marketing_client)} />
+          )}
+        </TabsContent>
+        
+        <TabsContent value="web" className="space-y-4">
+          {viewMode === 'grid' ? (
+            <CompanyCardView companies={filteredCompanies.filter(c => c.is_web_client)} />
+          ) : (
+            <CompanyListView companies={filteredCompanies.filter(c => c.is_web_client)} />
+          )}
+        </TabsContent>
+      </Tabs>
+
       <MultiStageCompanyDialog
-        isOpen={isCreating}
-        onClose={() => setIsCreating(false)}
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
       />
     </div>
   );
-};
-
-export default CompaniesPage;
-
-// Add missing imports
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+}
