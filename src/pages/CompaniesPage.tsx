@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { Building, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +24,7 @@ const CompaniesPage = () => {
   
   const { isAdmin, isEmployee } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   // Use the proper hook for fetching companies with subsidiary filtering
   const { companies, isLoading } = useCompanyList(showSubsidiaries);
@@ -54,6 +57,21 @@ const CompaniesPage = () => {
       // Otherwise navigate to the company details
       navigate(`/companies/${company.id}`);
     }
+  };
+
+  // Handle company creation success
+  const handleCompanyCreated = () => {
+    setIsCreating(false);
+    // Invalidate queries to refresh the list
+    queryClient.invalidateQueries({ queryKey: ['companyList'] });
+    queryClient.invalidateQueries({ queryKey: ['companies'] });
+  };
+
+  // Handle company deletion success
+  const handleCompanyDeleted = () => {
+    // Invalidate queries to refresh the list
+    queryClient.invalidateQueries({ queryKey: ['companyList'] });
+    queryClient.invalidateQueries({ queryKey: ['companies'] });
   };
   
   return (
@@ -133,7 +151,8 @@ const CompaniesPage = () => {
           <div className="w-full">
             <CompanyListView 
               companies={filteredCompanies} 
-              onCompanyClick={handleCompanyClick} 
+              onCompanyClick={handleCompanyClick}
+              onCompanyDeleted={handleCompanyDeleted}
             />
           </div>
         )}
@@ -143,6 +162,7 @@ const CompaniesPage = () => {
       <MultiStageCompanyDialog
         isOpen={isCreating}
         onClose={() => setIsCreating(false)}
+        onSuccess={handleCompanyCreated}
       />
     </div>
   );
