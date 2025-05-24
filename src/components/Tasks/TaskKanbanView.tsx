@@ -202,7 +202,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   // Loading skeleton for Kanban columns
   if (isLoading) {
     return (
-      <div className="container mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Todo column skeleton */}
         <KanbanColumnSkeleton title="Todo" />
         
@@ -223,7 +223,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
       onDragEnd={handleDragEnd}
       collisionDetection={closestCorners}
     >
-      <div className="container mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Todo column */}
         <TaskStatusColumn 
           id="todo"
@@ -276,7 +276,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
       {/* Add a DragOverlay component to show the task being dragged */}
       <DragOverlay>
         {activeTask ? (
-          <div className="opacity-80 w-full max-w-[240px]">
+          <div className="opacity-80 w-full max-w-[300px]">
             <TaskCard 
               task={activeTask}
               getPriorityBadge={getPriorityBadge}
@@ -298,7 +298,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
 // Kanban column skeleton component
 const KanbanColumnSkeleton: React.FC<{ title: string }> = ({ title }) => {
   return (
-    <div className="bg-muted/30 rounded-lg p-3">
+    <div className="bg-muted/30 rounded-lg p-4">
       <div className="flex items-center mb-4">
         <h3 className="font-medium">{title}</h3>
         <Badge variant="secondary" className="ml-2">
@@ -308,19 +308,19 @@ const KanbanColumnSkeleton: React.FC<{ title: string }> = ({ title }) => {
       <div className="space-y-2 min-h-[300px]">
         {Array(3).fill(0).map((_, i) => (
           <Card key={`skeleton-card-${i}`} className="overflow-hidden">
-            <CardContent className="p-2">
+            <CardContent className="p-3">
               <div className="space-y-2">
                 <Skeleton className="h-5 w-full mb-1" />
                 <div className="flex justify-between">
-                  <Skeleton className="h-5 w-20" />
+                  <Skeleton className="h-5 w-24" />
                   <div className="flex -space-x-2">
-                    <Skeleton className="h-7 w-7 rounded-full" />
-                    <Skeleton className="h-7 w-7 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
                   </div>
                 </div>
-                <div className="flex justify-between items-center pt-1">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-16" />
+                <div className="flex justify-between items-center pt-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-24" />
                 </div>
               </div>
             </CardContent>
@@ -364,8 +364,8 @@ const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
   const { setNodeRef } = useDroppable({ id });
 
   return (
-    <div id={id} className="bg-muted/30 rounded-lg p-3">
-      <div className="flex items-center mb-3">
+    <div id={id} className="bg-muted/30 rounded-lg p-4">
+      <div className="flex items-center mb-4">
         <h3 className="font-medium">{title}</h3>
         {getCountBadge(tasks.length)}
       </div>
@@ -393,7 +393,7 @@ const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
               />
             ))}
             {tasks.length === 0 && (
-              <div className="bg-background p-3 rounded-md border border-dashed border-border text-center text-muted-foreground text-sm">
+              <div className="bg-background p-4 rounded-md border border-dashed border-border text-center text-muted-foreground">
                 No tasks
               </div>
             )}

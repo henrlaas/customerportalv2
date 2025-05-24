@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -92,9 +93,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   
   const relatedItemName = getRelatedItemName();
   
-  // Truncate description to 30 characters (reduced from 40)
-  const truncatedDescription = task.description && task.description.length > 30
-    ? `${task.description.substring(0, 30)}...`
+  // Truncate description to 40 characters
+  const truncatedDescription = task.description && task.description.length > 40
+    ? `${task.description.substring(0, 40)}...`
     : task.description;
 
   return (
@@ -115,17 +116,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       {...attributes}
       {...listeners}
     >
-      <CardContent className="p-2">
-        <div className="flex flex-col gap-1">
+      <CardContent className="p-4">
+        <div className="flex flex-col gap-2">
           <div className="flex justify-between items-start">
             <h4 className={cn(
-              "font-medium text-xs",
+              "font-medium text-sm",
               task.status === 'completed' ? "text-green-800" : 
               isOverdue ? "text-red-800" : ""
             )}>
               {task.title}
             </h4>
-            <div className="flex items-center gap-1 ml-1">
+            <div className="flex items-center gap-1">
               {/* Client visibility indicator */}
               {task.client_visible ? (
                 <Eye className="h-3 w-3 text-blue-500" />
@@ -137,41 +138,42 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </div>
           
           {truncatedDescription && (
-            <p className="text-xs text-muted-foreground line-clamp-1">
+            <p className="text-xs text-muted-foreground line-clamp-2">
               {truncatedDescription}
             </p>
           )}
           
-          <div className="flex items-center justify-between mt-1 gap-1">
-            {/* Due date */}
-            {task.due_date && (
-              <div className={cn(
-                "flex items-center gap-1 text-xs",
-                isOverdue ? "text-red-700" : "text-muted-foreground"
-              )}>
-                {isOverdue ? (
-                  <AlertCircle className="h-3 w-3" />
-                ) : (
-                  <Calendar className="h-3 w-3" />
-                )}
-                <span>{new Date(task.due_date).toLocaleDateString()}</span>
-              </div>
-            )}
-          </div>
-          
-          {/* Company name */}
-          {companyName && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Building className="h-3 w-3" />
-              <span className="truncate max-w-[100px]">{companyName}</span>
+          <div className="flex items-center justify-between mt-1 gap-2">
+            {/* Due date and Company name next to each other */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {task.due_date && (
+                <div className={cn(
+                  "flex items-center gap-1",
+                  isOverdue ? "text-red-700" : "text-muted-foreground"
+                )}>
+                  {isOverdue ? (
+                    <AlertCircle className="h-3 w-3" />
+                  ) : (
+                    <Calendar className="h-3 w-3" />
+                  )}
+                  <span>{new Date(task.due_date).toLocaleDateString()}</span>
+                </div>
+              )}
+              
+              {companyName && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Building className="h-3 w-3" />
+                  <span className="truncate max-w-[120px]">{companyName}</span>
+                </div>
+              )}
             </div>
-          )}
+          </div>
           
           {/* Related item (campaign or project) */}
           {relatedItemName && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Link className="h-3 w-3" />
-              <span className="truncate max-w-[100px]">
+              <span className="truncate max-w-[180px]">
                 {task.related_type === 'campaign' ? 'Campaign: ' : 'Project: '}
                 {relatedItemName}
               </span>
@@ -180,20 +182,20 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
       </CardContent>
       
-      <CardFooter className="p-2 pt-0 flex justify-between items-center">
+      <CardFooter className="p-4 pt-0 flex justify-between items-center">
         {/* Assignees */}
         <UserAvatarGroup 
           users={assignees}
-          size="xs"
+          size="sm"
         />
         
         {/* Creator avatar */}
         {creator && (
-          <Avatar className="h-5 w-5" title={`Created by: ${creator.first_name || ''} ${creator.last_name || ''}`}>
+          <Avatar className="h-6 w-6" title={`Created by: ${creator.first_name || ''} ${creator.last_name || ''}`}>
             {creator.avatar_url ? (
               <AvatarImage src={creator.avatar_url} />
             ) : (
-              <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+              <AvatarFallback className="text-xs bg-primary/10 text-primary">
                 {getInitials(creator)}
               </AvatarFallback>
             )}
