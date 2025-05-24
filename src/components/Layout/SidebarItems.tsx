@@ -83,16 +83,7 @@ export function getSidebarItems() {
       disabled: false,
       tooltip: null
     },
-    {
-      title: t('Companies'),
-      href: '/companies',
-      icon: Users,
-      roles: ['admin', 'employee'],
-      category: 'MENU',
-      hasDropdown: false,
-      disabled: false,
-      tooltip: null
-    },
+    // Removed duplicate Companies entry here
     {
       title: t('Contracts'),
       href: isClient ? '/client/contracts' : '/contracts',
