@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
+import Select from 'react-select';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,14 +15,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 
 const formSchema = z.object({
@@ -40,7 +32,6 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   onBack,
   defaultValue,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -50,14 +41,13 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     },
   });
 
-  // Fetch companies with search and subsidiaries filter
+  // Fetch companies with subsidiaries filter
   const { data: companies = [], isLoading } = useQuery({
-    queryKey: ['companies', searchQuery, showSubsidiaries],
+    queryKey: ['companies', showSubsidiaries],
     queryFn: async () => {
       let query = supabase
         .from('companies')
         .select('id, name, parent_id')
-        .ilike('name', `%${searchQuery}%`)
         .order('name');
 
       // Only show top-level companies when not showing subsidiaries
@@ -76,6 +66,12 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     },
   });
 
+  // Format companies for react-select
+  const companyOptions = companies.map((company: any) => ({
+    value: company.id,
+    label: company.parent_id ? `↳ ${company.name}` : company.name
+  }));
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     onNext(values.company_id);
   };
@@ -84,17 +80,6 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex flex-col gap-4">
-          {/* Search input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search companies..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-
           {/* Show subsidiaries toggle */}
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="space-y-0.5">
@@ -106,31 +91,82 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
             />
           </div>
 
-          {/* Company select */}
+          {/* Company select with react-select */}
           <FormField
             control={form.control}
             name="company_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Select Company</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  disabled={isLoading}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a company" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {companies.map((company: any) => (
-                      <SelectItem key={company.id} value={company.id}>
-                        {company.parent_id && '↳ '}{company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <Select
+                    options={companyOptions}
+                    value={companyOptions.find(option => option.value === field.value)}
+                    onChange={(selectedOption) => field.onChange(selectedOption?.value || '')}
+                    placeholder="Search and select a company..."
+                    isClearable
+                    isSearchable
+                    isLoading={isLoading}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (baseStyles, state) => ({
+                        ...baseStyles,
+                        borderColor: state.isFocused ? 'hsl(var(--ring))' : 'hsl(var(--input))',
+                        backgroundColor: 'hsl(var(--background))',
+                        borderRadius: 'calc(var(--radius) - 2px)',
+                        boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
+                        '&:hover': {
+                          borderColor: 'hsl(var(--input))'
+                        },
+                        minHeight: '40px'
+                      }),
+                      placeholder: (baseStyles) => ({
+                        ...baseStyles,
+                        color: 'hsl(var(--muted-foreground))'
+                      }),
+                      menu: (baseStyles) => ({
+                        ...baseStyles,
+                        backgroundColor: 'hsl(var(--background))',
+                        borderColor: 'hsl(var(--border))',
+                        zIndex: 50
+                      }),
+                      option: (baseStyles, { isFocused, isSelected }) => ({
+                        ...baseStyles,
+                        backgroundColor: isFocused 
+                          ? 'hsl(var(--accent) / 0.1)' 
+                          : isSelected 
+                            ? 'hsl(var(--accent))'
+                            : undefined,
+                        color: isSelected 
+                          ? 'hsl(var(--accent-foreground))'
+                          : 'hsl(var(--foreground))'
+                      }),
+                      input: (baseStyles) => ({
+                        ...baseStyles,
+                        color: 'hsl(var(--foreground))'
+                      }),
+                      singleValue: (baseStyles) => ({
+                        ...baseStyles,
+                        color: 'hsl(var(--foreground))'
+                      }),
+                      dropdownIndicator: (baseStyles) => ({
+                        ...baseStyles,
+                        color: 'hsl(var(--foreground) / 0.5)',
+                        '&:hover': {
+                          color: 'hsl(var(--foreground) / 0.8)'
+                        }
+                      }),
+                      clearIndicator: (baseStyles) => ({
+                        ...baseStyles,
+                        color: 'hsl(var(--foreground) / 0.5)',
+                        '&:hover': {
+                          color: 'hsl(var(--foreground) / 0.8)'
+                        }
+                      })
+                    }}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
