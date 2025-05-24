@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -85,7 +86,40 @@ const CompaniesPage = () => {
       {/* Companies list */}
       <div className="w-full">
         {isLoading ? (
-          <CenteredSpinner />
+          <div className="overflow-x-auto rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[250px]">Company</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Website</TableHead>
+                  <TableHead>Partner</TableHead>
+                  <TableHead>Advisor</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Array(5).fill(0).map((_, index) => (
+                  <TableRow key={`skeleton-${index}`}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <div>
+                          <Skeleton className="h-4 w-40 mb-2" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-36" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         ) : filteredCompanies.length === 0 ? (
           <div className="text-center p-8 bg-muted/10 rounded-lg">
             <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -123,3 +157,6 @@ const CompaniesPage = () => {
 };
 
 export default CompaniesPage;
+
+// Add missing imports
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
