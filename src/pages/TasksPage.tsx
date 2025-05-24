@@ -397,7 +397,7 @@ export const TasksPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-6 overflow-x-hidden max-w-screen-xl">
+    <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Tasks</h1>
