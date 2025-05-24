@@ -194,9 +194,6 @@ export function MultiStageCompanyDialog({
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{parentId ? 'Add Subsidiary' : 'New Company'}</DialogTitle>
-          <DialogDescription>
-            Fill out the form below to create a new company
-          </DialogDescription>
         </DialogHeader>
         
         {/* Replace old progress bar with ProgressStepper component */}
