@@ -26,7 +26,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { useInviteUser } from '@/hooks/useInviteUser';
+import { supabase } from '@/integrations/supabase/client';
 
 // Form schema
 const contactFormSchema = z.object({
@@ -67,74 +67,79 @@ export const CreateContactDialog = ({
     },
   });
   
-  // Use invite user hook for creating and inviting users
-  const { mutateAsync: inviteUser } = useInviteUser({});
-  
-  // Create contact mutation
-  const createContactMutation = useMutation({
-    mutationFn: async (contactData: { 
-      company_id: string; 
-      user_id: string; 
-      position?: string;
-      is_primary?: boolean;
-      is_admin?: boolean;
-    }) => {
-      return companyService.createContact(contactData);
-    },
-    onSuccess: () => {
-      // Reset form
-      form.reset();
-      
-      // Notify parent component
-      if (onSuccess) onSuccess();
-      
-      // Close dialog
-      onClose();
-      
-      // Refetch company contacts
-      queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to add contact: ${error.message}`,
-        variant: 'destructive',
-      });
-    }
-  });
-  
   const onSubmit = async (values: ContactFormValues) => {
     try {
       setIsSubmitting(true);
       
-      // First, invite the user with client role
-      const inviteResponse = await inviteUser({
-        firstName: values.firstName,
-        lastName: values.lastName,
-        email: values.email,
-        phoneNumber: values.phoneNumber,
-        role: 'client', // Always set to client role
-        language: 'en'
+      console.log('Starting user invitation process for:', values.email);
+      
+      // Step 1: Invite user through Supabase Auth
+      const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(values.email);
+      
+      if (inviteError) {
+        console.error('Error inviting user:', inviteError);
+        throw new Error(`Failed to invite user: ${inviteError.message}`);
+      }
+      
+      if (!inviteData.user?.id) {
+        throw new Error('No user ID returned from invitation');
+      }
+      
+      console.log('User invited successfully, user ID:', inviteData.user.id);
+      
+      // Step 2: Create profile record
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: inviteData.user.id,
+          first_name: values.firstName,
+          last_name: values.lastName,
+          phone_number: values.phoneNumber || null,
+          role: 'client',
+          language: 'en'
+        });
+      
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        throw new Error(`Failed to create user profile: ${profileError.message}`);
+      }
+      
+      console.log('User profile created successfully');
+      
+      // Step 3: Create company contact record
+      const { error: contactError } = await supabase
+        .from('company_contacts')
+        .insert({
+          company_id: companyId,
+          user_id: inviteData.user.id,
+          position: values.position || null,
+          is_primary: false,
+          is_admin: false
+        });
+      
+      if (contactError) {
+        console.error('Error creating company contact:', contactError);
+        throw new Error(`Failed to create company contact: ${contactError.message}`);
+      }
+      
+      console.log('Company contact created successfully');
+      
+      // Success
+      toast({
+        title: 'Contact invited successfully',
+        description: `${values.firstName} ${values.lastName} has been invited and will receive an email to set their password.`,
       });
       
-      // Then create the company contact with the newly created user's ID
-      if (inviteResponse && inviteResponse.user && inviteResponse.user.id) {
-        await createContactMutation.mutateAsync({
-          company_id: companyId,
-          user_id: inviteResponse.user.id,
-          position: values.position,
-          is_primary: false,
-          is_admin: false,
-        });
-        
-        toast({
-          title: 'Contact added',
-          description: `${values.firstName} ${values.lastName} has been invited and added as a company contact.`,
-        });
-      } else {
-        throw new Error('Failed to invite user');
-      }
+      // Reset form and close dialog
+      form.reset();
+      onClose();
+      
+      // Notify parent component and refresh data
+      if (onSuccess) onSuccess();
+      queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] });
+      
     } catch (error) {
+      console.error('Error in contact creation process:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'An unknown error occurred',
@@ -151,7 +156,7 @@ export const CreateContactDialog = ({
         <DialogHeader>
           <DialogTitle>Add New Contact</DialogTitle>
           <DialogDescription>
-            Create and invite a new contact for this company. They will receive an email invitation to join.
+            Invite a new contact to join this company. They will receive an email invitation to set their password.
           </DialogDescription>
         </DialogHeader>
         
@@ -233,7 +238,7 @@ export const CreateContactDialog = ({
                 type="submit" 
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Adding...' : 'Add Contact'}
+                {isSubmitting ? 'Inviting...' : 'Invite Contact'}
               </Button>
             </div>
           </form>
