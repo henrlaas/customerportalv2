@@ -4,6 +4,7 @@ export interface Company {
   name: string;
   organization_number?: string;
   address?: string;
+  street_address?: string;
   city?: string;
   postal_code?: string;
   country?: string;
