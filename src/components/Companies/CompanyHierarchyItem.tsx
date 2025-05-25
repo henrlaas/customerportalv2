@@ -124,8 +124,7 @@ export const CompanyHierarchyItem = ({
               <div className="flex items-center gap-4 mt-1">
                 {company.organization_number && (
                   <div className="flex items-center gap-1 text-sm text-gray-500">
-                    <Hash className="h-3.5 w-3.5" />
-                    <span>{company.organization_number}</span>
+                    <span>Org.nr {company.organization_number}</span>
                   </div>
                 )}
                 {company.website && (
