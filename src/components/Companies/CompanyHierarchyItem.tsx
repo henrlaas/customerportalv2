@@ -133,19 +133,6 @@ export const CompanyHierarchyItem = ({
               <DropdownMenuContent align="end" className="w-48 z-50 bg-white">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={toggleExpand}>
-                  {isExpanded ? (
-                    <>
-                      <ChevronUp className="mr-2 h-4 w-4" />
-                      <span>Hide Details</span>
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="mr-2 h-4 w-4" />
-                      <span>Show Details</span>
-                    </>
-                  )}
-                </DropdownMenuItem>
                 {onEditCompany && (
                   <DropdownMenuItem onClick={() => onEditCompany()}>
                     <Edit className="mr-2 h-4 w-4" />
