@@ -44,9 +44,9 @@ serve(async (req) => {
     if (listError) {
       console.error(`Error listing users: ${listError.message}`);
       return new Response(
-        JSON.stringify({ error: listError.message }),
+        JSON.stringify({ error: `Failed to check existing users: ${listError.message}` }),
         {
-          status: 400,
+          status: 500,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         }
       );
@@ -57,7 +57,7 @@ serve(async (req) => {
     if (existingUser) {
       console.log(`User already exists: ${email}`);
       return new Response(
-        JSON.stringify({ error: 'User already exists' }),
+        JSON.stringify({ error: `A user with email ${email} already exists. Please use a different email address.` }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -79,9 +79,9 @@ serve(async (req) => {
     if (inviteError) {
       console.error(`Error inviting user: ${inviteError.message}`);
       return new Response(
-        JSON.stringify({ error: inviteError.message }),
+        JSON.stringify({ error: `Failed to invite user: ${inviteError.message}` }),
         {
-          status: 400,
+          status: 500,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         }
       );
@@ -91,7 +91,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'No user ID returned from invitation' }),
         {
-          status: 400,
+          status: 500,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         }
       );
@@ -137,7 +137,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: `Failed to create company contact: ${contactError.message}` }),
         {
-          status: 400,
+          status: 500,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         }
       );
@@ -159,7 +159,7 @@ serve(async (req) => {
   } catch (error) {
     console.error(`Error in invite-company-contact function: ${error.message}`);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: `Internal server error: ${error.message}` }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
