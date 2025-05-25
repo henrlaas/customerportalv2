@@ -77,8 +77,14 @@ const companyQueryService = {
         throw new Error(contactsError.message);
       }
 
+      if (!contactsData || contactsData.length === 0) {
+        console.log('No contacts found for company:', companyId);
+        return [];
+      }
+
       // Extract user IDs to fetch profile data
       const userIds = contactsData.map(contact => contact.user_id);
+      console.log('User IDs to fetch data for:', userIds);
       
       // Get profile data for these users including phone_number
       let profilesMap: Record<string, any> = {};
@@ -96,42 +102,38 @@ const companyQueryService = {
             acc[profile.id] = profile;
             return acc;
           }, {});
+          console.log('Profiles map:', profilesMap);
         }
       }
 
-      // Get emails using the edge function
+      // Get emails using the database function directly
       let emailsMap: Record<string, string> = {};
       if (userIds.length > 0) {
         try {
-          console.log('Fetching emails for user IDs:', userIds);
-          const { data: emailsResponse, error: emailsError } = await supabase.functions.invoke('user-management', {
-            body: {
-              action: 'get-user-emails',
-              userIds: userIds
-            }
-          });
+          console.log('Calling get_users_email function with user IDs:', userIds);
+          const { data: emailsData, error: emailsError } = await supabase
+            .rpc('get_users_email', {
+              user_ids: userIds
+            });
           
           if (emailsError) {
-            console.warn('Could not fetch email addresses:', emailsError);
-          } else if (emailsResponse) {
-            console.log('Email response:', emailsResponse);
-            // The response should be an array of {id, email} objects
-            if (Array.isArray(emailsResponse)) {
-              emailsMap = emailsResponse.reduce((acc: Record<string, string>, item: { id: string, email: string }) => {
-                acc[item.id] = item.email;
-                return acc;
-              }, {});
-            }
+            console.error('Error calling get_users_email function:', emailsError);
+          } else if (emailsData) {
+            console.log('Email data from function:', emailsData);
+            // The function returns an array of {id, email} objects
+            emailsMap = emailsData.reduce((acc: Record<string, string>, item: { id: string, email: string }) => {
+              acc[item.id] = item.email;
+              return acc;
+            }, {});
+            console.log('Emails map:', emailsMap);
           }
         } catch (error) {
-          console.error('Error invoking get-user-emails function:', error);
+          console.error('Error calling get_users_email function:', error);
         }
       }
 
-      console.log('Final emails map:', emailsMap);
-
       // Combine the data
-      return contactsData.map(contact => ({
+      const combinedData = contactsData.map(contact => ({
         ...contact,
         email: emailsMap[contact.user_id] || '',
         first_name: profilesMap[contact.user_id]?.first_name || '',
@@ -139,6 +141,9 @@ const companyQueryService = {
         avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
         phone_number: profilesMap[contact.user_id]?.phone_number || null,
       }));
+
+      console.log('Final combined contact data:', combinedData);
+      return combinedData;
     } catch (error: any) {
       console.error('Unexpected error fetching company contacts:', error);
       throw error;
