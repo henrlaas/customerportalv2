@@ -107,21 +107,28 @@ export const CompanyListView = ({ companies, onCompanyClick, onCompanyDeleted }:
     const advisor = users.find(user => user.id === advisorId);
     if (!advisor) return null;
     
+    const firstName = advisor.user_metadata?.first_name || '';
+    const lastName = advisor.user_metadata?.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    
     return {
-      name: `${advisor.user_metadata?.first_name || ''} ${advisor.user_metadata?.last_name || ''}`.trim() || advisor.email,
+      name: fullName || advisor.email,
       email: advisor.email,
       avatar_url: advisor.user_metadata?.avatar_url || null,
-      // Use initials for avatar fallback
-      initials: getInitials(advisor.user_metadata?.first_name, advisor.user_metadata?.last_name)
+      initials: getInitials(firstName, lastName, advisor.email)
     };
   };
   
-  // Helper function to get initials from name
-  const getInitials = (firstName?: string, lastName?: string): string => {
-    let initials = '';
-    if (firstName) initials += firstName.charAt(0).toUpperCase();
-    if (lastName) initials += lastName.charAt(0).toUpperCase();
-    return initials || '??';
+  // Helper function to get initials from name or email
+  const getInitials = (firstName?: string, lastName?: string, email?: string): string => {
+    if (firstName && lastName) {
+      return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+    } else if (firstName) {
+      return firstName.charAt(0).toUpperCase();
+    } else if (email) {
+      return email.charAt(0).toUpperCase();
+    }
+    return '?';
   };
   
   // Function to handle page changes
@@ -292,7 +299,7 @@ export const CompanyListView = ({ companies, onCompanyClick, onCompanyDeleted }:
                               src={advisorDetails.avatar_url || undefined} 
                               alt={advisorDetails.name} 
                             />
-                            <AvatarFallback className="text-xs">
+                            <AvatarFallback className="text-xs bg-blue-100 text-blue-800">
                               {advisorDetails.initials}
                             </AvatarFallback>
                           </Avatar>
