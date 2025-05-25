@@ -120,7 +120,8 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
         {canModify && (
           <Button 
             onClick={() => setIsAddingContact(true)}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            style={{ backgroundColor: '#004843' }}
+            className="hover:opacity-90 text-white"
           >
             <UserPlus className="mr-2 h-4 w-4" />
             Add Contact
@@ -171,7 +172,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {sortedContacts.map((contact) => (
-            <Card key={contact.id} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-md bg-gradient-to-br from-white to-gray-50/50 overflow-hidden">
+            <Card key={contact.id} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-md bg-white overflow-hidden">
               
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
