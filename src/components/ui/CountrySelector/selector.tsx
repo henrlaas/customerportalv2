@@ -63,7 +63,7 @@ export default function CountrySelector({
             <img
               alt={`${selectedValue.value}`}
               src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${selectedValue.value}.svg`}
-              className={"inline mr-2 h-4 rounded-sm"}
+              className={"inline mr-2 h-4"}
             />
             {selectedValue.title}
           </span>
