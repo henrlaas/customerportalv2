@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -154,7 +155,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {sortedContacts.map((contact) => (
-            <Card key={contact.id} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-md bg-white overflow-hidden">
+            <Card key={contact.id} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
