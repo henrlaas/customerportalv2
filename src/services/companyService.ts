@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Company, CompanyContact } from '@/types/company';
 
@@ -81,12 +80,12 @@ const companyQueryService = {
       // Extract user IDs to fetch profile data
       const userIds = contactsData.map(contact => contact.user_id);
       
-      // Get profile data for these users
+      // Get profile data for these users including phone_number
       let profilesMap: Record<string, any> = {};
       if (userIds.length > 0) {
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name, avatar_url')
+          .select('id, first_name, last_name, avatar_url, phone_number')
           .in('id', userIds);
 
         if (profilesError) {
@@ -132,6 +131,7 @@ const companyQueryService = {
         first_name: profilesMap[contact.user_id]?.first_name || '',
         last_name: profilesMap[contact.user_id]?.last_name || '',
         avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
+        phone_number: profilesMap[contact.user_id]?.phone_number || null,
       }));
     } catch (error: any) {
       console.error('Unexpected error fetching company contacts:', error);
