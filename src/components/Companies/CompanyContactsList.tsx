@@ -163,8 +163,8 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
         </div>
       ) : contacts.length === 0 ? (
         <div className="text-center p-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
-            <UserPlus className="h-10 w-10 text-gray-500" />
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ backgroundColor: '#E8EEEE' }}>
+            <UserPlus className="h-10 w-10" style={{ color: '#004843' }} />
           </div>
           <h3 className="text-xl font-semibold text-gray-700 mb-2">No contacts yet</h3>
           <p className="text-gray-500 mb-6">Start building your team by adding your first contact</p>
