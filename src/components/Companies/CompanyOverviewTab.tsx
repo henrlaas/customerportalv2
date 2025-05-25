@@ -1,3 +1,4 @@
+
 import { 
   Card,
   CardContent,
@@ -46,16 +47,16 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200 shadow-lg">
+        <Card className="bg-white border shadow-lg">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-bold text-blue-900 flex items-center">
-              <Building className="h-6 w-6 mr-3 text-blue-600" />
+            <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
+              <Building className="h-6 w-6 mr-3 text-primary" />
               Company Information
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start space-x-3 p-3 bg-white/70 rounded-lg">
-              <Building className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+              <Building className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Company Name</p>
                 <p className="text-lg font-semibold text-gray-900 break-words">{company.name}</p>
@@ -63,8 +64,8 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
             </div>
             
             {company.organization_number && (
-              <div className="flex items-start space-x-3 p-3 bg-white/70 rounded-lg">
-                <ClipboardList className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <ClipboardList className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-600">Organization Number</p>
                   <p className="text-base font-medium text-gray-900">{company.organization_number}</p>
@@ -72,16 +73,16 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
               </div>
             )}
             
-            <div className="flex items-start space-x-3 p-3 bg-white/70 rounded-lg">
-              <Calendar className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+              <Calendar className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Created</p>
                 <p className="text-base font-medium text-gray-900">{new Date(company.created_at).toLocaleDateString()}</p>
               </div>
             </div>
 
-            <div className="flex items-start space-x-3 p-3 bg-white/70 rounded-lg">
-              <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+              <Shield className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Partner Status</p>
                 <div className="flex items-center space-x-2 mt-1">
@@ -100,8 +101,8 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
               </div>
             </div>
 
-            <div className="flex items-start space-x-3 p-3 bg-white/70 rounded-lg">
-              <Users className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+              <Users className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Client Type</p>
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -134,8 +135,8 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
               </div>
             )}
             
-            <div className="flex items-start space-x-3 p-3 bg-white/70 rounded-lg">
-              <Calendar className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+              <Calendar className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Trial Period</p>
                 <div className="flex items-center space-x-2 mt-1">
@@ -156,17 +157,17 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200 shadow-lg">
+        <Card className="bg-white border shadow-lg">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-bold text-green-900 flex items-center">
-              <Phone className="h-6 w-6 mr-3 text-green-600" />
+            <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
+              <Phone className="h-6 w-6 mr-3 text-primary" />
               Contact Information
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {company.website && (
-              <div className="flex items-start space-x-3 p-3 bg-white/70 rounded-lg">
-                <Globe className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <Globe className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-600">Website</p>
                   <a 
@@ -183,8 +184,8 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
             )}
             
             {company.phone && (
-              <div className="flex items-start space-x-3 p-3 bg-white/70 rounded-lg">
-                <Phone className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <Phone className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-600">Phone Number</p>
                   <p className="text-base font-medium text-gray-900">{company.phone}</p>
@@ -193,8 +194,8 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
             )}
             
             {company.invoice_email && (
-              <div className="flex items-start space-x-3 p-3 bg-white/70 rounded-lg">
-                <Mail className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <Mail className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-600">Invoice Email</p>
                   <p className="text-base font-medium text-gray-900 break-all">{company.invoice_email}</p>
@@ -203,8 +204,8 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
             )}
             
             {(company.street_address || company.city || company.postal_code || company.country) && (
-              <div className="flex items-start space-x-3 p-3 bg-white/70 rounded-lg">
-                <MapPin className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-600">Address</p>
                   <p className="text-base font-medium text-gray-900 break-words mt-1">
