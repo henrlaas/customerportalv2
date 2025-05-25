@@ -70,6 +70,7 @@ export const CreateContactDialog = ({
       setIsSubmitting(true);
       
       console.log('Inviting company contact:', values.email);
+      console.log('Phone number being sent:', values.phoneNumber);
       
       const { data, error } = await supabase.functions.invoke('invite-company-contact', {
         body: {
@@ -176,7 +177,12 @@ export const CreateContactDialog = ({
                     <PhoneInput
                       country={'no'}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => {
+                        // Ensure the value always starts with + if it doesn't already
+                        const formattedValue = value.startsWith('+') ? value : `+${value}`;
+                        console.log('Phone input onChange:', formattedValue);
+                        field.onChange(formattedValue);
+                      }}
                       inputStyle={{
                         width: '100%',
                         height: '40px',
@@ -207,6 +213,8 @@ export const CreateContactDialog = ({
                         color: 'hsl(var(--foreground))',
                       }}
                       placeholder="Enter phone number"
+                      enableSearch={true}
+                      disableSearchIcon={true}
                     />
                   </FormControl>
                   <FormMessage />
