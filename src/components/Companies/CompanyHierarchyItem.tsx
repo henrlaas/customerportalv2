@@ -120,25 +120,6 @@ export const CompanyHierarchyItem = ({
               <CardTitle className="text-lg font-semibold text-gray-900 truncate">
                 {company.name}
               </CardTitle>
-              <div className="flex items-center gap-4 mt-1">
-                {company.organization_number && (
-                  <div className="flex items-center gap-1 text-sm text-gray-500">
-                    <span>Org.nr {company.organization_number}</span>
-                  </div>
-                )}
-                {company.website && (
-                  <a 
-                    href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Globe className="h-3.5 w-3.5" />
-                    <span>{company.website.replace(/^https?:\/\//, '')}</span>
-                  </a>
-                )}
-              </div>
             </div>
           </div>
           
