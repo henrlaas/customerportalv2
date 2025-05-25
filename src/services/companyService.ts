@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Company, CompanyContact } from '@/types/company';
 
@@ -106,20 +107,19 @@ const companyQueryService = {
         }
       }
 
-      // Get emails using the database function directly
+      // Get emails using the new dedicated edge function
       let emailsMap: Record<string, string> = {};
       if (userIds.length > 0) {
         try {
-          console.log('Calling get_users_email function with user IDs:', userIds);
-          const { data: emailsData, error: emailsError } = await supabase
-            .rpc('get_users_email', {
-              user_ids: userIds
-            });
+          console.log('Calling new get-user-emails function with user IDs:', userIds);
+          const { data: emailsData, error: emailsError } = await supabase.functions.invoke('get-user-emails', {
+            body: { userIds: userIds }
+          });
           
           if (emailsError) {
-            console.error('Error calling get_users_email function:', emailsError);
+            console.error('Error calling get-user-emails function:', emailsError);
           } else if (emailsData) {
-            console.log('Email data from function:', emailsData);
+            console.log('Email data from new function:', emailsData);
             // The function returns an array of {id, email} objects
             emailsMap = emailsData.reduce((acc: Record<string, string>, item: { id: string, email: string }) => {
               acc[item.id] = item.email;
@@ -128,7 +128,7 @@ const companyQueryService = {
             console.log('Emails map:', emailsMap);
           }
         } catch (error) {
-          console.error('Error calling get_users_email function:', error);
+          console.error('Error calling new get-user-emails function:', error);
         }
       }
 
