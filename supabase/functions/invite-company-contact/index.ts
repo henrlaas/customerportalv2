@@ -92,23 +92,23 @@ serve(async (req) => {
     const userId = inviteData.user.id;
     console.log(`User invited successfully, user ID: ${userId}`);
 
-    // Create profile record
+    // Update the existing profile record (created by the trigger) instead of inserting
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        id: userId,
+      .update({
         first_name: firstName,
         last_name: lastName,
         phone_number: phoneNumber || null,
         role: 'client',
         language: 'en',
         avatar_url: null
-      });
+      })
+      .eq('id', userId);
 
     if (profileError) {
-      console.error(`Error creating profile: ${profileError.message}`);
+      console.error(`Error updating profile: ${profileError.message}`);
       return new Response(
-        JSON.stringify({ error: `Failed to create profile: ${profileError.message}` }),
+        JSON.stringify({ error: `Failed to update profile: ${profileError.message}` }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -116,7 +116,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Profile created successfully for user: ${userId}`);
+    console.log(`Profile updated successfully for user: ${userId}`);
 
     // Create company contact record
     const { error: contactError } = await supabaseAdmin
