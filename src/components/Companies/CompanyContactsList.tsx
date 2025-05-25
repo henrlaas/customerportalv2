@@ -18,7 +18,8 @@ import {
   UserPlus,
   Mail,
   Star,
-  Shield
+  Shield,
+  Phone
 } from 'lucide-react';
 import { CreateContactDialog } from './CreateContactDialog';
 import { EditContactDialog } from './EditContactDialog';
@@ -95,9 +96,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   
   const canModify = isAdmin || isEmployee;
   
-  // ... keep the rest of the component code unchanged
   return (
-    // ... keep existing JSX code
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Company Contacts</h2>
@@ -190,6 +189,12 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
                     <Mail className="h-4 w-4 mr-2 text-gray-400" />
                     <span>{contact.email}</span>
                   </div>
+                  {contact.phone_number && (
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                      <span>{contact.phone_number}</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
