@@ -208,6 +208,15 @@ export const CreateCompanyDialog = ({
       setCurrentStep(0); // Go back to method selection
     }
   };
+
+  // Validate current step before allowing next
+  const canProceedToNext = () => {
+    if (currentStep === 2 && creationMethod === 'manual') {
+      // For manual basic info step, require name
+      return form.watch('name')?.trim().length > 0;
+    }
+    return true;
+  };
   
   // Render method selection step (step 0)
   const renderMethodSelectionStep = () => (
@@ -341,7 +350,8 @@ export const CreateCompanyDialog = ({
         {currentStep > 0 && <ProgressStepper currentStep={currentStep} totalSteps={totalSteps} />}
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Remove onSubmit from form tag to prevent automatic submission */}
+          <div className="space-y-4">
             {renderStageContent()}
             
             {currentStep > 0 && (
@@ -362,7 +372,8 @@ export const CreateCompanyDialog = ({
                   <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
                   {currentStep === 3 ? (
                     <Button 
-                      type="submit"
+                      type="button"
+                      onClick={() => form.handleSubmit(onSubmit)()}
                       className="flex items-center gap-1"
                       disabled={createCompanyMutation.isPending}
                     >
@@ -377,6 +388,7 @@ export const CreateCompanyDialog = ({
                         type="button"
                         onClick={handleNext}
                         className="flex items-center gap-1"
+                        disabled={!canProceedToNext()}
                       >
                         Next <ChevronRight className="h-4 w-4" />
                       </Button>
@@ -385,7 +397,7 @@ export const CreateCompanyDialog = ({
                 </div>
               </DialogFooter>
             )}
-          </form>
+          </div>
         </Form>
       </DialogContent>
     </Dialog>
