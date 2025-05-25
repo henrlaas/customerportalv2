@@ -86,6 +86,7 @@ export const handleInviteUser = async (
       } catch (profileError) {
         console.error("Error updating profile:", profileError);
         // Continue with the invitation process even if profile update fails
+        // but log the error for debugging
       }
     }
 

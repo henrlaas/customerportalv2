@@ -15,42 +15,36 @@ export const updateUserProfile = async (
   try {
     console.log(`Updating profile for user ID: ${userId} with data:`, JSON.stringify(userData));
     
-    // Check if profile already exists
-    const { data: existingProfile, error: fetchError } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows returned
-      console.error('Error checking existing profile:', fetchError.message);
-      throw fetchError;
-    }
-    
     // Prepare update data object
     const updateData: Record<string, any> = {
       id: userId, // Ensure ID is set for upsert
-      first_name: userData.firstName,
-      last_name: userData.lastName,
-      phone_number: userData.phoneNumber,
-      language: userData.language || 'en',
       updated_at: new Date().toISOString()
     };
     
-    // Add team if provided
-    if (userData.team) {
-      updateData.team = userData.team;
+    // Only update fields that are provided
+    if (userData.firstName !== undefined) {
+      updateData.first_name = userData.firstName;
     }
-    
-    // If profile doesn't exist, add created_at
-    if (!existingProfile) {
-      updateData.created_at = new Date().toISOString();
+    if (userData.lastName !== undefined) {
+      updateData.last_name = userData.lastName;
+    }
+    if (userData.phoneNumber !== undefined) {
+      updateData.phone_number = userData.phoneNumber;
+    }
+    if (userData.language !== undefined) {
+      updateData.language = userData.language;
+    }
+    if (userData.team !== undefined) {
+      updateData.team = userData.team;
     }
 
     // Use upsert to handle both insert and update cases
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('profiles')
-      .upsert(updateData)
+      .upsert(updateData, {
+        onConflict: 'id',
+        ignoreDuplicates: false
+      })
       .select();
 
     if (error) {
@@ -58,7 +52,7 @@ export const updateUserProfile = async (
       throw error;
     }
     
-    console.log(`Profile successfully updated for user ${userId}`);
+    console.log(`Profile successfully updated for user ${userId}:`, data);
     return true;
   } catch (error) {
     console.error('Error in updateUserProfile:', error instanceof Error ? error.message : String(error));
