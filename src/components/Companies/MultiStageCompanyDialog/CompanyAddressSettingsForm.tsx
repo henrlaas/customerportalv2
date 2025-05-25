@@ -13,7 +13,9 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { CompanyFormValues } from './types';
 import { AdvisorSelect } from './AdvisorSelect';
-import React from 'react';
+import CountrySelector from '@/components/ui/CountrySelector/selector';
+import { COUNTRIES } from '@/components/ui/CountrySelector/countries';
+import React, { useState } from 'react';
 
 interface CompanyAddressSettingsFormProps {
   form: UseFormReturn<CompanyFormValues>;
@@ -26,10 +28,17 @@ export const CompanyAddressSettingsForm = ({
   users, 
   hasMarketingType 
 }: CompanyAddressSettingsFormProps) => {
+  // Find Norway in the countries list to set as default
+  const norwayOption = COUNTRIES.find(country => country.value === 'NO') || COUNTRIES[0];
+  const [countryOpen, setCountryOpen] = useState(false);
+
   // Set Norway as default country when form loads
   React.useEffect(() => {
-    form.setValue('country', 'Norge');
-  }, []);
+    const currentCountry = form.getValues('country');
+    if (!currentCountry) {
+      form.setValue('country', norwayOption.title);
+    }
+  }, [form, norwayOption.title]);
 
   return (
     <>
@@ -83,17 +92,31 @@ export const CompanyAddressSettingsForm = ({
           <FormField
             control={form.control}
             name="country"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Country</FormLabel>
-                <FormControl>
-                  <div className="flex items-center gap-2 h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
-                    🇳🇴 Norge
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const selectedCountry = COUNTRIES.find(country => country.title === field.value) || norwayOption;
+              
+              return (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <CountrySelector
+                      id="country-selector"
+                      open={countryOpen}
+                      onToggle={() => setCountryOpen(!countryOpen)}
+                      selectedValue={selectedCountry}
+                      onChange={(countryCode) => {
+                        const country = COUNTRIES.find(c => c.value === countryCode);
+                        if (country) {
+                          field.onChange(country.title);
+                        }
+                        setCountryOpen(false);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
       </div>

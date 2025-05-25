@@ -1,11 +1,25 @@
-
 import { MapPin, User } from 'lucide-react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { AdvisorSelect } from './AdvisorSelect';
+import CountrySelector from '@/components/ui/CountrySelector/selector';
+import { COUNTRIES } from '@/components/ui/CountrySelector/countries';
+import React, { useState } from 'react';
 
 export function AddressAndSettingsStage({ form, users, hasMarketingType }: { form: any; users: any[]; hasMarketingType: boolean }) {
+  // Find Norway in the countries list to set as default
+  const norwayOption = COUNTRIES.find(country => country.value === 'NO') || COUNTRIES[0];
+  const [countryOpen, setCountryOpen] = useState(false);
+
+  // Set Norway as default country when form loads
+  React.useEffect(() => {
+    const currentCountry = form.getValues('country');
+    if (!currentCountry) {
+      form.setValue('country', norwayOption.title);
+    }
+  }, [form, norwayOption.title]);
+
   return (
     <>
       <div className="bg-muted p-4 rounded-lg">
@@ -55,15 +69,31 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
           <FormField
             control={form.control}
             name="country"
-            render={({ field }: any) => (
-              <FormItem>
-                <FormLabel>Country</FormLabel>
-                <FormControl>
-                  <Input placeholder="Norge" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }: any) => {
+              const selectedCountry = COUNTRIES.find(country => country.title === field.value) || norwayOption;
+              
+              return (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <CountrySelector
+                      id="country-selector-stage"
+                      open={countryOpen}
+                      onToggle={() => setCountryOpen(!countryOpen)}
+                      selectedValue={selectedCountry}
+                      onChange={(countryCode) => {
+                        const country = COUNTRIES.find(c => c.value === countryCode);
+                        if (country) {
+                          field.onChange(country.title);
+                        }
+                        setCountryOpen(false);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
       </div>
