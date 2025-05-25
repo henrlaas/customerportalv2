@@ -170,7 +170,7 @@ export const CompanyHierarchyItem = ({
           {company.organization_number && (
             <div className="flex items-center gap-2 text-gray-600">
               <Hash className="h-4 w-4 text-gray-400" />
-              <span>{company.organization_number}</span>
+              <span>Org.nr: {company.organization_number}</span>
             </div>
           )}
           
