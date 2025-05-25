@@ -47,7 +47,7 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-white shadow-lg border-0">
+        <Card>
           <CardHeader className="pb-4">
             <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
               <Building className="h-6 w-6 mr-3 text-primary" />
@@ -126,7 +126,7 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
             </div>
             
             {company.is_marketing_client && company.mrr !== null && (
-              <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                 <DollarSign className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-green-700">Monthly Recurring Revenue</p>
@@ -157,7 +157,7 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
           </CardContent>
         </Card>
         
-        <Card className="bg-white shadow-lg border-0">
+        <Card>
           <CardHeader className="pb-4">
             <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
               <Phone className="h-6 w-6 mr-3 text-primary" />
