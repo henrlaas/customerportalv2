@@ -1,8 +1,9 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import {
   Card,
   CardContent,
@@ -39,7 +40,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, User, Lock, Bell, Trash2 } from 'lucide-react';
 import FileUploader from '@/components/FileUploader';
-import { PhoneInput } from '@/components/ui/phone-input';
+import { PhoneInput as PhoneInputComponent } from '@/components/ui/phone-input';
 
 const SettingsPage = () => {
   const { user, profile } = useAuth();
@@ -462,7 +463,34 @@ const SettingsPage = () => {
                             <FormItem>
                               <FormLabel>Phone Number</FormLabel>
                               <FormControl>
-                                <PhoneInput placeholder="Enter phone number" {...field} />
+                                <PhoneInput
+                                  country={'no'}
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  placeholder="Enter phone number"
+                                  inputStyle={{
+                                    width: '100%',
+                                    height: '40px',
+                                    border: '1px solid hsl(var(--border))',
+                                    borderRadius: '6px',
+                                    backgroundColor: 'hsl(var(--background))',
+                                    color: 'hsl(var(--foreground))',
+                                    fontSize: '14px',
+                                    paddingLeft: '48px'
+                                  }}
+                                  buttonStyle={{
+                                    border: '1px solid hsl(var(--border))',
+                                    borderRight: 'none',
+                                    backgroundColor: 'hsl(var(--background))',
+                                    borderRadius: '6px 0 0 6px'
+                                  }}
+                                  dropdownStyle={{
+                                    backgroundColor: 'hsl(var(--background))',
+                                    border: '1px solid hsl(var(--border))',
+                                    borderRadius: '6px',
+                                    color: 'hsl(var(--foreground))'
+                                  }}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
