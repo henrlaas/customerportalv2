@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { CompanyContact } from '@/types/company';
 import { useToast } from '@/components/ui/use-toast';
@@ -21,11 +22,11 @@ import {
   Shield,
   Phone,
   MoreVertical,
-  MapPin,
   Calendar
 } from 'lucide-react';
 import { CreateContactDialog } from './CreateContactDialog';
 import { EditContactDialog } from './EditContactDialog';
+import { DeleteContactConfirmDialog } from './DeleteContactConfirmDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +42,7 @@ type ContactsListProps = {
 export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<CompanyContact | null>(null);
   
   const { isAdmin, isEmployee } = useAuth();
@@ -67,25 +69,6 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   console.log('Contacts query status:', { isLoading, isError, contactCount: contacts.length });
   if (isError && error) console.error('Contacts query error:', error);
   
-  // Delete contact mutation
-  const deleteContactMutation = useMutation({
-    mutationFn: (id: string) => companyService.deleteContact(id),
-    onSuccess: () => {
-      toast({
-        title: 'Contact removed',
-        description: 'The contact has been removed from this company',
-      });
-      queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to remove contact: ${error.message}`,
-        variant: 'destructive',
-      });
-    }
-  });
-  
   // Handle successful contact creation
   const handleContactAdded = () => {
     // Force a refetch of the contacts data
@@ -98,10 +81,9 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
     setIsEditingContact(true);
   };
   
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to remove this contact?')) {
-      deleteContactMutation.mutate(id);
-    }
+  const handleDelete = (contact: CompanyContact) => {
+    setSelectedContact(contact);
+    setIsDeleteDialogOpen(true);
   };
   
   const canModify = isAdmin || isEmployee;
@@ -222,9 +204,9 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           className="text-destructive cursor-pointer" 
-                          onClick={() => handleDelete(contact.id)}
+                          onClick={() => handleDelete(contact)}
                         >
-                          <Trash2 className="mr-2 h-4 w-4" /> Remove
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -311,6 +293,16 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
           setSelectedContact(null);
         }}
         contact={selectedContact}
+      />
+
+      <DeleteContactConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setSelectedContact(null);
+        }}
+        contact={selectedContact}
+        companyId={companyId}
       />
     </div>
   );
