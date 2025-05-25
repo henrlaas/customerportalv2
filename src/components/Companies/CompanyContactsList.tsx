@@ -56,6 +56,13 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
     retry: 1, // Only retry once on failure
   });
   
+  // Sort contacts to show primary contacts first
+  const sortedContacts = [...contacts].sort((a, b) => {
+    if (a.is_primary && !b.is_primary) return -1;
+    if (!a.is_primary && b.is_primary) return 1;
+    return 0;
+  });
+  
   // Log query status for debugging
   console.log('Contacts query status:', { isLoading, isError, contactCount: contacts.length });
   if (isError && error) console.error('Contacts query error:', error);
@@ -113,7 +120,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
         {canModify && (
           <Button 
             onClick={() => setIsAddingContact(true)}
-            className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
             <UserPlus className="mr-2 h-4 w-4" />
             Add Contact
@@ -163,7 +170,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {contacts.map((contact) => (
+          {sortedContacts.map((contact) => (
             <Card key={contact.id} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-md bg-gradient-to-br from-white to-gray-50/50 overflow-hidden">
               
               <CardHeader className="pb-4">
