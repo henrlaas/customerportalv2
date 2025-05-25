@@ -103,7 +103,8 @@ const companyQueryService = {
       let emailsMap: Record<string, string> = {};
       if (userIds.length > 0) {
         try {
-          const { data: emailsData, error: emailsError } = await supabase.functions.invoke('user-management', {
+          console.log('Fetching emails for user IDs:', userIds);
+          const { data: emailsResponse, error: emailsError } = await supabase.functions.invoke('user-management', {
             body: {
               action: 'get-user-emails',
               userIds: userIds
@@ -112,17 +113,22 @@ const companyQueryService = {
           
           if (emailsError) {
             console.warn('Could not fetch email addresses:', emailsError);
-          } else if (emailsData) {
-            // Create a map for quick lookups
-            emailsMap = emailsData.reduce((acc: Record<string, string>, item: { id: string, email: string }) => {
-              acc[item.id] = item.email;
-              return acc;
-            }, {});
+          } else if (emailsResponse) {
+            console.log('Email response:', emailsResponse);
+            // The response should be an array of {id, email} objects
+            if (Array.isArray(emailsResponse)) {
+              emailsMap = emailsResponse.reduce((acc: Record<string, string>, item: { id: string, email: string }) => {
+                acc[item.id] = item.email;
+                return acc;
+              }, {});
+            }
           }
         } catch (error) {
           console.error('Error invoking get-user-emails function:', error);
         }
       }
+
+      console.log('Final emails map:', emailsMap);
 
       // Combine the data
       return contactsData.map(contact => ({

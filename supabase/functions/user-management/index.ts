@@ -16,6 +16,8 @@ serve(async (req) => {
   }
 
   try {
+    // Clone the request to avoid body consumption issues
+    const reqClone = req.clone();
     const body = await req.json()
     const { action } = body
     const supabaseAdmin = createAdminClient()
@@ -39,7 +41,8 @@ serve(async (req) => {
       case 'reset-password':
         return await handleResetPassword(body, origin, supabaseAdmin, corsHeaders)
       case 'get-user-emails':
-        return await handleGetUserEmails(req)
+        // Pass the cloned request to avoid body consumption issues
+        return await handleGetUserEmails(reqClone)
       default:
         console.error(`Unknown action: ${action}`);
         return new Response(

@@ -9,8 +9,9 @@ export const handleGetUserEmails = async (req: Request) => {
       return new Response('Method not allowed', { status: 405, headers: corsHeaders });
     }
 
-    // Parse the request body
-    const { userIds } = await req.json();
+    // Parse the request body only once
+    const body = await req.json();
+    const { userIds } = body;
 
     // Validate request body
     if (!userIds || !Array.isArray(userIds)) {
@@ -30,9 +31,9 @@ export const handleGetUserEmails = async (req: Request) => {
 
     if (error) throw error;
 
-    // Return the emails
+    // Return the emails in the expected format
     return new Response(
-      JSON.stringify({ data }),
+      JSON.stringify(data),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   } catch (error) {
