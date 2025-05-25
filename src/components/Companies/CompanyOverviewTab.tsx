@@ -47,7 +47,7 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-white border shadow-lg">
+        <Card className="bg-white shadow-lg border-0">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
               <Building className="h-6 w-6 mr-3 text-primary" />
@@ -157,7 +157,7 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
           </CardContent>
         </Card>
         
-        <Card className="bg-white border shadow-lg">
+        <Card className="bg-white shadow-lg border-0">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
               <Phone className="h-6 w-6 mr-3 text-primary" />
