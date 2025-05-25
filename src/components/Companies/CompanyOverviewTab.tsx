@@ -1,4 +1,3 @@
-
 import { 
   Card,
   CardContent,
@@ -29,6 +28,21 @@ interface CompanyOverviewTabProps {
 }
 
 export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
+  // Format address into a single line
+  const formatAddress = () => {
+    const parts = [];
+    if (company.street_address) parts.push(company.street_address);
+    if (company.postal_code && company.city) {
+      parts.push(`${company.postal_code} ${company.city}`);
+    } else if (company.city) {
+      parts.push(company.city);
+    } else if (company.postal_code) {
+      parts.push(company.postal_code);
+    }
+    if (company.country) parts.push(company.country);
+    return parts.join(', ');
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -193,18 +207,9 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
                 <MapPin className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-600">Address</p>
-                  <div className="mt-1 text-base text-gray-900 space-y-1">
-                    {company.street_address && (
-                      <p className="font-medium">{company.street_address}</p>
-                    )}
-                    <div className="flex flex-wrap gap-1">
-                      {company.city && <span>{company.city}</span>}
-                      {company.postal_code && <span>{company.postal_code}</span>}
-                    </div>
-                    {company.country && (
-                      <p className="text-gray-700">{company.country}</p>
-                    )}
-                  </div>
+                  <p className="text-base font-medium text-gray-900 break-words mt-1">
+                    {formatAddress()}
+                  </p>
                 </div>
               </div>
             )}
