@@ -60,7 +60,7 @@ export const CreateCompanyDialog = ({
   const [currentStep, setCurrentStep] = useState(0); // Start at 0 for method selection
   const [creationMethod, setCreationMethod] = useState<CreationMethod | null>(null);
   const [selectedBrregCompany, setSelectedBrregCompany] = useState<BrregCompany | null>(null);
-  const totalSteps = 3; // Method selection + Basic info + Website
+  const totalSteps = 4; // Method selection + Search/Basic info + Website + Complete
   
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
@@ -111,21 +111,22 @@ export const CreateCompanyDialog = ({
   const handleMethodSelect = (method: CreationMethod) => {
     setCreationMethod(method);
     if (method === 'manual') {
-      setCurrentStep(2); // Skip search stage, go directly to basic info
+      setCurrentStep(2); // Go to basic info stage for manual creation
     } else {
-      setCurrentStep(1); // Go to search stage
+      setCurrentStep(1); // Go to search stage for Brunnøysund
     }
   };
 
   const handleBrregCompanySelect = (company: BrregCompany) => {
     setSelectedBrregCompany(company);
-    setCurrentStep(2); // Go to basic info stage
+    setCurrentStep(3); // Go to website stage
   };
 
   const getStageTitle = () => {
     if (currentStep === 0) return 'Creation Method';
     if (currentStep === 1) return 'Search Company Registry';
-    if (currentStep === 2) return 'Website Information';
+    if (currentStep === 2) return 'Basic Information';
+    if (currentStep === 3) return 'Website Information';
     return 'Create Subsidiary';
   };
   
@@ -188,14 +189,21 @@ export const CreateCompanyDialog = ({
   };
 
   const handleNext = () => {
-    if (currentStep < totalSteps - 1) {
+    if (currentStep === 2 && creationMethod === 'manual') {
+      // Go to website stage after basic info for manual creation
+      setCurrentStep(3);
+    } else if (currentStep < totalSteps - 1) {
       goToNextStep();
     }
   };
 
   const handleBack = () => {
-    if (currentStep === 2 && creationMethod === 'brunnøysund') {
+    if (currentStep === 3 && creationMethod === 'brunnøysund') {
       setCurrentStep(1); // Go back to search
+    } else if (currentStep === 3 && creationMethod === 'manual') {
+      setCurrentStep(2); // Go back to basic info
+    } else if (currentStep === 2 && creationMethod === 'manual') {
+      setCurrentStep(0); // Go back to method selection
     } else if (currentStep > 0) {
       setCurrentStep(0); // Go back to method selection
     }
@@ -210,8 +218,46 @@ export const CreateCompanyDialog = ({
   const renderSearchStep = () => (
     <BrunnøysundSearchStage onCompanySelect={handleBrregCompanySelect} />
   );
+
+  // Render basic info step (step 2) - for manual creation
+  const renderBasicInfoStep = () => (
+    <>
+      <div className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Company Name *</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter company name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="organization_number"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Organization Number</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter organization number (optional)" {...field} />
+              </FormControl>
+              <FormDescription>
+                Optional organization number for the subsidiary
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </>
+  );
   
-  // Render website step (step 2)
+  // Render website step (step 3)
   const renderWebsiteStep = () => (
     <>
       <div className="flex items-start gap-4 mb-4">
@@ -265,6 +311,9 @@ export const CreateCompanyDialog = ({
       return renderSearchStep();
     }
     if (currentStep === 2) {
+      return renderBasicInfoStep();
+    }
+    if (currentStep === 3) {
       return renderWebsiteStep();
     }
     return null;
@@ -311,7 +360,7 @@ export const CreateCompanyDialog = ({
                 </div>
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                  {currentStep === totalSteps - 1 ? (
+                  {currentStep === 3 ? (
                     <Button 
                       type="submit"
                       className="flex items-center gap-1"
