@@ -180,7 +180,10 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
                     <div className="relative">
                       <Avatar className="h-14 w-14 ring-4 ring-white shadow-lg">
                         <AvatarImage src={contact.avatar_url || ''} alt={`${contact.first_name} ${contact.last_name}`} />
-                        <AvatarFallback className="bg-green-100 text-green-700 font-semibold text-lg">
+                        <AvatarFallback 
+                          className="font-semibold text-lg"
+                          style={{ backgroundColor: '#E8EEEE', color: '#004843' }}
+                        >
                           {(contact.first_name?.[0] || '')}{(contact.last_name?.[0] || '')}
                         </AvatarFallback>
                       </Avatar>
