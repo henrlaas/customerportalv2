@@ -28,6 +28,9 @@ import {
 import { ProgressStepper } from '@/components/ui/progress-stepper';
 import { ChevronLeft, ChevronRight, Globe, Building } from 'lucide-react';
 import type { Company } from '@/types/company';
+import { CreationMethodStage } from './MultiStageCompanyDialog/CreationMethodStage';
+import { BrunnøysundSearchStage } from './MultiStageCompanyDialog/BrunnøysundSearchStage';
+import type { CreationMethod, BrregCompany } from './MultiStageCompanyDialog/types';
 
 // Form schema - simplified for subsidiaries
 const companyFormSchema = z.object({
@@ -54,8 +57,10 @@ export const CreateCompanyDialog = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [logo, setLogo] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 2;
+  const [currentStep, setCurrentStep] = useState(0); // Start at 0 for method selection
+  const [creationMethod, setCreationMethod] = useState<CreationMethod | null>(null);
+  const [selectedBrregCompany, setSelectedBrregCompany] = useState<BrregCompany | null>(null);
+  const totalSteps = 3; // Method selection + Basic info + Website
   
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
@@ -85,14 +90,43 @@ export const CreateCompanyDialog = ({
       fetchLogo();
     }
   }, [website]);
+
+  // Prefill form when Brunnøysund company is selected
+  useEffect(() => {
+    if (selectedBrregCompany) {
+      form.setValue('name', selectedBrregCompany.navn);
+      form.setValue('organization_number', selectedBrregCompany.organisasjonsnummer);
+    }
+  }, [selectedBrregCompany, form]);
   
   // Handle steps navigation
   const goToNextStep = () => {
-    setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    setCurrentStep(prev => Math.min(prev + 1, totalSteps - 1));
   };
 
   const goToPreviousStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    setCurrentStep(prev => Math.max(prev - 1, 0));
+  };
+
+  const handleMethodSelect = (method: CreationMethod) => {
+    setCreationMethod(method);
+    if (method === 'manual') {
+      setCurrentStep(2); // Skip search stage, go directly to basic info
+    } else {
+      setCurrentStep(1); // Go to search stage
+    }
+  };
+
+  const handleBrregCompanySelect = (company: BrregCompany) => {
+    setSelectedBrregCompany(company);
+    setCurrentStep(2); // Go to basic info stage
+  };
+
+  const getStageTitle = () => {
+    if (currentStep === 0) return 'Creation Method';
+    if (currentStep === 1) return 'Search Company Registry';
+    if (currentStep === 2) return 'Website Information';
+    return 'Create Subsidiary';
   };
   
   // Create company mutation
@@ -100,7 +134,7 @@ export const CreateCompanyDialog = ({
     mutationFn: (values: CompanyFormValues) => {
       // Create a company object with copied values from parent
       const companyData = {
-        name: values.name, // Make sure name is explicitly included
+        name: values.name,
         organization_number: values.organization_number,
         website: values.website,
         parent_id: parentId,
@@ -135,7 +169,9 @@ export const CreateCompanyDialog = ({
       }
       form.reset();
       setLogo(null);
-      setCurrentStep(1);
+      setCurrentStep(0);
+      setCreationMethod(null);
+      setSelectedBrregCompany(null);
       onClose();
     },
     onError: (error: Error) => {
@@ -148,17 +184,37 @@ export const CreateCompanyDialog = ({
   });
   
   const onSubmit = (values: CompanyFormValues) => {
-    if (currentStep < totalSteps) {
-      goToNextStep();
-      return;
-    }
     createCompanyMutation.mutate(values);
   };
+
+  const handleNext = () => {
+    if (currentStep < totalSteps - 1) {
+      goToNextStep();
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep === 2 && creationMethod === 'brunnøysund') {
+      setCurrentStep(1); // Go back to search
+    } else if (currentStep > 0) {
+      setCurrentStep(0); // Go back to method selection
+    }
+  };
   
-  // Render basic info step (step 1)
-  const renderBasicInfoStep = () => (
+  // Render method selection step (step 0)
+  const renderMethodSelectionStep = () => (
+    <CreationMethodStage onSelect={handleMethodSelect} />
+  );
+
+  // Render search step (step 1)
+  const renderSearchStep = () => (
+    <BrunnøysundSearchStage onCompanySelect={handleBrregCompanySelect} />
+  );
+  
+  // Render website step (step 2)
+  const renderWebsiteStep = () => (
     <>
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-4 mb-4">
         <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
           {logo ? (
             <img 
@@ -171,44 +227,15 @@ export const CreateCompanyDialog = ({
           )}
         </div>
         <div className="flex-1">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Company Name*</FormLabel>
-                <FormControl>
-                  <Input placeholder="Subsidiary Name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="text-lg font-semibold">{form.watch('name')}</div>
+          {form.watch('organization_number') && (
+            <div className="text-sm text-gray-600">
+              Org. nr: {form.watch('organization_number')}
+            </div>
+          )}
         </div>
       </div>
-      
-      <FormField
-        control={form.control}
-        name="organization_number"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Organization Number</FormLabel>
-            <FormControl>
-              <Input placeholder="123456-7890" {...field} />
-            </FormControl>
-            <FormDescription>
-              Official registration number of the subsidiary
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </>
-  );
-  
-  // Render website step (step 2)
-  const renderWebsiteStep = () => (
-    <>
+
       <FormField
         control={form.control}
         name="website"
@@ -229,11 +256,28 @@ export const CreateCompanyDialog = ({
       />
     </>
   );
+
+  const renderStageContent = () => {
+    if (currentStep === 0) {
+      return renderMethodSelectionStep();
+    }
+    if (currentStep === 1) {
+      return renderSearchStep();
+    }
+    if (currentStep === 2) {
+      return renderWebsiteStep();
+    }
+    return null;
+  };
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) {
-        setCurrentStep(1); // Reset to first step when closing
+        setCurrentStep(0);
+        setCreationMethod(null);
+        setSelectedBrregCompany(null);
+        setLogo(null);
+        form.reset();
       }
       onClose();
     }}>
@@ -241,52 +285,57 @@ export const CreateCompanyDialog = ({
         <DialogHeader>
           <DialogTitle>Add Subsidiary</DialogTitle>
           <DialogDescription>
-            Step {currentStep} of {totalSteps}: {
-              currentStep === 1 ? 'Basic Information' : 'Website'
-            }
+            {getStageTitle()}
           </DialogDescription>
         </DialogHeader>
         
-        <ProgressStepper currentStep={currentStep} totalSteps={totalSteps} />
+        {currentStep > 0 && <ProgressStepper currentStep={currentStep} totalSteps={totalSteps} />}
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {currentStep === 1 && renderBasicInfoStep()}
-            {currentStep === 2 && renderWebsiteStep()}
+            {renderStageContent()}
             
-            <DialogFooter className="flex justify-between pt-4 sm:justify-between">
-              <div>
-                {currentStep > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={goToPreviousStep}
-                    className="flex items-center gap-1"
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Back
-                  </Button>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <Button 
-                  type="submit"
-                  className="flex items-center gap-1"
-                  disabled={createCompanyMutation.isPending}
-                >
-                  {createCompanyMutation.isPending 
-                    ? 'Creating...' 
-                    : currentStep === totalSteps 
-                      ? 'Create Subsidiary' 
-                      : (
-                        <>
-                          Next <ChevronRight className="h-4 w-4" />
-                        </>
-                      )
-                  }
-                </Button>
-              </div>
-            </DialogFooter>
+            {currentStep > 0 && (
+              <DialogFooter className="flex justify-between pt-4 sm:justify-between">
+                <div>
+                  {currentStep > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleBack}
+                      className="flex items-center gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" /> Back
+                    </Button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                  {currentStep === totalSteps - 1 ? (
+                    <Button 
+                      type="submit"
+                      className="flex items-center gap-1"
+                      disabled={createCompanyMutation.isPending}
+                    >
+                      {createCompanyMutation.isPending 
+                        ? 'Creating...' 
+                        : 'Create Subsidiary'
+                      }
+                    </Button>
+                  ) : (
+                    currentStep >= 2 && (
+                      <Button 
+                        type="button"
+                        onClick={handleNext}
+                        className="flex items-center gap-1"
+                      >
+                        Next <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    )
+                  )}
+                </div>
+              </DialogFooter>
+            )}
           </form>
         </Form>
       </DialogContent>
