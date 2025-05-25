@@ -26,13 +26,13 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 
-// Form schema
+// Form schema - all fields are now required
 const contactFormSchema = z.object({
   firstName: z.string().min(1, { message: 'First name is required' }),
   lastName: z.string().min(1, { message: 'Last name is required' }),
   email: z.string().email({ message: 'Valid email is required' }),
-  phoneNumber: z.string().optional(),
-  position: z.string().optional(),
+  phoneNumber: z.string().min(1, { message: 'Phone number is required' }),
+  position: z.string().min(1, { message: 'Position is required' }),
 });
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
@@ -129,9 +129,9 @@ export const CreateContactDialog = ({
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel>First Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="John" {...field} />
+                    <Input placeholder="John" {...field} required />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -143,9 +143,9 @@ export const CreateContactDialog = ({
               name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Last Name</FormLabel>
+                  <FormLabel>Last Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Doe" {...field} />
+                    <Input placeholder="Doe" {...field} required />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -157,9 +157,9 @@ export const CreateContactDialog = ({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email *</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="john.doe@example.com" {...field} />
+                    <Input type="email" placeholder="john.doe@example.com" {...field} required />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -171,7 +171,7 @@ export const CreateContactDialog = ({
               name="phoneNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel>Phone Number *</FormLabel>
                   <FormControl>
                     <PhoneInput
                       country={'no'}
@@ -219,9 +219,9 @@ export const CreateContactDialog = ({
               name="position"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Position</FormLabel>
+                  <FormLabel>Position *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. CEO" {...field} />
+                    <Input placeholder="e.g. CEO" {...field} required />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
