@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -104,17 +103,17 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold text-gray-900">
             Company Contacts
           </h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-gray-600 mt-1">
             {contacts.length} {contacts.length === 1 ? 'contact' : 'contacts'} in this company
           </p>
         </div>
         {canModify && (
           <Button 
             onClick={() => setIsAddingContact(true)}
-            className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
           >
             <UserPlus className="mr-2 h-4 w-4" />
             Add Contact
@@ -175,7 +174,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
                     <div className="relative">
                       <Avatar className="h-14 w-14 ring-4 ring-white shadow-lg">
                         <AvatarImage src={contact.avatar_url || ''} alt={`${contact.first_name} ${contact.last_name}`} />
-                        <AvatarFallback className="bg-gradient-to-br from-primary to-blue-600 text-white font-semibold text-lg">
+                        <AvatarFallback className="bg-green-100 text-green-700 font-semibold text-lg">
                           {(contact.first_name?.[0] || '')}{(contact.last_name?.[0] || '')}
                         </AvatarFallback>
                       </Avatar>
