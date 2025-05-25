@@ -45,7 +45,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
-import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './MultiStageCompanyDialog/types';
+import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './types';
 import type { Company } from '@/types/company';
 import { useAuth } from '@/contexts/AuthContext';
 import { PhoneInput } from '@/components/ui/phone-input';
