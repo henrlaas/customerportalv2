@@ -165,8 +165,6 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {contacts.map((contact) => (
             <Card key={contact.id} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-md bg-gradient-to-br from-white to-gray-50/50 overflow-hidden">
-              {/* Decorative header gradient */}
-              <div className="h-2 bg-gradient-to-r from-primary via-blue-500 to-purple-500"></div>
               
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
