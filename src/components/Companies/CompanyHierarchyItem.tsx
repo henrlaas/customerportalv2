@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -44,6 +45,7 @@ import {
 } from '@/components/ui/card';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { DeleteCompanyDialog } from './DeleteCompanyDialog';
+import { EditSubsidiaryDialog } from './EditSubsidiaryDialog';
 
 interface CompanyHierarchyItemProps {
   company: Company;
@@ -64,6 +66,7 @@ export const CompanyHierarchyItem = ({
 }: CompanyHierarchyItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const { isAdmin, isEmployee } = useAuth();
   const { toast } = useToast();
@@ -135,12 +138,10 @@ export const CompanyHierarchyItem = ({
                 <DropdownMenuContent align="end" className="w-48 z-50 bg-white">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {onEditCompany && (
-                    <DropdownMenuItem onClick={() => onEditCompany()}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      <span>Edit</span>
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    <span>Edit</span>
+                  </DropdownMenuItem>
                   <DropdownMenuItem 
                     className="text-red-600 focus:text-red-600" 
                     onClick={() => setIsDeleteDialogOpen(true)}
@@ -233,6 +234,12 @@ export const CompanyHierarchyItem = ({
         onConfirm={handleDeleteCompany}
         company={company}
         isDeleting={deleteCompanyMutation.isPending}
+      />
+
+      <EditSubsidiaryDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        subsidiary={company}
       />
     </>
   );
