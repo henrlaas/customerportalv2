@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { companyService } from '@/services/companyService';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -73,40 +72,31 @@ export const CreateContactDialog = ({
       
       console.log('Starting user invitation process for:', values.email);
       
-      // Step 1: Invite user through Supabase Auth
-      const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(values.email);
+      // Step 1: Invite user through edge function
+      const { data: inviteData, error: inviteError } = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'invite',
+          email: values.email,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          phoneNumber: values.phoneNumber,
+          role: 'client',
+          language: 'en'
+        }
+      });
       
       if (inviteError) {
         console.error('Error inviting user:', inviteError);
         throw new Error(`Failed to invite user: ${inviteError.message}`);
       }
       
-      if (!inviteData.user?.id) {
+      if (!inviteData?.user?.id) {
         throw new Error('No user ID returned from invitation');
       }
       
       console.log('User invited successfully, user ID:', inviteData.user.id);
       
-      // Step 2: Create profile record
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: inviteData.user.id,
-          first_name: values.firstName,
-          last_name: values.lastName,
-          phone_number: values.phoneNumber || null,
-          role: 'client',
-          language: 'en'
-        });
-      
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
-        throw new Error(`Failed to create user profile: ${profileError.message}`);
-      }
-      
-      console.log('User profile created successfully');
-      
-      // Step 3: Create company contact record
+      // Step 2: Create company contact record
       const { error: contactError } = await supabase
         .from('company_contacts')
         .insert({
