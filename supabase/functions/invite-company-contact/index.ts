@@ -92,10 +92,10 @@ serve(async (req) => {
     const userId = inviteData.user.id;
     console.log(`User invited successfully, user ID: ${userId}`);
 
-    // Create profile record using upsert to handle potential trigger conflicts
+    // Create profile record - insert only, no updates
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .upsert({
+      .insert({
         id: userId,
         first_name: firstName,
         last_name: lastName,
@@ -103,8 +103,6 @@ serve(async (req) => {
         role: 'client',
         language: 'en',
         avatar_url: null
-      }, {
-        onConflict: 'id'
       });
 
     if (profileError) {
@@ -120,7 +118,7 @@ serve(async (req) => {
 
     console.log(`Profile created successfully for user: ${userId}`);
 
-    // Create company contact record
+    // Create company contact record - insert only, no updates
     const { error: contactError } = await supabaseAdmin
       .from('company_contacts')
       .insert({
