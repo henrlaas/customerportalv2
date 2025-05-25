@@ -1,5 +1,3 @@
-
-// ----- Imports
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -38,6 +36,8 @@ export function MultiStageCompanyDialog({
   parentId,
   defaultValues,
   dealId,
+  isEditMode = false,
+  companyId,
 }: MultiStageCompanyDialogProps) {
   const [stage, setStage] = useState(0); // Start at 0 for method selection
   const [logo, setLogo] = useState<string | null>(null);
@@ -123,6 +123,11 @@ export function MultiStageCompanyDialog({
         name: values.name,
         country: values.country || null,
       };
+      
+      if (isEditMode && companyId) {
+        return await companyService.updateCompany(companyId, companyData);
+      }
+      
       if (dealId) {
         return await companyService.convertTempCompany(companyData, dealId);
       }
@@ -130,8 +135,8 @@ export function MultiStageCompanyDialog({
     },
     onSuccess: () => {
       toast({
-        title: 'Company created',
-        description: 'The company has been created successfully',
+        title: isEditMode ? 'Company updated' : 'Company created',
+        description: `The company has been ${isEditMode ? 'updated' : 'created'} successfully`,
       });
       if (dealId) {
         queryClient.invalidateQueries({ queryKey: ['deals'] });
@@ -141,6 +146,9 @@ export function MultiStageCompanyDialog({
         queryClient.invalidateQueries({ queryKey: ['childCompanies', parentId] });
       } else {
         queryClient.invalidateQueries({ queryKey: ['companies'] });
+      }
+      if (isEditMode && companyId) {
+        queryClient.invalidateQueries({ queryKey: ['company', companyId] });
       }
       form.reset();
       setStage(0);
@@ -152,7 +160,7 @@ export function MultiStageCompanyDialog({
     onError: (error: Error) => {
       toast({
         title: 'Error',
-        description: `Failed to create company: ${error.message}`,
+        description: `Failed to ${isEditMode ? 'update' : 'create'} company: ${error.message}`,
         variant: 'destructive',
       });
     },
@@ -192,10 +200,24 @@ export function MultiStageCompanyDialog({
     if (stage === 2) return 'Basic Information';
     if (stage === 3) return 'Contact Details';
     if (stage === 4) return 'Address & Settings';
-    return 'Create Company';
+    return isEditMode ? 'Update Company' : 'Create Company';
   };
 
   const renderStageContent = () => {
+    // In edit mode, skip the creation method selection and search stages
+    if (isEditMode) {
+      if (stage === 0) {
+        return <BasicInfoStage form={form} logo={logo} />;
+      }
+      if (stage === 1) {
+        return <ContactDetailsStage form={form} />;
+      }
+      if (stage === 2) {
+        return <AddressAndSettingsStage form={form} users={users} hasMarketingType={hasMarketingType} />;
+      }
+      return null;
+    }
+
     if (stage === 0) {
       return <CreationMethodStage onSelect={handleMethodSelect} />;
     }
@@ -214,26 +236,30 @@ export function MultiStageCompanyDialog({
     return null;
   };
 
+  // Adjust total stages for edit mode
+  const totalStagesForMode = isEditMode ? 3 : totalStages;
+  const currentStageForProgress = isEditMode ? stage + 1 : stage;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{parentId ? 'Add Subsidiary' : 'New Company'}</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Company' : (parentId ? 'Add Subsidiary' : 'New Company')}</DialogTitle>
           <DialogDescription>
             {getStageTitle()}
           </DialogDescription>
         </DialogHeader>
 
-        {stage > 0 && <ProgressStepper currentStep={stage} totalSteps={totalStages} />}
+        {(stage > 0 || isEditMode) && <ProgressStepper currentStep={currentStageForProgress} totalSteps={totalStagesForMode} />}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {renderStageContent()}
 
-            {stage > 0 && (
+            {(stage > 0 || isEditMode) && (
               <DialogFooter className="flex justify-between pt-4 sm:justify-between">
                 <div>
-                  {stage > 0 && (
+                  {((stage > 0 && !isEditMode) || (isEditMode && stage > 0)) && (
                     <Button
                       type="button"
                       variant="outline"
@@ -248,19 +274,19 @@ export function MultiStageCompanyDialog({
                   <Button type="button" variant="outline" onClick={onClose}>
                     Cancel
                   </Button>
-                  {stage >= 2 && (
+                  {((stage >= 2 && !isEditMode) || isEditMode) && (
                     <Button
                       type="submit"
                       className={cn(
                         "flex items-center gap-1 bg-black hover:bg-black/90",
-                        stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
+                        (stage === totalStages - 1 && !isEditMode) || (isEditMode && stage === totalStagesForMode - 1) ? "" : "bg-black hover:bg-black/90"
                       )}
                       disabled={createCompanyMutation.isPending}
                     >
                       {createCompanyMutation.isPending
-                        ? 'Creating...'
-                        : stage === totalStages - 1
-                          ? 'Create Company'
+                        ? (isEditMode ? 'Updating...' : 'Creating...')
+                        : ((stage === totalStages - 1 && !isEditMode) || (isEditMode && stage === totalStagesForMode - 1))
+                          ? (isEditMode ? 'Update Company' : 'Create Company')
                           : (
                             <>
                               Next <ChevronRight className="h-4 w-4" />
