@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -15,7 +15,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import {
   Dialog,
@@ -23,7 +22,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -70,66 +68,39 @@ export const CreateContactDialog = ({
     try {
       setIsSubmitting(true);
       
-      console.log('Starting user invitation process for:', values.email);
+      console.log('Inviting company contact:', values.email);
       
-      // Step 1: Invite user through edge function
-      const { data: inviteData, error: inviteError } = await supabase.functions.invoke('user-management', {
+      const { data, error } = await supabase.functions.invoke('invite-company-contact', {
         body: {
-          action: 'invite',
           email: values.email,
           firstName: values.firstName,
           lastName: values.lastName,
           phoneNumber: values.phoneNumber,
-          role: 'client',
-          language: 'en'
+          position: values.position,
+          companyId: companyId
         }
       });
       
-      if (inviteError) {
-        console.error('Error inviting user:', inviteError);
-        throw new Error(`Failed to invite user: ${inviteError.message}`);
+      if (error) {
+        console.error('Error inviting contact:', error);
+        throw new Error(`Failed to invite contact: ${error.message}`);
       }
       
-      if (!inviteData?.user?.id) {
-        throw new Error('No user ID returned from invitation');
-      }
+      console.log('Contact invited successfully:', data);
       
-      console.log('User invited successfully, user ID:', inviteData.user.id);
-      
-      // Step 2: Create company contact record
-      const { error: contactError } = await supabase
-        .from('company_contacts')
-        .insert({
-          company_id: companyId,
-          user_id: inviteData.user.id,
-          position: values.position || null,
-          is_primary: false,
-          is_admin: false
-        });
-      
-      if (contactError) {
-        console.error('Error creating company contact:', contactError);
-        throw new Error(`Failed to create company contact: ${contactError.message}`);
-      }
-      
-      console.log('Company contact created successfully');
-      
-      // Success
       toast({
         title: 'Contact invited successfully',
         description: `${values.firstName} ${values.lastName} has been invited and will receive an email to set their password.`,
       });
       
-      // Reset form and close dialog
       form.reset();
       onClose();
       
-      // Notify parent component and refresh data
       if (onSuccess) onSuccess();
       queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] });
       
     } catch (error) {
-      console.error('Error in contact creation process:', error);
+      console.error('Error in contact invitation process:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'An unknown error occurred',
