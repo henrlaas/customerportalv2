@@ -1,6 +1,7 @@
 
 import { MapPin, User } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
+import { useState } from 'react';
 import { 
   FormField,
   FormItem,
@@ -13,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { CompanyFormValues } from './types';
 import { AdvisorSelect } from './AdvisorSelect';
+import CountrySelector from '@/components/ui/CountrySelector/selector';
+import { COUNTRIES } from '@/components/ui/CountrySelector/countries';
 import React from 'react';
 
 interface CompanyAddressSettingsFormProps {
@@ -26,10 +29,21 @@ export const CompanyAddressSettingsForm = ({
   users, 
   hasMarketingType 
 }: CompanyAddressSettingsFormProps) => {
+  const [countryOpen, setCountryOpen] = useState(false);
+  
+  // Find Norway as default country
+  const norwayCountry = COUNTRIES.find(country => country.value === 'NO') || COUNTRIES[0];
+  
   // Set Norway as default country when form loads
   React.useEffect(() => {
-    form.setValue('country', 'Norge');
+    if (!form.getValues('country')) {
+      form.setValue('country', 'NO');
+    }
   }, []);
+  
+  // Watch for selected country and find the country object
+  const selectedCountryCode = form.watch('country');
+  const selectedCountry = COUNTRIES.find(country => country.value === selectedCountryCode) || norwayCountry;
 
   return (
     <>
@@ -87,9 +101,16 @@ export const CompanyAddressSettingsForm = ({
               <FormItem>
                 <FormLabel>Country</FormLabel>
                 <FormControl>
-                  <div className="flex items-center gap-2 h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
-                    🇳🇴 Norge
-                  </div>
+                  <CountrySelector
+                    id="country-selector"
+                    open={countryOpen}
+                    onToggle={() => setCountryOpen(!countryOpen)}
+                    selectedValue={selectedCountry}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      setCountryOpen(false);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -162,10 +183,7 @@ export const CompanyAddressSettingsForm = ({
                 </FormDescription>
               </div>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
             </FormItem>
           )}
@@ -183,10 +201,7 @@ export const CompanyAddressSettingsForm = ({
                 </FormDescription>
               </div>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
             </FormItem>
           )}
