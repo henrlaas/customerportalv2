@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -8,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import {
   Form,
   FormControl,
@@ -23,11 +25,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-// Form schema
+// Form schema - removed is_admin field
 const contactFormSchema = z.object({
   position: z.string().optional(),
   is_primary: z.boolean().default(false),
-  is_admin: z.boolean().default(false),
 });
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
@@ -51,7 +52,6 @@ export const EditContactDialog = ({
     defaultValues: {
       position: '',
       is_primary: false,
-      is_admin: false,
     },
   });
   
@@ -61,12 +61,11 @@ export const EditContactDialog = ({
       form.reset({
         position: contact.position || '',
         is_primary: contact.is_primary || false,
-        is_admin: contact.is_admin || false,
       });
     }
   }, [contact, form]);
   
-  // Update contact mutation - use updateContact instead of updateCompanyContact
+  // Update contact mutation
   const updateContactMutation = useMutation({
     mutationFn: (values: ContactFormValues) => companyService.updateContact(contact?.id as string, values),
     onSuccess: () => {
@@ -126,31 +125,9 @@ export const EditContactDialog = ({
                     <FormLabel>Primary Contact</FormLabel>
                   </div>
                   <FormControl>
-                    <input
-                      type="checkbox"
+                    <Switch
                       checked={field.value}
-                      onChange={field.onChange}
-                      className="h-4 w-4 rounded-sm border border-primary text-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="is_admin"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel>Admin Contact</FormLabel>
-                  </div>
-                  <FormControl>
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={field.onChange}
-                      className="h-4 w-4 rounded-sm border border-primary text-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+                      onCheckedChange={field.onChange}
                     />
                   </FormControl>
                 </FormItem>
