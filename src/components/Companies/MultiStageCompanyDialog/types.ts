@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import type { Company } from '@/types/company';
 
@@ -31,10 +32,9 @@ export interface MultiStageCompanyDialogProps {
   isOpen: boolean;
   onClose: () => void;
   parentId?: string;
+  parentCompany?: Company;
   defaultValues?: Partial<CompanyFormValues>;
   dealId?: string;
-  isEditMode?: boolean;
-  companyId?: string;
 }
 
 // Brunnøysund API types
