@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -214,7 +213,7 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
                   )}
                 </div>
                 
-                <div className="flex flex-wrap gap-2 mt-4">
+                <div className="flex flex-wrap gap-2 mt-6">
                   {contact.is_primary && (
                     <Badge 
                       variant="outline" 
