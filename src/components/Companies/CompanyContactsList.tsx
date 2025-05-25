@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -22,7 +21,8 @@ import {
   Shield,
   Phone,
   MoreVertical,
-  Calendar
+  Calendar,
+  Clock
 } from 'lucide-react';
 import { CreateContactDialog } from './CreateContactDialog';
 import { EditContactDialog } from './EditContactDialog';
@@ -228,6 +228,14 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
                       className="border-blue-200 bg-blue-50 text-blue-700 font-medium px-3 py-1"
                     >
                       <Shield className="h-3 w-3 mr-1" /> Admin
+                    </Badge>
+                  )}
+                  {!contact.is_verified && (
+                    <Badge 
+                      variant="outline" 
+                      className="border-orange-200 bg-orange-50 text-orange-700 font-medium px-3 py-1"
+                    >
+                      <Clock className="h-3 w-3 mr-1" /> Waiting for verification
                     </Badge>
                   )}
                 </div>

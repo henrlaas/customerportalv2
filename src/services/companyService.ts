@@ -132,6 +132,34 @@ const companyQueryService = {
         }
       }
 
+      // Get verification status using the new function
+      let verificationMap: Record<string, { is_verified: boolean; confirmed_at: string | null }> = {};
+      if (userIds.length > 0) {
+        try {
+          console.log('Fetching verification status for user IDs:', userIds);
+          const { data: verificationData, error: verificationError } = await supabase.rpc(
+            'get_user_verification_status',
+            { user_ids: userIds }
+          );
+          
+          if (verificationError) {
+            console.error('Error fetching verification status:', verificationError);
+          } else if (verificationData) {
+            console.log('Verification data:', verificationData);
+            verificationMap = verificationData.reduce((acc: Record<string, any>, item: any) => {
+              acc[item.user_id] = {
+                is_verified: item.is_verified,
+                confirmed_at: item.confirmed_at
+              };
+              return acc;
+            }, {});
+            console.log('Verification map:', verificationMap);
+          }
+        } catch (error) {
+          console.error('Error calling get_user_verification_status function:', error);
+        }
+      }
+
       // Combine the data
       const combinedData = contactsData.map(contact => ({
         ...contact,
@@ -140,6 +168,8 @@ const companyQueryService = {
         last_name: profilesMap[contact.user_id]?.last_name || '',
         avatar_url: profilesMap[contact.user_id]?.avatar_url || null,
         phone_number: profilesMap[contact.user_id]?.phone_number || null,
+        is_verified: verificationMap[contact.user_id]?.is_verified || false,
+        confirmed_at: verificationMap[contact.user_id]?.confirmed_at || null,
       }));
 
       console.log('Final combined contact data:', combinedData);

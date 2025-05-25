@@ -1451,6 +1451,14 @@ export type Database = {
         Args: { user_id: string }
         Returns: string
       }
+      get_user_verification_status: {
+        Args: { user_ids: string[] }
+        Returns: {
+          user_id: string
+          is_verified: boolean
+          confirmed_at: string
+        }[]
+      }
       get_users_email: {
         Args: { user_ids: string[] }
         Returns: {
