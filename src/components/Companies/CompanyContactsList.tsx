@@ -22,7 +22,8 @@ import {
   Phone,
   MoreVertical,
   Calendar,
-  Clock
+  Clock,
+  KeyRound
 } from 'lucide-react';
 import { CreateContactDialog } from './CreateContactDialog';
 import { EditContactDialog } from './EditContactDialog';
@@ -34,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { userService } from '@/services/userService';
 
 type ContactsListProps = {
   companyId: string;
@@ -84,6 +86,32 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   const handleDelete = (contact: CompanyContact) => {
     setSelectedContact(contact);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handlePasswordReset = async (contact: CompanyContact) => {
+    if (!contact.email) {
+      toast({
+        title: "Error",
+        description: "Contact does not have an email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await userService.resetPassword(contact.email);
+      toast({
+        title: "Password Reset Sent",
+        description: `Password reset email has been sent to ${contact.email}`,
+      });
+    } catch (error) {
+      console.error('Error sending password reset:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send password reset email",
+        variant: "destructive",
+      });
+    }
   };
   
   const canModify = isAdmin || isEmployee;
@@ -198,9 +226,16 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem onClick={() => handleEdit(contact)} className="cursor-pointer">
                           <Edit className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handlePasswordReset(contact)} 
+                          className="cursor-pointer"
+                          disabled={!contact.email}
+                        >
+                          <KeyRound className="mr-2 h-4 w-4" /> Password Reset
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           className="text-destructive cursor-pointer" 
