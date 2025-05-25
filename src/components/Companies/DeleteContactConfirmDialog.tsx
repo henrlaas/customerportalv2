@@ -83,6 +83,10 @@ export const DeleteContactConfirmDialog = ({
     onClose();
   };
 
+  const handleCheckboxChange = (checked: boolean | "indeterminate") => {
+    setConfirmChecked(checked === true);
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={handleClose}>
       <AlertDialogContent>
@@ -112,7 +116,7 @@ export const DeleteContactConfirmDialog = ({
               <Checkbox
                 id="confirm-delete"
                 checked={confirmChecked}
-                onCheckedChange={setConfirmChecked}
+                onCheckedChange={handleCheckboxChange}
               />
               <label
                 htmlFor="confirm-delete"
