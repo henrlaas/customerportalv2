@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EditCompanyDialog } from '@/components/Companies/EditCompanyDialog';
+import { DeleteCompanyDialog } from '@/components/Companies/DeleteCompanyDialog';
 import { companyService } from '@/services/companyService';
 import { Company } from '@/types/company';
 
@@ -24,6 +25,7 @@ interface CompanyDetailHeaderProps {
 
 export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin, isEmployee } = useAuth();
@@ -61,10 +63,8 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
   };
   
   // Handle delete confirmation
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this company? This will also delete all associated data.')) {
-      deleteCompanyMutation.mutate(id);
-    }
+  const handleDeleteConfirm = () => {
+    deleteCompanyMutation.mutate(company.id);
   };
   
   // Check if user can modify companies (admin or employee)
@@ -119,7 +119,6 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
                     Web
                   </Badge>
                 )}
-                {/* Removed the redundant Partner badge here */}
               </div>
             </div>
             {company.organization_number && (
@@ -140,8 +139,9 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
               Edit
             </Button>
             <Button 
-              variant="destructive" 
-              onClick={() => handleDelete(company.id)}
+              variant="outline" 
+              onClick={() => setIsDeleting(true)}
+              className="border-red-300 text-red-600 hover:bg-red-50"
             >
               <Trash className="mr-2 h-4 w-4" />
               Delete
@@ -155,6 +155,15 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
         isOpen={isEditing}
         onClose={() => setIsEditing(false)}
         companyId={company.id}
+      />
+
+      {/* Delete Company Dialog */}
+      <DeleteCompanyDialog
+        isOpen={isDeleting}
+        onClose={() => setIsDeleting(false)}
+        onConfirm={handleDeleteConfirm}
+        company={company}
+        isDeleting={deleteCompanyMutation.isPending}
       />
     </>
   );
