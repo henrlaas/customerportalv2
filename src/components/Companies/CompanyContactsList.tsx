@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -18,7 +19,8 @@ import {
   UserPlus,
   Mail,
   Star,
-  Shield
+  Shield,
+  Phone
 } from 'lucide-react';
 import { CreateContactDialog } from './CreateContactDialog';
 import { EditContactDialog } from './EditContactDialog';
@@ -95,14 +97,15 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
   
   const canModify = isAdmin || isEmployee;
   
-  // ... keep the rest of the component code unchanged
   return (
-    // ... keep existing JSX code
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Company Contacts</h2>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Company Contacts</h2>
+          <p className="text-gray-600 mt-1">Manage contacts for this company</p>
+        </div>
         {canModify && (
-          <Button onClick={() => setIsAddingContact(true)}>
+          <Button onClick={() => setIsAddingContact(true)} className="bg-blue-600 hover:bg-blue-700">
             <UserPlus className="mr-2 h-4 w-4" />
             Add Contact
           </Button>
@@ -110,86 +113,136 @@ export const CompanyContactsList = ({ companyId }: ContactsListProps) => {
       </div>
       
       {isLoading ? (
-        <div className="flex justify-center p-8">
+        <div className="flex justify-center p-12">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
       ) : isError ? (
-        <div className="text-center p-8 border rounded-lg bg-muted/10 text-destructive">
-          <p>Error loading contacts: {error instanceof Error ? error.message : 'Unknown error'}</p>
+        <div className="text-center p-12 border-2 border-dashed border-red-200 rounded-lg bg-red-50">
+          <div className="text-red-600 mb-4">
+            <Mail className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p className="text-lg font-medium">Error loading contacts</p>
+            <p className="text-sm mt-1">{error instanceof Error ? error.message : 'Unknown error'}</p>
+          </div>
           <Button variant="outline" className="mt-4" onClick={() => 
             queryClient.invalidateQueries({ queryKey: ['companyContacts', companyId] })
           }>
-            Retry
+            Try Again
           </Button>
         </div>
       ) : contacts.length === 0 ? (
-        <div className="text-center p-8 border rounded-lg bg-muted/10">
-          <p>No contacts added yet.</p>
+        <div className="text-center p-12 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+          <UserPlus className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-medium text-gray-900 mb-2">No contacts yet</h3>
+          <p className="text-gray-500 mb-6">Start by adding your first contact for this company.</p>
           {canModify && (
-            <Button variant="outline" className="mt-4" onClick={() => setIsAddingContact(true)}>
+            <Button onClick={() => setIsAddingContact(true)} className="bg-blue-600 hover:bg-blue-700">
               <UserPlus className="mr-2 h-4 w-4" />
               Add Your First Contact
             </Button>
           )}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {contacts.map((contact) => (
-            <Card key={contact.id}>
-              <CardHeader className="pb-2">
+            <Card key={contact.id} className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-blue-500">
+              <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={contact.avatar_url || ''} alt={`${contact.first_name} ${contact.last_name}`} />
-                      <AvatarFallback>
+                  <div className="flex items-start space-x-4">
+                    <Avatar className="h-12 w-12 border-2 border-white shadow-md">
+                      <AvatarImage 
+                        src={contact.avatar_url || ''} 
+                        alt={`${contact.first_name || ''} ${contact.last_name || ''}`} 
+                      />
+                      <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold">
                         {(contact.first_name?.[0] || '')}{(contact.last_name?.[0] || '')}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <CardTitle className="text-base">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg font-bold text-gray-900 truncate">
                         {contact.first_name || ''} {contact.last_name || ''}
                       </CardTitle>
-                      {contact.position && <p className="text-sm text-muted-foreground">{contact.position}</p>}
+                      {contact.position && (
+                        <p className="text-sm text-gray-600 font-medium mt-1 truncate">
+                          {contact.position}
+                        </p>
+                      )}
                     </div>
                   </div>
                   
                   {canModify && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700">
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => handleEdit(contact)}>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem onClick={() => handleEdit(contact)} className="cursor-pointer">
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(contact.id)}>
+                        <DropdownMenuItem 
+                          className="text-destructive cursor-pointer" 
+                          onClick={() => handleDelete(contact.id)}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" /> Remove
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {contact.is_primary && (
-                    <Badge variant="outline" className="border-amber-500 text-amber-500">
-                      <Star className="h-3 w-3 mr-1" /> Primary
-                    </Badge>
-                  )}
-                  {contact.is_admin && (
-                    <Badge variant="outline" className="border-blue-500 text-blue-500">
-                      <Shield className="h-3 w-3 mr-1" /> Admin
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center">
-                    <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                    <span>{contact.email}</span>
+                
+                {/* Status badges */}
+                {(contact.is_primary || contact.is_admin) && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {contact.is_primary && (
+                      <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-xs">
+                        <Star className="h-3 w-3 mr-1" fill="currentColor" /> Primary Contact
+                      </Badge>
+                    )}
+                    {contact.is_admin && (
+                      <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-xs">
+                        <Shield className="h-3 w-3 mr-1" /> Admin Access
+                      </Badge>
+                    )}
                   </div>
+                )}
+              </CardHeader>
+              
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  {/* Email */}
+                  {contact.email && (
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-shrink-0">
+                        <Mail className="h-4 w-4 text-gray-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Email</p>
+                        <p className="text-sm text-gray-900 truncate font-medium">{contact.email}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Phone (if available in the contact data) */}
+                  {contact.phone && (
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-shrink-0">
+                        <Phone className="h-4 w-4 text-gray-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Phone</p>
+                        <p className="text-sm text-gray-900 truncate font-medium">{contact.phone}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* If no contact info available */}
+                  {!contact.email && !contact.phone && (
+                    <div className="text-center py-4 text-gray-400">
+                      <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No contact information available</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
