@@ -1,4 +1,5 @@
 
+// ----- Imports
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -7,15 +8,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import {
   Dialog,
@@ -25,38 +19,18 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Building,
-  ChevronLeft,
-  ChevronRight,
-  Globe,
-  Mail,
-  MapPin,
-  Phone,
-  User,
-} from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Checkbox } from '@/components/ui/checkbox';
-import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps } from './types';
-import type { Company } from '@/types/company';
+import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps, CreationMethod, BrregCompany } from './types';
 import { useAuth } from '@/contexts/AuthContext';
-import { PhoneInput } from '@/components/ui/phone-input';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
-import CountrySelector from '@/components/ui/CountrySelector/selector';
-import { COUNTRIES } from '@/components/ui/CountrySelector/countries';
-
-const CLIENT_TYPES = {
-  MARKETING: 'Marketing',
-  WEB: 'Web',
-};
+// Newly added componentized stages and constants
+import { CreationMethodStage } from './CreationMethodStage';
+import { BrunnøysundSearchStage } from './BrunnøysundSearchStage';
+import { BasicInfoStage } from './BasicInfoStage';
+import { ContactDetailsStage } from './ContactDetailsStage';
+import { AddressAndSettingsStage } from './AddressAndSettingsStage';
+import { CLIENT_TYPES } from './ClientTypes';
 
 export function MultiStageCompanyDialog({
   isOpen,
@@ -65,25 +39,21 @@ export function MultiStageCompanyDialog({
   defaultValues,
   dealId,
 }: MultiStageCompanyDialogProps) {
-  const [stage, setStage] = useState(1);
+  const [stage, setStage] = useState(0); // Start at 0 for method selection
   const [logo, setLogo] = useState<string | null>(null);
-  const [countryOpen, setCountryOpen] = useState(false);
+  const [creationMethod, setCreationMethod] = useState<CreationMethod | null>(null);
+  const [selectedBrregCompany, setSelectedBrregCompany] = useState<BrregCompany | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  
-  const totalStages = 3;
-  
-  // Find Norway as default country
-  const norwayCountry = COUNTRIES.find(country => country.value === 'NO') || COUNTRIES[0];
-  
-  // Fix: Change getUsers to listUsers to match the userService API
+
+  const totalStages = 5; // Method selection + 4 original stages (basic info, contact, address/settings)
+
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => userService.listUsers(),
   });
-  
-  // Create form with all fields and set default user
+
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
@@ -96,25 +66,20 @@ export function MultiStageCompanyDialog({
       street_address: '',
       city: '',
       postal_code: '',
-      country: 'NO', // Set Norway as default
+      country: '', // Remove default "Norge"
       parent_id: parentId || '',
       trial_period: false,
       is_partner: false,
-      advisor_id: user?.id || '', // Set default advisor to current user
+      advisor_id: user?.id || '',
       mrr: 0,
-      ...defaultValues, // Merge any provided default values
+      ...defaultValues,
     },
   });
 
-  // Watch for website changes to fetch favicon
   const website = form.watch('website');
   const clientTypes = form.watch('client_types');
-  const selectedCountryCode = form.watch('country');
   const hasMarketingType = clientTypes?.includes(CLIENT_TYPES.MARKETING);
-  
-  // Find selected country object
-  const selectedCountry = COUNTRIES.find(country => country.value === selectedCountryCode) || norwayCountry;
-  
+
   useEffect(() => {
     if (website) {
       const fetchLogo = async () => {
@@ -127,35 +92,40 @@ export function MultiStageCompanyDialog({
           console.error('Failed to fetch favicon:', error);
         }
       };
-      
       fetchLogo();
     }
   }, [website]);
-  
-  // Create company mutation
-  const createCompanyMutation = useMutation<Company, Error, CompanyFormValues>({
-    mutationFn: async (values: CompanyFormValues) => {
-      // Find the country name from the country code
-      const countryObj = COUNTRIES.find(country => country.value === values.country);
-      const countryName = countryObj?.title || 'Norge';
+
+  // Prefill form when Brunnøysund company is selected
+  useEffect(() => {
+    if (selectedBrregCompany) {
+      const address = selectedBrregCompany.forretningsadresse;
+      form.setValue('name', selectedBrregCompany.navn);
+      form.setValue('organization_number', selectedBrregCompany.organisasjonsnummer);
       
-      // Format values for submission
+      if (address) {
+        if (address.land) form.setValue('country', address.land);
+        if (address.postnummer) form.setValue('postal_code', address.postnummer);
+        if (address.poststed) form.setValue('city', address.poststed);
+        if (address.adresse) form.setValue('street_address', address.adresse.join(', '));
+      }
+    }
+  }, [selectedBrregCompany, form]);
+
+  const createCompanyMutation = useMutation({
+    mutationFn: async (values: CompanyFormValues) => {
       const companyData = {
         ...values,
         logo_url: logo,
         parent_id: values.parent_id || null,
-        // Pass client_types directly - the service will handle conversion
         client_types: values.client_types,
-        mrr: hasMarketingType ? values.mrr : null, // Only include MRR if Marketing is selected
-        name: values.name, // Ensure name is included
-        country: countryName, // Use country name instead of code
+        mrr: hasMarketingType ? values.mrr : null,
+        name: values.name,
+        country: values.country || null,
       };
-      
-      // Handle deal ID if provided (converting temp company)
       if (dealId) {
         return await companyService.convertTempCompany(companyData, dealId);
       }
-      
       return await companyService.createCompany(companyData);
     },
     onSuccess: () => {
@@ -163,8 +133,6 @@ export function MultiStageCompanyDialog({
         title: 'Company created',
         description: 'The company has been created successfully',
       });
-      
-      // Invalidate necessary queries
       if (dealId) {
         queryClient.invalidateQueries({ queryKey: ['deals'] });
         queryClient.invalidateQueries({ queryKey: ['temp-deal-companies'] });
@@ -174,10 +142,10 @@ export function MultiStageCompanyDialog({
       } else {
         queryClient.invalidateQueries({ queryKey: ['companies'] });
       }
-      
-      // Reset form and close dialog
       form.reset();
-      setStage(1);
+      setStage(0);
+      setCreationMethod(null);
+      setSelectedBrregCompany(null);
       setLogo(null);
       onClose();
     },
@@ -189,430 +157,121 @@ export function MultiStageCompanyDialog({
       });
     },
   });
-  
+
   const onSubmit = (values: CompanyFormValues) => {
-    if (stage < totalStages) {
+    if (stage < totalStages - 1) {
       setStage(stage + 1);
     } else {
       createCompanyMutation.mutate(values);
     }
   };
-  
+
   const goBack = () => {
-    if (stage > 1) {
+    if (stage > 0) {
       setStage(stage - 1);
     }
   };
-  
+
+  const handleMethodSelect = (method: CreationMethod) => {
+    setCreationMethod(method);
+    if (method === 'manual') {
+      setStage(2); // Skip search stage, go directly to basic info
+    } else {
+      setStage(1); // Go to search stage
+    }
+  };
+
+  const handleBrregCompanySelect = (company: BrregCompany) => {
+    setSelectedBrregCompany(company);
+    setStage(2); // Go to basic info stage
+  };
+
+  const getStageTitle = () => {
+    if (stage === 0) return 'Creation Method';
+    if (stage === 1) return 'Search Company Registry';
+    if (stage === 2) return 'Basic Information';
+    if (stage === 3) return 'Contact Details';
+    if (stage === 4) return 'Address & Settings';
+    return 'Create Company';
+  };
+
+  const renderStageContent = () => {
+    if (stage === 0) {
+      return <CreationMethodStage onSelect={handleMethodSelect} />;
+    }
+    if (stage === 1) {
+      return <BrunnøysundSearchStage onCompanySelect={handleBrregCompanySelect} />;
+    }
+    if (stage === 2) {
+      return <BasicInfoStage form={form} logo={logo} />;
+    }
+    if (stage === 3) {
+      return <ContactDetailsStage form={form} />;
+    }
+    if (stage === 4) {
+      return <AddressAndSettingsStage form={form} users={users} hasMarketingType={hasMarketingType} />;
+    }
+    return null;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{parentId ? 'Add Subsidiary' : 'New Company'}</DialogTitle>
+          <DialogDescription>
+            {getStageTitle()}
+          </DialogDescription>
         </DialogHeader>
-        
-        {/* Replace old progress bar with ProgressStepper component */}
-        <ProgressStepper currentStep={stage} totalSteps={totalStages} />
+
+        {stage > 0 && <ProgressStepper currentStep={stage} totalSteps={totalStages} />}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Stage 1: Basic Information */}
-            {stage === 1 && (
-              <>
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
-                    {logo ? (
-                      <img 
-                        src={logo} 
-                        alt="Company Logo" 
-                        className="h-12 w-12 object-contain"
-                      />
-                    ) : (
-                      <Building className="h-8 w-8 text-gray-400" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Company Name*</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Acme Corporation" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
+            {renderStageContent()}
 
-                <FormField
-                  control={form.control}
-                  name="organization_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Organization Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="123456-7890" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Official registration number of the company
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="client_types"
-                  render={() => (
-                    <FormItem>
-                      <div className="mb-2">
-                        <FormLabel>Client Type*</FormLabel>
-                        <FormDescription>
-                          Type of services provided to this client
-                        </FormDescription>
-                      </div>
-                      <div className="space-y-2">
-                        <FormField
-                          control={form.control}
-                          name="client_types"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(CLIENT_TYPES.MARKETING)}
-                                  onCheckedChange={(checked) => {
-                                    const current = field.value || [];
-                                    const updated = checked
-                                      ? [...current, CLIENT_TYPES.MARKETING]
-                                      : current.filter(value => value !== CLIENT_TYPES.MARKETING);
-                                    
-                                    // Ensure at least one value is selected
-                                    field.onChange(updated.length > 0 ? updated : current);
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal cursor-pointer">
-                                Marketing
-                              </FormLabel>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="client_types"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(CLIENT_TYPES.WEB)}
-                                  onCheckedChange={(checked) => {
-                                    const current = field.value || [];
-                                    const updated = checked
-                                      ? [...current, CLIENT_TYPES.WEB]
-                                      : current.filter(value => value !== CLIENT_TYPES.WEB);
-                                    
-                                    // Ensure at least one value is selected
-                                    field.onChange(updated.length > 0 ? updated : current);
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal cursor-pointer">
-                                Web
-                              </FormLabel>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-            
-            {/* Stage 2: Contact Details */}
-            {stage === 2 && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="website"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Globe className="h-4 w-4" /> Website
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Company website (logo will be automatically fetched)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" /> Phone Number
-                      </FormLabel>
-                      <FormControl>
-                        <PhoneInput {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="invoice_email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" /> Invoice Email
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="invoices@example.com" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Email address for sending invoices
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-            
-            {/* Stage 3: Address & Settings */}
-            {stage === 3 && (
-              <>
-                <div className="bg-muted p-4 rounded-lg">
-                  <h3 className="text-sm font-medium flex items-center mb-2 gap-2">
-                    <MapPin className="h-4 w-4" /> Address Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="street_address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Street Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="123 Main St" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Oslo" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="postal_code"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Postal Code</FormLabel>
-                          <FormControl>
-                            <Input placeholder="0123" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="country"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Country</FormLabel>
-                          <FormControl>
-                            <CountrySelector
-                              id="country-selector"
-                              open={countryOpen}
-                              onToggle={() => setCountryOpen(!countryOpen)}
-                              selectedValue={selectedCountry}
-                              onChange={(value) => {
-                                field.onChange(value);
-                                setCountryOpen(false);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="advisor_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <User className="h-4 w-4" /> Advisor
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select an advisor" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {users.map((user) => (
-                              <SelectItem key={user.id} value={user.id}>
-                                {user.user_metadata?.first_name} {user.user_metadata?.last_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Employee responsible for this client
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {hasMarketingType && (
-                    <FormField
-                      control={form.control}
-                      name="mrr"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Monthly Recurring Revenue</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="1000"
-                              {...field}
-                              onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Monthly price charged to the client
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+            {stage > 0 && (
+              <DialogFooter className="flex justify-between pt-4 sm:justify-between">
+                <div>
+                  {stage > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={goBack}
+                      className="flex items-center gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" /> Back
+                    </Button>
                   )}
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="trial_period"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel>Trial Period</FormLabel>
-                          <FormDescription>
-                            Provide 30 days free trial
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="is_partner"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel>Partner Company</FormLabel>
-                          <FormDescription>
-                            Can have subsidiaries
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </>
-            )}
-            
-            <DialogFooter className="flex justify-between pt-4 sm:justify-between">
-              <div>
-                {stage > 1 && (
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={goBack}
-                    className="flex items-center gap-1"
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Back
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={onClose}>
+                    Cancel
                   </Button>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit"
-                  className={cn(
-                    "flex items-center gap-1 bg-black hover:bg-black/90",
-                    stage === totalStages ? "" : "bg-black hover:bg-black/90"
+                  {stage >= 2 && (
+                    <Button
+                      type="submit"
+                      className={cn(
+                        "flex items-center gap-1 bg-black hover:bg-black/90",
+                        stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
+                      )}
+                      disabled={createCompanyMutation.isPending}
+                    >
+                      {createCompanyMutation.isPending
+                        ? 'Creating...'
+                        : stage === totalStages - 1
+                          ? 'Create Company'
+                          : (
+                            <>
+                              Next <ChevronRight className="h-4 w-4" />
+                            </>
+                          )
+                      }
+                    </Button>
                   )}
-                  disabled={createCompanyMutation.isPending}
-                >
-                  {createCompanyMutation.isPending 
-                    ? 'Creating...' 
-                    : stage === totalStages 
-                      ? 'Create Company' 
-                      : (
-                        <>
-                          Next <ChevronRight className="h-4 w-4" />
-                        </>
-                      )
-                  }
-                </Button>
-              </div>
-            </DialogFooter>
+                </div>
+              </DialogFooter>
+            )}
           </form>
         </Form>
       </DialogContent>
