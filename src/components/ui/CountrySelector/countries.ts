@@ -585,7 +585,7 @@ export const COUNTRIES = [
     value: "MP",
   },
   {
-    title: "Norway",
+    title: "Norge",
     value: "NO",
   },
   {
