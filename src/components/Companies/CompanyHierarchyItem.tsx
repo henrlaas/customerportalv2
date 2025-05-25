@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -187,17 +186,25 @@ export const CompanyHierarchyItem = ({
 
       <CardContent className="pt-0">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          {company.phone && (
+          {company.organization_number && (
             <div className="flex items-center gap-2 text-gray-600">
-              <Phone className="h-4 w-4 text-gray-400" />
-              <span>{company.phone}</span>
+              <Hash className="h-4 w-4 text-gray-400" />
+              <span>{company.organization_number}</span>
             </div>
           )}
           
-          {company.invoice_email && (
+          {company.website && (
             <div className="flex items-center gap-2 text-gray-600">
-              <Mail className="h-4 w-4 text-gray-400" />
-              <span className="truncate">{company.invoice_email}</span>
+              <Globe className="h-4 w-4 text-gray-400" />
+              <a 
+                href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline truncate"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {company.website.replace(/^https?:\/\//, '')}
+              </a>
             </div>
           )}
           
