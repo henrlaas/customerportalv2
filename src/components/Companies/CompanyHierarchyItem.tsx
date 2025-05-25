@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -42,6 +43,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 interface CompanyHierarchyItemProps {
   company: Company;
@@ -105,53 +107,43 @@ export const CompanyHierarchyItem = ({
   };
 
   return (
-    <div className={`relative ${depth > 0 ? 'pl-4 border-l-2 border-gray-100 ml-3 mt-1' : ''}`}>
-      {/* Company Row - Always visible */}
-      <div className="flex justify-between items-center py-2">
-        {/* Company Name and Icon - Clickable */}
-        <div 
-          onClick={toggleExpand}
-          className={`flex items-center gap-2 flex-grow cursor-pointer hover:bg-gray-50 rounded-md px-2 py-1`}
-        >
-          {isExpanded ? (
-            <ChevronDown className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
-          ) : (
-            <ChevronRight className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
-          )}
-          <Building2 className={`${depth > 0 ? 'h-4 w-4' : 'h-5 w-5'} text-gray-500`} />
-          <span className={`${depth > 0 ? 'text-sm font-medium' : 'text-base font-medium'}`}>
-            {company.name}
-          </span>
-          
-          {/* Brief Info Section when not expanded */}
-          {!isExpanded && (
-            <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground ml-2">
-              {company.organization_number && (
-                <div className="flex items-center gap-1">
-                  <Hash className="h-3.5 w-3.5" />
-                  <span>{company.organization_number}</span>
-                </div>
-              )}
-              {company.website && (
-                <div className="flex items-center gap-1">
-                  <Globe className="h-3.5 w-3.5" />
+    <Card className="relative hover:shadow-md transition-all duration-200">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 flex-1">
+            <CompanyFavicon 
+              companyName={company.name}
+              website={company.website}
+              logoUrl={company.logo_url}
+              size="md"
+            />
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg font-semibold text-gray-900 truncate">
+                {company.name}
+              </CardTitle>
+              <div className="flex items-center gap-4 mt-1">
+                {company.organization_number && (
+                  <div className="flex items-center gap-1 text-sm text-gray-500">
+                    <Hash className="h-3.5 w-3.5" />
+                    <span>{company.organization_number}</span>
+                  </div>
+                )}
+                {company.website && (
                   <a 
                     href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="hover:text-blue-500 hover:underline"
+                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {company.website.replace(/^https?:\/\//, '')}
+                    <Globe className="h-3.5 w-3.5" />
+                    <span>{company.website.replace(/^https?:\/\//, '')}</span>
                   </a>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          )}
-        </div>
-        
-        {/* Actions Dropdown Menu */}
-        <div className="flex items-center">
+          </div>
+          
           {canModify && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -192,105 +184,73 @@ export const CompanyHierarchyItem = ({
             </DropdownMenu>
           )}
         </div>
-      </div>
+      </CardHeader>
 
-      {/* Expanded Company Details */}
-      {isExpanded && (
-        <div className="mt-2 mb-4 ml-6 mr-2 bg-gray-50 rounded-md p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {company.organization_number && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">Organization Number</h4>
-                <div className="flex items-center">
-                  <Hash className="h-4 w-4 mr-2 text-gray-500" />
-                  <p>{company.organization_number}</p>
-                </div>
-              </div>
-            )}
-            
-            {company.website && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">Website</h4>
-                <a 
-                  href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center text-blue-600 hover:underline"
-                >
-                  <Globe className="h-4 w-4 mr-2" />
-                  {company.website.replace(/^https?:\/\//, '')}
-                </a>
-              </div>
-            )}
-            
-            {company.phone && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">Phone</h4>
-                <div className="flex items-center">
-                  <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                  <p>{company.phone}</p>
-                </div>
-              </div>
-            )}
-            
-            {company.invoice_email && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">Invoice Email</h4>
-                <div className="flex items-center">
-                  <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                  <p>{company.invoice_email}</p>
-                </div>
-              </div>
-            )}
-            
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">Created</h4>
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                <p>{formatDate(company.created_at)}</p>
-              </div>
+      <CardContent className="pt-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          {company.phone && (
+            <div className="flex items-center gap-2 text-gray-600">
+              <Phone className="h-4 w-4 text-gray-400" />
+              <span>{company.phone}</span>
             </div>
-          </div>
+          )}
           
-          {company.address && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">Address</h4>
-              <p className="text-sm">{company.address}</p>
+          {company.invoice_email && (
+            <div className="flex items-center gap-2 text-gray-600">
+              <Mail className="h-4 w-4 text-gray-400" />
+              <span className="truncate">{company.invoice_email}</span>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-2 text-gray-600">
+            <Calendar className="h-4 w-4 text-gray-400" />
+            <span>{formatDate(company.created_at)}</span>
+          </div>
+        </div>
+
+        {company.address && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="text-sm text-gray-600">
+              <div className="font-medium text-gray-700 mb-1">Address</div>
+              <div>{company.address}</div>
               {company.city && (
-                <p className="text-sm mt-1">
+                <div className="mt-1">
                   {company.city}
                   {company.postal_code && `, ${company.postal_code}`}
                   {company.country && `, ${company.country}`}
-                </p>
+                </div>
               )}
             </div>
-          )}
-          
-          {canModify && (
-            <div className="flex justify-end gap-2 mt-4">
-              {onEditCompany && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => onEditCompany()}
-                >
-                  <Edit className="mr-2 h-3.5 w-3.5" />
-                  Edit
-                </Button>
-              )}
-              <Button 
-                variant="destructive"
-                size="sm"
-                onClick={() => handleDeleteCompany(company.id)}
-              >
-                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                Delete
-              </Button>
+          </div>
+        )}
+
+        {/* Expanded Details */}
+        {isExpanded && (
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+            <div className="text-sm">
+              <div className="font-medium text-gray-700 mb-2">Additional Details</div>
+              <div className="grid grid-cols-1 gap-2 text-gray-600">
+                {company.client_type && (
+                  <div>
+                    <span className="font-medium">Client Type:</span> {company.client_type}
+                  </div>
+                )}
+                {company.is_partner && (
+                  <div>
+                    <span className="font-medium">Status:</span> Partner Company
+                  </div>
+                )}
+                {company.mrr && (
+                  <div>
+                    <span className="font-medium">MRR:</span> {company.mrr.toLocaleString()} NOK
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
