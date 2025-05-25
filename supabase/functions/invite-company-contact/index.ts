@@ -66,7 +66,15 @@ serve(async (req) => {
     }
 
     // Invite the user
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email);
+    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      data: {
+        first_name: firstName,
+        last_name: lastName,
+        phone_number: phoneNumber,
+        role: 'client',
+        language: 'en'
+      }
+    });
     
     if (inviteError) {
       console.error(`Error inviting user: ${inviteError.message}`);
@@ -92,31 +100,26 @@ serve(async (req) => {
     const userId = inviteData.user.id;
     console.log(`User invited successfully, user ID: ${userId}`);
 
-    // Create profile record - insert only, no updates
-    const { error: profileError } = await supabaseAdmin
+    // Wait a moment for the trigger to create the profile
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Update the profile with additional details (the trigger creates a basic profile)
+    const { error: profileUpdateError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        id: userId,
+      .update({
         first_name: firstName,
         last_name: lastName,
         phone_number: phoneNumber || null,
-        role: 'client',
-        language: 'en',
-        avatar_url: null
-      });
+      })
+      .eq('id', userId);
 
-    if (profileError) {
-      console.error(`Error creating profile: ${profileError.message}`);
-      return new Response(
-        JSON.stringify({ error: `Failed to create profile: ${profileError.message}` }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
+    if (profileUpdateError) {
+      console.error(`Error updating profile: ${profileUpdateError.message}`);
+      // Don't fail here, just log the error as the profile creation might still work
+      console.log(`Profile update failed, but continuing with company contact creation`);
+    } else {
+      console.log(`Profile updated successfully for user: ${userId}`);
     }
-
-    console.log(`Profile created successfully for user: ${userId}`);
 
     // Create company contact record - insert only, no updates
     const { error: contactError } = await supabaseAdmin
