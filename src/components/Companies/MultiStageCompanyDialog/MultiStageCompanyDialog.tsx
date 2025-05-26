@@ -1,4 +1,3 @@
-
 // ----- Imports
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -21,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps, CreationMethod, BrregCompany } from './types';
+import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps, CreationMethod, BrregCompany, basicInfoSchema, contactDetailsSchema, addressAndSettingsSchema } from './types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
 // Newly added componentized stages and constants
@@ -56,6 +55,7 @@ export function MultiStageCompanyDialog({
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
+    mode: 'onChange', // Enable real-time validation
     defaultValues: {
       name: '',
       organization_number: '',
@@ -66,7 +66,7 @@ export function MultiStageCompanyDialog({
       street_address: '',
       city: '',
       postal_code: '',
-      country: '', // Remove default "Norge"
+      country: 'Norge', // Set default country
       parent_id: parentId || '',
       trial_period: false,
       is_partner: false,
@@ -95,6 +95,52 @@ export function MultiStageCompanyDialog({
       fetchLogo();
     }
   }, [website]);
+
+  // Function to validate current stage
+  const validateCurrentStage = async () => {
+    const formValues = form.getValues();
+    
+    try {
+      if (stage === 2) {
+        await basicInfoSchema.parseAsync(formValues);
+        return true;
+      } else if (stage === 3) {
+        await contactDetailsSchema.parseAsync(formValues);
+        return true;
+      } else if (stage === 4) {
+        await addressAndSettingsSchema.parseAsync(formValues);
+        return true;
+      }
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        // Set form errors for invalid fields
+        error.errors.forEach((err) => {
+          if (err.path) {
+            form.setError(err.path.join('.') as any, {
+              type: 'manual',
+              message: err.message,
+            });
+          }
+        });
+      }
+      return false;
+    }
+  };
+
+  // Check if current stage is valid
+  const isCurrentStageValid = () => {
+    const formValues = form.getValues();
+    
+    if (stage === 2) {
+      return formValues.name && formValues.organization_number && formValues.client_types?.length > 0;
+    } else if (stage === 3) {
+      return formValues.website && formValues.phone && formValues.invoice_email;
+    } else if (stage === 4) {
+      return formValues.street_address && formValues.city && formValues.postal_code && formValues.country && formValues.advisor_id;
+    }
+    return true;
+  };
 
   // Prefill form when Brunnøysund company is selected
   useEffect(() => {
@@ -158,9 +204,13 @@ export function MultiStageCompanyDialog({
     },
   });
 
-  const onSubmit = (values: CompanyFormValues) => {
+  const onSubmit = async (values: CompanyFormValues) => {
     if (stage < totalStages - 1) {
-      setStage(stage + 1);
+      // Validate current stage before proceeding
+      const isValid = await validateCurrentStage();
+      if (isValid) {
+        setStage(stage + 1);
+      }
     } else {
       createCompanyMutation.mutate(values);
     }
@@ -255,7 +305,7 @@ export function MultiStageCompanyDialog({
                         "flex items-center gap-1 bg-black hover:bg-black/90",
                         stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
                       )}
-                      disabled={createCompanyMutation.isPending}
+                      disabled={createCompanyMutation.isPending || !isCurrentStageValid()}
                     >
                       {createCompanyMutation.isPending
                         ? 'Creating...'

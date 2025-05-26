@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import type { Company } from '@/types/company';
 
-// Form schema for all stages
+// Form schema for all stages with all fields required
 export const companyFormSchema = z.object({
   // Stage 1: Basic Info
   name: z.string().min(1, { message: 'Company name is required' }),
@@ -11,19 +11,41 @@ export const companyFormSchema = z.object({
   
   // Stage 2: Contact Details
   website: z.string().url({ message: 'Please enter a valid website URL' }).min(1, { message: 'Website is required' }),
-  phone: z.string().optional(),
-  invoice_email: z.string().email().or(z.literal('')).optional(),
+  phone: z.string().min(1, { message: 'Phone number is required' }),
+  invoice_email: z.string().email({ message: 'Please enter a valid email address' }).min(1, { message: 'Invoice email is required' }),
   
   // Stage 3: Address & Settings
-  street_address: z.string().optional(),
-  city: z.string().optional(),
-  postal_code: z.string().optional(),
-  country: z.string().optional(),
+  street_address: z.string().min(1, { message: 'Street address is required' }),
+  city: z.string().min(1, { message: 'City is required' }),
+  postal_code: z.string().min(1, { message: 'Postal code is required' }),
+  country: z.string().min(1, { message: 'Country is required' }),
   parent_id: z.string().optional(),
   trial_period: z.boolean().default(false),
   is_partner: z.boolean().default(false),
-  advisor_id: z.string().optional(),
+  advisor_id: z.string().min(1, { message: 'Advisor is required' }),
   mrr: z.coerce.number().min(0, { message: 'MRR cannot be negative' }).optional(),
+});
+
+// Stage-specific schemas for validation
+export const basicInfoSchema = companyFormSchema.pick({
+  name: true,
+  organization_number: true,
+  client_types: true,
+});
+
+export const contactDetailsSchema = companyFormSchema.pick({
+  website: true,
+  phone: true,
+  invoice_email: true,
+});
+
+export const addressAndSettingsSchema = companyFormSchema.pick({
+  street_address: true,
+  city: true,
+  postal_code: true,
+  country: true,
+  advisor_id: true,
+  mrr: true,
 });
 
 export type CompanyFormValues = z.infer<typeof companyFormSchema>;
