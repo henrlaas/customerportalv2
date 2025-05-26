@@ -59,27 +59,38 @@ serve(async (req) => {
       },
     });
 
-    // Format the FROM field properly to avoid email address validation errors
+    // Format the FROM field properly
     const formattedFrom = `${EMAIL_FROM_NAME} <${EMAIL_FROM_ADDRESS}>`;
     
     // Log email details for debugging
     console.log("Sending email to:", to);
     console.log("Email subject:", subject);
+    console.log("HTML content available:", !!html);
     console.log("HTML content length:", html ? html.length : 0);
 
-    // Send email without forcing transfer encoding to ensure proper HTML rendering
-    await client.send({
+    // Prepare email data with proper HTML handling
+    const emailData = {
       from: formattedFrom,
       to: Array.isArray(to) ? to : [to],
       cc: cc ? (Array.isArray(cc) ? cc : [cc]) : undefined,
       bcc: bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined,
       subject: subject,
-      content: text || "Please view this email with an HTML-compatible email client.",
-      html: html || undefined,
-      // Set the HTML content type but do not specify a transfer encoding
-      // This allows the email client to determine the best encoding
-      contentType: "text/html; charset=utf-8",
-    });
+    };
+
+    // Send HTML email if HTML content is provided
+    if (html) {
+      await client.send({
+        ...emailData,
+        html: html,
+        content: text || "Please view this email with an HTML-compatible email client.",
+      });
+    } else {
+      // Send plain text email
+      await client.send({
+        ...emailData,
+        content: text,
+      });
+    }
 
     await client.close();
 
