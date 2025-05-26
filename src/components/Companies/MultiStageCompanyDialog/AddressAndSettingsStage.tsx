@@ -1,11 +1,25 @@
-
 import { MapPin, User } from 'lucide-react';
-import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { AdvisorSelect } from './AdvisorSelect';
+import CountrySelector from '@/components/ui/CountrySelector/selector';
+import { COUNTRIES } from '@/components/ui/CountrySelector/countries';
+import React, { useState } from 'react';
 
 export function AddressAndSettingsStage({ form, users, hasMarketingType }: { form: any; users: any[]; hasMarketingType: boolean }) {
+  // Find Norway in the countries list to set as default
+  const norwayOption = COUNTRIES.find(country => country.value === 'NO') || COUNTRIES[0];
+  const [countryOpen, setCountryOpen] = useState(false);
+
+  // Set Norway as default country when form loads
+  React.useEffect(() => {
+    const currentCountry = form.getValues('country');
+    if (!currentCountry) {
+      form.setValue('country', norwayOption.title);
+    }
+  }, [form, norwayOption.title]);
+
   return (
     <>
       <div className="bg-muted p-4 rounded-lg">
@@ -18,7 +32,7 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
             name="street_address"
             render={({ field }: any) => (
               <FormItem>
-                <FormLabel>Street Address*</FormLabel>
+                <FormLabel>Street Address</FormLabel>
                 <FormControl>
                   <Input placeholder="123 Main St" {...field} />
                 </FormControl>
@@ -26,13 +40,12 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
               </FormItem>
             )}
           />
-          
           <FormField
             control={form.control}
             name="city"
             render={({ field }: any) => (
               <FormItem>
-                <FormLabel>City*</FormLabel>
+                <FormLabel>City</FormLabel>
                 <FormControl>
                   <Input placeholder="Oslo" {...field} />
                 </FormControl>
@@ -40,13 +53,12 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
               </FormItem>
             )}
           />
-          
           <FormField
             control={form.control}
             name="postal_code"
             render={({ field }: any) => (
               <FormItem>
-                <FormLabel>Postal Code*</FormLabel>
+                <FormLabel>Postal Code</FormLabel>
                 <FormControl>
                   <Input placeholder="0123" {...field} />
                 </FormControl>
@@ -54,25 +66,38 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
               </FormItem>
             )}
           />
-          
           <FormField
             control={form.control}
             name="country"
-            render={({ field }: any) => (
-              <FormItem>
-                <FormLabel>Country*</FormLabel>
-                <FormControl>
-                  <div className="flex items-center gap-2 h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
-                    🇳🇴 Norge
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }: any) => {
+              const selectedCountry = COUNTRIES.find(country => country.title === field.value) || norwayOption;
+              
+              return (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <CountrySelector
+                      id="country-selector-stage"
+                      open={countryOpen}
+                      onToggle={() => setCountryOpen(!countryOpen)}
+                      selectedValue={selectedCountry}
+                      onChange={(countryCode) => {
+                        const country = COUNTRIES.find(c => c.value === countryCode);
+                        if (country) {
+                          field.onChange(country.title);
+                        }
+                        setCountryOpen(false);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={form.control}
@@ -80,33 +105,21 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
           render={({ field }: any) => (
             <FormItem>
               <FormLabel className="flex items-center gap-2">
-                <User className="h-4 w-4" /> Advisor*
+                <User className="h-4 w-4" /> Advisor
               </FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an advisor" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.user_metadata?.first_name} {user.user_metadata?.last_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <AdvisorSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              </FormControl>
               <FormDescription>
-                Employee responsible for this client (required)
+                Employee responsible for this client
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        
         {hasMarketingType && (
           <FormField
             control={form.control}
@@ -115,9 +128,10 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
               <FormItem>
                 <FormLabel>Monthly Recurring Revenue</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
+                  <Input
+                    type="number"
                     placeholder="1000"
+                    min="0"
                     {...field}
                     onChange={(e) => field.onChange(e.target.valueAsNumber)}
                   />
@@ -131,7 +145,7 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
           />
         )}
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={form.control}
@@ -145,15 +159,11 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
                 </FormDescription>
               </div>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
             </FormItem>
           )}
         />
-        
         <FormField
           control={form.control}
           name="is_partner"
@@ -166,10 +176,7 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
                 </FormDescription>
               </div>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
             </FormItem>
           )}
