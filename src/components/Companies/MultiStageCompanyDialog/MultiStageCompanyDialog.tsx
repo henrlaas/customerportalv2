@@ -158,10 +158,69 @@ export function MultiStageCompanyDialog({
     },
   });
 
-  const onSubmit = (values: CompanyFormValues) => {
+  // Validate specific fields based on current stage
+  const validateCurrentStage = async () => {
+    const values = form.getValues();
+    
+    if (stage === 2) { // Basic Info stage
+      // Validate basic info fields
+      if (!values.name || values.name.trim() === '') {
+        form.setError('name', { message: 'Company name is required' });
+        return false;
+      }
+      if (!values.organization_number || values.organization_number.trim() === '') {
+        form.setError('organization_number', { message: 'Organization number is required' });
+        return false;
+      }
+      if (!values.client_types || values.client_types.length === 0) {
+        form.setError('client_types', { message: 'At least one client type is required' });
+        return false;
+      }
+      return true;
+    }
+    
+    if (stage === 3) { // Contact Details stage
+      // Validate contact fields
+      if (!values.website || values.website.trim() === '') {
+        form.setError('website', { message: 'Website is required' });
+        return false;
+      }
+      // Basic URL validation
+      try {
+        new URL(values.website);
+      } catch {
+        form.setError('website', { message: 'Please enter a valid website URL' });
+        return false;
+      }
+      if (!values.phone || values.phone.trim() === '') {
+        form.setError('phone', { message: 'Phone number is required' });
+        return false;
+      }
+      if (!values.invoice_email || values.invoice_email.trim() === '') {
+        form.setError('invoice_email', { message: 'Invoice email is required' });
+        return false;
+      }
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(values.invoice_email)) {
+        form.setError('invoice_email', { message: 'Please enter a valid email address' });
+        return false;
+      }
+      return true;
+    }
+    
+    return true; // For other stages, allow progression
+  };
+
+  const onSubmit = async (values: CompanyFormValues) => {
     if (stage < totalStages - 1) {
-      setStage(stage + 1);
+      // Validate current stage before proceeding
+      const isValid = await validateCurrentStage();
+      if (isValid) {
+        setStage(stage + 1);
+      }
     } else {
+      // Final stage - create the company
       createCompanyMutation.mutate(values);
     }
   };
