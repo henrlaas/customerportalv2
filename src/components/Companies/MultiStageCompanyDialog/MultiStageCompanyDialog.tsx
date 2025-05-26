@@ -158,36 +158,11 @@ export function MultiStageCompanyDialog({
     },
   });
 
-  // Simple validation for basic info stage
-  const isBasicInfoValid = () => {
-    const values = form.getValues();
-    console.log('Validating basic info stage. Current values:', values);
-    console.log('Current stage:', stage);
-    
-    const nameValid = values.name && values.name.trim().length > 0;
-    const orgNumberValid = values.organization_number && values.organization_number.trim().length > 0;
-    const clientTypesValid = values.client_types && values.client_types.length > 0;
-    
-    console.log('Name valid:', nameValid);
-    console.log('Org number valid:', orgNumberValid);
-    console.log('Client types valid:', clientTypesValid);
-    
-    return nameValid && orgNumberValid && clientTypesValid;
-  };
-
   const onSubmit = async (values: CompanyFormValues) => {
     console.log('Form submitted with stage:', stage);
     console.log('Form values:', values);
     
     if (stage < totalStages - 1) {
-      // For basic info stage (stage 2), check if all required fields are filled
-      if (stage === 2) {
-        if (!isBasicInfoValid()) {
-          console.log('Basic info validation failed');
-          return;
-        }
-      }
-      
       console.log('Moving to next stage:', stage + 1);
       setStage(stage + 1);
     } else {
@@ -285,7 +260,7 @@ export function MultiStageCompanyDialog({
                         "flex items-center gap-1 bg-black hover:bg-black/90",
                         stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
                       )}
-                      disabled={createCompanyMutation.isPending || (stage === 2 && !isBasicInfoValid())}
+                      disabled={createCompanyMutation.isPending}
                     >
                       {createCompanyMutation.isPending
                         ? 'Creating...'
