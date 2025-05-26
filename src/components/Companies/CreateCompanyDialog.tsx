@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { useToast } from '@/components/ui/use-toast';
@@ -32,11 +31,11 @@ import { CreationMethodStage } from './MultiStageCompanyDialog/CreationMethodSta
 import { BrunnøysundSearchStage } from './MultiStageCompanyDialog/BrunnøysundSearchStage';
 import type { CreationMethod, BrregCompany } from './MultiStageCompanyDialog/types';
 
-// Form schema - organization number is now required for subsidiaries
+// Form schema - website is now also required for subsidiaries
 const companyFormSchema = z.object({
   name: z.string().min(1, { message: 'Company name is required' }),
   organization_number: z.string().min(1, { message: 'Organization number is required' }),
-  website: z.string().url().or(z.literal('')).optional(),
+  website: z.string().url({ message: 'Please enter a valid website URL' }).min(1, { message: 'Website is required' }),
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
@@ -209,13 +208,18 @@ export const CreateCompanyDialog = ({
     }
   };
 
-  // Validate current step before allowing next - now requires both name and organization number
+  // Validate current step before allowing next - now requires name, organization number, and website
   const canProceedToNext = () => {
     if (currentStep === 2 && creationMethod === 'manual') {
       // For manual basic info step, require both name and organization number
       const name = form.watch('name')?.trim();
       const orgNumber = form.watch('organization_number')?.trim();
       return name && name.length > 0 && orgNumber && orgNumber.length > 0;
+    }
+    if (currentStep === 3) {
+      // For website step, require valid website
+      const website = form.watch('website')?.trim();
+      return website && website.length > 0 && website.startsWith('http');
     }
     return true;
   };
@@ -299,13 +303,13 @@ export const CreateCompanyDialog = ({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="flex items-center gap-2">
-              <Globe className="h-4 w-4" /> Website
+              <Globe className="h-4 w-4" /> Website *
             </FormLabel>
             <FormControl>
               <Input placeholder="https://subsidiary.example.com" {...field} />
             </FormControl>
             <FormDescription>
-              Company website (logo will be automatically fetched)
+              Company website is required (logo will be automatically fetched)
             </FormDescription>
             <FormMessage />
           </FormItem>
