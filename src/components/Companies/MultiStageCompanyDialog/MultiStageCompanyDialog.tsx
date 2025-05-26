@@ -1,4 +1,3 @@
-
 // ----- Imports
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -21,7 +20,15 @@ import {
 } from '@/components/ui/dialog';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { companyFormSchema, CompanyFormValues, MultiStageCompanyDialogProps, CreationMethod, BrregCompany } from './types';
+import { 
+  companyFormSchema, 
+  basicInfoSchema,
+  contactDetailsSchema,
+  CompanyFormValues, 
+  MultiStageCompanyDialogProps, 
+  CreationMethod, 
+  BrregCompany 
+} from './types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
 // Newly added componentized stages and constants
@@ -56,6 +63,7 @@ export function MultiStageCompanyDialog({
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
+    mode: 'onChange',
     defaultValues: {
       name: '',
       organization_number: '',
@@ -79,6 +87,36 @@ export function MultiStageCompanyDialog({
   const website = form.watch('website');
   const clientTypes = form.watch('client_types');
   const hasMarketingType = clientTypes?.includes(CLIENT_TYPES.MARKETING);
+
+  // Stage-specific validation
+  const validateCurrentStage = async () => {
+    const values = form.getValues();
+    
+    try {
+      if (stage === 2) {
+        // Basic Info stage
+        basicInfoSchema.parse({
+          name: values.name,
+          organization_number: values.organization_number,
+          client_types: values.client_types,
+        });
+        return true;
+      } else if (stage === 3) {
+        // Contact Details stage
+        contactDetailsSchema.parse({
+          website: values.website,
+          phone: values.phone,
+          invoice_email: values.invoice_email,
+        });
+        return true;
+      }
+      // Stage 4 (Address & Settings) doesn't have required fields
+      return true;
+    } catch (error) {
+      console.log('Stage validation failed:', error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     if (website) {
@@ -163,6 +201,13 @@ export function MultiStageCompanyDialog({
     console.log('Form values:', values);
     
     if (stage < totalStages - 1) {
+      // Validate current stage before proceeding
+      const isValid = await validateCurrentStage();
+      if (!isValid) {
+        console.log('Stage validation failed, not proceeding');
+        return;
+      }
+      
       console.log('Moving to next stage:', stage + 1);
       setStage(stage + 1);
     } else {
@@ -219,6 +264,22 @@ export function MultiStageCompanyDialog({
     return null;
   };
 
+  const canProceedToNextStage = async () => {
+    if (stage < 2) return true; // Method selection and search don't need validation
+    return await validateCurrentStage();
+  };
+
+  const [canProceed, setCanProceed] = useState(true);
+
+  // Update proceed state when form values change
+  useEffect(() => {
+    const checkCanProceed = async () => {
+      const result = await canProceedToNextStage();
+      setCanProceed(result);
+    };
+    checkCanProceed();
+  }, [stage, form.watch()]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
@@ -260,7 +321,7 @@ export function MultiStageCompanyDialog({
                         "flex items-center gap-1 bg-black hover:bg-black/90",
                         stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
                       )}
-                      disabled={createCompanyMutation.isPending}
+                      disabled={createCompanyMutation.isPending || !canProceed}
                     >
                       {createCompanyMutation.isPending
                         ? 'Creating...'
