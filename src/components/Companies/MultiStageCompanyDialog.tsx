@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
@@ -176,6 +177,19 @@ export function MultiStageCompanyDialog({
   });
   
   const onSubmit = (values: CompanyFormValues) => {
+    // Only allow progression to next stage if current stage is valid
+    if (stage === 2) {
+      // Check if all required fields for stage 2 are filled
+      const websiteValid = values.website && values.website.trim().length > 0;
+      const phoneValid = values.phone && values.phone.trim().length > 0;
+      const emailValid = values.invoice_email && values.invoice_email.trim().length > 0;
+      
+      if (!websiteValid || !phoneValid || !emailValid) {
+        // Form validation will show the errors
+        return;
+      }
+    }
+    
     if (stage < totalStages) {
       setStage(stage + 1);
     } else {
@@ -330,13 +344,13 @@ export function MultiStageCompanyDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <Globe className="h-4 w-4" /> Website
+                        <Globe className="h-4 w-4" /> Website *
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="https://example.com" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Company website (logo will be automatically fetched)
+                        Company website (required - logo will be automatically fetched)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -349,7 +363,7 @@ export function MultiStageCompanyDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" /> Phone Number
+                        <Phone className="h-4 w-4" /> Phone Number *
                       </FormLabel>
                       <FormControl>
                         <PhoneInput {...field} />
@@ -365,13 +379,13 @@ export function MultiStageCompanyDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" /> Invoice Email
+                        <Mail className="h-4 w-4" /> Invoice Email *
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="invoices@example.com" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Email address for sending invoices
+                        Email address for sending invoices (required)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
