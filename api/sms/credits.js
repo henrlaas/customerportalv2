@@ -27,10 +27,33 @@ export default async function handler(req, res) {
     };
     
     const count = await fetchSMSCount();
-    // Return the data from the external API as plain text
-    res.status(200).send(count);
+    
+    // Check if account is deleted
+    if (count === "Kontoen er slettet") {
+      res.status(200).json({
+        credits: 0,
+        accountDeleted: true
+      });
+      return;
+    }
+    
+    // Parse the number
+    const credits = parseInt(count, 10);
+    
+    if (isNaN(credits)) {
+      throw new Error("Invalid response format from API");
+    }
+    
+    res.status(200).json({
+      credits: credits,
+      accountDeleted: false
+    });
   } catch (error) {
     console.error('Error in SMS count handler:', error.message);
-    res.status(500).send('Error processing SMS count request');
+    res.status(500).json({
+      error: 'Error processing SMS count request',
+      credits: 0,
+      accountDeleted: false
+    });
   }
 }

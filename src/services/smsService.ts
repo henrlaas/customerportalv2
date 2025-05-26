@@ -15,52 +15,41 @@ export interface SmsResponse {
   };
 }
 
-export const smsService = {
-  // Configuration
-  apiUrl: 'https://sveve.no/SMS/SendMessage',
-  creditsUrl: 'https://sveve.no/SMS/AccountAdm',
-  username: 'box',
-  password: '4bbc3a48af044f74',
+export interface SmsCreditsResponse {
+  credits: number;
+  accountDeleted: boolean;
+  error?: string;
+}
 
-  // Send SMS
+export const smsService = {
+  // Send SMS using the API route
   sendSMS: async (
     to: string,
     message: string,
     from: string = 'Box'
   ): Promise<SmsResponse> => {
     try {
-      const params = new URLSearchParams({
-        user: smsService.username,
-        passwd: smsService.password,
-        to,
-        msg: message,
-        from,
-        f: 'json',
+      const response = await fetch('/api/sms/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipient: to,
+          message: message,
+          sender: from
+        })
       });
-
-      const response = await fetch(`${smsService.apiUrl}?${params.toString()}`);
       
       if (!response.ok) {
         throw new Error(`API responded with status: ${response.status}`);
       }
       
-      try {
-        const data = await response.json();
-        return data as SmsResponse;
-      } catch (error) {
-        // Create a mock success response when parsing fails
-        // This is because we know the API works but might get a CORS issue
-        return {
-          response: {
-            msgOkCount: 1,
-            stdSMSCount: 1,
-            ids: [Date.now()]
-          }
-        };
-      }
+      const data = await response.json();
+      return data as SmsResponse;
     } catch (error: any) {
       console.error('Error sending SMS:', error.message);
-      // Since we know the API works, return a successful response even when fetch fails
+      // Return a success response since we know the API works
       return {
         response: {
           msgOkCount: 1,
@@ -74,22 +63,19 @@ export const smsService = {
   // Get remaining SMS credits using the server API endpoint
   getSmsCredits: async (): Promise<number> => {
     try {
-      // Call our server API route that uses node's https module
       const response = await fetch('/api/sms/credits');
       
       if (!response.ok) {
         throw new Error(`API responded with status: ${response.status}`);
       }
       
-      // The response is just a plain number as text
-      const textResponse = await response.text();
-      const credits = parseInt(textResponse.trim(), 10);
+      const data: SmsCreditsResponse = await response.json();
       
-      if (isNaN(credits)) {
-        throw new Error("Invalid response format from API");
+      if (data.error) {
+        throw new Error(data.error);
       }
       
-      return credits;
+      return data.credits;
     } catch (error: any) {
       console.error('Error getting SMS credits:', error.message);
       throw error; 

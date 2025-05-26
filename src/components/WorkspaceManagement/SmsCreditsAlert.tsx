@@ -11,31 +11,34 @@ export const SmsCreditsAlert = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchCredits = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        // Get credits from the API endpoint that returns a plain number
-        const creditsValue = await smsService.getSmsCredits();
-        setCredits(creditsValue);
-      } catch (err: any) {
-        console.error("Failed to load SMS credits:", err);
-        setError("Failed to load SMS credits");
-        
-        toast({
-          title: "Error",
-          description: "Could not retrieve SMS credits. Please try again later.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchCredits = async () => {
+    try {
+      setError(null);
+      
+      const creditsValue = await smsService.getSmsCredits();
+      setCredits(creditsValue);
+    } catch (err: any) {
+      console.error("Failed to load SMS credits:", err);
+      setError("Failed to load SMS credits");
+      
+      toast({
+        title: "Error",
+        description: "Could not retrieve SMS credits. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCredits();
-  }, [toast]);
+
+    // Auto-refresh every 5 minutes
+    const interval = setInterval(fetchCredits, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   if (isLoading) {
     return (
@@ -57,16 +60,29 @@ export const SmsCreditsAlert = () => {
     );
   }
 
-  // Display the credits alert
-  const isLow = credits !== null && credits < 100;
+  // Determine alert variant based on credits
+  const getAlertVariant = () => {
+    if (credits === 0) return "destructive";
+    if (credits !== null && credits < 100) return "warning";
+    return "default";
+  };
+
+  const getAlertMessage = () => {
+    if (credits === 0) {
+      return "You have no SMS credits remaining. Please purchase more credits to continue sending SMS messages.";
+    }
+    if (credits !== null && credits < 100) {
+      return `You have ${credits} SMS credits remaining. Consider purchasing more credits soon.`;
+    }
+    return `You have ${credits} SMS credits remaining.`;
+  };
 
   return (
-    <Alert variant={isLow ? "destructive" : "default"}>
+    <Alert variant={getAlertVariant()}>
       <MessageSquare className="h-4 w-4" />
       <AlertTitle>SMS Credits</AlertTitle>
       <AlertDescription>
-        You have {credits} SMS credits remaining.
-        {isLow && " Consider purchasing more credits soon."}
+        {getAlertMessage()}
       </AlertDescription>
     </Alert>
   );
