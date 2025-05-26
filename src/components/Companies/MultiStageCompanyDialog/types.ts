@@ -9,10 +9,10 @@ export const companyFormSchema = z.object({
   organization_number: z.string().min(1, { message: 'Organization number is required' }),
   client_types: z.array(z.string()).min(1, { message: 'At least one client type is required' }),
   
-  // Stage 2: Contact Details
-  website: z.string().url().or(z.literal('')).optional(),
-  phone: z.string().optional(),
-  invoice_email: z.string().email().or(z.literal('')).optional(),
+  // Stage 2: Contact Details - now required fields
+  website: z.string().url({ message: 'Please enter a valid website URL' }).min(1, { message: 'Website is required' }),
+  phone: z.string().min(1, { message: 'Phone number is required' }),
+  invoice_email: z.string().email({ message: 'Please enter a valid email address' }).min(1, { message: 'Invoice email is required' }),
   
   // Stage 3: Address & Settings
   street_address: z.string().optional(),

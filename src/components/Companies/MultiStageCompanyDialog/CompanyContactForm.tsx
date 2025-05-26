@@ -27,13 +27,13 @@ export const CompanyContactForm = ({ form }: CompanyContactFormProps) => {
         render={({ field }) => (
           <FormItem>
             <FormLabel className="flex items-center gap-2">
-              <Globe className="h-4 w-4" /> Website
+              <Globe className="h-4 w-4" /> Website *
             </FormLabel>
             <FormControl>
               <Input placeholder="https://example.com" {...field} />
             </FormControl>
             <FormDescription>
-              Company website (logo will be automatically fetched)
+              Company website is required (logo will be automatically fetched)
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -46,7 +46,7 @@ export const CompanyContactForm = ({ form }: CompanyContactFormProps) => {
         render={({ field }) => (
           <FormItem>
             <FormLabel className="flex items-center gap-2">
-              <Phone className="h-4 w-4" /> Phone Number
+              <Phone className="h-4 w-4" /> Phone Number *
             </FormLabel>
             <FormControl>
               <PhoneInput
@@ -85,6 +85,9 @@ export const CompanyContactForm = ({ form }: CompanyContactFormProps) => {
                 placeholder="Enter phone number"
               />
             </FormControl>
+            <FormDescription>
+              Phone number is required
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -96,13 +99,13 @@ export const CompanyContactForm = ({ form }: CompanyContactFormProps) => {
         render={({ field }) => (
           <FormItem>
             <FormLabel className="flex items-center gap-2">
-              <Mail className="h-4 w-4" /> Invoice Email
+              <Mail className="h-4 w-4" /> Invoice Email *
             </FormLabel>
             <FormControl>
               <Input placeholder="invoices@example.com" {...field} />
             </FormControl>
             <FormDescription>
-              Email address for sending invoices
+              Email address for sending invoices is required
             </FormDescription>
             <FormMessage />
           </FormItem>
