@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -21,60 +20,34 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Box Workspace</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333333;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-        }
-        .logo {
-            text-align: center;
-            padding: 20px 0;
-        }
-        .content {
-            padding: 20px;
-        }
-        h2 {
-            color: #004743;
-            margin-top: 0;
-        }
-        p {
-            margin-bottom: 20px;
-        }
-        .footer {
-            text-align: center;
-            padding: 20px;
-            font-size: 12px;
-            color: #999999;
-            border-top: 1px solid #eeeeee;
-            margin-top: 20px;
-        }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="logo">
-            <img src="https://shorturl.at/7WV73" alt="Box Marketing AS" width="150" />
-        </div>
-        <div class="content">
-            <h2>Hello 👋</h2>
-            <div>\${data.message}</div>
-            <p>Thank you,<br>The Box Team</p>
-        </div>
-        <div class="footer">
-            <p>This email was sent to you because you have an association with Box Marketing AS.</p>
-            <p>© 2025 Box Marketing AS. All rights reserved.</p>
-        </div>
-    </div>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; margin: 0 auto;">
+                    <tr>
+                        <td style="text-align: center; padding: 20px 0;">
+                            <img src="https://shorturl.at/7WV73" alt="Box Marketing AS" width="150" style="display: block; margin: 0 auto;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 20px;">
+                            <h2 style="color: #004743; margin: 0 0 20px 0; font-size: 24px;">Hello 👋</h2>
+                            <div style="margin-bottom: 20px; white-space: pre-wrap;">\${data.message}</div>
+                            <p style="margin: 20px 0;">Thank you,<br>The Box Team</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center; padding: 20px; font-size: 12px; color: #999999; border-top: 1px solid #eeeeee;">
+                            <p style="margin: 0 0 10px 0;">This email was sent to you because you have an association with Box Marketing AS.</p>
+                            <p style="margin: 0;">© 2025 Box Marketing AS. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>`;
 
@@ -168,8 +141,7 @@ export const EmailForm = () => {
     });
 
     // Generate a clean plain text version
-    const plainTextMessage = `
-Hello 👋
+    const plainTextMessage = `Hello 👋
 
 ${data.message}
 
@@ -177,8 +149,7 @@ Thank you,
 The Box Team
 
 This email was sent to you because you have an association with Box Marketing AS.
-© 2025 Box Marketing AS. All rights reserved.
-    `.trim();
+© 2025 Box Marketing AS. All rights reserved.`;
 
     const emailData: EmailData = {
       to: data.to,
