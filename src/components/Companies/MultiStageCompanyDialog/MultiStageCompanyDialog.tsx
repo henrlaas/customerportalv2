@@ -158,67 +158,38 @@ export function MultiStageCompanyDialog({
     },
   });
 
-  // Validate specific fields based on current stage
-  const validateCurrentStage = async () => {
+  // Simple validation for basic info stage
+  const isBasicInfoValid = () => {
     const values = form.getValues();
+    console.log('Validating basic info stage. Current values:', values);
+    console.log('Current stage:', stage);
     
-    if (stage === 2) { // Basic Info stage
-      // Validate basic info fields
-      if (!values.name || values.name.trim() === '') {
-        form.setError('name', { message: 'Company name is required' });
-        return false;
-      }
-      if (!values.organization_number || values.organization_number.trim() === '') {
-        form.setError('organization_number', { message: 'Organization number is required' });
-        return false;
-      }
-      if (!values.client_types || values.client_types.length === 0) {
-        form.setError('client_types', { message: 'At least one client type is required' });
-        return false;
-      }
-      return true;
-    }
+    const nameValid = values.name && values.name.trim().length > 0;
+    const orgNumberValid = values.organization_number && values.organization_number.trim().length > 0;
+    const clientTypesValid = values.client_types && values.client_types.length > 0;
     
-    if (stage === 3) { // Contact Details stage
-      // Validate contact fields
-      if (!values.website || values.website.trim() === '') {
-        form.setError('website', { message: 'Website is required' });
-        return false;
-      }
-      // Basic URL validation
-      try {
-        new URL(values.website);
-      } catch {
-        form.setError('website', { message: 'Please enter a valid website URL' });
-        return false;
-      }
-      if (!values.phone || values.phone.trim() === '') {
-        form.setError('phone', { message: 'Phone number is required' });
-        return false;
-      }
-      if (!values.invoice_email || values.invoice_email.trim() === '') {
-        form.setError('invoice_email', { message: 'Invoice email is required' });
-        return false;
-      }
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(values.invoice_email)) {
-        form.setError('invoice_email', { message: 'Please enter a valid email address' });
-        return false;
-      }
-      return true;
-    }
+    console.log('Name valid:', nameValid);
+    console.log('Org number valid:', orgNumberValid);
+    console.log('Client types valid:', clientTypesValid);
     
-    return true; // For other stages, allow progression
+    return nameValid && orgNumberValid && clientTypesValid;
   };
 
   const onSubmit = async (values: CompanyFormValues) => {
+    console.log('Form submitted with stage:', stage);
+    console.log('Form values:', values);
+    
     if (stage < totalStages - 1) {
-      // Validate current stage before proceeding
-      const isValid = await validateCurrentStage();
-      if (isValid) {
-        setStage(stage + 1);
+      // For basic info stage (stage 2), check if all required fields are filled
+      if (stage === 2) {
+        if (!isBasicInfoValid()) {
+          console.log('Basic info validation failed');
+          return;
+        }
       }
+      
+      console.log('Moving to next stage:', stage + 1);
+      setStage(stage + 1);
     } else {
       // Final stage - create the company
       createCompanyMutation.mutate(values);
@@ -314,7 +285,7 @@ export function MultiStageCompanyDialog({
                         "flex items-center gap-1 bg-black hover:bg-black/90",
                         stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
                       )}
-                      disabled={createCompanyMutation.isPending}
+                      disabled={createCompanyMutation.isPending || (stage === 2 && !isBasicInfoValid())}
                     >
                       {createCompanyMutation.isPending
                         ? 'Creating...'
