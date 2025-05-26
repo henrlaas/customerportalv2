@@ -1,3 +1,4 @@
+
 // ----- Imports
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -70,7 +71,7 @@ export function MultiStageCompanyDialog({
       trial_period: false,
       is_partner: false,
       advisor_id: user?.id || '',
-      mrr: 0,
+      mrr: 0, // Default to 0 instead of undefined
       ...defaultValues,
     },
   });
@@ -91,11 +92,19 @@ export function MultiStageCompanyDialog({
         fieldsToValidate = ['website', 'phone', 'invoice_email'];
         break;
       case 4: // Address & Settings stage
-        // Only validate fields that are actually used based on conditions
-        fieldsToValidate = ['street_address', 'city', 'postal_code', 'country', 'advisor_id'];
+        fieldsToValidate = [
+          'street_address', 
+          'city', 
+          'postal_code', 
+          'advisor_id'
+        ];
+        
+        // Only validate MRR if Marketing client type is selected
         if (hasMarketingType) {
           fieldsToValidate.push('mrr');
         }
+        
+        // Country is optional, trial_period and is_partner have defaults
         break;
       default:
         return true; // No validation for stage 0 and 1 (method selection and search)
