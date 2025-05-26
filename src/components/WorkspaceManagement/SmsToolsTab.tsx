@@ -1,6 +1,5 @@
 
 import { SmsForm } from "@/components/WorkspaceManagement/SmsForm";
-import { SmsCreditsAlert } from "@/components/WorkspaceManagement/SmsCreditsAlert";
 import { Separator } from "@/components/ui/separator";
 import { MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,8 +17,6 @@ export const SmsToolsTab = () => {
         </p>
         <Separator />
       </div>
-
-      <SmsCreditsAlert />
 
       <Card className="bg-white shadow-md">
         <CardHeader>
