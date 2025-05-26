@@ -2,20 +2,19 @@
 import { z } from 'zod';
 import type { Company } from '@/types/company';
 
-// Stage-specific schemas
-export const basicInfoSchema = z.object({
+// Form schema for all stages
+export const companyFormSchema = z.object({
+  // Stage 1: Basic Info
   name: z.string().min(1, { message: 'Company name is required' }),
   organization_number: z.string().min(1, { message: 'Organization number is required' }),
   client_types: z.array(z.string()).min(1, { message: 'At least one client type is required' }),
-});
-
-export const contactDetailsSchema = z.object({
-  website: z.string().url({ message: 'Please enter a valid website URL' }).min(1, { message: 'Website is required' }),
-  phone: z.string().min(1, { message: 'Phone number is required' }),
-  invoice_email: z.string().email({ message: 'Please enter a valid email address' }).min(1, { message: 'Invoice email is required' }),
-});
-
-export const addressSettingsSchema = z.object({
+  
+  // Stage 2: Contact Details
+  website: z.string().url().or(z.literal('')).optional(),
+  phone: z.string().optional(),
+  invoice_email: z.string().email().or(z.literal('')).optional(),
+  
+  // Stage 3: Address & Settings
   street_address: z.string().optional(),
   city: z.string().optional(),
   postal_code: z.string().optional(),
@@ -27,13 +26,7 @@ export const addressSettingsSchema = z.object({
   mrr: z.coerce.number().min(0, { message: 'MRR cannot be negative' }).optional(),
 });
 
-// Full form schema for final submission
-export const companyFormSchema = basicInfoSchema.merge(contactDetailsSchema).merge(addressSettingsSchema);
-
 export type CompanyFormValues = z.infer<typeof companyFormSchema>;
-export type BasicInfoValues = z.infer<typeof basicInfoSchema>;
-export type ContactDetailsValues = z.infer<typeof contactDetailsSchema>;
-export type AddressSettingsValues = z.infer<typeof addressSettingsSchema>;
 
 export interface MultiStageCompanyDialogProps {
   isOpen: boolean;
