@@ -14,13 +14,13 @@ export function ContactDetailsStage({ form }: { form: any }) {
         render={({ field }: any) => (
           <FormItem>
             <FormLabel className="flex items-center gap-2">
-              <Globe className="h-4 w-4" /> Website*
+              <Globe className="h-4 w-4" /> Website
             </FormLabel>
             <FormControl>
               <Input placeholder="https://example.no" {...field} />
             </FormControl>
             <FormDescription>
-              Company website (required)
+              Company website
             </FormDescription>
             <FormMessage />
           </FormItem>
