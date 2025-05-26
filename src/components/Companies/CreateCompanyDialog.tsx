@@ -32,10 +32,10 @@ import { CreationMethodStage } from './MultiStageCompanyDialog/CreationMethodSta
 import { BrunnøysundSearchStage } from './MultiStageCompanyDialog/BrunnøysundSearchStage';
 import type { CreationMethod, BrregCompany } from './MultiStageCompanyDialog/types';
 
-// Form schema - simplified for subsidiaries
+// Form schema - organization number is now required for subsidiaries
 const companyFormSchema = z.object({
   name: z.string().min(1, { message: 'Company name is required' }),
-  organization_number: z.string().optional(),
+  organization_number: z.string().min(1, { message: 'Organization number is required' }),
   website: z.string().url().or(z.literal('')).optional(),
 });
 
@@ -209,11 +209,13 @@ export const CreateCompanyDialog = ({
     }
   };
 
-  // Validate current step before allowing next
+  // Validate current step before allowing next - now requires both name and organization number
   const canProceedToNext = () => {
     if (currentStep === 2 && creationMethod === 'manual') {
-      // For manual basic info step, require name
-      return form.watch('name')?.trim().length > 0;
+      // For manual basic info step, require both name and organization number
+      const name = form.watch('name')?.trim();
+      const orgNumber = form.watch('organization_number')?.trim();
+      return name && name.length > 0 && orgNumber && orgNumber.length > 0;
     }
     return true;
   };
@@ -251,12 +253,12 @@ export const CreateCompanyDialog = ({
           name="organization_number"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Organization Number</FormLabel>
+              <FormLabel>Organization Number *</FormLabel>
               <FormControl>
-                <Input placeholder="Enter organization number (optional)" {...field} />
+                <Input placeholder="Enter organization number" {...field} />
               </FormControl>
               <FormDescription>
-                Optional organization number for the subsidiary
+                Official registration number of the subsidiary
               </FormDescription>
               <FormMessage />
             </FormItem>
