@@ -1,4 +1,3 @@
-
 // ----- Imports
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -80,6 +79,59 @@ export function MultiStageCompanyDialog({
   const clientTypes = form.watch('client_types');
   const hasMarketingType = clientTypes?.includes(CLIENT_TYPES.MARKETING);
 
+  // Add stage-specific validation logic
+  const validateCurrentStage = async (): Promise<boolean> => {
+    let fieldsToValidate: (keyof CompanyFormValues)[] = [];
+    
+    switch (stage) {
+      case 2: // Basic Info stage
+        fieldsToValidate = ['name', 'organization_number', 'client_types'];
+        break;
+      case 3: // Contact Details stage
+        fieldsToValidate = ['website', 'phone', 'invoice_email'];
+        break;
+      case 4: // Address & Settings stage
+        // Only validate fields that are actually used based on conditions
+        fieldsToValidate = ['street_address', 'city', 'postal_code', 'country', 'advisor_id'];
+        if (hasMarketingType) {
+          fieldsToValidate.push('mrr');
+        }
+        break;
+      default:
+        return true; // No validation for stage 0 and 1 (method selection and search)
+    }
+    
+    // Trigger validation only for current stage fields
+    const result = await form.trigger(fieldsToValidate as any);
+    return result;
+  };
+
+  // Add a new handleNext function
+  const handleNext = async () => {
+    // For stages that need validation (2, 3, 4)
+    if (stage >= 2) {
+      const isValid = await validateCurrentStage();
+      
+      if (!isValid) {
+        // Validation failed, don't proceed
+        return;
+      }
+    }
+    
+    // If we're on the last stage, submit the form
+    if (stage === totalStages - 1) {
+      // Final validation of all fields before submission
+      const isFormValid = await form.trigger();
+      if (isFormValid) {
+        const values = form.getValues();
+        createCompanyMutation.mutate(values);
+      }
+    } else {
+      // Otherwise just go to next stage
+      setStage(stage + 1);
+    }
+  };
+
   useEffect(() => {
     if (website) {
       const fetchLogo = async () => {
@@ -158,14 +210,6 @@ export function MultiStageCompanyDialog({
     },
   });
 
-  const onSubmit = (values: CompanyFormValues) => {
-    if (stage < totalStages - 1) {
-      setStage(stage + 1);
-    } else {
-      createCompanyMutation.mutate(values);
-    }
-  };
-
   const goBack = () => {
     if (stage > 0) {
       setStage(stage - 1);
@@ -227,7 +271,7 @@ export function MultiStageCompanyDialog({
         {stage > 0 && <ProgressStepper currentStep={stage} totalSteps={totalStages} />}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-4">
             {renderStageContent()}
 
             {stage > 0 && (
@@ -250,7 +294,8 @@ export function MultiStageCompanyDialog({
                   </Button>
                   {stage >= 2 && (
                     <Button
-                      type="submit"
+                      type="button"
+                      onClick={handleNext}
                       className={cn(
                         "flex items-center gap-1 bg-black hover:bg-black/90",
                         stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
@@ -272,7 +317,7 @@ export function MultiStageCompanyDialog({
                 </div>
               </DialogFooter>
             )}
-          </form>
+          </div>
         </Form>
       </DialogContent>
     </Dialog>
