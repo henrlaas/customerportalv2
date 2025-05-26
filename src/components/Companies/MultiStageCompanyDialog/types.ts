@@ -10,7 +10,7 @@ export const companyFormSchema = z.object({
   client_types: z.array(z.string()).min(1, { message: 'At least one client type is required' }),
   
   // Stage 2: Contact Details
-  website: z.string().url().min(1, { message: 'URL is required' }),
+  website: z.string().url().or(z.literal('')).optional(),
   phone: z.string().optional(),
   invoice_email: z.string().email().or(z.literal('')).optional(),
   
