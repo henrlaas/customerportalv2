@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Select from 'react-select';
@@ -25,7 +26,7 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
         // Fetch users who are employees or admins from profiles table
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name')
+          .select('id, first_name, last_name, avatar_url')
           .in('role', ['employee', 'admin']);
           
         if (error) throw error;
@@ -44,10 +45,46 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
     }
   }, [form, user]);
 
+  // Helper function to get user initials
+  const getUserInitials = (firstName: string | null, lastName: string | null) => {
+    const first = firstName?.[0] || '';
+    const last = lastName?.[0] || '';
+    return (first + last).toUpperCase() || 'U';
+  };
+
+  // Custom option component for react-select with avatar
+  const CustomOption = ({ data, ...props }: any) => (
+    <div {...props.innerProps} className="flex items-center gap-2 p-2 hover:bg-gray-100 cursor-pointer">
+      <Avatar className="h-6 w-6">
+        <AvatarImage src={data.avatar_url || undefined} />
+        <AvatarFallback className="text-xs">
+          {getUserInitials(data.firstName, data.lastName)}
+        </AvatarFallback>
+      </Avatar>
+      <span>{data.label}</span>
+    </div>
+  );
+
+  // Custom single value component for react-select with avatar
+  const CustomSingleValue = ({ data }: any) => (
+    <div className="flex items-center gap-2">
+      <Avatar className="h-5 w-5">
+        <AvatarImage src={data.avatar_url || undefined} />
+        <AvatarFallback className="text-xs">
+          {getUserInitials(data.firstName, data.lastName)}
+        </AvatarFallback>
+      </Avatar>
+      <span>{data.label}</span>
+    </div>
+  );
+
   // Transform employees data for react-select
   const userOptions = employees.map(employee => ({
     value: employee.id,
     label: `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || 'Unknown User',
+    avatar_url: employee.avatar_url,
+    firstName: employee.first_name,
+    lastName: employee.last_name,
   }));
 
   // Find the selected option
@@ -82,6 +119,10 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
                   placeholder="Select a user"
                   className="react-select-container"
                   classNamePrefix="react-select"
+                  components={{
+                    Option: CustomOption,
+                    SingleValue: CustomSingleValue,
+                  }}
                   styles={{
                     control: (baseStyles) => ({
                       ...baseStyles,
@@ -105,18 +146,16 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
                       borderColor: 'hsl(var(--border))',
                       zIndex: 50
                     }),
-                    option: (baseStyles, { isFocused, isSelected }) => ({
+                    option: (baseStyles) => ({
                       ...baseStyles,
-                      backgroundColor: isFocused 
-                        ? '#f3f3f3'
-                        : isSelected 
-                          ? 'hsl(var(--accent) / 0.2)'
-                          : undefined,
-                      color: 'hsl(var(--foreground))'
+                      backgroundColor: 'transparent',
+                      color: 'hsl(var(--foreground))',
+                      padding: 0,
                     }),
                     singleValue: (baseStyles) => ({
                       ...baseStyles,
-                      color: 'hsl(var(--foreground))'
+                      color: 'hsl(var(--foreground))',
+                      margin: 0,
                     }),
                     input: (baseStyles) => ({
                       ...baseStyles,
