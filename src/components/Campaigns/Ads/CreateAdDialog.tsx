@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Dialog,
@@ -61,26 +62,25 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
 
   const isSnapchat = validPlatform === 'Snapchat';
   const isTikTok = validPlatform === 'Tiktok';
+  const isGoogle = validPlatform === 'Google';
   const creationMethod = form.watch('creation_method') || 'manual';
 
-  // Update steps based on creation method
+  // Update steps based on creation method and platform
   const getSteps = () => {
-    const baseSteps = isSnapchat
-      ? [{ label: 'Media & Name' }, { label: 'Creation Method' }]
-      : isTikTok
-        ? [{ label: 'Media & Name' }, { label: 'Creation Method' }]
-        : [{ label: 'Basic Info' }, { label: 'Creation Method' }];
+    const baseSteps = [{ label: 'Creation Method' }];
 
     if (creationMethod === 'ai') {
       baseSteps.push({ label: 'AI Prompt' });
     }
 
     if (isSnapchat) {
-      baseSteps.push({ label: 'Details & Preview' });
+      baseSteps.push({ label: 'Media & Name' }, { label: 'Details & Preview' });
     } else if (isTikTok) {
-      baseSteps.push({ label: 'Details & Preview' });
+      baseSteps.push({ label: 'Media & Name' }, { label: 'Details & Preview' });
+    } else if (isGoogle) {
+      baseSteps.push({ label: 'Basic Info' }, ...getStepsForPlatform(validPlatform).slice(1).map(step => ({ label: step.title })));
     } else {
-      baseSteps.push(...getStepsForPlatform(validPlatform).slice(1).map(step => ({ label: step.title })));
+      baseSteps.push({ label: 'Basic Info' }, ...getStepsForPlatform(validPlatform).slice(1).map(step => ({ label: step.title })));
     }
 
     return baseSteps;
@@ -113,7 +113,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
       };
     }
     
-    const variation = Math.max(0, step - 2);
+    const variation = Math.max(0, step - (creationMethod === 'ai' ? 3 : 2));
     return {
       headline: form.watch(`headline_variations.${variation}.text`) || form.watch('headline') || '',
       description: form.watch(`description_variations.${variation}.text`) || form.watch('description') || '',
@@ -286,16 +286,59 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
     }
   };
 
-  const getCurrentStepIndex = () => {
-    if (creationMethod === 'ai') {
-      return step;
-    } else {
-      // Skip AI prompt step for manual creation
-      return step >= 2 ? step + 1 : step;
+  const validateCurrentStep = () => {
+    // Step 0: Creation method - always valid (radio button has default)
+    if (step === 0) return true;
+
+    // Step 1: AI prompt (only if AI method selected)
+    if (step === 1 && creationMethod === 'ai') {
+      const prompt = form.watch('ai_prompt');
+      if (!prompt?.trim()) {
+        toast({
+          title: 'Missing prompt',
+          description: 'Please provide a description for your ad.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+      return true;
     }
+
+    // Basic info step validation
+    const basicInfoStepIndex = creationMethod === 'ai' ? 2 : 1;
+    if (step === basicInfoStepIndex) {
+      const name = form.watch('name');
+      if (!name?.trim()) {
+        toast({
+          title: 'Missing information',
+          description: 'Please provide an ad name.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      // Check media upload requirement for non-Google platforms
+      if (requiresMediaUpload(validPlatform) && !fileInfo) {
+        toast({
+          title: 'Missing file',
+          description: 'Please upload an image or video for your ad.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+      return true;
+    }
+
+    // Platform-specific validation for remaining steps
+    if (isGoogle || isSnapchat || isTikTok) {
+      return true; // These have their own validation
+    }
+
+    // Default platform validation
+    return validateStepFn(step - basicInfoStepIndex - 1, form, fileInfo, validPlatform, requiresMediaUpload, toast);
   };
 
-  const isLastStep = getCurrentStepIndex() === steps.length - 1;
+  const isLastStep = step === steps.length - 1;
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
@@ -322,8 +365,25 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
         <Form {...form}>
           <div className="space-y-4">
             <AnimatePresence mode="wait">
-              {/* Step 0: Basic Info / Media & Name */}
+              {/* Step 0: Creation Method */}
               {step === 0 && (
+                <CreationMethodStep
+                  form={form}
+                  onNext={() => setStep(step + 1)}
+                />
+              )}
+
+              {/* Step 1: AI Prompt (only if AI method selected) */}
+              {step === 1 && creationMethod === 'ai' && (
+                <AIPromptStep
+                  form={form}
+                  onGenerate={handleAIGeneration}
+                  isGenerating={isGenerating}
+                />
+              )}
+
+              {/* Basic Info / Media & Name Step */}
+              {step === (creationMethod === 'ai' ? 2 : 1) && (
                 <>
                   {isSnapchat ? (
                     <SnapchatAdSteps
@@ -349,7 +409,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
                     />
                   ) : (
                     <DefaultPlatformAdSteps
-                      steps={[steps[0]]}
+                      steps={[steps[creationMethod === 'ai' ? 2 : 1]]}
                       step={0}
                       setStep={setStep}
                       form={form}
@@ -365,25 +425,8 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
                 </>
               )}
 
-              {/* Step 1: Creation Method */}
-              {step === 1 && (
-                <CreationMethodStep
-                  form={form}
-                  onNext={() => setStep(step + 1)}
-                />
-              )}
-
-              {/* Step 2: AI Prompt (only if AI method selected) */}
-              {step === 2 && creationMethod === 'ai' && (
-                <AIPromptStep
-                  form={form}
-                  onGenerate={handleAIGeneration}
-                  isGenerating={isGenerating}
-                />
-              )}
-
-              {/* Remaining steps */}
-              {step >= (creationMethod === 'ai' ? 3 : 2) && (
+              {/* Remaining platform-specific steps */}
+              {step > (creationMethod === 'ai' ? 2 : 1) && (
                 <>
                   {isSnapchat ? (
                     <SnapchatAdSteps
@@ -407,9 +450,9 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
                       validPlatform={validPlatform}
                       uploading={uploading}
                     />
-                  ) : validPlatform === 'Google' ? (
+                  ) : isGoogle ? (
                     <GoogleAdSteps
-                      step={getCurrentStepIndex() - (creationMethod === 'ai' ? 3 : 2)}
+                      step={step - (creationMethod === 'ai' ? 3 : 2)}
                       setStep={setStep}
                       form={form}
                       fileInfo={fileInfo}
@@ -423,7 +466,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
                   ) : (
                     <DefaultPlatformAdSteps
                       steps={getStepsForPlatform(validPlatform).slice(1)}
-                      step={getCurrentStepIndex() - (creationMethod === 'ai' ? 3 : 2)}
+                      step={step - (creationMethod === 'ai' ? 3 : 2)}
                       setStep={setStep}
                       form={form}
                       fileInfo={fileInfo}
@@ -454,25 +497,18 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
                 onClick={() => {
                   if (isLastStep) {
                     submitAd();
-                  } else if (step === 1) {
-                    // Creation method step
-                    setStep(step + 1);
-                  } else if (step === 2 && creationMethod === 'ai') {
+                  } else if (step === 1 && creationMethod === 'ai') {
                     // AI prompt step - handled by handleAIGeneration
                     return;
                   } else {
-                    // Regular validation for other steps
-                    if (isTikTok || isSnapchat) {
-                      // These platforms have their own validation
-                    } else {
-                      if (validateStepFn(getCurrentStepIndex() - (creationMethod === 'ai' ? 3 : 2), form, fileInfo, validPlatform, requiresMediaUpload, toast)) {
-                        setStep(step + 1);
-                      }
+                    // Validate current step before proceeding
+                    if (validateCurrentStep()) {
+                      setStep(step + 1);
                     }
                   }
                 }}
                 className="bg-primary hover:bg-primary/90"
-                disabled={isGenerating}
+                disabled={isGenerating || uploading}
               >
                 {isLastStep ? "Create Ad" : "Next"}
               </Button>

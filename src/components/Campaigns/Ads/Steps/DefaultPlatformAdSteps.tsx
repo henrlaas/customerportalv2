@@ -33,6 +33,8 @@ export function DefaultPlatformAdSteps({
   toast,
   getWatchedFieldsForCurrentVariation,
 }: Props) {
+  const isGoogle = validPlatform === 'Google';
+
   return (
     <>
       {steps.map((platformStep, idx) => {
@@ -73,7 +75,7 @@ export function DefaultPlatformAdSteps({
                     setStep(step + 1);
                   }
                 }}
-                hideFileUpload={false}
+                hideFileUpload={isGoogle}
               />
             </motion.div>
           );

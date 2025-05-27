@@ -1,9 +1,8 @@
 
 import { motion } from 'framer-motion';
 import { AdDialogPreview } from '../components/AdDialogPreview';
-import { BasicInfoStep } from './BasicInfoStep';
-import { Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 
 interface Props {
   step: number;
@@ -33,24 +32,28 @@ export function GoogleAdSteps({
           transition={{ duration: 0.3 }}
           className="px-6 pb-6"
         >
-          <BasicInfoStep
-            fileInfo={null}
-            onFileChange={() => {}}
-            onRemoveFile={() => {}}
-            form={form}
-            onNextStep={() => {
-              if (form.watch('name')?.trim()) {
-                setStep(step + 1)
-              } else {
-                toast({
-                  title: 'Missing information',
-                  description: 'Please provide an ad name.',
-                  variant: 'destructive',
-                });
-              }
-            }}
-            hideFileUpload={true}
-          />
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-semibold">Basic Information</h2>
+              <p className="text-sm text-muted-foreground">
+                Enter your ad name to get started
+              </p>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ad Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter ad name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </motion.div>
       )}
       {step === 1 && (
@@ -62,22 +65,41 @@ export function GoogleAdSteps({
           transition={{ duration: 0.3 }}
           className="px-6 pb-6"
         >
-          <h2 className="text-lg font-bold mb-4">Headlines</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[...Array(10)].map((_, i) => (
-              <div key={i}>
-                <label className="block text-sm mb-1" htmlFor={`headline_variations.${i}.text`}>
-                  Headline {i + 1} <span className="text-xs text-muted-foreground">({(form.watch(`headline_variations.${i}.text`) || '').length}/30)</span>
-                </label>
-                <input
-                  id={`headline_variations.${i}.text`}
-                  type="text"
-                  maxLength={30}
-                  className="w-full border rounded px-3 py-2"
-                  {...form.register(`headline_variations.${i}.text`)}
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-semibold">Headlines</h2>
+              <p className="text-sm text-muted-foreground">
+                Add up to 10 different headlines for your ad
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[...Array(10)].map((_, i) => (
+                <FormField
+                  key={i}
+                  control={form.control}
+                  name={`headline_variations.${i}.text`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Headline {i + 1} 
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({(field.value || '').length}/30)
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          maxLength={30}
+                          placeholder={`Enter headline ${i + 1}`}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </motion.div>
       )}
@@ -90,22 +112,41 @@ export function GoogleAdSteps({
           transition={{ duration: 0.3 }}
           className="px-6 pb-6"
         >
-          <h2 className="text-lg font-bold mb-4">Descriptions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i}>
-                <label className="block text-sm mb-1" htmlFor={`description_variations.${i}.text`}>
-                  Description {i + 1} <span className="text-xs text-muted-foreground">({(form.watch(`description_variations.${i}.text`) || '').length}/90)</span>
-                </label>
-                <input
-                  id={`description_variations.${i}.text`}
-                  type="text"
-                  maxLength={90}
-                  className="w-full border rounded px-3 py-2"
-                  {...form.register(`description_variations.${i}.text`)}
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-semibold">Descriptions</h2>
+              <p className="text-sm text-muted-foreground">
+                Add up to 4 different descriptions for your ad
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <FormField
+                  key={i}
+                  control={form.control}
+                  name={`description_variations.${i}.text`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Description {i + 1}
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({(field.value || '').length}/90)
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          maxLength={90}
+                          placeholder={`Enter description ${i + 1}`}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </motion.div>
       )}
@@ -118,22 +159,41 @@ export function GoogleAdSteps({
           transition={{ duration: 0.3 }}
           className="px-6 pb-6"
         >
-          <h2 className="text-lg font-bold mb-4">Keywords</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i}>
-                <label className="block text-sm mb-1" htmlFor={`keywords_variations.${i}.text`}>
-                  Keywords Set {i + 1} <span className="text-xs text-muted-foreground">({(form.watch(`keywords_variations.${i}.text`) || '').length}/80)</span>
-                </label>
-                <input
-                  id={`keywords_variations.${i}.text`}
-                  type="text"
-                  maxLength={80}
-                  className="w-full border rounded px-3 py-2"
-                  {...form.register(`keywords_variations.${i}.text`)}
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-semibold">Keywords</h2>
+              <p className="text-sm text-muted-foreground">
+                Add up to 5 different keyword sets for your ad
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[...Array(5)].map((_, i) => (
+                <FormField
+                  key={i}
+                  control={form.control}
+                  name={`keywords_variations.${i}.text`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Keywords Set {i + 1}
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({(field.value || '').length}/80)
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          maxLength={80}
+                          placeholder={`Enter keywords set ${i + 1}`}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </motion.div>
       )}
@@ -146,13 +206,30 @@ export function GoogleAdSteps({
           transition={{ duration: 0.3 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 pb-6"
         >
-          <div>
-            <label className="block text-sm mb-1" htmlFor="url">URL</label>
-            <input
-              id="url"
-              type="text"
-              className="w-full border rounded px-3 py-2 mb-6"
-              {...form.register('url')}
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-semibold">URL</h2>
+              <p className="text-sm text-muted-foreground">
+                Set the URL where users will be directed
+              </p>
+            </div>
+            
+            <FormField
+              control={form.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Landing Page URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="url"
+                      placeholder="https://example.com"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
           <AdDialogPreview
