@@ -56,7 +56,7 @@ export function AdPreviewPanel({ formData, fileInfo, platform }: Props) {
             {Object.entries(limits).map(([field, limit]) => (
               <div key={field} className="flex justify-between text-xs">
                 <span className="capitalize">{String(field).replace('_', ' ')}</span>
-                <span className="text-muted-foreground">{limit} chars</span>
+                <span className="text-muted-foreground">{Number(limit)} chars</span>
               </div>
             ))}
           </CardContent>
