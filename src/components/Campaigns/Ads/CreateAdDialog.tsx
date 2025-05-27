@@ -141,7 +141,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
           Create Ad
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[90vh] p-0 flex flex-col bg-gradient-to-br from-background to-muted/30 backdrop-blur-sm border-primary/10">
+      <DialogContent className="max-w-6xl h-[90vh] p-0 flex flex-col bg-gradient-to-br from-background to-muted/30 backdrop-blur-sm border-primary/10">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             Create New {validPlatform} Ad
@@ -152,7 +152,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex flex-col h-full"
+          className="flex-1 min-h-0 overflow-hidden"
         >
           <AdCreationForm
             form={form}
