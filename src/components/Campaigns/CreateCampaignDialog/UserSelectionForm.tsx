@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as z from 'zod';
@@ -133,8 +132,8 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
                       '&:hover': {
                         borderColor: 'hsl(var(--input))'
                       },
-                      padding: '1px',
-                      minHeight: '40px'
+                      padding: '4px 8px',
+                      minHeight: '44px'
                     }),
                     placeholder: (baseStyles) => ({
                       ...baseStyles,
