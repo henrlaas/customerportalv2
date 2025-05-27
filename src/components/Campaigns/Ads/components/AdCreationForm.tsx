@@ -61,8 +61,19 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
                 />
               </div>
             </ScrollArea>
+          </div>
+          
+          {/* Right Panel - Preview with Submit Button */}
+          <div className="w-96 border-l bg-muted/20 flex flex-col">
+            <div className="flex-1 overflow-y-auto">
+              <AdPreviewPanel
+                formData={formData}
+                fileInfo={fileInfo}
+                platform={platform}
+              />
+            </div>
             
-            {/* Submit Button - Fixed at bottom */}
+            {/* Submit Button - Fixed at bottom right */}
             <div className="p-6 pt-4 border-t bg-background flex-shrink-0">
               <Button 
                 type="submit" 
@@ -80,15 +91,6 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
                 )}
               </Button>
             </div>
-          </div>
-          
-          {/* Right Panel - Preview (Made wider) */}
-          <div className="w-96 border-l bg-muted/20 overflow-y-auto">
-            <AdPreviewPanel
-              formData={formData}
-              fileInfo={fileInfo}
-              platform={platform}
-            />
           </div>
         </form>
       </Form>
