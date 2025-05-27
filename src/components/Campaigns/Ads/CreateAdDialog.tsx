@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -79,7 +80,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
     } else if (isTikTok) {
       baseSteps.push({ label: 'Details & Preview' });
     } else {
-      baseSteps.push(...getStepsForPlatform(validPlatform).slice(1));
+      baseSteps.push(...getStepsForPlatform(validPlatform).slice(1).map(step => ({ label: step.title })));
     }
 
     return baseSteps;
