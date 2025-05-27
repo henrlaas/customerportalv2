@@ -244,19 +244,19 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <EditCampaignDialog campaign={campaign} trigger={
-                      <Button variant="ghost" className="w-full justify-start">
+                      <Button variant="ghost" className="w-full justify-start h-10 px-2 py-1.5">
                         <Edit className="mr-2 h-4 w-4" />
                         <span>Edit Campaign</span>
                       </Button>
                     } />
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={handleDuplicate}>
+                  <DropdownMenuItem onSelect={handleDuplicate} className="h-10 px-2 py-1.5">
                     <Copy className="mr-2 h-4 w-4" />
                     <span>Duplicate Campaign</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
                     <DeleteCampaignDialog campaign={campaign} trigger={
-                      <Button variant="ghost" className="w-full justify-start text-destructive">
+                      <Button variant="ghost" className="w-full justify-start text-destructive h-10 px-2 py-1.5">
                         <Trash2 className="mr-2 h-4 w-4" />
                         <span>Delete Campaign</span>
                       </Button>
