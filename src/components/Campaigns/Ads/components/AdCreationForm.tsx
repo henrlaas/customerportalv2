@@ -34,8 +34,8 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
       <Form {...form}>
         <form onSubmit={handleSubmit} className="h-full flex">
           {/* Left Panel - Form Fields with ScrollArea */}
-          <div className="flex-1 flex flex-col min-h-0">
-            <ScrollArea className="flex-1 h-full">
+          <div className="flex-1 flex flex-col">
+            <ScrollArea className="flex-1">
               <div className="p-6 space-y-6">
                 {/* AI Assistant */}
                 <AIContentAssistant
@@ -63,7 +63,7 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
             </ScrollArea>
             
             {/* Submit Button - Fixed at bottom */}
-            <div className="p-6 pt-4 border-t bg-background flex-shrink-0">
+            <div className="p-6 pt-4 border-t bg-background">
               <Button 
                 type="submit" 
                 className="w-full"
