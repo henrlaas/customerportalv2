@@ -2,7 +2,7 @@
 import { format } from 'date-fns';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Repeat } from 'lucide-react';
+import { Edit, Trash2, Repeat, ArrowLeft } from 'lucide-react';
 import { PlatformBadge } from './PlatformBadge';
 import { Campaign } from './types/campaign';
 import { EditCampaignDialog } from './EditCampaignDialog/EditCampaignDialog';
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 
 interface CampaignDetailsBannerProps {
   campaign: Campaign | null;
@@ -19,6 +20,7 @@ interface CampaignDetailsBannerProps {
 
 export function CampaignDetailsBanner({ campaign, onCampaignUpdate }: CampaignDetailsBannerProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   if (!campaign) return null;
 
@@ -85,11 +87,23 @@ export function CampaignDetailsBanner({ campaign, onCampaignUpdate }: CampaignDe
     }
   };
 
+  const handleBackClick = () => {
+    navigate('/campaigns');
+  };
+
   return (
     <div className="bg-card border-b mb-6">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleBackClick}
+              className="mr-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             {campaign.companies?.logo_url && (
               <div className="h-12 w-12 rounded-md overflow-hidden">
                 <img 
