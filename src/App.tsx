@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -111,6 +112,8 @@ function App() {
                   <Route path="/campaigns/:campaignId" element={<CampaignDetailsPage />} />
                   <Route path="/campaigns/:campaignId/adsets/:adsetId" element={<AdSetDetailsPage />} />
                   <Route path="/campaigns/:campaignId/adsets/:adsetId/ads/:adId" element={<AdDetailsPage />} />
+                  <Route path="/adsets/:adsetId" element={<AdSetDetailsPage />} />
+                  <Route path="/ads/:adId" element={<AdDetailsPage />} />
                   <Route path="/deals" element={<DealsPage />} />
                   <Route path="/projects" element={<ProjectsPage />} />
                   <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
