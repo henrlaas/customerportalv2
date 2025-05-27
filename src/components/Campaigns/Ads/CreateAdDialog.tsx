@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -27,6 +26,7 @@ import { FileInfo } from './types';
 import { CreationMethodStep } from './Steps/CreationMethodStep';
 import { AIPromptStep } from './Steps/AIPromptStep';
 import { generateAdContent } from '@/services/aiContentService';
+import { BasicInfoStep } from './Steps/BasicInfoStep';
 
 interface Props {
   adsetId: string;
@@ -408,19 +408,39 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
                       uploading={uploading}
                     />
                   ) : isGoogle ? (
-                    <DefaultPlatformAdSteps
-                      steps={[steps[creationMethod === 'ai' ? 2 : 1]]}
-                      step={0}
-                      setStep={setStep}
-                      form={form}
-                      fileInfo={fileInfo}
-                      setFileInfo={setFileInfo}
-                      validateStepFn={validateStepFn}
-                      validPlatform={validPlatform}
-                      limits={limits}
-                      toast={toast}
-                      getWatchedFieldsForCurrentVariation={getWatchedFieldsForCurrentVariation}
-                    />
+                    <motion.div
+                      key="google-basic-info"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="px-6 pb-6"
+                    >
+                      <BasicInfoStep
+                        form={form}
+                        fileInfo={fileInfo}
+                        onFileChange={(e) => {
+                          if (!e.target.files || e.target.files.length === 0) return;
+                          const file = e.target.files[0];
+                          const fileExt = file.name.split('.').pop()?.toLowerCase();
+                          let adType = 'other';
+                          if (fileExt === 'jpg' || fileExt === 'jpeg' || fileExt === 'png' || fileExt === 'gif') {
+                            adType = 'image';
+                          } else if (fileExt === 'mp4' || fileExt === 'webm' || fileExt === 'mov') {
+                            adType = 'video';
+                          }
+                          const previewUrl = URL.createObjectURL(file);
+                          setFileInfo({
+                            url: previewUrl,
+                            type: adType,
+                            file
+                          });
+                        }}
+                        onRemoveFile={() => setFileInfo(null)}
+                        onNextStep={() => {}}
+                        hideFileUpload={true}
+                      />
+                    </motion.div>
                   ) : (
                     <DefaultPlatformAdSteps
                       steps={[steps[creationMethod === 'ai' ? 2 : 1]]}
