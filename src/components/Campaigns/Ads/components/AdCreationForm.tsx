@@ -11,6 +11,7 @@ import { AdPreviewPanel } from './AdPreviewPanel';
 import { AIContentAssistant } from './AIContentAssistant';
 import { ValidationProvider } from './ValidationProvider';
 import { requiresMediaUpload } from '../types/variations';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Props {
   form: any;
@@ -32,33 +33,37 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
     <ValidationProvider platform={platform}>
       <Form {...form}>
         <form onSubmit={handleSubmit} className="h-full flex">
-          {/* Left Panel - Form Fields */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* AI Assistant */}
-            <AIContentAssistant
-              form={form}
-              platform={platform}
-              onGenerated={() => setAiGenerated(true)}
-            />
+          {/* Left Panel - Form Fields with ScrollArea */}
+          <div className="flex-1 flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="p-6 space-y-6">
+                {/* AI Assistant */}
+                <AIContentAssistant
+                  form={form}
+                  platform={platform}
+                  onGenerated={() => setAiGenerated(true)}
+                />
+                
+                {/* Media Upload */}
+                {requiresMediaUpload(platform) && (
+                  <MediaUploadSection
+                    fileInfo={fileInfo}
+                    setFileInfo={setFileInfo}
+                    platform={platform}
+                  />
+                )}
+                
+                {/* Platform-Specific Fields */}
+                <PlatformFieldsRenderer
+                  form={form}
+                  platform={platform}
+                  aiGenerated={aiGenerated}
+                />
+              </div>
+            </ScrollArea>
             
-            {/* Media Upload */}
-            {requiresMediaUpload(platform) && (
-              <MediaUploadSection
-                fileInfo={fileInfo}
-                setFileInfo={setFileInfo}
-                platform={platform}
-              />
-            )}
-            
-            {/* Platform-Specific Fields */}
-            <PlatformFieldsRenderer
-              form={form}
-              platform={platform}
-              aiGenerated={aiGenerated}
-            />
-            
-            {/* Submit Button */}
-            <div className="pt-6 border-t">
+            {/* Submit Button - Fixed at bottom */}
+            <div className="p-6 pt-4 border-t bg-background">
               <Button 
                 type="submit" 
                 className="w-full"
@@ -77,8 +82,8 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
             </div>
           </div>
           
-          {/* Right Panel - Preview */}
-          <div className="w-80 border-l bg-muted/20 overflow-y-auto">
+          {/* Right Panel - Preview (Made wider) */}
+          <div className="w-96 border-l bg-muted/20 overflow-y-auto">
             <AdPreviewPanel
               formData={formData}
               fileInfo={fileInfo}
