@@ -14,20 +14,27 @@ type CompanySelectionFormProps = {
 };
 
 export function CompanySelectionForm({ onBack, onNext, form }: CompanySelectionFormProps) {
+  const includeSubsidiaries = form.watch('include_subsidiaries');
+  
   const { data: companies = [], isLoading } = useQuery({
-    queryKey: ['companies'],
+    queryKey: ['companies', includeSubsidiaries],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('companies')
-        .select('id, name')
+        .select('id, name, parent_id')
         .order('name');
+      
+      // If subsidiaries toggle is OFF, only show parent companies (companies without parent_id)
+      if (!includeSubsidiaries) {
+        query = query.is('parent_id', null);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data;
     },
   });
-  
-  const includeSubsidiaries = form.watch('include_subsidiaries');
 
   // Transform companies data for react-select
   const companyOptions = companies.map(company => ({
