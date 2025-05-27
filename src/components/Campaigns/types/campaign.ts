@@ -1,4 +1,3 @@
-
 export interface FileInfo {
   url: string;
   type: string;
@@ -49,8 +48,11 @@ export interface AdFormData {
   main_text?: string;
   keywords?: string;
   brand_name?: string;
-  cta_button?: string | null;
-  url?: string | null;
+  cta_button?: string;
+  url?: string;
+  creation_method?: 'manual' | 'ai';
+  ai_prompt?: string;
+  ai_language?: string;
   // Add variation fields
   headline_variations?: { text: string }[];
   description_variations?: { text: string }[];

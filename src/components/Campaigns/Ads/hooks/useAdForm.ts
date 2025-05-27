@@ -25,6 +25,9 @@ export const useAdForm = (adsetId: string, campaignPlatform?: string) => {
       brand_name: '',
       cta_button: '',
       url: '',
+      creation_method: 'manual',
+      ai_prompt: '',
+      ai_language: 'english',
     },
   });
 

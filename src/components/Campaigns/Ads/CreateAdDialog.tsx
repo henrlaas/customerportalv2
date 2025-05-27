@@ -22,6 +22,9 @@ import { TiktokAdSteps } from './Steps/TiktokAdSteps';
 import { GoogleAdSteps } from './Steps/GoogleAdSteps';
 import { DefaultPlatformAdSteps } from './Steps/DefaultPlatformAdSteps';
 import { FileInfo } from './types';
+import { CreationMethodStep } from './Steps/CreationMethodStep';
+import { AIPromptStep } from './Steps/AIPromptStep';
+import { generateAdContent } from '@/services/aiContentService';
 
 interface Props {
   adsetId: string;
@@ -53,14 +56,36 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
     validateStep: validateStepFn,
   } = useAdDialog();
 
+  const [isGenerating, setIsGenerating] = React.useState(false);
+
   const isSnapchat = validPlatform === 'Snapchat';
   const isTikTok = validPlatform === 'Tiktok';
+  const creationMethod = form.watch('creation_method') || 'manual';
 
-  const steps = isSnapchat
-    ? [{ label: 'Media & Name' }, { label: 'Details & Preview' }]
-    : isTikTok
-      ? [{ label: 'Media & Name' }, { label: 'Details & Preview' }]
-      : getStepsForPlatform(validPlatform);
+  // Update steps based on creation method
+  const getSteps = () => {
+    const baseSteps = isSnapchat
+      ? [{ label: 'Media & Name' }, { label: 'Creation Method' }]
+      : isTikTok
+        ? [{ label: 'Media & Name' }, { label: 'Creation Method' }]
+        : [{ label: 'Basic Info' }, { label: 'Creation Method' }];
+
+    if (creationMethod === 'ai') {
+      baseSteps.push({ label: 'AI Prompt' });
+    }
+
+    if (isSnapchat) {
+      baseSteps.push({ label: 'Details & Preview' });
+    } else if (isTikTok) {
+      baseSteps.push({ label: 'Details & Preview' });
+    } else {
+      baseSteps.push(...getStepsForPlatform(validPlatform).slice(1));
+    }
+
+    return baseSteps;
+  };
+
+  const steps = getSteps();
 
   const getWatchedFieldsForCurrentVariation = () => {
     if (isSnapchat) {
@@ -180,7 +205,96 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
     }
   };
 
-  const isLastStep = isSnapchat || isTikTok ? step === 1 : step === steps.length - 1;
+  const handleAIGeneration = async () => {
+    const prompt = form.watch('ai_prompt');
+    const language = form.watch('ai_language') || 'english';
+
+    if (!prompt) {
+      toast({
+        title: 'Missing prompt',
+        description: 'Please provide a description for your ad.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const generatedContent = await generateAdContent({
+        prompt,
+        language,
+        platform: validPlatform,
+      });
+
+      // Pre-fill form fields with generated content
+      if (generatedContent.headlines?.length > 0) {
+        form.setValue('headline', generatedContent.headlines[0]);
+        generatedContent.headlines.forEach((headline, index) => {
+          if (index > 0) {
+            form.setValue(`headline_variations.${index - 1}.text`, headline);
+          }
+        });
+      }
+
+      if (generatedContent.descriptions?.length > 0) {
+        form.setValue('description', generatedContent.descriptions[0]);
+        generatedContent.descriptions.forEach((description, index) => {
+          if (index > 0) {
+            form.setValue(`description_variations.${index - 1}.text`, description);
+          }
+        });
+      }
+
+      if (generatedContent.main_texts?.length > 0) {
+        form.setValue('main_text', generatedContent.main_texts[0]);
+        generatedContent.main_texts.forEach((mainText, index) => {
+          if (index > 0) {
+            form.setValue(`main_text_variations.${index - 1}.text`, mainText);
+          }
+        });
+      }
+
+      if (generatedContent.keywords?.length > 0) {
+        form.setValue('keywords', generatedContent.keywords[0]);
+        generatedContent.keywords.forEach((keywords, index) => {
+          if (index > 0) {
+            form.setValue(`keywords_variations.${index - 1}.text`, keywords);
+          }
+        });
+      }
+
+      if (generatedContent.brand_name) {
+        form.setValue('brand_name', generatedContent.brand_name);
+      }
+
+      toast({
+        title: 'Content generated!',
+        description: 'AI has pre-filled your ad content. You can edit it before creating the ad.',
+      });
+
+      setStep(step + 1);
+    } catch (error: any) {
+      toast({
+        title: 'Generation failed',
+        description: error.message || 'Failed to generate content. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const getCurrentStepIndex = () => {
+    if (creationMethod === 'ai') {
+      return step;
+    } else {
+      // Skip AI prompt step for manual creation
+      return step >= 2 ? step + 1 : step;
+    }
+  };
+
+  const isLastStep = getCurrentStepIndex() === steps.length - 1;
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
@@ -207,57 +321,123 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
         <Form {...form}>
           <div className="space-y-4">
             <AnimatePresence mode="wait">
-              {isSnapchat ? (
-                <SnapchatAdSteps
-                  step={step}
-                  setStep={setStep}
-                  fileInfo={fileInfo}
-                  setFileInfo={setFileInfo}
+              {/* Step 0: Basic Info / Media & Name */}
+              {step === 0 && (
+                <>
+                  {isSnapchat ? (
+                    <SnapchatAdSteps
+                      step={0}
+                      setStep={setStep}
+                      fileInfo={fileInfo}
+                      setFileInfo={setFileInfo}
+                      form={form}
+                      toast={toast}
+                      validPlatform={validPlatform}
+                      uploading={uploading}
+                    />
+                  ) : isTikTok ? (
+                    <TiktokAdSteps
+                      step={0}
+                      setStep={setStep}
+                      fileInfo={fileInfo}
+                      setFileInfo={setFileInfo}
+                      form={form}
+                      toast={toast}
+                      validPlatform={validPlatform}
+                      uploading={uploading}
+                    />
+                  ) : (
+                    <DefaultPlatformAdSteps
+                      steps={[steps[0]]}
+                      step={0}
+                      setStep={setStep}
+                      form={form}
+                      fileInfo={fileInfo}
+                      setFileInfo={setFileInfo}
+                      validateStepFn={validateStepFn}
+                      validPlatform={validPlatform}
+                      limits={limits}
+                      toast={toast}
+                      getWatchedFieldsForCurrentVariation={getWatchedFieldsForCurrentVariation}
+                    />
+                  )}
+                </>
+              )}
+
+              {/* Step 1: Creation Method */}
+              {step === 1 && (
+                <CreationMethodStep
                   form={form}
-                  toast={toast}
-                  validPlatform={validPlatform}
-                  uploading={uploading}
-                />
-              ) : isTikTok ? (
-                <TiktokAdSteps
-                  step={step}
-                  setStep={setStep}
-                  fileInfo={fileInfo}
-                  setFileInfo={setFileInfo}
-                  form={form}
-                  toast={toast}
-                  validPlatform={validPlatform}
-                  uploading={uploading}
-                />
-              ) : validPlatform === 'Google' ? (
-                <GoogleAdSteps
-                  step={step}
-                  setStep={setStep}
-                  form={form}
-                  fileInfo={fileInfo}
-                  toast={toast}
-                  validateStepFn={validateStepFn}
-                  setFileInfo={setFileInfo}
-                  uploading={uploading}
-                  limits={limits}
-                  watchedFields={watchedFields}
-                />
-              ) : (
-                <DefaultPlatformAdSteps
-                  steps={steps}
-                  step={step}
-                  setStep={setStep}
-                  form={form}
-                  fileInfo={fileInfo}
-                  setFileInfo={setFileInfo}
-                  validateStepFn={validateStepFn}
-                  validPlatform={validPlatform}
-                  limits={limits}
-                  toast={toast}
-                  getWatchedFieldsForCurrentVariation={getWatchedFieldsForCurrentVariation}
+                  onNext={() => setStep(step + 1)}
                 />
               )}
+
+              {/* Step 2: AI Prompt (only if AI method selected) */}
+              {step === 2 && creationMethod === 'ai' && (
+                <AIPromptStep
+                  form={form}
+                  onGenerate={handleAIGeneration}
+                  isGenerating={isGenerating}
+                />
+              )}
+
+              {/* Remaining steps */}
+              {step >= (creationMethod === 'ai' ? 3 : 2) && (
+                <>
+                  {isSnapchat ? (
+                    <SnapchatAdSteps
+                      step={1}
+                      setStep={setStep}
+                      fileInfo={fileInfo}
+                      setFileInfo={setFileInfo}
+                      form={form}
+                      toast={toast}
+                      validPlatform={validPlatform}
+                      uploading={uploading}
+                    />
+                  ) : isTikTok ? (
+                    <TiktokAdSteps
+                      step={1}
+                      setStep={setStep}
+                      fileInfo={fileInfo}
+                      setFileInfo={setFileInfo}
+                      form={form}
+                      toast={toast}
+                      validPlatform={validPlatform}
+                      uploading={uploading}
+                    />
+                  ) : validPlatform === 'Google' ? (
+                    <GoogleAdSteps
+                      step={getCurrentStepIndex() - (creationMethod === 'ai' ? 3 : 2)}
+                      setStep={setStep}
+                      form={form}
+                      fileInfo={fileInfo}
+                      toast={toast}
+                      validateStepFn={validateStepFn}
+                      setFileInfo={setFileInfo}
+                      uploading={uploading}
+                      limits={limits}
+                      watchedFields={watchedFields}
+                    />
+                  ) : (
+                    <DefaultPlatformAdSteps
+                      steps={getStepsForPlatform(validPlatform).slice(1)}
+                      step={getCurrentStepIndex() - (creationMethod === 'ai' ? 3 : 2)}
+                      setStep={setStep}
+                      form={form}
+                      fileInfo={fileInfo}
+                      setFileInfo={setFileInfo}
+                      validateStepFn={validateStepFn}
+                      validPlatform={validPlatform}
+                      limits={limits}
+                      toast={toast}
+                      getWatchedFieldsForCurrentVariation={getWatchedFieldsForCurrentVariation}
+                    />
+                  )}
+                </>
+              )}
             </AnimatePresence>
+            
             <div className="flex justify-between p-6 pt-0">
               <Button 
                 type="button" 
@@ -273,20 +453,25 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
                 onClick={() => {
                   if (isLastStep) {
                     submitAd();
+                  } else if (step === 1) {
+                    // Creation method step
+                    setStep(step + 1);
+                  } else if (step === 2 && creationMethod === 'ai') {
+                    // AI prompt step - handled by handleAIGeneration
+                    return;
                   } else {
-                    // For platform-specific steps with internal validation
+                    // Regular validation for other steps
                     if (isTikTok || isSnapchat) {
-                      // These platforms have their own validation inside their components
-                      // So we don't need to do anything here - they handle their own nextStep
+                      // These platforms have their own validation
                     } else {
-                      // For other platforms, use the validateStep utility
-                      if (validateStepFn(step, form, fileInfo, validPlatform, requiresMediaUpload, toast)) {
+                      if (validateStepFn(getCurrentStepIndex() - (creationMethod === 'ai' ? 3 : 2), form, fileInfo, validPlatform, requiresMediaUpload, toast)) {
                         setStep(step + 1);
                       }
                     }
                   }
                 }}
                 className="bg-primary hover:bg-primary/90"
+                disabled={isGenerating}
               >
                 {isLastStep ? "Create Ad" : "Next"}
               </Button>
