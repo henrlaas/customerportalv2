@@ -9,7 +9,6 @@ import { Card } from '@/components/ui/card';
 import { useState } from 'react';
 import { AdMediaViewer } from '@/components/Ads/AdDetails/AdMediaViewer';
 import { AdTextVariations } from '@/components/Ads/AdDetails/AdTextVariations';
-import { AppLayout } from '@/components/Layout/AppLayout';
 
 function AdInformationBanner({ ad, onEdit, onDelete }: { ad: any; onEdit: () => void; onDelete: () => void }) {
   return (
@@ -254,109 +253,108 @@ export default function AdDetailsPage() {
   if (isLoading || !ad) return <div className="container mx-auto mt-12 text-center">Loading...</div>;
 
   return (
-    <AppLayout>
-      <div className="container max-w-4xl mx-auto py-8">
-        <Card>
-          <AdInformationBanner
-            ad={ad}
-            onEdit={() => setShowEdit(true)}
-            onDelete={() => setShowDelete(true)}
-          />
-          
-          <div className="px-6 pb-6 space-y-6">
-            {/* Media Viewer with Comments */}
-            {(ad.ad_type === 'image' || ad.ad_type === 'video') && ad.file_url && (
-              <AdMediaViewer
-                fileUrl={ad.file_url}
-                fileType={ad.ad_type}
-                adId={ad.id}
-                comments={pointComments}
-                onCommentAdd={handleAddComment}
-                onCommentResolve={handleResolveComment}
-              />
-            )}
+    <div className="container max-w-4xl mx-auto py-8">
+      <Card>
+        <AdInformationBanner
+          ad={ad}
+          onEdit={() => setShowEdit(true)}
+          onDelete={() => setShowDelete(true)}
+        />
+        
+        <div className="px-6 pb-6 space-y-6">
+          {/* Media Viewer with Comments */}
+          {(ad.ad_type === 'image' || ad.ad_type === 'video') && ad.file_url && (
+            <AdMediaViewer
+              fileUrl={ad.file_url}
+              fileType={ad.ad_type}
+              adId={ad.id}
+              comments={pointComments}
+              onCommentAdd={handleAddComment}
+              onCommentResolve={handleResolveComment}
+            />
+          )}
 
-            {/* Text Variations */}
-            <div className="grid gap-6 mt-6">
-              <AdTextVariations
-                base={ad.headline}
-                variations={safeParse(ad.headline_variations)}
-                label="Headline"
-              />
-              <AdTextVariations
-                base={ad.description}
-                variations={safeParse(ad.description_variations)}
-                label="Description"
-              />
-              <AdTextVariations
-                base={ad.main_text}
-                variations={safeParse(ad.main_text_variations)}
-                label="Main Text"
-              />
-              <AdTextVariations
-                base={ad.keywords}
-                variations={safeParse(ad.keywords_variations)}
-                label="Keywords"
-              />
-            </div>
-
-            {/* URL and CTA */}
-            {(ad.url || ad.cta_button) && (
-              <Card className="overflow-hidden">
-                <div className="p-6">
-                  {ad.url && (
-                    <div className="mb-4">
-                      <div className="font-semibold mb-2">URL</div>
-                      <a
-                        href={ad.url}
-                        className="text-blue-600 hover:text-blue-800 break-all"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {ad.url}
-                      </a>
-                    </div>
-                  )}
-                  {ad.cta_button && (
-                    <div>
-                      <div className="font-semibold mb-2">CTA Button</div>
-                      <Badge>{ad.cta_button}</Badge>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
-
-            {/* Comments and History */}
-            <div className="space-y-6">
-              <CommentList adId={ad.id} />
-              <HistoryLog adId={ad.id} />
-            </div>
+          {/* Text Variations */}
+          <div className="grid gap-6 mt-6">
+            <AdTextVariations
+              base={ad.headline}
+              variations={safeParse(ad.headline_variations)}
+              label="Headline"
+            />
+            <AdTextVariations
+              base={ad.description}
+              variations={safeParse(ad.description_variations)}
+              label="Description"
+            />
+            <AdTextVariations
+              base={ad.main_text}
+              variations={safeParse(ad.main_text_variations)}
+              label="Main Text"
+            />
+            <AdTextVariations
+              base={ad.keywords}
+              variations={safeParse(ad.keywords_variations)}
+              label="Keywords"
+            />
           </div>
-        </Card>
 
-        {showEdit && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-            <div className="bg-white rounded-lg p-8 relative w-[95vw] max-w-lg shadow">
-              <button onClick={() => setShowEdit(false)} className="absolute top-3 right-3 text-lg text-gray-500">&times;</button>
-              {/* Reuse EditAdDialog component when available */}
-              {/* <EditAdDialog ad={ad} onSuccess={() => { setShowEdit(false); refetch(); }} /> */}
-              <div className="text-center">Edit Ad dialog goes here.</div>
-            </div>
-          </div>
-        )}
-        {showDelete && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-            <div className="bg-white rounded-lg p-8 relative w-[95vw] max-w-sm shadow">
-              <div className="mb-3 font-medium text-center">Are you sure you want to delete this ad?</div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowDelete(false)}>Cancel</Button>
-                <Button variant="destructive" onClick={() => deleteMutation.mutate()}>Delete</Button>
+          {/* URL and CTA */}
+          {(ad.url || ad.cta_button) && (
+            <Card className="overflow-hidden">
+              <div className="p-6">
+                {ad.url && (
+                  <div className="mb-4">
+                    <div className="font-semibold mb-2">URL</div>
+                    <a
+                      href={ad.url}
+                      className="text-blue-600 hover:text-blue-800 break-all"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {ad.url}
+                    </a>
+                  </div>
+                )}
+                {ad.cta_button && (
+                  <div>
+                    <div className="font-semibold mb-2">CTA Button</div>
+                    <Badge>{ad.cta_button}</Badge>
+                  </div>
+                )}
               </div>
+            </Card>
+          )}
+
+          {/* Comments and History */}
+          <div className="space-y-6">
+            <CommentList adId={ad.id} />
+            <HistoryLog adId={ad.id} />
+          </div>
+        </div>
+      </Card>
+
+      {/* Edit Dialog */}
+      {showEdit && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white rounded-lg p-8 relative w-[95vw] max-w-lg shadow">
+            <button onClick={() => setShowEdit(false)} className="absolute top-3 right-3 text-lg text-gray-500">&times;</button>
+            <div className="text-center">Edit Ad dialog goes here.</div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Dialog */}
+      {showDelete && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white rounded-lg p-8 relative w-[95vw] max-w-sm shadow">
+            <div className="mb-3 font-medium text-center">Are you sure you want to delete this ad?</div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowDelete(false)}>Cancel</Button>
+              <Button variant="destructive" onClick={() => deleteMutation.mutate()}>Delete</Button>
             </div>
           </div>
-        )}
-      </div>
-    </AppLayout>
+        </div>
+      )}
+    </div>
   );
 }
