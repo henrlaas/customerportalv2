@@ -4,12 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import Select from 'react-select';
 
 type UserSelectionFormProps = {
-  onNext: (values: any) => void; // Update the type to accept form values
+  onNext: (values: any) => void;
   onBack: () => void;
   form: any;
 };
@@ -44,12 +44,25 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
     }
   }, [form, user]);
 
+  // Transform employees data for react-select
+  const userOptions = employees.map(employee => ({
+    value: employee.id,
+    label: `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || 'Unknown User',
+  }));
+
+  // Find the selected option
+  const selectedUser = userOptions.find(option => option.value === form.watch('associated_user_id'));
+
   // Function to handle form submission
   const handleSubmit = () => {
-    setLoading(true);
-    const values = form.getValues();
-    onNext(values); // Pass the values to the onNext function
-    setLoading(false);
+    form.trigger(['associated_user_id']).then((isValid) => {
+      if (isValid) {
+        setLoading(true);
+        const values = form.getValues();
+        onNext(values);
+        setLoading(false);
+      }
+    });
   };
 
   return (
@@ -60,24 +73,58 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
           name="associated_user_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Associated User</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value || user?.id}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a user" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.first_name} {employee.last_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormLabel>Associated User *</FormLabel>
+              <FormControl>
+                <Select
+                  options={userOptions}
+                  value={selectedUser || null}
+                  onChange={(option) => field.onChange(option ? option.value : '')}
+                  placeholder="Select a user"
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  styles={{
+                    control: (baseStyles) => ({
+                      ...baseStyles,
+                      borderColor: 'hsl(var(--input))',
+                      backgroundColor: 'hsl(var(--background))',
+                      borderRadius: 'var(--radius)',
+                      boxShadow: 'none',
+                      '&:hover': {
+                        borderColor: 'hsl(var(--input))'
+                      },
+                      padding: '1px',
+                      minHeight: '40px'
+                    }),
+                    placeholder: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--muted-foreground))'
+                    }),
+                    menu: (baseStyles) => ({
+                      ...baseStyles,
+                      backgroundColor: 'hsl(var(--background))',
+                      borderColor: 'hsl(var(--border))',
+                      zIndex: 50
+                    }),
+                    option: (baseStyles, { isFocused, isSelected }) => ({
+                      ...baseStyles,
+                      backgroundColor: isFocused 
+                        ? '#f3f3f3'
+                        : isSelected 
+                          ? 'hsl(var(--accent) / 0.2)'
+                          : undefined,
+                      color: 'hsl(var(--foreground))'
+                    }),
+                    singleValue: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--foreground))'
+                    }),
+                    input: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--foreground))'
+                    }),
+                  }}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -95,7 +142,7 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
           <Button 
             type="button" 
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !form.getValues('associated_user_id')}
           >
             {loading ? 'Saving...' : 'Save Campaign'}
           </Button>

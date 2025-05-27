@@ -31,7 +31,7 @@ export function CampaignDetailsForm({ form, onNext }: Props) {
   const isOngoing = form.watch('is_ongoing');
 
   const handleNext = () => {
-    // If ongoing is selected, we don't validate date fields
+    // Validate required fields for this step
     const fieldsToValidate = ['name', 'platform', 'budget'];
     if (!isOngoing) {
       fieldsToValidate.push('start_date', 'end_date');
@@ -51,7 +51,7 @@ export function CampaignDetailsForm({ form, onNext }: Props) {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Campaign Name</FormLabel>
+            <FormLabel>Campaign Name *</FormLabel>
             <FormControl>
               <Input placeholder="Enter campaign name" {...field} />
             </FormControl>
@@ -65,7 +65,7 @@ export function CampaignDetailsForm({ form, onNext }: Props) {
         name="platform"
         render={({ field }) => (
           <FormItem className="space-y-3">
-            <FormLabel>Platform</FormLabel>
+            <FormLabel>Platform *</FormLabel>
             <FormControl>
               <PlatformSelector 
                 value={field.value} 
@@ -82,13 +82,13 @@ export function CampaignDetailsForm({ form, onNext }: Props) {
         name="budget"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Budget (NOK kr)</FormLabel>
+            <FormLabel>Budget (NOK kr) *</FormLabel>
             <FormControl>
               <Input 
                 type="number" 
                 placeholder="Enter budget" 
                 {...field}
-                onChange={(e) => field.onChange(e.target.valueAsNumber || null)}
+                onChange={(e) => field.onChange(e.target.valueAsNumber || undefined)}
               />
             </FormControl>
             <FormMessage />
@@ -124,7 +124,7 @@ export function CampaignDetailsForm({ form, onNext }: Props) {
             name="start_date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Start Date</FormLabel>
+                <FormLabel>Start Date *</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -163,7 +163,7 @@ export function CampaignDetailsForm({ form, onNext }: Props) {
             name="end_date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>End Date</FormLabel>
+                <FormLabel>End Date *</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>

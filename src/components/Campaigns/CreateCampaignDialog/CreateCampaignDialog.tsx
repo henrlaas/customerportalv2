@@ -23,17 +23,28 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 
 const campaignSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, 'Campaign name is required'),
   company_id: z.string().min(1, 'Company is required'),
-  platform: z.enum(['Meta', 'Tiktok', 'Google', 'Snapchat', 'LinkedIn'] as const),
+  platform: z.enum(['Meta', 'Tiktok', 'Google', 'Snapchat', 'LinkedIn'] as const, {
+    required_error: 'Platform is required'
+  }),
   is_ongoing: z.boolean().default(false),
   start_date: z.date().nullable(),
   end_date: z.date().nullable(),
-  budget: z.number().nullable(),
+  budget: z.number().min(1, 'Budget is required'),
   description: z.string().nullable(),
   include_subsidiaries: z.boolean().default(false),
   associated_user_id: z.string().min(1, 'Associated user is required'),
   status: z.enum(['draft', 'in-progress', 'ready', 'published', 'archived']).default('draft'),
+}).refine((data) => {
+  // If not ongoing, both start and end dates are required
+  if (!data.is_ongoing) {
+    return data.start_date && data.end_date;
+  }
+  return true;
+}, {
+  message: "Start date and end date are required when campaign is not ongoing",
+  path: ["start_date"],
 });
 
 export function CreateCampaignDialog() {
@@ -52,11 +63,11 @@ export function CreateCampaignDialog() {
       is_ongoing: false,
       start_date: null,
       end_date: null,
-      budget: null,
+      budget: undefined,
       description: null,
       include_subsidiaries: false,
       associated_user_id: user?.id || '',
-      status: 'draft', // Default status for new campaigns is draft
+      status: 'draft',
     },
   });
 

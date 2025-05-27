@@ -4,18 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { 
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectLabel,
-  SelectValue,
-} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchIcon } from 'lucide-react';
+import Select from 'react-select';
 
 type CompanySelectionFormProps = {
   onBack: () => void;
@@ -47,6 +39,23 @@ export function CompanySelectionForm({ onBack, onNext, form }: CompanySelectionF
   
   const includeSubsidiaries = form.watch('include_subsidiaries');
 
+  // Transform companies data for react-select
+  const companyOptions = companies.map(company => ({
+    value: company.id,
+    label: company.name,
+  }));
+
+  // Find the selected option
+  const selectedCompany = companyOptions.find(option => option.value === form.watch('company_id'));
+
+  const handleNext = () => {
+    form.trigger(['company_id']).then((isValid) => {
+      if (isValid) {
+        onNext();
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="relative">
@@ -64,24 +73,60 @@ export function CompanySelectionForm({ onBack, onNext, form }: CompanySelectionF
         name="company_id"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Company</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a company" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Companies</SelectLabel>
-                  {companies.map((company) => (
-                    <SelectItem key={company.id} value={company.id}>
-                      {company.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <FormLabel>Company *</FormLabel>
+            <FormControl>
+              <Select
+                options={companyOptions}
+                value={selectedCompany || null}
+                onChange={(option) => field.onChange(option ? option.value : '')}
+                placeholder="Select a company"
+                isLoading={isLoading}
+                isClearable
+                className="react-select-container"
+                classNamePrefix="react-select"
+                styles={{
+                  control: (baseStyles) => ({
+                    ...baseStyles,
+                    borderColor: 'hsl(var(--input))',
+                    backgroundColor: 'hsl(var(--background))',
+                    borderRadius: 'var(--radius)',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      borderColor: 'hsl(var(--input))'
+                    },
+                    padding: '1px',
+                    minHeight: '40px'
+                  }),
+                  placeholder: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'hsl(var(--muted-foreground))'
+                  }),
+                  menu: (baseStyles) => ({
+                    ...baseStyles,
+                    backgroundColor: 'hsl(var(--background))',
+                    borderColor: 'hsl(var(--border))',
+                    zIndex: 50
+                  }),
+                  option: (baseStyles, { isFocused, isSelected }) => ({
+                    ...baseStyles,
+                    backgroundColor: isFocused 
+                      ? '#f3f3f3'
+                      : isSelected 
+                        ? 'hsl(var(--accent) / 0.2)'
+                        : undefined,
+                    color: 'hsl(var(--foreground))'
+                  }),
+                  singleValue: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'hsl(var(--foreground))'
+                  }),
+                  input: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'hsl(var(--foreground))'
+                  }),
+                }}
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}
@@ -119,7 +164,7 @@ export function CompanySelectionForm({ onBack, onNext, form }: CompanySelectionF
         
         <Button 
           type="button" 
-          onClick={onNext} 
+          onClick={handleNext} 
           disabled={!form.getValues('company_id')}
         >
           Next
