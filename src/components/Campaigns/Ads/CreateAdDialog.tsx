@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Dialog,
@@ -140,19 +141,14 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
           Create Ad
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl h-[90vh] p-0 flex flex-col bg-gradient-to-br from-background to-muted/30 backdrop-blur-sm border-primary/10">
-        <DialogHeader className="p-6 pb-2 flex-shrink-0">
+      <DialogContent className="max-w-6xl max-h-[90vh] p-0 flex flex-col bg-gradient-to-br from-background to-muted/30 backdrop-blur-sm border-primary/10 overflow-hidden">
+        <DialogHeader className="p-6 pb-2 flex-shrink-0 border-b">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             Create New {validPlatform} Ad
           </DialogTitle>
         </DialogHeader>
         
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex-1 min-h-0"
-        >
+        <div className="flex-1 min-h-0 overflow-hidden">
           <AdCreationForm
             form={form}
             platform={validPlatform}
@@ -161,7 +157,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
             onSubmit={submitAd}
             uploading={uploading}
           />
-        </motion.div>
+        </div>
       </DialogContent>
     </Dialog>
   );
