@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -11,7 +12,9 @@ import {
   ArrowRightCircle,
   Archive,
   Repeat,
-  Copy
+  Copy,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -236,14 +239,24 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <EditCampaignDialog campaign={campaign} trigger={<Button variant="ghost" className="w-full justify-start">Edit Campaign</Button>} />
+                  <EditCampaignDialog campaign={campaign} trigger={
+                    <Button variant="ghost" className="w-full justify-start">
+                      <Edit className="mr-2 h-4 w-4" />
+                      <span>Edit Campaign</span>
+                    </Button>
+                  } />
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={handleDuplicate}>
                   <Copy className="mr-2 h-4 w-4" />
                   <span>Duplicate Campaign</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
-                  <DeleteCampaignDialog campaign={campaign} trigger={<Button variant="ghost" className="w-full justify-start text-destructive">Delete Campaign</Button>} />
+                  <DeleteCampaignDialog campaign={campaign} trigger={
+                    <Button variant="ghost" className="w-full justify-start text-destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <span>Delete Campaign</span>
+                    </Button>
+                  } />
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
