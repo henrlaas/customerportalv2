@@ -78,7 +78,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
     } else if (isTikTok) {
       baseSteps.push({ label: 'Media & Name' }, { label: 'Details & Preview' });
     } else if (isGoogle) {
-      baseSteps.push({ label: 'Basic Info' }, ...getStepsForPlatform(validPlatform).slice(1).map(step => ({ label: step.title })));
+      baseSteps.push({ label: 'Basic Info' }, { label: 'Headlines' }, { label: 'Descriptions' }, { label: 'Keywords' }, { label: 'URL & Preview' });
     } else {
       baseSteps.push({ label: 'Basic Info' }, ...getStepsForPlatform(validPlatform).slice(1).map(step => ({ label: step.title })));
     }
@@ -406,6 +406,20 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
                       toast={toast}
                       validPlatform={validPlatform}
                       uploading={uploading}
+                    />
+                  ) : isGoogle ? (
+                    <DefaultPlatformAdSteps
+                      steps={[steps[creationMethod === 'ai' ? 2 : 1]]}
+                      step={0}
+                      setStep={setStep}
+                      form={form}
+                      fileInfo={fileInfo}
+                      setFileInfo={setFileInfo}
+                      validateStepFn={validateStepFn}
+                      validPlatform={validPlatform}
+                      limits={limits}
+                      toast={toast}
+                      getWatchedFieldsForCurrentVariation={getWatchedFieldsForCurrentVariation}
                     />
                   ) : (
                     <DefaultPlatformAdSteps

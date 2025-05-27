@@ -61,21 +61,15 @@ export function AIPromptStep({ form, onGenerate, isGenerating }: Props) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Output Language</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || 'english'}>
+              <Select onValueChange={field.onChange} value={field.value || 'norwegian'}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select language for generated content" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="english">English</SelectItem>
                   <SelectItem value="norwegian">Norwegian</SelectItem>
-                  <SelectItem value="spanish">Spanish</SelectItem>
-                  <SelectItem value="french">French</SelectItem>
-                  <SelectItem value="german">German</SelectItem>
-                  <SelectItem value="italian">Italian</SelectItem>
-                  <SelectItem value="portuguese">Portuguese</SelectItem>
-                  <SelectItem value="dutch">Dutch</SelectItem>
+                  <SelectItem value="english">English</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

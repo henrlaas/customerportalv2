@@ -34,39 +34,6 @@ export function GoogleAdSteps({
         >
           <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h2 className="text-xl font-semibold">Basic Information</h2>
-              <p className="text-sm text-muted-foreground">
-                Enter your ad name to get started
-              </p>
-            </div>
-
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ad Name *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter ad name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </motion.div>
-      )}
-      {step === 1 && (
-        <motion.div
-          key="google-step-1"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
-          className="px-6 pb-6"
-        >
-          <div className="space-y-6">
-            <div className="text-center space-y-2">
               <h2 className="text-xl font-semibold">Headlines</h2>
               <p className="text-sm text-muted-foreground">
                 Add up to 10 different headlines for your ad
@@ -103,9 +70,9 @@ export function GoogleAdSteps({
           </div>
         </motion.div>
       )}
-      {step === 2 && (
+      {step === 1 && (
         <motion.div
-          key="google-step-2"
+          key="google-step-1"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -150,9 +117,9 @@ export function GoogleAdSteps({
           </div>
         </motion.div>
       )}
-      {step === 3 && (
+      {step === 2 && (
         <motion.div
-          key="google-step-3"
+          key="google-step-2"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -197,9 +164,9 @@ export function GoogleAdSteps({
           </div>
         </motion.div>
       )}
-      {step === 4 && (
+      {step === 3 && (
         <motion.div
-          key="google-step-4"
+          key="google-step-3"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
