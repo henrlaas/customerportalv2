@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -306,7 +307,7 @@ export default function AdDetailsPage() {
         onDelete={() => setShowDelete(true)}
       />
       
-      <div className="container max-w-4xl mx-auto py-8">
+      <div className="container max-w-6xl mx-auto py-8">
         <Card>
           <div className="px-6 pb-6 space-y-6">
             {/* Media Viewer with Comments */}
