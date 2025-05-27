@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as z from 'zod';
@@ -123,7 +124,7 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
                     SingleValue: CustomSingleValue,
                   }}
                   styles={{
-                    control: (baseStyles) => ({
+                    control: (baseStyles, state) => ({
                       ...baseStyles,
                       borderColor: 'hsl(var(--input))',
                       backgroundColor: 'hsl(var(--background))',
@@ -132,12 +133,32 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
                       '&:hover': {
                         borderColor: 'hsl(var(--input))'
                       },
-                      padding: '4px 8px',
-                      minHeight: '44px'
+                      minHeight: '44px',
+                      height: '44px',
+                      padding: '0 8px',
+                    }),
+                    valueContainer: (baseStyles) => ({
+                      ...baseStyles,
+                      height: '44px',
+                      padding: '0 8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }),
+                    input: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--foreground))',
+                      margin: 0,
+                      padding: 0,
                     }),
                     placeholder: (baseStyles) => ({
                       ...baseStyles,
-                      color: 'hsl(var(--muted-foreground))'
+                      color: 'hsl(var(--muted-foreground))',
+                      margin: 0,
+                    }),
+                    singleValue: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--foreground))',
+                      margin: 0,
                     }),
                     menu: (baseStyles) => ({
                       ...baseStyles,
@@ -151,14 +172,9 @@ export function UserSelectionForm({ onNext, onBack, form }: UserSelectionFormPro
                       color: 'hsl(var(--foreground))',
                       padding: 0,
                     }),
-                    singleValue: (baseStyles) => ({
+                    indicatorsContainer: (baseStyles) => ({
                       ...baseStyles,
-                      color: 'hsl(var(--foreground))',
-                      margin: 0,
-                    }),
-                    input: (baseStyles) => ({
-                      ...baseStyles,
-                      color: 'hsl(var(--foreground))'
+                      height: '44px',
                     }),
                   }}
                 />
