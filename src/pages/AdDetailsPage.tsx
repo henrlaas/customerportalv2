@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, MessageSquare, History } from 'lucide-react';
+import { Edit, Trash2, MessageSquare, History, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Card } from '@/components/ui/card';
 import { useState } from 'react';
@@ -11,11 +11,33 @@ import { AdMediaViewer } from '@/components/Ads/AdDetails/AdMediaViewer';
 import { AdTextVariations } from '@/components/Ads/AdDetails/AdTextVariations';
 
 function AdInformationBanner({ ad, onEdit, onDelete }: { ad: any; onEdit: () => void; onDelete: () => void }) {
+  const navigate = useNavigate();
+
+  const handleBackClick = () => {
+    // Navigate back to the campaign details page where this ad's adset belongs
+    if (ad.adsets?.campaign_id) {
+      navigate(`/campaigns/${ad.adsets.campaign_id}`);
+    } else {
+      // Fallback to campaigns list if we don't have campaign_id
+      navigate('/campaigns');
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 bg-muted/50 border-b px-6 py-4 mb-6 rounded-t-lg">
-      <div>
-        <h1 className="text-2xl font-semibold">{ad.name}</h1>
-        <Badge className="mt-2">{ad.file_type || ad.ad_type}</Badge>
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleBackClick}
+          className="mr-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-semibold">{ad.name}</h1>
+          <Badge className="mt-2">{ad.file_type || ad.ad_type}</Badge>
+        </div>
       </div>
       <div className="flex gap-2 flex-shrink-0">
         <Button onClick={onEdit} variant="outline" size="sm"><Edit className="w-4 h-4 mr-1.5" /> Edit</Button>
@@ -137,7 +159,14 @@ export default function AdDetailsPage() {
       if (!adId) return null;
       const { data } = await supabase
         .from('ads')
-        .select('*')
+        .select(`
+          *,
+          adsets (
+            id,
+            name,
+            campaign_id
+          )
+        `)
         .eq('id', adId)
         .single();
       return data;
