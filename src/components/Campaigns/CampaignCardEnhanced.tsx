@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -275,7 +274,7 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
             ) : (
               <>
                 <Calendar className="h-4 w-4 text-gray-500" />
-                <span>{formatDate(campaign.start_date)} - ${formatDate(campaign.end_date)}</span>
+                <span>{formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}</span>
               </>
             )}
           </div>
