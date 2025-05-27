@@ -244,20 +244,26 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <EditCampaignDialog campaign={campaign} trigger={
-                      <Button variant="ghost" className="w-full justify-start h-10 px-2 py-1.5">
-                        <Edit className="mr-2 h-4 w-4" />
+                      <Button variant="ghost" className="w-full justify-start h-9 px-2 py-1.5 text-sm">
+                        <Edit className="mr-2 h-3.5 w-3.5" />
                         <span>Edit Campaign</span>
                       </Button>
                     } />
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={handleDuplicate} className="h-10 px-2 py-1.5">
-                    <Copy className="mr-2 h-4 w-4" />
-                    <span>Duplicate Campaign</span>
+                  <DropdownMenuItem asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start h-9 px-2 py-1.5 text-sm"
+                      onClick={handleDuplicate}
+                    >
+                      <Copy className="mr-2 h-3.5 w-3.5" />
+                      <span>Duplicate Campaign</span>
+                    </Button>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
                     <DeleteCampaignDialog campaign={campaign} trigger={
-                      <Button variant="ghost" className="w-full justify-start text-destructive h-10 px-2 py-1.5">
-                        <Trash2 className="mr-2 h-4 w-4" />
+                      <Button variant="ghost" className="w-full justify-start text-destructive h-9 px-2 py-1.5 text-sm">
+                        <Trash2 className="mr-2 h-3.5 w-3.5" />
                         <span>Delete Campaign</span>
                       </Button>
                     } />
