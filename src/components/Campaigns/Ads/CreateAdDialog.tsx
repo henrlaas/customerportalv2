@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -152,7 +151,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex-1 min-h-0 overflow-hidden"
+          className="flex-1 min-h-0"
         >
           <AdCreationForm
             form={form}
