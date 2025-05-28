@@ -35,14 +35,14 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
           {/* Left Panel - Form Fields with Scrollbar */}
           <div className="flex-1 flex flex-col min-w-0">
             <div 
-              className="flex-1 overflow-y-auto px-8 py-6"
+              className="flex-1 overflow-y-auto px-12 py-6"
               style={{
                 maxHeight: 'calc(90vh - 120px)', // Account for header and submit button
                 scrollbarWidth: 'thin',
                 scrollbarColor: 'rgb(156 163 175) transparent'
               }}
             >
-              <div className="space-y-6 min-h-[800px]">
+              <div className="space-y-6 min-h-[800px] max-w-none">
                 {/* AI Assistant */}
                 <AIContentAssistant
                   form={form}
@@ -92,7 +92,7 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
           </div>
           
           {/* Right Panel - Preview */}
-          <div className="w-72 border-l bg-muted/20 overflow-y-auto">
+          <div className="w-64 border-l bg-muted/20 overflow-y-auto">
             <AdPreviewPanel
               formData={formData}
               fileInfo={fileInfo}
