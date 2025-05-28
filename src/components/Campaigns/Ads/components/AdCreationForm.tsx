@@ -35,8 +35,8 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
         <form onSubmit={handleSubmit} className="h-full flex">
           {/* Left Panel - Form Fields with Proper Scrolling */}
           <div className="flex-1 flex flex-col min-h-0">
-            <ScrollArea className="flex-1">
-              <div className="p-6 space-y-6">
+            <ScrollArea className="flex-1 h-full">
+              <div className="p-6 space-y-6 min-h-full">
                 {/* AI Assistant */}
                 <AIContentAssistant
                   form={form}
