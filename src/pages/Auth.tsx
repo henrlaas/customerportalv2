@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +28,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Define form schema for login
 const loginSchema = z.object({
@@ -66,11 +74,17 @@ const Auth = () => {
         'Email': 'Email',
         'Password': 'Password',
         'Log In': 'Log In',
+        'Need help?': 'Need help?',
+        'Contact our developer at henrik@box.no if you are experiencing any issues with the application.': 'Contact our developer at henrik@box.no if you are experiencing any issues with the application.',
+        'Box Workspace v5.2': 'Box Workspace v5.2',
       },
       no: {
         'Email': 'E-post',
         'Password': 'Passord',
         'Log In': 'Logg Inn',
+        'Need help?': 'Trenger du hjelp?',
+        'Contact our developer at henrik@box.no if you are experiencing any issues with the application.': 'Kontakt vår utvikler på henrik@box.no hvis du opplever problemer med applikasjonen.',
+        'Box Workspace v5.2': 'Box Workspace v5.2',
       },
     };
     
@@ -143,25 +157,22 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8 relative">
         {/* Language Selector */}
-        <div className="absolute top-4 right-4 flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`p-2 h-8 w-8 ${localLanguage === 'en' ? 'bg-gray-100' : ''}`}
-            onClick={() => handleLanguageChange('en')}
-            title="English"
-          >
-            🇺🇸
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`p-2 h-8 w-8 ${localLanguage === 'no' ? 'bg-gray-100' : ''}`}
-            onClick={() => handleLanguageChange('no')}
-            title="Norwegian"
-          >
-            🇳🇴
-          </Button>
+        <div className="absolute top-4 right-4">
+          <Select value={localLanguage} onValueChange={handleLanguageChange}>
+            <SelectTrigger className="w-16 h-8 border-0 bg-transparent hover:bg-gray-100 focus:ring-0">
+              <SelectValue>
+                {localLanguage === 'en' ? '🇺🇸' : '🇳🇴'}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="min-w-0 w-20 bg-white border shadow-md">
+              <SelectItem value="en" className="flex items-center justify-center p-2">
+                🇺🇸
+              </SelectItem>
+              <SelectItem value="no" className="flex items-center justify-center p-2">
+                🇳🇴
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex justify-center mb-8">
@@ -246,11 +257,11 @@ const Auth = () => {
       <Dialog open={helpModalOpen} onOpenChange={setHelpModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Need help?</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">{getLocalTranslation('Need help?')}</DialogTitle>
           </DialogHeader>
           <DialogDescription className="space-y-4">
-            <p>Contact our developer at henrik@box.no if you are experiencing any issues with the application.</p>
-            <p className="text-sm text-gray-500 pt-4">Box Workspace v5.2</p>
+            <p>{getLocalTranslation('Contact our developer at henrik@box.no if you are experiencing any issues with the application.')}</p>
+            <p className="text-sm text-gray-500 pt-4">{getLocalTranslation('Box Workspace v5.2')}</p>
           </DialogDescription>
         </DialogContent>
       </Dialog>
@@ -259,3 +270,4 @@ const Auth = () => {
 };
 
 export default Auth;
+
