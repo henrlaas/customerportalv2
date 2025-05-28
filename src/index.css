@@ -104,4 +104,30 @@
   .bg-primary {
     color: hsl(var(--primary-foreground));
   }
+
+  /* Custom scrollbar styles for better visibility */
+  .overflow-y-auto::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 6px;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 6px;
+    border: 2px solid hsl(var(--muted));
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  /* Firefox scrollbar */
+  .overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) hsl(var(--muted));
+  }
 }

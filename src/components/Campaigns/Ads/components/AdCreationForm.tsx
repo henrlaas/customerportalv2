@@ -11,7 +11,6 @@ import { AdPreviewPanel } from './AdPreviewPanel';
 import { AIContentAssistant } from './AIContentAssistant';
 import { ValidationProvider } from './ValidationProvider';
 import { requiresMediaUpload } from '../types/variations';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Props {
   form: any;
@@ -32,58 +31,63 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
   return (
     <ValidationProvider platform={platform}>
       <Form {...form}>
-        <form onSubmit={handleSubmit} className="h-full flex">
-          {/* Left Panel - Form Fields with Visible Scrollbar */}
-          <div className="flex-1 flex flex-col h-full">
-            <div className="flex-1 relative">
-              <ScrollArea className="absolute inset-0 pr-4" style={{ height: '100%' }}>
-                <div className="p-6 space-y-6 min-h-[800px]">
-                  {/* AI Assistant */}
-                  <AIContentAssistant
-                    form={form}
+        <form onSubmit={handleSubmit} className="flex h-full w-full">
+          {/* Left Panel - Form Fields with Scrollbar */}
+          <div className="flex-1 flex flex-col">
+            <div 
+              className="flex-1 overflow-y-auto px-6 py-6"
+              style={{
+                maxHeight: 'calc(90vh - 120px)', // Account for header and submit button
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgb(156 163 175) transparent'
+              }}
+            >
+              <div className="space-y-6 min-h-[800px]">
+                {/* AI Assistant */}
+                <AIContentAssistant
+                  form={form}
+                  platform={platform}
+                  onGenerated={() => setAiGenerated(true)}
+                />
+                
+                {/* Media Upload */}
+                {requiresMediaUpload(platform) && (
+                  <MediaUploadSection
+                    fileInfo={fileInfo}
+                    setFileInfo={setFileInfo}
                     platform={platform}
-                    onGenerated={() => setAiGenerated(true)}
                   />
-                  
-                  {/* Media Upload */}
-                  {requiresMediaUpload(platform) && (
-                    <MediaUploadSection
-                      fileInfo={fileInfo}
-                      setFileInfo={setFileInfo}
-                      platform={platform}
-                    />
-                  )}
-                  
-                  {/* Platform-Specific Fields */}
-                  <PlatformFieldsRenderer
-                    form={form}
-                    platform={platform}
-                    aiGenerated={aiGenerated}
-                  />
-                  
-                  {/* Submit Button */}
-                  <div className="pt-6 border-t">
-                    <Button 
-                      type="submit" 
-                      className="w-full"
-                      disabled={uploading}
-                      size="lg"
-                    >
-                      {uploading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating Ad...
-                        </>
-                      ) : (
-                        'Create Ad'
-                      )}
-                    </Button>
-                  </div>
-                  
-                  {/* Extra padding to ensure scrolling */}
-                  <div className="h-20" />
-                </div>
-              </ScrollArea>
+                )}
+                
+                {/* Platform-Specific Fields */}
+                <PlatformFieldsRenderer
+                  form={form}
+                  platform={platform}
+                  aiGenerated={aiGenerated}
+                />
+                
+                {/* Extra padding to ensure scrolling */}
+                <div className="h-32" />
+              </div>
+            </div>
+            
+            {/* Submit Button - Fixed at bottom */}
+            <div className="flex-shrink-0 p-6 border-t bg-background">
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={uploading}
+                size="lg"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Ad...
+                  </>
+                ) : (
+                  'Create Ad'
+                )}
+              </Button>
             </div>
           </div>
           
