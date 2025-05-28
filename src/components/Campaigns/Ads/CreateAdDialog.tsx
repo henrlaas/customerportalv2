@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -141,14 +140,14 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
           Create Ad
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[90vh] p-0 flex flex-col bg-gradient-to-br from-background to-muted/30 backdrop-blur-sm border-primary/10">
-        <DialogHeader className="p-6 pb-2 flex-shrink-0 border-b">
+      <DialogContent className="max-w-7xl w-[95vw] max-h-[95vh] p-0 flex flex-col bg-gradient-to-br from-background to-muted/30 backdrop-blur-sm border-primary/10">
+        <DialogHeader className="p-6 pb-4 flex-shrink-0 border-b">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             Create New {validPlatform} Ad
           </DialogTitle>
         </DialogHeader>
         
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 overflow-hidden">
           <AdCreationForm
             form={form}
             platform={validPlatform}
