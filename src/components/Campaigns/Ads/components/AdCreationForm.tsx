@@ -33,9 +33,9 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
       <Form {...form}>
         <form onSubmit={handleSubmit} className="flex h-full w-full">
           {/* Left Panel - Form Fields with Scrollbar */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-w-0">
             <div 
-              className="flex-1 overflow-y-auto px-6 py-6"
+              className="flex-1 overflow-y-auto px-8 py-6"
               style={{
                 maxHeight: 'calc(90vh - 120px)', // Account for header and submit button
                 scrollbarWidth: 'thin',
@@ -92,7 +92,7 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
           </div>
           
           {/* Right Panel - Preview */}
-          <div className="w-80 border-l bg-muted/20 overflow-y-auto">
+          <div className="w-72 border-l bg-muted/20 overflow-y-auto">
             <AdPreviewPanel
               formData={formData}
               fileInfo={fileInfo}
