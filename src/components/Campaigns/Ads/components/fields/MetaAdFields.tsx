@@ -13,67 +13,66 @@ interface Props {
 
 export function MetaAdFields({ form, aiGenerated }: Props) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Basic Info */}
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6 w-full">
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full">
                 <FormLabel>Ad Name *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter ad name" {...field} />
+                  <Input placeholder="Enter ad name" {...field} className="w-full" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Website URL</FormLabel>
+          {/* Changed from grid-cols-2 to separate full-width fields for better spacing */}
+          <FormField
+            control={form.control}
+            name="url"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel>Website URL</FormLabel>
+                <FormControl>
+                  <Input type="url" placeholder="https://example.com" {...field} className="w-full" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="cta_button"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel>Call to Action</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <Input type="url" placeholder="https://example.com" {...field} />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select CTA" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="cta_button"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Call to Action</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select CTA" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Learn More">Learn More</SelectItem>
-                      <SelectItem value="Shop Now">Shop Now</SelectItem>
-                      <SelectItem value="Sign Up">Sign Up</SelectItem>
-                      <SelectItem value="Download">Download</SelectItem>
-                      <SelectItem value="Contact Us">Contact Us</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                  <SelectContent>
+                    <SelectItem value="Learn More">Learn More</SelectItem>
+                    <SelectItem value="Shop Now">Shop Now</SelectItem>
+                    <SelectItem value="Sign Up">Sign Up</SelectItem>
+                    <SelectItem value="Download">Download</SelectItem>
+                    <SelectItem value="Contact Us">Contact Us</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </CardContent>
       </Card>
 

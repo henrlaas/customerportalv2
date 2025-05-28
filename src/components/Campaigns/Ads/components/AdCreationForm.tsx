@@ -32,17 +32,17 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
     <ValidationProvider platform={platform}>
       <Form {...form}>
         <form onSubmit={handleSubmit} className="flex h-full w-full">
-          {/* Left Panel - Form Fields with Scrollbar */}
-          <div className="flex-1 flex flex-col min-w-0">
+          {/* Left Panel - Form Fields with Scrollbar - Increased width allocation */}
+          <div className="flex-1 flex flex-col min-w-0 max-w-none">
             <div 
-              className="flex-1 overflow-y-auto px-12 py-6"
+              className="flex-1 overflow-y-auto px-8 py-6"
               style={{
                 maxHeight: 'calc(90vh - 120px)', // Account for header and submit button
                 scrollbarWidth: 'thin',
                 scrollbarColor: 'rgb(156 163 175) transparent'
               }}
             >
-              <div className="space-y-6 min-h-[800px] max-w-none">
+              <div className="space-y-6 min-h-[800px] w-full max-w-none">
                 {/* AI Assistant */}
                 <AIContentAssistant
                   form={form}
@@ -60,11 +60,13 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
                 )}
                 
                 {/* Platform-Specific Fields */}
-                <PlatformFieldsRenderer
-                  form={form}
-                  platform={platform}
-                  aiGenerated={aiGenerated}
-                />
+                <div className="w-full">
+                  <PlatformFieldsRenderer
+                    form={form}
+                    platform={platform}
+                    aiGenerated={aiGenerated}
+                  />
+                </div>
                 
                 {/* Extra padding to ensure scrolling */}
                 <div className="h-32" />

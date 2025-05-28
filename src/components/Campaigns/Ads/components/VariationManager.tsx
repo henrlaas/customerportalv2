@@ -43,10 +43,10 @@ export function VariationManager({
   const baseValue = form.watch(fieldName) || '';
   
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex-1">
             <CardTitle className="flex items-center gap-2">
               {title}
               {aiGenerated && <Sparkles className="h-4 w-4 text-primary" />}
@@ -58,19 +58,20 @@ export function VariationManager({
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 w-full">
         {/* Base field */}
         <FormField
           control={form.control}
           name={fieldName}
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="w-full">
               <FormLabel>Primary {title.slice(0, -1)}</FormLabel>
               <FormControl>
                 <Input
                   maxLength={maxLength}
                   placeholder={`Enter primary ${fieldName}`}
                   {...field}
+                  className="w-full"
                 />
               </FormControl>
               {maxLength && (
@@ -90,14 +91,15 @@ export function VariationManager({
             control={form.control}
             name={`${fieldName}_variations.${index}.text`}
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center justify-between">
-                  Variation {index + 2}
+              <FormItem className="w-full">
+                <FormLabel className="flex items-center justify-between w-full">
+                  <span>Variation {index + 2}</span>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => removeVariation(index)}
+                    className="h-auto p-1"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -107,6 +109,7 @@ export function VariationManager({
                     maxLength={maxLength}
                     placeholder={`Enter variation ${index + 2}`}
                     {...field}
+                    className="w-full"
                   />
                 </FormControl>
                 {maxLength && (
