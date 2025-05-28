@@ -33,10 +33,10 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
     <ValidationProvider platform={platform}>
       <Form {...form}>
         <form onSubmit={handleSubmit} className="h-full flex">
-          {/* Left Panel - Form Fields with Proper Scrolling */}
-          <div className="flex-1 flex flex-col min-h-0">
-            <ScrollArea className="flex-1 h-full">
-              <div className="p-6 space-y-6 min-h-full">
+          {/* Left Panel - Form Fields with Scrollable Area */}
+          <div className="flex-1 flex flex-col min-h-0 max-h-full">
+            <ScrollArea className="flex-1 h-0" type="always">
+              <div className="p-6 space-y-6 pb-20">
                 {/* AI Assistant */}
                 <AIContentAssistant
                   form={form}
