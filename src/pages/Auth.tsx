@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,6 +45,37 @@ const Auth = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const [localLanguage, setLocalLanguage] = useState<string>('en');
+  
+  // Initialize local language from localStorage or default to 'en'
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('loginLanguage') || 'en';
+    setLocalLanguage(savedLanguage);
+  }, []);
+
+  // Save language selection to localStorage
+  const handleLanguageChange = (lang: string) => {
+    setLocalLanguage(lang);
+    localStorage.setItem('loginLanguage', lang);
+  };
+
+  // Get translations based on local language
+  const getLocalTranslation = (key: string): string => {
+    const translations: Record<string, Record<string, string>> = {
+      en: {
+        'Email': 'Email',
+        'Password': 'Password',
+        'Log In': 'Log In',
+      },
+      no: {
+        'Email': 'E-post',
+        'Password': 'Passord',
+        'Log In': 'Logg Inn',
+      },
+    };
+    
+    return translations[localLanguage][key] || key;
+  };
   
   // Check if user is coming with an invitation token
   useEffect(() => {
@@ -109,7 +141,29 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8 relative">
+        {/* Language Selector */}
+        <div className="absolute top-4 right-4 flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`p-2 h-8 w-8 ${localLanguage === 'en' ? 'bg-gray-100' : ''}`}
+            onClick={() => handleLanguageChange('en')}
+            title="English"
+          >
+            🇺🇸
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`p-2 h-8 w-8 ${localLanguage === 'no' ? 'bg-gray-100' : ''}`}
+            onClick={() => handleLanguageChange('no')}
+            title="Norwegian"
+          >
+            🇳🇴
+          </Button>
+        </div>
+
         <div className="flex justify-center mb-8">
           <AuthLogo />
         </div>
@@ -127,7 +181,7 @@ const Auth = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('Email')}</FormLabel>
+                  <FormLabel>{getLocalTranslation('Email')}</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="email@example.com" 
@@ -145,7 +199,7 @@ const Auth = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('Password')}</FormLabel>
+                  <FormLabel>{getLocalTranslation('Password')}</FormLabel>
                   <FormControl>
                     <Input 
                       type="password" 
@@ -164,7 +218,7 @@ const Auth = () => {
               disabled={isProcessing}
             >
               <span className={`flex items-center justify-center gap-2 ${isProcessing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
-                {t('Log In')}
+                {getLocalTranslation('Log In')}
               </span>
               {isProcessing && (
                 <span className="absolute inset-0 flex items-center justify-center">
