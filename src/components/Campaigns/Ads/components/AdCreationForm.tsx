@@ -33,53 +33,58 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
     <ValidationProvider platform={platform}>
       <Form {...form}>
         <form onSubmit={handleSubmit} className="h-full flex">
-          {/* Left Panel - Form Fields with Scrollable Area */}
-          <div className="flex-1 flex flex-col min-h-0 max-h-full">
-            <ScrollArea className="flex-1 h-0" type="always">
-              <div className="p-6 space-y-6 pb-20">
-                {/* AI Assistant */}
-                <AIContentAssistant
-                  form={form}
-                  platform={platform}
-                  onGenerated={() => setAiGenerated(true)}
-                />
-                
-                {/* Media Upload */}
-                {requiresMediaUpload(platform) && (
-                  <MediaUploadSection
-                    fileInfo={fileInfo}
-                    setFileInfo={setFileInfo}
+          {/* Left Panel - Form Fields with Visible Scrollbar */}
+          <div className="flex-1 flex flex-col h-full">
+            <div className="flex-1 relative">
+              <ScrollArea className="absolute inset-0 pr-4" style={{ height: '100%' }}>
+                <div className="p-6 space-y-6 min-h-[800px]">
+                  {/* AI Assistant */}
+                  <AIContentAssistant
+                    form={form}
                     platform={platform}
+                    onGenerated={() => setAiGenerated(true)}
                   />
-                )}
-                
-                {/* Platform-Specific Fields */}
-                <PlatformFieldsRenderer
-                  form={form}
-                  platform={platform}
-                  aiGenerated={aiGenerated}
-                />
-                
-                {/* Submit Button */}
-                <div className="pt-6 border-t">
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={uploading}
-                    size="lg"
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating Ad...
-                      </>
-                    ) : (
-                      'Create Ad'
-                    )}
-                  </Button>
+                  
+                  {/* Media Upload */}
+                  {requiresMediaUpload(platform) && (
+                    <MediaUploadSection
+                      fileInfo={fileInfo}
+                      setFileInfo={setFileInfo}
+                      platform={platform}
+                    />
+                  )}
+                  
+                  {/* Platform-Specific Fields */}
+                  <PlatformFieldsRenderer
+                    form={form}
+                    platform={platform}
+                    aiGenerated={aiGenerated}
+                  />
+                  
+                  {/* Submit Button */}
+                  <div className="pt-6 border-t">
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={uploading}
+                      size="lg"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating Ad...
+                        </>
+                      ) : (
+                        'Create Ad'
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {/* Extra padding to ensure scrolling */}
+                  <div className="h-20" />
                 </div>
-              </div>
-            </ScrollArea>
+              </ScrollArea>
+            </div>
           </div>
           
           {/* Right Panel - Preview */}
