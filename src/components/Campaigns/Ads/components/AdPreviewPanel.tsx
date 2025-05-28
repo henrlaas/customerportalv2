@@ -27,15 +27,15 @@ export function AdPreviewPanel({ formData, fileInfo, platform }: Props) {
   };
   
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 space-y-3">
       <Card className="border-primary/10 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            Live Preview
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            Preview
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3">
           <AdPreview
             fileInfo={fileInfo}
             watchedFields={watchedFields}
@@ -49,14 +49,14 @@ export function AdPreviewPanel({ formData, fileInfo, platform }: Props) {
       {/* Character Limits Info */}
       {Object.keys(limits).length > 0 && (
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Character Limits</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs">Limits</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-1 p-3">
             {Object.entries(limits).map(([field, limit]) => (
               <div key={field} className="flex justify-between text-xs">
-                <span className="capitalize">{String(field).replace('_', ' ')}</span>
-                <span className="text-muted-foreground">{Number(limit)} chars</span>
+                <span className="capitalize text-xs truncate">{String(field).replace('_', ' ')}</span>
+                <span className="text-muted-foreground text-xs ml-1">{Number(limit)}</span>
               </div>
             ))}
           </CardContent>

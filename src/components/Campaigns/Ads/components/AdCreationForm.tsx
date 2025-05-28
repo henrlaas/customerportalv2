@@ -92,7 +92,7 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
           </div>
           
           {/* Right Panel - Preview */}
-          <div className="w-64 border-l bg-muted/20 overflow-y-auto">
+          <div className="w-48 border-l bg-muted/20 overflow-y-auto">
             <AdPreviewPanel
               formData={formData}
               fileInfo={fileInfo}
