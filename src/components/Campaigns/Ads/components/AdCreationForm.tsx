@@ -33,7 +33,7 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
       <Form {...form}>
         <form onSubmit={handleSubmit} className="flex h-full w-full">
           {/* Left Panel - Form Fields with Scrollbar */}
-          <div className="flex-1 flex flex-col min-w-0 max-w-none">
+          <div className="flex-1 flex flex-col min-w-0 max-w-none w-2/3">
             <div 
               className="flex-1 overflow-y-auto px-8 py-6"
               style={{
@@ -94,7 +94,7 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
           </div>
           
           {/* Right Panel - Preview */}
-          <div className="w-96 border-l bg-muted/20 overflow-y-auto">
+          <div className="w-1/3 min-w-[400px] max-w-[450px] border-l bg-muted/20 overflow-y-auto">
             <AdPreviewPanel
               formData={formData}
               fileInfo={fileInfo}
