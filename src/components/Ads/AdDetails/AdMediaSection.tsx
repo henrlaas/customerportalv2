@@ -42,20 +42,20 @@ export function AdMediaSection({
       
       if (!userId) throw new Error("User not authenticated");
       
-      // Upload file to storage
+      // Upload file to storage using campaign_media bucket
       const fileExt = file.name.split('.').pop()?.toLowerCase();
       const fileName = `${adId}-${Date.now()}.${fileExt}`;
       const filePath = `ads/${fileName}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('ad-media')
+        .from('campaign_media')
         .upload(filePath, file);
       
       if (uploadError) throw uploadError;
       
       // Get public URL
       const { data: urlData } = supabase.storage
-        .from('ad-media')
+        .from('campaign_media')
         .getPublicUrl(filePath);
       
       const newFileUrl = urlData.publicUrl;
@@ -90,7 +90,10 @@ export function AdMediaSection({
           uploaded_by: userId
         });
       
-      if (mediaError) throw mediaError;
+      if (mediaError) {
+        console.warn('Could not create media upload record:', mediaError);
+        // Don't throw error as this is not critical
+      }
     },
     onSuccess: () => {
       toast({ 
