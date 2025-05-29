@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Play, Image as ImageIcon, FileText, MoreVertical, Edit, Trash2, Copy } from 'lucide-react';
+import { Play, Image as ImageIcon, FileText, MoreVertical, Edit, Trash2, Copy, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DeleteAdDialog } from './DeleteAdDialog/DeleteAdDialog';
 import { EditAdDialog } from './EditAdDialog/EditAdDialog';
@@ -32,7 +32,38 @@ export function EnhancedAdCard({ ad, disableModifications, onAdUpdate, campaignP
     }
   };
 
+  const getApprovalStatusInfo = () => {
+    const status = ad.approval_status || 'draft';
+    switch (status) {
+      case 'approved':
+        return { 
+          label: 'Approved', 
+          icon: CheckCircle, 
+          color: 'bg-green-100 text-green-800 border-green-200' 
+        };
+      case 'rejected':
+        return { 
+          label: 'Rejected', 
+          icon: XCircle, 
+          color: 'bg-red-100 text-red-800 border-red-200' 
+        };
+      case 'pending_approval':
+        return { 
+          label: 'Under Review', 
+          icon: Clock, 
+          color: 'bg-yellow-100 text-yellow-800 border-yellow-200' 
+        };
+      default: // draft
+        return { 
+          label: 'Under Review', 
+          icon: Clock, 
+          color: 'bg-gray-100 text-gray-800 border-gray-200' 
+        };
+    }
+  };
+
   const adTypeInfo = getAdTypeInfo();
+  const approvalInfo = getApprovalStatusInfo();
 
   const handleDuplicate = async () => {
     try {
@@ -170,10 +201,16 @@ export function EnhancedAdCard({ ad, disableModifications, onAdUpdate, campaignP
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm truncate mb-1">{ad.name}</h3>
-            <Badge variant="outline" className={`text-xs ${adTypeInfo.color}`}>
-              <adTypeInfo.icon className="h-3 w-3 mr-1" />
-              {adTypeInfo.type}
-            </Badge>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className={`text-xs ${adTypeInfo.color}`}>
+                <adTypeInfo.icon className="h-3 w-3 mr-1" />
+                {adTypeInfo.type}
+              </Badge>
+              <Badge variant="outline" className={`text-xs ${approvalInfo.color}`}>
+                <approvalInfo.icon className="h-3 w-3 mr-1" />
+                {approvalInfo.label}
+              </Badge>
+            </div>
           </div>
           
           {!disableModifications && (
