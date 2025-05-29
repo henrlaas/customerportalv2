@@ -148,6 +148,7 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
             parentComments.map((comment) => {
               const replies = getChildComments(comment.id);
               const userProfile = getUserProfile(comment.user_id);
+              console.log('Rendering comment:', comment); // Debug log
               return (
                 <div key={comment.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between">
@@ -167,7 +168,8 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm">{comment.comment}</p>
+                      {/* Display the comment text - try both possible field names */}
+                      <p className="text-sm">{comment.comment || comment.text || 'No comment text'}</p>
                     </div>
                     <div className="flex items-center gap-1">
                       <Button
@@ -182,11 +184,11 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => resolveCommentMutation.mutate(comment.id)}
+                        className={`h-8 w-8 p-0 ${comment.is_resolved ? 'cursor-default' : ''}`}
+                        onClick={() => !comment.is_resolved && resolveCommentMutation.mutate(comment.id)}
                         disabled={resolveCommentMutation.isPending || comment.is_resolved}
                       >
-                        <CheckCircle className={`h-4 w-4 ${comment.is_resolved ? 'text-green-600' : ''}`} />
+                        <CheckCircle className={`h-4 w-4 ${comment.is_resolved ? 'text-green-600 fill-green-100' : 'hover:text-green-600'}`} />
                       </Button>
                     </div>
                   </div>
@@ -207,7 +209,7 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
                                 {replyUserProfile.firstName}
                               </span>
                             </div>
-                            <p className="text-sm">{reply.comment}</p>
+                            <p className="text-sm">{reply.comment || reply.text || 'No reply text'}</p>
                           </div>
                         );
                       })}

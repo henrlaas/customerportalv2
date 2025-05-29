@@ -91,16 +91,19 @@ interface CommentData {
 
 // Helper to convert database comment to frontend Comment format
 const mapDatabaseToComment = (comment: CommentData): any => {
+  console.log('Mapping comment data:', comment); // Debug log to see actual data structure
   return {
     id: comment.id,
     x: comment.x || 50,
     y: comment.y || 50,
-    text: comment.comment,
+    text: comment.comment, // This should map the comment text
+    comment: comment.comment, // Also keep this for consistency
     isResolved: comment.is_resolved || false,
     comment_type: comment.comment_type || 'general_comment',
     parent_comment_id: comment.parent_comment_id,
     created_at: comment.created_at,
-    user_id: comment.user_id
+    user_id: comment.user_id,
+    is_resolved: comment.is_resolved || false // Ensure this is also mapped
   };
 };
 
