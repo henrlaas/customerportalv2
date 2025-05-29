@@ -94,7 +94,7 @@ export function SnapchatAdSteps({ step, setStep, fileInfo, setFileInfo, form, to
                       if (!e.target.files || e.target.files.length === 0) return;
                       const file = e.target.files[0];
                       const fileExt = file.name.split('.').pop()?.toLowerCase();
-                      let adType = 'other';
+                      let adType: 'image' | 'video' | 'text' = 'text';
                       if (fileExt === 'jpg' || fileExt === 'jpeg' || fileExt === 'png' || fileExt === 'gif') {
                         adType = 'image';
                       } else if (fileExt === 'mp4' || fileExt === 'webm' || fileExt === 'mov') {
@@ -144,7 +144,6 @@ export function SnapchatAdSteps({ step, setStep, fileInfo, setFileInfo, form, to
                 </div>
               )}
             </div>
-            {/* Removed the Next button as it's now handled by the parent dialog */}
           </div>
         </motion.div>
       )}

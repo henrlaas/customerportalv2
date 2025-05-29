@@ -61,7 +61,7 @@ export function EditAdDialog({ ad, campaignPlatform, trigger, onSuccess }: Props
         setFileInfo({
           file: null as any, // We don't have the original file object
           url: ad.file_url,
-          type: ad.ad_type || 'image',
+          type: ad.ad_type === 'image' || ad.ad_type === 'video' ? ad.ad_type : 'image',
         });
       }
     }
@@ -104,7 +104,7 @@ export function EditAdDialog({ ad, campaignPlatform, trigger, onSuccess }: Props
     const keywordsVariations = collectVariations('keywords');
     
     try {
-      const updateData = {
+      const updateData: any = {
         name: data.name,
         headline: data.headline || null,
         description: data.description || null,

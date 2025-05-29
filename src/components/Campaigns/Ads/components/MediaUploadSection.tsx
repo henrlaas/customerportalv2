@@ -21,7 +21,7 @@ export function MediaUploadSection({ fileInfo, setFileInfo, platform }: Props) {
     const file = e.target.files[0];
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     
-    let adType = 'other';
+    let adType: 'image' | 'video' | 'text' = 'text';
     if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt || '')) {
       adType = 'image';
     } else if (['mp4', 'webm', 'mov'].includes(fileExt || '')) {

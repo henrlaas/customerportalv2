@@ -83,7 +83,7 @@ export function TiktokAdSteps({ step, setStep, fileInfo, setFileInfo, form, toas
                   if (!e.target.files || e.target.files.length === 0) return;
                   const file = e.target.files[0];
                   const fileExt = file.name.split('.').pop()?.toLowerCase();
-                  let adType = 'other';
+                  let adType: 'image' | 'video' | 'text' = 'text';
                   if (fileExt === 'jpg' || fileExt === 'jpeg' || fileExt === 'png' || fileExt === 'gif') {
                     adType = 'image';
                   } else if (fileExt === 'mp4' || fileExt === 'webm' || fileExt === 'mov') {
@@ -111,7 +111,6 @@ export function TiktokAdSteps({ step, setStep, fileInfo, setFileInfo, form, toas
               </div>
             )}
           </div>
-          {/* We're removing the standalone next button here as it's now handled by the parent dialog */}
         </motion.div>
       )}
 
