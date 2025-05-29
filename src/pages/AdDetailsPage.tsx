@@ -4,22 +4,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, MessageSquare, History, ArrowLeft } from 'lucide-react';
+import { Edit, Trash2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Card } from '@/components/ui/card';
 import { useState } from 'react';
-import { AdMediaViewer } from '@/components/Ads/AdDetails/AdMediaViewer';
+import { AdApprovalPanel } from '@/components/Ads/AdDetails/AdApprovalPanel';
+import { AdMediaSection } from '@/components/Ads/AdDetails/AdMediaSection';
+import { AdContentPreview } from '@/components/Ads/AdDetails/AdContentPreview';
+import { AdCommentsPanel } from '@/components/Ads/AdDetails/AdCommentsPanel';
 import { AdTextVariations } from '@/components/Ads/AdDetails/AdTextVariations';
+import { EditAdDialog } from '@/components/Campaigns/Ads/EditAdDialog/EditAdDialog';
+import { DeleteAdDialog } from '@/components/Campaigns/Ads/DeleteAdDialog/DeleteAdDialog';
+import { Platform } from '@/components/Campaigns/types/campaign';
 
 function AdInformationBanner({ ad, onEdit, onDelete }: { ad: any; onEdit: () => void; onDelete: () => void }) {
   const navigate = useNavigate();
 
   const handleBackClick = () => {
-    // Navigate back to the campaign details page where this ad's adset belongs
     if (ad.adsets?.campaign_id) {
       navigate(`/campaigns/${ad.adsets.campaign_id}`);
     } else {
-      // Fallback to campaigns list if we don't have campaign_id
       navigate('/campaigns');
     }
   };
@@ -40,11 +44,17 @@ function AdInformationBanner({ ad, onEdit, onDelete }: { ad: any; onEdit: () => 
             <div>
               <h1 className="text-2xl font-bold mb-1">{ad.name}</h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge variant="secondary">{ad.file_type || ad.ad_type}</Badge>
+                <Badge variant="secondary">{ad.file_type || ad.ad_type || 'Text'}</Badge>
                 {ad.adsets?.name && (
                   <>
                     <span>•</span>
                     <span>{ad.adsets.name}</span>
+                  </>
+                )}
+                {ad.adsets?.campaigns?.platform && (
+                  <>
+                    <span>•</span>
+                    <Badge variant="outline">{ad.adsets.campaigns.platform}</Badge>
                   </>
                 )}
               </div>
@@ -65,79 +75,6 @@ function AdInformationBanner({ ad, onEdit, onDelete }: { ad: any; onEdit: () => 
   );
 }
 
-function CommentList({ adId }: { adId: string }) {
-  const { data: comments = [], isLoading } = useQuery({
-    queryKey: ['ad_comments', adId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('ad_comments')
-        .select('id, comment, created_at, user_id')
-        .eq('ad_id', adId)
-        .order('created_at', { ascending: false });
-      return data || [];
-    },
-  });
-
-  return (
-    <div>
-      <div className="font-semibold flex items-center gap-2 mt-6 mb-2">
-        <MessageSquare className="w-4 h-4" /> Comments
-      </div>
-      {isLoading ? <div className="text-muted-foreground">Loading...</div> :
-        comments.length === 0 ? <div className="text-sm text-muted-foreground">No comments yet.</div>
-        : (
-          <ul className="space-y-2">
-            {comments.map((c: any) => (
-              <li key={c.id} className="border rounded px-3 py-2">
-                <span className="font-medium">{c.user_id.slice(0, 8)}:</span> {c.comment}
-                <div className="text-xs text-muted-foreground mt-1">{new Date(c.created_at).toLocaleString()}</div>
-              </li>
-            ))}
-          </ul>
-        )
-      }
-    </div>
-  );
-}
-
-function HistoryLog({ adId }: { adId: string }) {
-  const { data: events = [], isLoading } = useQuery({
-    queryKey: ['ad_history', adId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('ad_history')
-        .select('id, created_at, action_type, details, user_id')
-        .eq('ad_id', adId)
-        .order('created_at', { ascending: false });
-      return data || [];
-    },
-  });
-
-  return (
-    <div>
-      <div className="font-semibold flex items-center gap-2 mt-6 mb-2">
-        <History className="w-4 h-4" /> History Log
-      </div>
-      {isLoading ? <div className="text-muted-foreground">Loading...</div> :
-        events.length === 0 ? <div className="text-sm text-muted-foreground">No history items yet.</div>
-        : (
-          <ul className="space-y-2">
-            {events.map((e: any) => (
-              <li key={e.id} className="border rounded px-3 py-2">
-                <div>
-                  <span className="font-semibold">{e.action_type}</span> by {e.user_id ? e.user_id.slice(0,8) : 'system'}
-                </div>
-                <div className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleString()}</div>
-                {e.details && <pre className="text-xs mt-1">{JSON.stringify(e.details, null, 2)}</pre>}
-              </li>
-            ))}
-          </ul>
-        )
-      }
-    </div>
-  );
-}
-
 // Interface to handle the conversion between database schema and our frontend Comment type
 interface CommentData {
   id: string;
@@ -149,17 +86,22 @@ interface CommentData {
   x?: number;
   y?: number;
   is_resolved?: boolean;
+  comment_type?: string;
+  parent_comment_id?: string;
 }
 
 // Helper to convert database comment to frontend Comment format
 const mapDatabaseToComment = (comment: CommentData): any => {
-  // Map database fields to our Comment interface expected by AdMediaViewer
   return {
     id: comment.id,
-    x: comment.x || 50, // Default to center if not specified
-    y: comment.y || 50, // Default to center if not specified
+    x: comment.x || 50,
+    y: comment.y || 50,
     text: comment.comment,
-    isResolved: comment.is_resolved || false
+    isResolved: comment.is_resolved || false,
+    comment_type: comment.comment_type || 'general_comment',
+    parent_comment_id: comment.parent_comment_id,
+    created_at: comment.created_at,
+    user_id: comment.user_id
   };
 };
 
@@ -171,7 +113,7 @@ export default function AdDetailsPage() {
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
 
-  const { data: ad, isLoading, refetch } = useQuery({
+  const { data: ad, isLoading } = useQuery({
     queryKey: ['ad', adId],
     queryFn: async () => {
       if (!adId) return null;
@@ -182,7 +124,12 @@ export default function AdDetailsPage() {
           adsets (
             id,
             name,
-            campaign_id
+            campaign_id,
+            campaigns (
+              id,
+              name,
+              platform
+            )
           )
         `)
         .eq('id', adId)
@@ -209,26 +156,32 @@ export default function AdDetailsPage() {
   });
   
   // Query for ad-specific comments
-  const { data: pointCommentsRaw = [], refetch: refetchComments } = useQuery({
-    queryKey: ['ad_point_comments', adId],
+  const { data: commentsRaw = [] } = useQuery({
+    queryKey: ['ad_comments', adId],
     queryFn: async () => {
       if (!adId) return [];
       const { data } = await supabase
         .from('ad_comments')
         .select('*')
-        .eq('ad_id', adId);
+        .eq('ad_id', adId)
+        .order('created_at', { ascending: false });
       return data || [];
     },
     enabled: !!adId,
   });
   
-  // Map database comments to our frontend Comment format
-  const pointComments = pointCommentsRaw.map(mapDatabaseToComment);
+  // Separate point comments and general comments
+  const pointComments = commentsRaw
+    .filter(c => c.comment_type === 'point_comment')
+    .map(mapDatabaseToComment);
+  
+  const generalComments = commentsRaw
+    .filter(c => c.comment_type === 'general_comment' || !c.comment_type)
+    .map(mapDatabaseToComment);
   
   // Mutation for adding point-specific comments
   const addCommentMutation = useMutation({
     mutationFn: async (comment: { x: number; y: number; text: string }) => {
-      // Get user ID from authentication
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user?.id;
       
@@ -236,23 +189,21 @@ export default function AdDetailsPage() {
         throw new Error("User not authenticated or ad ID missing");
       }
       
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from('ad_comments')
         .insert({
           ad_id: adId,
           comment: comment.text,
           user_id: userId,
           x: comment.x,
-          y: comment.y
-        })
-        .select()
-        .single();
+          y: comment.y,
+          comment_type: 'point_comment'
+        });
       
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ad_point_comments', adId] });
+      queryClient.invalidateQueries({ queryKey: ['ad_comments', adId] });
     },
     onError: (err: any) => {
       toast({ title: 'Failed to add comment', description: err.message, variant: 'destructive' });
@@ -262,15 +213,24 @@ export default function AdDetailsPage() {
   // Mutation for resolving comments
   const resolveCommentMutation = useMutation({
     mutationFn: async (commentId: string) => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      
+      if (!userId) throw new Error("User not authenticated");
+      
       const { error } = await supabase
         .from('ad_comments')
-        .update({ is_resolved: true })
+        .update({ 
+          is_resolved: true,
+          resolved_by: userId,
+          resolved_at: new Date().toISOString()
+        })
         .eq('id', commentId);
       
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ad_point_comments', adId] });
+      queryClient.invalidateQueries({ queryKey: ['ad_comments', adId] });
       toast({ title: 'Comment resolved' });
     },
     onError: (err: any) => {
@@ -299,6 +259,9 @@ export default function AdDetailsPage() {
 
   if (isLoading || !ad) return <div className="container mx-auto mt-12 text-center">Loading...</div>;
 
+  const platform = ad.adsets?.campaigns?.platform as Platform || 'Meta';
+  const hasMedia = ad.file_url && ad.file_type && ad.file_type !== 'text';
+
   return (
     <div className="min-h-screen">
       <AdInformationBanner
@@ -307,101 +270,95 @@ export default function AdDetailsPage() {
         onDelete={() => setShowDelete(true)}
       />
       
-      <div className="container max-w-6xl mx-auto py-8">
-        <Card>
-          <div className="px-6 pb-6 space-y-6">
-            {/* Media Viewer with Comments */}
-            {(ad.ad_type === 'image' || ad.ad_type === 'video') && ad.file_url && (
-              <AdMediaViewer
-                fileUrl={ad.file_url}
-                fileType={ad.ad_type}
+      <div className="container max-w-7xl mx-auto py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Left Column - Media and Content */}
+          <div className="xl:col-span-2 space-y-6">
+            {/* Media Section (for platforms that support media) */}
+            {hasMedia && (
+              <AdMediaSection
                 adId={ad.id}
+                fileUrl={ad.file_url}
+                fileType={ad.file_type}
                 comments={pointComments}
                 onCommentAdd={handleAddComment}
                 onCommentResolve={handleResolveComment}
+                canReupload={true}
               />
             )}
+
+            {/* Content Preview */}
+            <AdContentPreview ad={ad} platform={platform} />
 
             {/* Text Variations */}
-            <div className="grid gap-6 mt-6">
-              <AdTextVariations
-                base={ad.headline}
-                variations={safeParse(ad.headline_variations)}
-                label="Headline"
-              />
-              <AdTextVariations
-                base={ad.description}
-                variations={safeParse(ad.description_variations)}
-                label="Description"
-              />
-              <AdTextVariations
-                base={ad.main_text}
-                variations={safeParse(ad.main_text_variations)}
-                label="Main Text"
-              />
-              <AdTextVariations
-                base={ad.keywords}
-                variations={safeParse(ad.keywords_variations)}
-                label="Keywords"
-              />
-            </div>
-
-            {/* URL and CTA */}
-            {(ad.url || ad.cta_button) && (
-              <Card className="overflow-hidden">
-                <div className="p-6">
-                  {ad.url && (
-                    <div className="mb-4">
-                      <div className="font-semibold mb-2">URL</div>
-                      <a
-                        href={ad.url}
-                        className="text-blue-600 hover:text-blue-800 break-all"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {ad.url}
-                      </a>
-                    </div>
-                  )}
-                  {ad.cta_button && (
-                    <div>
-                      <div className="font-semibold mb-2">CTA Button</div>
-                      <Badge>{ad.cta_button}</Badge>
-                    </div>
-                  )}
+            <Card className="overflow-hidden">
+              <div className="p-6 space-y-6">
+                <h3 className="text-lg font-semibold">Content Variations</h3>
+                <div className="grid gap-6">
+                  <AdTextVariations
+                    base={ad.headline}
+                    variations={safeParse(ad.headline_variations)}
+                    label="Headline"
+                  />
+                  <AdTextVariations
+                    base={ad.description}
+                    variations={safeParse(ad.description_variations)}
+                    label="Description"
+                  />
+                  <AdTextVariations
+                    base={ad.main_text}
+                    variations={safeParse(ad.main_text_variations)}
+                    label="Main Text"
+                  />
+                  <AdTextVariations
+                    base={ad.keywords}
+                    variations={safeParse(ad.keywords_variations)}
+                    label="Keywords"
+                  />
                 </div>
-              </Card>
-            )}
-
-            {/* Comments and History */}
-            <div className="space-y-6">
-              <CommentList adId={ad.id} />
-              <HistoryLog adId={ad.id} />
-            </div>
+              </div>
+            </Card>
           </div>
-        </Card>
+
+          {/* Right Column - Approval and Comments */}
+          <div className="space-y-6">
+            {/* Approval Panel */}
+            <AdApprovalPanel
+              adId={ad.id}
+              approvalStatus={ad.approval_status || 'draft'}
+              approvedBy={ad.approved_by}
+              approvedAt={ad.approved_at}
+              rejectionReason={ad.rejection_reason}
+              canApprove={true} // TODO: Add proper permission check
+            />
+
+            {/* General Comments */}
+            <AdCommentsPanel
+              adId={ad.id}
+              comments={generalComments}
+            />
+          </div>
+        </div>
 
         {/* Edit Dialog */}
         {showEdit && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-            <div className="bg-white rounded-lg p-8 relative w-[95vw] max-w-lg shadow">
-              <button onClick={() => setShowEdit(false)} className="absolute top-3 right-3 text-lg text-gray-500">&times;</button>
-              <div className="text-center">Edit Ad dialog goes here.</div>
-            </div>
-          </div>
+          <EditAdDialog
+            ad={ad}
+            adsetId={ad.adset_id}
+            trigger={null}
+            open={showEdit}
+            onOpenChange={setShowEdit}
+          />
         )}
 
         {/* Delete Dialog */}
         {showDelete && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-            <div className="bg-white rounded-lg p-8 relative w-[95vw] max-w-sm shadow">
-              <div className="mb-3 font-medium text-center">Are you sure you want to delete this ad?</div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowDelete(false)}>Cancel</Button>
-                <Button variant="destructive" onClick={() => deleteMutation.mutate()}>Delete</Button>
-              </div>
-            </div>
-          </div>
+          <DeleteAdDialog
+            ad={ad}
+            trigger={null}
+            open={showDelete}
+            onOpenChange={setShowDelete}
+          />
         )}
       </div>
     </div>

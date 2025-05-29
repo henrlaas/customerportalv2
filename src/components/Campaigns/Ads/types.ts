@@ -20,11 +20,37 @@ export interface AdPreviewProps {
   watchedFields: WatchedFields;
   platform: string;
   limits: Record<string, number>;
-  variation?: number; // Add variation number
+  variation?: number;
 }
 
 export interface TextVariation {
   text: string;
+}
+
+export interface Comment {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  isResolved: boolean;
+  created_at?: string;
+  user_id?: string;
+  comment_type?: 'point_comment' | 'general_comment' | 'approval_comment';
+  parent_comment_id?: string;
+}
+
+export interface MediaUpload {
+  id: string;
+  ad_id: string;
+  file_url: string;
+  file_type: string;
+  file_name?: string;
+  file_size?: number;
+  uploaded_by?: string;
+  uploaded_at: string;
+  is_current: boolean;
+  replaced_at?: string;
+  comments_resolved: boolean;
 }
 
 export const CTA_BUTTON_OPTIONS = [

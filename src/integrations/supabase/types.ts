@@ -13,9 +13,13 @@ export type Database = {
         Row: {
           ad_id: string
           comment: string
+          comment_type: string | null
           created_at: string
           id: string
           is_resolved: boolean | null
+          parent_comment_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           updated_at: string
           user_id: string
           x: number | null
@@ -24,9 +28,13 @@ export type Database = {
         Insert: {
           ad_id: string
           comment: string
+          comment_type?: string | null
           created_at?: string
           id?: string
           is_resolved?: boolean | null
+          parent_comment_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           updated_at?: string
           user_id: string
           x?: number | null
@@ -35,9 +43,13 @@ export type Database = {
         Update: {
           ad_id?: string
           comment?: string
+          comment_type?: string | null
           created_at?: string
           id?: string
           is_resolved?: boolean | null
+          parent_comment_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           updated_at?: string
           user_id?: string
           x?: number | null
@@ -49,6 +61,20 @@ export type Database = {
             columns: ["ad_id"]
             isOneToOne: false
             referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "ad_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_comments_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -92,6 +118,9 @@ export type Database = {
         Row: {
           ad_type: string
           adset_id: string
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
           brand_name: string | null
           created_at: string
           cta_button: string | null
@@ -107,12 +136,16 @@ export type Database = {
           main_text: string | null
           main_text_variations: Json | null
           name: string
+          rejection_reason: string | null
           updated_at: string
           url: string | null
         }
         Insert: {
           ad_type: string
           adset_id: string
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           brand_name?: string | null
           created_at?: string
           cta_button?: string | null
@@ -128,12 +161,16 @@ export type Database = {
           main_text?: string | null
           main_text_variations?: Json | null
           name: string
+          rejection_reason?: string | null
           updated_at?: string
           url?: string | null
         }
         Update: {
           ad_type?: string
           adset_id?: string
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           brand_name?: string | null
           created_at?: string
           cta_button?: string | null
@@ -149,6 +186,7 @@ export type Database = {
           main_text?: string | null
           main_text_variations?: Json | null
           name?: string
+          rejection_reason?: string | null
           updated_at?: string
           url?: string | null
         }
@@ -158,6 +196,13 @@ export type Database = {
             columns: ["adset_id"]
             isOneToOne: false
             referencedRelation: "adsets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ads_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -823,6 +868,63 @@ export type Database = {
           uploaded_by?: string | null
         }
         Relationships: []
+      }
+      media_uploads: {
+        Row: {
+          ad_id: string
+          comments_resolved: boolean | null
+          file_name: string | null
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          is_current: boolean | null
+          replaced_at: string | null
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          ad_id: string
+          comments_resolved?: boolean | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          is_current?: boolean | null
+          replaced_at?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          ad_id?: string
+          comments_resolved?: boolean | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_current?: boolean | null
+          replaced_at?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_uploads_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_uploads_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       milestones: {
         Row: {
