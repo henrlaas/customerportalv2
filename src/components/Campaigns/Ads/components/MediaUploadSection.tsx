@@ -103,13 +103,15 @@ export function MediaUploadSection({ fileInfo, setFileInfo, platform }: Props) {
               ) : (
                 <div className="w-full h-40 bg-muted rounded-lg flex items-center justify-center">
                   <div className="text-center">
-                    {fileInfo.type === 'image' ? (
-                      <Image className="h-8 w-8 mx-auto mb-2" />
-                    ) : (
-                      <Video className="h-8 w-8 mx-auto mb-2" />
-                    )}
+                    <div className="h-8 w-8 mx-auto mb-2">
+                      {fileInfo.type === 'video' ? (
+                        <Video className="h-8 w-8" />
+                      ) : (
+                        <Image className="h-8 w-8" />
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      {fileInfo.file.name}
+                      {fileInfo.file?.name || 'Unknown file'}
                     </p>
                   </div>
                 </div>
