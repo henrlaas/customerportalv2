@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, RotateCcw } from 'lucide-react';
 import { AdMediaViewer } from './AdMediaViewer';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -31,8 +31,32 @@ export function AdMediaSection({
   const queryClient = useQueryClient();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Get ad data to check campaign status
+  const { data: ad } = useQuery({
+    queryKey: ['ad', adId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('ads')
+        .select(`
+          *,
+          adsets (
+            campaigns (
+              status
+            )
+          )
+        `)
+        .eq('id', adId)
+        .single();
+      return data;
+    },
+    enabled: !!adId,
+  });
+
   const unresolvedComments = comments.filter(c => !c.isResolved);
   const hasUnresolvedComments = unresolvedComments.length > 0;
+  const campaignStatus = ad?.adsets?.campaigns?.status;
+  const isCampaignLocked = campaignStatus && ['ready', 'published', 'archived'].includes(campaignStatus);
+  const isApproved = ad?.approval_status === 'approved';
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -140,6 +164,15 @@ export function AdMediaSection({
     uploadMutation.mutate(file);
   };
 
+  const getDisabledReason = () => {
+    if (hasUnresolvedComments) return "Resolve comments before replacing media";
+    if (isApproved) return "Cannot replace media for approved ads";
+    if (isCampaignLocked) return "Cannot replace media when campaign is ready, published, or archived";
+    return "";
+  };
+
+  const canReplaceMedia = canReupload && !hasUnresolvedComments && !isApproved && !isCampaignLocked;
+
   if (!fileUrl || !fileType || fileType === 'text') {
     return (
       <Card>
@@ -177,7 +210,7 @@ export function AdMediaSection({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Media</CardTitle>
-          {canReupload && !hasUnresolvedComments && (
+          {canReplaceMedia ? (
             <Button
               variant="outline"
               size="sm"
@@ -188,10 +221,9 @@ export function AdMediaSection({
               <RotateCcw className="h-4 w-4" />
               {uploading ? 'Uploading...' : 'Replace Media'}
             </Button>
-          )}
-          {hasUnresolvedComments && (
+          ) : (
             <div className="text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
-              Resolve comments before replacing media
+              {getDisabledReason()}
             </div>
           )}
         </div>
@@ -204,6 +236,8 @@ export function AdMediaSection({
           comments={comments}
           onCommentAdd={onCommentAdd}
           onCommentResolve={onCommentResolve}
+          isApproved={isApproved}
+          isCampaignLocked={isCampaignLocked}
         />
         <input
           ref={fileInputRef}

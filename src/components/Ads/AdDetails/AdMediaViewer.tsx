@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,7 @@ interface AdMediaViewerProps {
   onCommentAdd: (comment: Omit<Comment, 'id'>) => void;
   onCommentResolve: (commentId: string) => void;
   isApproved?: boolean;
+  isCampaignLocked?: boolean;
 }
 
 export function AdMediaViewer({ 
@@ -36,7 +36,8 @@ export function AdMediaViewer({
   comments = [], 
   onCommentAdd,
   onCommentResolve,
-  isApproved = false
+  isApproved = false,
+  isCampaignLocked = false
 }: AdMediaViewerProps) {
   const [isCommenting, setIsCommenting] = useState(false);
   const [newComment, setNewComment] = useState<Omit<Comment, 'id'> | null>(null);
@@ -68,7 +69,7 @@ export function AdMediaViewer({
   };
 
   const handleMediaClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isCommenting || isApproved) return;
+    if (!isCommenting || isApproved || isCampaignLocked) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -78,7 +79,7 @@ export function AdMediaViewer({
   };
 
   const handleCommentSubmit = (text: string) => {
-    if (!newComment || isApproved) return;
+    if (!newComment || isApproved || isCampaignLocked) return;
     
     onCommentAdd({ ...newComment, text });
     setNewComment(null);
@@ -104,12 +105,17 @@ export function AdMediaViewer({
     return videoTypes.includes(lowerType) || videoTypes.includes(urlExtension);
   };
 
+  const commentsDisabled = isApproved || isCampaignLocked;
+  const disabledReason = isApproved 
+    ? "This ad is approved. Comments cannot be added." 
+    : "Comments cannot be added when the campaign is ready, published, or archived.";
+
   return (
     <div className="grid grid-cols-[2fr,1fr] gap-6">
       <div>
         <Card className="overflow-hidden">
           <div 
-            className={`relative ${!isApproved ? 'cursor-crosshair' : 'cursor-default'}`}
+            className={`relative ${!commentsDisabled ? 'cursor-crosshair' : 'cursor-default'}`}
             onClick={handleMediaClick}
           >
             {isImageFile(fileType, fileUrl) ? (
@@ -151,7 +157,7 @@ export function AdMediaViewer({
               />
             ))}
             
-            {newComment && !isApproved && (
+            {newComment && !commentsDisabled && (
               <div className="absolute" style={{ left: `${newComment.x}%`, top: `${newComment.y}%` }}>
                 <input
                   autoFocus
@@ -171,7 +177,7 @@ export function AdMediaViewer({
         </Card>
         
         <div className="mt-4 flex justify-end">
-          {!isApproved ? (
+          {!commentsDisabled ? (
             <Button
               variant={isCommenting ? "secondary" : "outline"}
               onClick={() => setIsCommenting(!isCommenting)}
@@ -181,7 +187,7 @@ export function AdMediaViewer({
             </Button>
           ) : (
             <div className="text-sm text-muted-foreground bg-blue-50 px-3 py-2 rounded">
-              This ad is approved. Comments cannot be added.
+              {disabledReason}
             </div>
           )}
         </div>

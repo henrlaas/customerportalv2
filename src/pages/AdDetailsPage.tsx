@@ -133,7 +133,8 @@ export default function AdDetailsPage() {
             campaigns (
               id,
               name,
-              platform
+              platform,
+              status
             )
           )
         `)
@@ -279,6 +280,17 @@ export default function AdDetailsPage() {
       return;
     }
     
+    // Prevent adding comments if campaign status is locked
+    const campaignStatus = ad?.adsets?.campaigns?.status;
+    if (campaignStatus && ['ready', 'published', 'archived'].includes(campaignStatus)) {
+      toast({ 
+        title: 'Cannot add comments', 
+        description: 'Comments cannot be added when the campaign is ready, published, or archived.',
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     addCommentMutation.mutate(comment);
   };
   
@@ -305,6 +317,8 @@ export default function AdDetailsPage() {
   const platform = ad.adsets?.campaigns?.platform as Platform || 'Meta';
   const hasMedia = ad.file_url && ad.file_type && ad.file_type !== 'text';
   const isApproved = ad.approval_status === 'approved';
+  const campaignStatus = ad.adsets?.campaigns?.status;
+  const isCampaignLocked = campaignStatus && ['ready', 'published', 'archived'].includes(campaignStatus);
 
   return (
     <div className="min-h-screen">
@@ -328,7 +342,7 @@ export default function AdDetailsPage() {
                 comments={pointComments}
                 onCommentAdd={handleAddComment}
                 onCommentResolve={handleResolveComment}
-                canReupload={!isApproved}
+                canReupload={!isApproved && !isCampaignLocked}
               />
             )}
 
@@ -374,14 +388,14 @@ export default function AdDetailsPage() {
               approvedBy={ad.approved_by}
               approvedAt={ad.approved_at}
               rejectionReason={ad.rejection_reason}
-              canApprove={true} // TODO: Add proper permission check
+              canApprove={!isCampaignLocked}
             />
 
             {/* General Comments */}
             <AdCommentsPanel
               adId={ad.id}
               comments={generalComments}
-              isApproved={isApproved}
+              isApproved={isApproved || isCampaignLocked}
             />
           </div>
         </div>

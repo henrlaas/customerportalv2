@@ -131,7 +131,7 @@ export function AdApprovalPanel({
           </div>
         )}
 
-        {/* Only show approval/rejection buttons if the ad is not in a final state */}
+        {/* Only show approval/rejection buttons if the ad is not in a final state AND campaign allows it */}
         {canApprove && !isInFinalState && (
           <div className="space-y-2">
             {!showRejectForm ? (
@@ -182,10 +182,16 @@ export function AdApprovalPanel({
           </div>
         )}
 
-        {/* Show a message when the ad is in a final state */}
+        {/* Show appropriate message based on state */}
         {isInFinalState && (
           <div className="text-sm text-muted-foreground">
             This ad has been {approvalStatus} and cannot be modified further.
+          </div>
+        )}
+        
+        {!canApprove && !isInFinalState && (
+          <div className="text-sm text-muted-foreground">
+            Approval status cannot be changed when the campaign is ready, published, or archived.
           </div>
         )}
       </CardContent>
