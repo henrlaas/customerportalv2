@@ -56,6 +56,44 @@ export function MediaUploadSection({ fileInfo, setFileInfo, platform }: Props) {
     }
   };
   
+  const renderMediaPreview = () => {
+    if (!fileInfo) return null;
+    
+    if (fileInfo.type === 'image') {
+      return (
+        <img
+          src={fileInfo.url}
+          alt="Upload preview"
+          className="w-full h-40 object-cover rounded-lg"
+        />
+      );
+    }
+    
+    if (fileInfo.type === 'video') {
+      return (
+        <video
+          src={fileInfo.url}
+          controls
+          className="w-full h-40 object-cover rounded-lg"
+        />
+      );
+    }
+    
+    // Fallback for text or unknown types
+    return (
+      <div className="w-full h-40 bg-muted rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 mx-auto mb-2">
+            <Image className="h-8 w-8" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {fileInfo.file?.name || 'Unknown file'}
+          </p>
+        </div>
+      </div>
+    );
+  };
+  
   return (
     <Card>
       <CardHeader>
@@ -88,34 +126,7 @@ export function MediaUploadSection({ fileInfo, setFileInfo, platform }: Props) {
         ) : (
           <div className="space-y-4">
             <div className="relative">
-              {fileInfo.type === 'image' ? (
-                <img
-                  src={fileInfo.url}
-                  alt="Upload preview"
-                  className="w-full h-40 object-cover rounded-lg"
-                />
-              ) : fileInfo.type === 'video' ? (
-                <video
-                  src={fileInfo.url}
-                  controls
-                  className="w-full h-40 object-cover rounded-lg"
-                />
-              ) : (
-                <div className="w-full h-40 bg-muted rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="h-8 w-8 mx-auto mb-2">
-                      {fileInfo.type === 'video' ? (
-                        <Video className="h-8 w-8" />
-                      ) : (
-                        <Image className="h-8 w-8" />
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {fileInfo.file?.name || 'Unknown file'}
-                    </p>
-                  </div>
-                </div>
-              )}
+              {renderMediaPreview()}
               <Button
                 type="button"
                 variant="destructive"
