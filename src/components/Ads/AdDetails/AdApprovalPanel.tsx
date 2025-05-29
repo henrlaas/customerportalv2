@@ -100,6 +100,9 @@ export function AdApprovalPanel({
     }
   };
 
+  // Check if the ad is in a final state (approved or rejected)
+  const isInFinalState = approvalStatus === 'approved' || approvalStatus === 'rejected';
+
   return (
     <Card>
       <CardHeader>
@@ -128,7 +131,8 @@ export function AdApprovalPanel({
           </div>
         )}
 
-        {canApprove && approvalStatus !== 'approved' && (
+        {/* Only show approval/rejection buttons if the ad is not in a final state */}
+        {canApprove && !isInFinalState && (
           <div className="space-y-2">
             {!showRejectForm ? (
               <div className="flex gap-2">
@@ -175,6 +179,13 @@ export function AdApprovalPanel({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Show a message when the ad is in a final state */}
+        {isInFinalState && (
+          <div className="text-sm text-muted-foreground">
+            This ad has been {approvalStatus} and cannot be modified further.
           </div>
         )}
       </CardContent>
