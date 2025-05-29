@@ -28,16 +28,23 @@ export interface TextVariation {
 
 export const CTA_BUTTON_OPTIONS = [
   'No button',
-  'Learn More',
-  'Sign Up',
-  'Shop Now',
+  'Get a quote',
+  'Search now',
+  'Book now',
+  'Contact us',
   'Download',
+  'Get promotions',
+  'See showtimes',
+  'Find out more',
+  'Listen now',
+  'Get access',
+  'Book an appointment',
+  'See menu',
+  'Get updates',
+  'Buy now',
+  'Sign up',
   'Subscribe',
-  'Contact Us',
-  'Book Now',
-  'Apply Now',
-  'Get Offer',
-  'Get Quote'
+  'See more'
 ];
 
 export interface AdFormData {
