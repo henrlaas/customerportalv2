@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -5,7 +6,27 @@ import { UseFormReturn } from 'react-hook-form';
 import { AdFormData, Platform } from '../types/campaign';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CTA_BUTTON_OPTIONS } from './types';
+
+const CTA_BUTTON_OPTIONS = [
+  'No button',
+  'Get a quote',
+  'Search now',
+  'Book now',
+  'Contact us',
+  'Download',
+  'Get promotions',
+  'See showtimes',
+  'Find out more',
+  'Listen now',
+  'Get access',
+  'Book an appointment',
+  'See menu',
+  'Get updates',
+  'Buy now',
+  'Sign up',
+  'Subscribe',
+  'See more'
+];
 
 interface AdFormFieldsProps {
   form: UseFormReturn<AdFormData>;
@@ -147,7 +168,7 @@ export function AdFormFields({ form, platform, limits }: AdFormFieldsProps) {
                     <SelectValue placeholder="Select a CTA button" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="bg-background border border-border shadow-lg z-50">
                   {CTA_BUTTON_OPTIONS.map((option) => (
                     <SelectItem key={option} value={option === 'No button' ? '' : option}>
                       {option}

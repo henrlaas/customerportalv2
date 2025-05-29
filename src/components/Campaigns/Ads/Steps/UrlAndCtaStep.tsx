@@ -5,7 +5,27 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Globe, Link, Zap } from 'lucide-react';
 import { AdFormData } from '../../types/campaign';
-import { CTA_BUTTON_OPTIONS } from '../types';
+
+const CTA_BUTTON_OPTIONS = [
+  'No button',
+  'Get a quote',
+  'Search now',
+  'Book now',
+  'Contact us',
+  'Download',
+  'Get promotions',
+  'See showtimes',
+  'Find out more',
+  'Listen now',
+  'Get access',
+  'Book an appointment',
+  'See menu',
+  'Get updates',
+  'Buy now',
+  'Sign up',
+  'Subscribe',
+  'See more'
+];
 
 interface UrlAndCtaStepProps {
   form: UseFormReturn<AdFormData>;
@@ -53,7 +73,7 @@ export function UrlAndCtaStep({ form }: UrlAndCtaStepProps) {
                     <SelectValue placeholder="Select a CTA button" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="max-h-[200px]">
+                <SelectContent className="max-h-[200px] bg-background border border-border shadow-lg z-50">
                   {CTA_BUTTON_OPTIONS.map((option) => (
                     <SelectItem key={option} value={option === 'No button' ? 'no-button' : option}>
                       {option}
