@@ -1,4 +1,5 @@
 
+
 import { format } from 'date-fns';
 import { ChevronDown, ChevronRight, MessageSquare, MoreVertical } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -141,15 +142,15 @@ export const EnhancedCampaignCard = ({ campaign }: EnhancedCampaignCardProps) =>
           </div>
           
           <div className="flex items-center gap-2">
-            <Badge className={getStatusColor(campaign.status)}>
-              {campaign.status}
-            </Badge>
-            
             {approvalStatusBadge && (
               <Badge variant="outline" className={`text-xs ${approvalStatusBadge.color}`}>
                 {approvalStatusBadge.label}
               </Badge>
             )}
+
+            <Badge className={getStatusColor(campaign.status)}>
+              {campaign.status}
+            </Badge>
 
             {campaign.platform && (
               <PlatformBadge 

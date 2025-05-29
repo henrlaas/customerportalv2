@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -275,15 +274,15 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
             </div>
 
             <div className="flex items-center gap-2" onClick={handleInteractiveClick}>
-              <Badge className={getStatusBadgeColor(campaign.status)}>
-                {formatStatus(campaign.status)}
-              </Badge>
-              
               {approvalStatusBadge && (
                 <Badge variant="outline" className={`text-xs ${approvalStatusBadge.color}`}>
                   {approvalStatusBadge.label}
                 </Badge>
               )}
+              
+              <Badge className={getStatusBadgeColor(campaign.status)}>
+                {formatStatus(campaign.status)}
+              </Badge>
               
               {campaign.platform && (
                 <PlatformBadge 
