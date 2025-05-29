@@ -32,10 +32,10 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
     <ValidationProvider platform={platform}>
       <Form {...form}>
         <form onSubmit={handleSubmit} className="flex h-full w-full">
-          {/* Left Panel - Form Fields (60-70% width) */}
-          <div className="flex-1 flex flex-col overflow-hidden" style={{ minWidth: '0', maxWidth: 'calc(100% - 400px)' }}>
+          {/* Left Panel - Form Fields (takes remaining space after preview) */}
+          <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto p-8">
-              <div className="space-y-8 w-full max-w-4xl mx-auto">
+              <div className="space-y-8 w-full">
                 {/* AI Assistant */}
                 <AIContentAssistant
                   form={form}
@@ -65,7 +65,7 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
             <div className="flex-shrink-0 p-8 border-t bg-background">
               <Button 
                 type="submit" 
-                className="w-full max-w-lg mx-auto"
+                className="w-full max-w-md mx-auto"
                 disabled={uploading}
                 size="lg"
               >
