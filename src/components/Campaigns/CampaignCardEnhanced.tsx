@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -102,7 +103,7 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
     }
   };
 
-  // Fetch adsets for this campaign
+  // Fetch adsets and their ads for this campaign to calculate approval stats
   const { data: adsets = [] } = useQuery({
     queryKey: ['adsets', campaign.id],
     queryFn: async () => {
@@ -114,7 +115,7 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
           targeting,
           created_at,
           updated_at,
-          ads (id, name, file_url, file_type)
+          ads (id, name, file_url, file_type, approval_status)
         `)
         .eq('campaign_id', campaign.id)
         .order('created_at', { ascending: false });
@@ -127,6 +128,59 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
       return data || [];
     },
   });
+
+  // Calculate approval status for all ads in the campaign
+  const getApprovalStatusBadge = () => {
+    const allAds = adsets.flatMap((adset: any) => adset.ads || []);
+    
+    if (allAds.length === 0) {
+      return null;
+    }
+
+    const approvedCount = allAds.filter((ad: any) => ad.approval_status === 'approved').length;
+    const rejectedCount = allAds.filter((ad: any) => ad.approval_status === 'rejected').length;
+    const draftCount = allAds.filter((ad: any) => !ad.approval_status || ad.approval_status === 'draft').length;
+
+    // If all are draft, show "Under Review"
+    if (draftCount === allAds.length) {
+      return {
+        label: 'Under Review',
+        color: 'bg-gray-100 text-gray-800'
+      };
+    }
+
+    // If there are both approved and rejected ads
+    if (approvedCount > 0 && rejectedCount > 0) {
+      return {
+        label: `${approvedCount} approved, ${rejectedCount} rejected`,
+        color: 'bg-yellow-100 text-yellow-800'
+      };
+    }
+
+    // If only approved ads
+    if (approvedCount > 0) {
+      return {
+        label: `${approvedCount} approved`,
+        color: 'bg-green-100 text-green-800'
+      };
+    }
+
+    // If only rejected ads
+    if (rejectedCount > 0) {
+      return {
+        label: `${rejectedCount} rejected`,
+        color: 'bg-red-100 text-red-800'
+      };
+    }
+
+    // Default case (shouldn't happen)
+    return {
+      label: 'Under Review',
+      color: 'bg-gray-100 text-gray-800'
+    };
+  };
+
+  const approvalStatusBadge = getApprovalStatusBadge();
 
   // Helper function to check if profiles is valid and not an error
   const isValidProfile = (profile: any): profile is { first_name: string | null, last_name: string | null, avatar_url: string | null } => {
@@ -224,6 +278,12 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
               <Badge className={getStatusBadgeColor(campaign.status)}>
                 {formatStatus(campaign.status)}
               </Badge>
+              
+              {approvalStatusBadge && (
+                <Badge variant="outline" className={`text-xs ${approvalStatusBadge.color}`}>
+                  {approvalStatusBadge.label}
+                </Badge>
+              )}
               
               {campaign.platform && (
                 <PlatformBadge 

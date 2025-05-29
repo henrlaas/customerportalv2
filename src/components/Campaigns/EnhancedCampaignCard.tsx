@@ -45,13 +45,66 @@ export const EnhancedCampaignCard = ({ campaign }: EnhancedCampaignCardProps) =>
         .from('adsets')
         .select(`
           *,
-          ads (*)
+          ads (*, approval_status)
         `)
         .eq('campaign_id', campaign.id)
         .order('created_at', { ascending: false });
       return data || [];
     },
   });
+
+  // Calculate approval status for all ads in the campaign
+  const getApprovalStatusBadge = () => {
+    const allAds = adsets.flatMap((adset: any) => adset.ads || []);
+    
+    if (allAds.length === 0) {
+      return null;
+    }
+
+    const approvedCount = allAds.filter((ad: any) => ad.approval_status === 'approved').length;
+    const rejectedCount = allAds.filter((ad: any) => ad.approval_status === 'rejected').length;
+    const draftCount = allAds.filter((ad: any) => !ad.approval_status || ad.approval_status === 'draft').length;
+
+    // If all are draft, show "Under Review"
+    if (draftCount === allAds.length) {
+      return {
+        label: 'Under Review',
+        color: 'bg-gray-100 text-gray-800'
+      };
+    }
+
+    // If there are both approved and rejected ads
+    if (approvedCount > 0 && rejectedCount > 0) {
+      return {
+        label: `${approvedCount} approved, ${rejectedCount} rejected`,
+        color: 'bg-yellow-100 text-yellow-800'
+      };
+    }
+
+    // If only approved ads
+    if (approvedCount > 0) {
+      return {
+        label: `${approvedCount} approved`,
+        color: 'bg-green-100 text-green-800'
+      };
+    }
+
+    // If only rejected ads
+    if (rejectedCount > 0) {
+      return {
+        label: `${rejectedCount} rejected`,
+        color: 'bg-red-100 text-red-800'
+      };
+    }
+
+    // Default case (shouldn't happen)
+    return {
+      label: 'Under Review',
+      color: 'bg-gray-100 text-gray-800'
+    };
+  };
+
+  const approvalStatusBadge = getApprovalStatusBadge();
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
@@ -92,6 +145,12 @@ export const EnhancedCampaignCard = ({ campaign }: EnhancedCampaignCardProps) =>
               {campaign.status}
             </Badge>
             
+            {approvalStatusBadge && (
+              <Badge variant="outline" className={`text-xs ${approvalStatusBadge.color}`}>
+                {approvalStatusBadge.label}
+              </Badge>
+            )}
+
             {campaign.platform && (
               <PlatformBadge 
                 platform={campaign.platform} 
