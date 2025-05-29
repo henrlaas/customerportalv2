@@ -169,27 +169,26 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
                       </div>
                       <p className="text-sm">{comment.comment}</p>
                     </div>
-                    {!comment.is_resolved && (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                        >
-                          <Reply className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => resolveCommentMutation.mutate(comment.id)}
-                          disabled={resolveCommentMutation.isPending}
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                        disabled={comment.is_resolved}
+                      >
+                        <Reply className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => resolveCommentMutation.mutate(comment.id)}
+                        disabled={resolveCommentMutation.isPending || comment.is_resolved}
+                      >
+                        <CheckCircle className={`h-4 w-4 ${comment.is_resolved ? 'text-green-600' : ''}`} />
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Replies */}
@@ -216,7 +215,7 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
                   )}
 
                   {/* Reply form */}
-                  {replyingTo === comment.id && (
+                  {replyingTo === comment.id && !comment.is_resolved && (
                     <div className="ml-6 space-y-2">
                       <Textarea
                         placeholder="Write a reply..."
