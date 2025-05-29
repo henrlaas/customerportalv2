@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Check, MessageSquare } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Comment {
   x: number;
@@ -48,16 +48,20 @@ export function AdMediaViewer({
       if (userIds.length === 0) return [];
       const { data } = await supabase
         .from('profiles')
-        .select('id, first_name')
+        .select('id, first_name, avatar_url')
         .in('id', userIds);
       return data || [];
     },
     enabled: userIds.length > 0,
   });
 
-  const getUserFirstName = (userId: string) => {
+  const getUserProfile = (userId: string) => {
     const profile = userProfiles.find(p => p.id === userId);
-    return profile?.first_name || 'Unknown User';
+    return {
+      firstName: profile?.first_name || 'Unknown User',
+      avatarUrl: profile?.avatar_url,
+      initials: profile?.first_name ? profile.first_name.charAt(0).toUpperCase() : 'U'
+    };
   };
 
   const handleMediaClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -188,31 +192,38 @@ export function AdMediaViewer({
                 No comments yet
               </div>
             ) : (
-              comments.map((comment) => (
-                <div 
-                  key={comment.id} 
-                  className={`border rounded-lg p-3 transition-colors ${
-                    selectedComment === comment.id ? 'border-primary' : ''
-                  } ${comment.isResolved ? 'bg-muted/50' : ''}`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm">{comment.text}</p>
-                    {!comment.isResolved && comment.id && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
-                        onClick={() => onCommentResolve(comment.id!)}
-                      >
-                        <Check className="w-4 h-4" />
-                      </Button>
-                    )}
+              comments.map((comment) => {
+                const userProfile = getUserProfile(comment.user_id || '');
+                return (
+                  <div 
+                    key={comment.id} 
+                    className={`border rounded-lg p-3 transition-colors ${
+                      selectedComment === comment.id ? 'border-primary' : ''
+                    } ${comment.isResolved ? 'bg-muted/50' : ''}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm">{comment.text}</p>
+                      {!comment.isResolved && comment.id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0"
+                          onClick={() => onCommentResolve(comment.id!)}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                      <Avatar className="h-4 w-4">
+                        <AvatarImage src={userProfile.avatarUrl || undefined} />
+                        <AvatarFallback className="text-xs">{userProfile.initials}</AvatarFallback>
+                      </Avatar>
+                      <span>By: {userProfile.firstName}</span>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    By: {comment.user_id ? getUserFirstName(comment.user_id) : 'Unknown User'}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </ScrollArea>
