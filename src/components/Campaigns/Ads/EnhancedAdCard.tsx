@@ -5,6 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Play, Image as ImageIcon, FileText, MoreVertical, Edit, Trash2, Copy } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DeleteAdDialog } from './DeleteAdDialog/DeleteAdDialog';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Props {
   ad: any;
@@ -13,8 +17,10 @@ interface Props {
   disableModifications?: boolean;
 }
 
-export function EnhancedAdCard({ ad, disableModifications }: Props) {
+export function EnhancedAdCard({ ad, disableModifications, onAdUpdate }: Props) {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const getAdTypeInfo = () => {
     if (ad.ad_type === 'image') {
@@ -27,6 +33,59 @@ export function EnhancedAdCard({ ad, disableModifications }: Props) {
   };
 
   const adTypeInfo = getAdTypeInfo();
+
+  const handleDuplicate = async () => {
+    try {
+      const { data: duplicatedAd, error } = await supabase
+        .from('ads')
+        .insert({
+          name: `${ad.name} (Copy)`,
+          adset_id: ad.adset_id,
+          ad_type: ad.ad_type,
+          file_url: ad.file_url,
+          file_type: ad.file_type,
+          headline: ad.headline,
+          description: ad.description,
+          main_text: ad.main_text,
+          keywords: ad.keywords,
+          brand_name: ad.brand_name,
+          headline_variations: ad.headline_variations,
+          description_variations: ad.description_variations,
+          main_text_variations: ad.main_text_variations,
+          keywords_variations: ad.keywords_variations,
+          url: ad.url,
+          cta_button: ad.cta_button,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Ad duplicated',
+        description: 'The ad has been duplicated successfully.',
+      });
+
+      // Refresh the ads list
+      await queryClient.invalidateQueries({
+        queryKey: ['ads', ad.adset_id]
+      });
+
+      onAdUpdate?.();
+    } catch (error: any) {
+      toast({
+        title: 'Error duplicating ad',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteSuccess = () => {
+    // Refresh the ads list
+    queryClient.invalidateQueries({
+      queryKey: ['ads', ad.adset_id]
+    });
+    onAdUpdate?.();
+  };
 
   const renderMediaContent = () => {
     if (ad.ad_type === 'image' && ad.file_url) {
@@ -126,14 +185,21 @@ export function EnhancedAdCard({ ad, disableModifications }: Props) {
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDuplicate}>
                   <Copy className="h-4 w-4 mr-2" />
                   Duplicate
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
+                <DeleteAdDialog
+                  adId={ad.id}
+                  adName={ad.name}
+                  onSuccess={handleDeleteSuccess}
+                  trigger={
+                    <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  }
+                />
               </DropdownMenuContent>
             </DropdownMenu>
           )}
