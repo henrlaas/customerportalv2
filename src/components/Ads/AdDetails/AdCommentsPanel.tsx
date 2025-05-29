@@ -13,9 +13,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 interface CommentsPanelProps {
   adId: string;
   comments: any[];
+  isApproved?: boolean;
 }
 
-export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
+export function AdCommentsPanel({ adId, comments, isApproved = false }: CommentsPanelProps) {
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -48,6 +49,10 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
 
   const addCommentMutation = useMutation({
     mutationFn: async ({ text, parentId }: { text: string; parentId?: string }) => {
+      if (isApproved) {
+        throw new Error("Cannot add comments to approved ads");
+      }
+      
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user?.id;
       
@@ -121,34 +126,44 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Add new comment */}
-        <div className="space-y-2">
-          <Textarea
-            placeholder="Add a general comment..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="min-h-[80px]"
-          />
-          <Button
-            onClick={() => addCommentMutation.mutate({ text: newComment })}
-            disabled={!newComment.trim() || addCommentMutation.isPending}
-            size="sm"
-          >
-            Add Comment
-          </Button>
-        </div>
+        {/* Add new comment - only show if not approved */}
+        {!isApproved && (
+          <div className="space-y-2">
+            <Textarea
+              placeholder="Add a general comment..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              className="min-h-[80px]"
+            />
+            <Button
+              onClick={() => addCommentMutation.mutate({ text: newComment })}
+              disabled={!newComment.trim() || addCommentMutation.isPending}
+              size="sm"
+            >
+              Add Comment
+            </Button>
+          </div>
+        )}
+
+        {/* Show message if approved */}
+        {isApproved && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-800">
+              This ad is approved. Comments cannot be added or modified.
+            </p>
+          </div>
+        )}
 
         {/* Comments list */}
         <div className="space-y-4">
           {parentComments.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              No comments yet. Be the first to add one!
+              No comments yet. {!isApproved && 'Be the first to add one!'}
             </p>
           ) : (
             parentComments.map((comment) => {
               const replies = getChildComments(comment.id);
               const userProfile = getUserProfile(comment.user_id);
-              console.log('Rendering comment:', comment); // Debug log
               return (
                 <div key={comment.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between">
@@ -168,19 +183,20 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
                           </Badge>
                         )}
                       </div>
-                      {/* Display the comment text - try both possible field names */}
                       <p className="text-sm">{comment.comment || comment.text || 'No comment text'}</p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                        disabled={comment.is_resolved}
-                      >
-                        <Reply className="h-4 w-4" />
-                      </Button>
+                      {!isApproved && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                          disabled={comment.is_resolved}
+                        >
+                          <Reply className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -216,8 +232,8 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
                     </div>
                   )}
 
-                  {/* Reply form */}
-                  {replyingTo === comment.id && !comment.is_resolved && (
+                  {/* Reply form - only show if not approved */}
+                  {replyingTo === comment.id && !comment.is_resolved && !isApproved && (
                     <div className="ml-6 space-y-2">
                       <Textarea
                         placeholder="Write a reply..."

@@ -268,6 +268,17 @@ export default function AdDetailsPage() {
 
   const handleAddComment = (comment: { x: number; y: number; text: string }) => {
     if (!adId) return;
+    
+    // Prevent adding comments if ad is approved
+    if (ad?.approval_status === 'approved') {
+      toast({ 
+        title: 'Cannot add comments', 
+        description: 'Comments cannot be added to approved ads.',
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     addCommentMutation.mutate(comment);
   };
   
@@ -293,6 +304,7 @@ export default function AdDetailsPage() {
 
   const platform = ad.adsets?.campaigns?.platform as Platform || 'Meta';
   const hasMedia = ad.file_url && ad.file_type && ad.file_type !== 'text';
+  const isApproved = ad.approval_status === 'approved';
 
   return (
     <div className="min-h-screen">
@@ -316,7 +328,7 @@ export default function AdDetailsPage() {
                 comments={pointComments}
                 onCommentAdd={handleAddComment}
                 onCommentResolve={handleResolveComment}
-                canReupload={true}
+                canReupload={!isApproved}
               />
             )}
 
@@ -369,6 +381,7 @@ export default function AdDetailsPage() {
             <AdCommentsPanel
               adId={ad.id}
               comments={generalComments}
+              isApproved={isApproved}
             />
           </div>
         </div>
