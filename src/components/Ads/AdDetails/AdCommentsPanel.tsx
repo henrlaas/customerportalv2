@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, CheckCircle, Clock, Reply } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface CommentsPanelProps {
   adId: string;
@@ -20,6 +21,30 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
   const [replyText, setReplyText] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch user profiles for comments
+  const userIds = comments.map(c => c.user_id).filter(Boolean);
+  const { data: userProfiles = [] } = useQuery({
+    queryKey: ['user_profiles', userIds],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, first_name, avatar_url')
+        .in('id', userIds);
+      return data || [];
+    },
+    enabled: userIds.length > 0,
+  });
+
+  const getUserProfile = (userId: string) => {
+    const profile = userProfiles.find(p => p.id === userId);
+    return {
+      firstName: profile?.first_name || 'Unknown User',
+      avatarUrl: profile?.avatar_url,
+      initials: profile?.first_name ? profile.first_name.charAt(0).toUpperCase() : 'U'
+    };
+  };
 
   const addCommentMutation = useMutation({
     mutationFn: async ({ text, parentId }: { text: string; parentId?: string }) => {
@@ -122,16 +147,18 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
           ) : (
             parentComments.map((comment) => {
               const replies = getChildComments(comment.id);
+              const userProfile = getUserProfile(comment.user_id);
               return (
                 <div key={comment.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={userProfile.avatarUrl || undefined} />
+                          <AvatarFallback className="text-xs">{userProfile.initials}</AvatarFallback>
+                        </Avatar>
                         <span className="font-medium text-sm">
-                          {comment.user_id.slice(0, 8)}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(comment.created_at).toLocaleString()}
+                          {userProfile.firstName}
                         </span>
                         {comment.is_resolved && (
                           <Badge variant="secondary" className="text-xs">
@@ -143,23 +170,23 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
                       <p className="text-sm">{comment.comment}</p>
                     </div>
                     {!comment.is_resolved && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
+                          className="h-8 w-8 p-0"
                           onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
                         >
-                          <Reply className="h-3 w-3 mr-1" />
-                          Reply
+                          <Reply className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
+                          className="h-8 w-8 p-0"
                           onClick={() => resolveCommentMutation.mutate(comment.id)}
                           disabled={resolveCommentMutation.isPending}
                         >
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Resolve
+                          <CheckCircle className="h-4 w-4" />
                         </Button>
                       </div>
                     )}
@@ -168,19 +195,23 @@ export function AdCommentsPanel({ adId, comments }: CommentsPanelProps) {
                   {/* Replies */}
                   {replies.length > 0 && (
                     <div className="ml-6 space-y-2 border-l-2 border-muted pl-4">
-                      {replies.map((reply) => (
-                        <div key={reply.id} className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">
-                              {reply.user_id.slice(0, 8)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(reply.created_at).toLocaleString()}
-                            </span>
+                      {replies.map((reply) => {
+                        const replyUserProfile = getUserProfile(reply.user_id);
+                        return (
+                          <div key={reply.id} className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-4 w-4">
+                                <AvatarImage src={replyUserProfile.avatarUrl || undefined} />
+                                <AvatarFallback className="text-xs">{replyUserProfile.initials}</AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium text-sm">
+                                {replyUserProfile.firstName}
+                              </span>
+                            </div>
+                            <p className="text-sm">{reply.comment}</p>
                           </div>
-                          <p className="text-sm">{reply.comment}</p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
