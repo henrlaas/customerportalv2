@@ -37,6 +37,57 @@ export function AdSetCard({ adset, onUpdate, disableModifications = false, isSel
   // Get preview thumbnails (first 3 ads with media)
   const previewAds = ads.filter(ad => ad.file_url).slice(0, 3);
 
+  // Calculate approval status for all ads in the adset
+  const getApprovalStatusBadge = () => {
+    if (ads.length === 0) {
+      return null;
+    }
+
+    const approvedCount = ads.filter((ad: any) => ad.approval_status === 'approved').length;
+    const rejectedCount = ads.filter((ad: any) => ad.approval_status === 'rejected').length;
+    const draftCount = ads.filter((ad: any) => !ad.approval_status || ad.approval_status === 'draft').length;
+
+    // If all are draft, show "Under Review"
+    if (draftCount === ads.length) {
+      return {
+        label: 'Under Review',
+        color: 'bg-gray-100 text-gray-800'
+      };
+    }
+
+    // If there are both approved and rejected ads
+    if (approvedCount > 0 && rejectedCount > 0) {
+      return {
+        label: `${approvedCount} approved, ${rejectedCount} rejected`,
+        color: 'bg-yellow-100 text-yellow-800'
+      };
+    }
+
+    // If only approved ads
+    if (approvedCount > 0) {
+      return {
+        label: `${approvedCount} approved`,
+        color: 'bg-green-100 text-green-800'
+      };
+    }
+
+    // If only rejected ads
+    if (rejectedCount > 0) {
+      return {
+        label: `${rejectedCount} rejected`,
+        color: 'bg-red-100 text-red-800'
+      };
+    }
+
+    // Default case (shouldn't happen)
+    return {
+      label: 'Under Review',
+      color: 'bg-gray-100 text-gray-800'
+    };
+  };
+
+  const approvalStatusBadge = getApprovalStatusBadge();
+
   return (
     <Card 
       className={`
@@ -103,6 +154,15 @@ export function AdSetCard({ adset, onUpdate, disableModifications = false, isSel
             </DropdownMenu>
           )}
         </div>
+
+        {/* Approval status badge */}
+        {approvalStatusBadge && (
+          <div className="mb-3">
+            <Badge variant="outline" className={`text-xs ${approvalStatusBadge.color}`}>
+              {approvalStatusBadge.label}
+            </Badge>
+          </div>
+        )}
 
         {/* Ad statistics */}
         <div className="space-y-2 mb-3">
