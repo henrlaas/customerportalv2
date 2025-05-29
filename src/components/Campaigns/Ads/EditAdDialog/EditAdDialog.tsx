@@ -19,14 +19,20 @@ interface Props {
   ad: any;
   campaignPlatform?: string;
   trigger: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onSuccess?: () => void;
 }
 
-export function EditAdDialog({ ad, campaignPlatform, trigger, onSuccess }: Props) {
+export function EditAdDialog({ ad, campaignPlatform, trigger, open, onOpenChange, onSuccess }: Props) {
   const validPlatform = (campaignPlatform as Platform) || 'Meta';
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [open, setOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  
+  // Use external open state if provided, otherwise use internal state
+  const isOpen = open !== undefined ? open : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
   
   const {
     form,
@@ -40,7 +46,7 @@ export function EditAdDialog({ ad, campaignPlatform, trigger, onSuccess }: Props
 
   // Prefill form with existing ad data when dialog opens
   React.useEffect(() => {
-    if (open && ad) {
+    if (isOpen && ad) {
       form.reset({
         name: ad.name || '',
         adset_id: ad.adset_id,
@@ -65,7 +71,7 @@ export function EditAdDialog({ ad, campaignPlatform, trigger, onSuccess }: Props
         });
       }
     }
-  }, [open, ad, form]);
+  }, [isOpen, ad, form]);
 
   const resetDialog = () => {
     if (!ad.file_url) {
@@ -157,13 +163,15 @@ export function EditAdDialog({ ad, campaignPlatform, trigger, onSuccess }: Props
   };
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
+    <Dialog open={isOpen} onOpenChange={(newOpen) => {
       setOpen(newOpen);
       if (!newOpen) resetDialog();
     }}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+      {trigger && (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl max-h-[90vh] p-0 flex flex-col bg-gradient-to-br from-background to-muted/30 backdrop-blur-sm border-primary/10">
         <DialogHeader className="p-6 pb-2 flex-shrink-0 border-b">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
