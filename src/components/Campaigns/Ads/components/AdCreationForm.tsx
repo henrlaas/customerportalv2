@@ -2,6 +2,7 @@
 import React from 'react';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
 import { Platform } from '../../types/campaign';
 import { FileInfo } from '../types';
@@ -28,40 +29,42 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
   return (
     <ValidationProvider platform={platform}>
       <Form {...form}>
-        <form onSubmit={handleSubmit} className="flex flex-col h-full w-full">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
           {/* Form Fields - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-8">
-            <div className="space-y-8 max-w-2xl mx-auto">
-              {/* AI Assistant */}
-              <AIContentAssistant
-                form={form}
-                platform={platform}
-                onGenerated={() => setAiGenerated(true)}
-              />
-              
-              {/* Media Upload */}
-              {requiresMediaUpload(platform) && (
-                <MediaUploadSection
-                  fileInfo={fileInfo}
-                  setFileInfo={setFileInfo}
+          <div className="flex-1 min-h-0">
+            <ScrollArea className="h-full">
+              <div className="p-6 space-y-6">
+                {/* AI Assistant */}
+                <AIContentAssistant
+                  form={form}
                   platform={platform}
+                  onGenerated={() => setAiGenerated(true)}
                 />
-              )}
-              
-              {/* Platform-Specific Fields */}
-              <PlatformFieldsRenderer
-                form={form}
-                platform={platform}
-                aiGenerated={aiGenerated}
-              />
-            </div>
+                
+                {/* Media Upload */}
+                {requiresMediaUpload(platform) && (
+                  <MediaUploadSection
+                    fileInfo={fileInfo}
+                    setFileInfo={setFileInfo}
+                    platform={platform}
+                  />
+                )}
+                
+                {/* Platform-Specific Fields */}
+                <PlatformFieldsRenderer
+                  form={form}
+                  platform={platform}
+                  aiGenerated={aiGenerated}
+                />
+              </div>
+            </ScrollArea>
           </div>
           
           {/* Submit Button - Fixed at bottom */}
-          <div className="flex-shrink-0 p-8 border-t bg-background">
+          <div className="flex-shrink-0 p-6 border-t bg-background">
             <Button 
               type="submit" 
-              className="w-full max-w-md mx-auto"
+              className="w-full"
               disabled={uploading}
               size="lg"
             >
