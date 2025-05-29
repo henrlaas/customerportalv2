@@ -219,7 +219,7 @@ export function AdMediaViewer({
                         <AvatarImage src={userProfile.avatarUrl || undefined} />
                         <AvatarFallback className="text-xs">{userProfile.initials}</AvatarFallback>
                       </Avatar>
-                      <span>By: {userProfile.firstName}</span>
+                      <span>{userProfile.firstName}</span>
                     </div>
                   </div>
                 );
