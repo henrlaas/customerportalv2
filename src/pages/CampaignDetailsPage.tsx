@@ -181,7 +181,7 @@ export function CampaignDetailsPage() {
   } as Campaign : null);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-muted/20">
       {/* Always render the banner with either real data or placeholder */}
       <CampaignDetailsBanner 
         campaign={displayCampaign} 
@@ -202,51 +202,105 @@ export function CampaignDetailsPage() {
         </div>
       )}
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Adsets sidebar */}
-          <div className="w-full md:w-64 flex-shrink-0 border rounded-lg">
-            <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
-              <h2 className="font-medium text-lg">Ad Sets</h2>
-              {campaignId && <CreateAdSetDialog campaignId={campaignId} disabled={disableModifications} />}
-            </div>
-            <ScrollArea className="h-[calc(100vh-250px)]">
-              <div className="p-2">
-                <AdSetList
-                  adsets={allAdsets}
-                  campaignId={campaignId!}
-                  onUpdate={handleAdsetUpdate}
-                  disableModifications={disableModifications}
-                  selectedAdsetId={selectedAdsetId}
-                  onSelectAdset={handleSelectAdset}
-                />
-              </div>
-            </ScrollArea>
-          </div>
-
-          {/* Ads content area */}
-          <div className="flex-1">
-            {selectedAdsetId ? (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-medium">
-                    {selectedAdset?.name} 
-                    {selectedAdset?.targeting && (
-                      <span className="ml-2 text-sm text-muted-foreground">
-                        ({selectedAdset.targeting})
-                      </span>
-                    )}
-                  </h2>
-                  {selectedAdsetId && (
-                    <CreateAdDialog adsetId={selectedAdsetId} campaignPlatform={campaign?.platform} disabled={disableModifications} />
+      <div className="container mx-auto px-4 py-8 flex-1">
+        <div className="flex flex-col lg:flex-row gap-8 h-full">
+          {/* Enhanced Adsets sidebar */}
+          <div className="w-full lg:w-80 flex-shrink-0">
+            <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
+              <div className="p-6 border-b bg-gradient-to-r from-primary/5 to-primary/10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-semibold text-lg">Ad Sets</h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {allAdsets.length} ad set{allAdsets.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  {campaignId && (
+                    <CreateAdSetDialog 
+                      campaignId={campaignId} 
+                      disabled={disableModifications} 
+                    />
                   )}
                 </div>
-                <AdsList ads={ads} campaignPlatform={campaign?.platform} disableModifications={disableModifications} />
+              </div>
+              
+              <ScrollArea className="h-[calc(100vh-300px)]">
+                <div className="p-4">
+                  <AdSetList
+                    adsets={allAdsets}
+                    campaignId={campaignId!}
+                    onUpdate={handleAdsetUpdate}
+                    disableModifications={disableModifications}
+                    selectedAdsetId={selectedAdsetId}
+                    onSelectAdset={handleSelectAdset}
+                  />
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+
+          {/* Enhanced Ads content area */}
+          <div className="flex-1 min-w-0">
+            {selectedAdsetId ? (
+              <div className="space-y-6">
+                {/* Header with adset info and create button */}
+                <div className="bg-card rounded-xl shadow-sm border p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <h2 className="text-xl font-semibold">
+                        {selectedAdset?.name}
+                      </h2>
+                      {selectedAdset?.targeting && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          <span className="font-medium">Targeting:</span> {selectedAdset.targeting}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                        <span>{ads.length} ad{ads.length !== 1 ? 's' : ''}</span>
+                        {ads.length > 0 && (
+                          <>
+                            <span>•</span>
+                            <span>
+                              {ads.filter(ad => ad.ad_type === 'image').length} image, {' '}
+                              {ads.filter(ad => ad.ad_type === 'video').length} video, {' '}
+                              {ads.filter(ad => ad.ad_type === 'text' || !ad.ad_type).length} text
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {selectedAdsetId && (
+                      <CreateAdDialog 
+                        adsetId={selectedAdsetId} 
+                        campaignPlatform={campaign?.platform} 
+                        disabled={disableModifications} 
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Ads list with enhanced design */}
+                <div className="bg-card rounded-xl shadow-sm border p-6">
+                  <AdsList 
+                    ads={ads} 
+                    campaignPlatform={campaign?.platform} 
+                    disableModifications={disableModifications} 
+                  />
+                </div>
               </div>
             ) : (
-              <div className="text-center py-12 border rounded-lg bg-muted/30">
-                <h3 className="text-lg font-medium mb-2">Select an Ad Set</h3>
-                <p className="text-muted-foreground">Choose an ad set from the sidebar to view its ads.</p>
+              <div className="bg-card rounded-xl shadow-sm border p-12 text-center">
+                <div className="max-w-md mx-auto">
+                  <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">Select an Ad Set</h3>
+                  <p className="text-muted-foreground">
+                    Choose an ad set from the sidebar to view and manage its ads.
+                  </p>
+                </div>
               </div>
             )}
           </div>
