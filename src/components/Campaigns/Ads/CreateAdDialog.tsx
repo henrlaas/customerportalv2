@@ -141,7 +141,7 @@ export function CreateAdDialog({ adsetId, campaignPlatform, disabled = false }: 
           Create Ad
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-full sm:max-w-[90vw] lg:max-w-[1500px] max-h-[90vh] p-0 flex flex-col bg-gradient-to-br from-background to-muted/30 backdrop-blur-sm border-primary/10">
+      <DialogContent className="sm:max-w-[95vw] lg:max-w-[1600px] w-full max-h-[90vh] p-0 flex flex-col bg-gradient-to-br from-background to-muted/30 backdrop-blur-sm border-primary/10">
         <DialogHeader className="p-6 pb-2 flex-shrink-0 border-b">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             Create New {validPlatform} Ad

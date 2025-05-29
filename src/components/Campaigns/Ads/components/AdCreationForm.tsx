@@ -42,7 +42,7 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
                 scrollbarColor: 'rgb(156 163 175) transparent'
               }}
             >
-              <div className="space-y-6 min-h-[800px] w-full max-w-none">
+              <div className="space-y-6 min-h-[800px] w-full">
                 {/* AI Assistant */}
                 <AIContentAssistant
                   form={form}
@@ -94,7 +94,7 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
           </div>
           
           {/* Right Panel - Preview */}
-          <div className="w-[400px] flex-shrink-0 border-l bg-muted/20 overflow-y-auto">
+          <div className="w-[350px] lg:w-[400px] flex-shrink-0 border-l bg-muted/20 overflow-y-auto">
             <AdPreviewPanel
               formData={formData}
               fileInfo={fileInfo}
