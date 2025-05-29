@@ -56,6 +56,24 @@ export function AdMediaViewer({
     toast({ title: "Comment added" });
   };
 
+  // Helper function to determine if the file is an image
+  const isImageFile = (type: string, url: string) => {
+    const imageTypes = ['image', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+    const lowerType = type?.toLowerCase() || '';
+    const urlExtension = url?.split('.').pop()?.toLowerCase() || '';
+    
+    return imageTypes.includes(lowerType) || imageTypes.includes(urlExtension);
+  };
+
+  // Helper function to determine if the file is a video
+  const isVideoFile = (type: string, url: string) => {
+    const videoTypes = ['video', 'mp4', 'webm', 'mov', 'avi', 'mkv'];
+    const lowerType = type?.toLowerCase() || '';
+    const urlExtension = url?.split('.').pop()?.toLowerCase() || '';
+    
+    return videoTypes.includes(lowerType) || videoTypes.includes(urlExtension);
+  };
+
   return (
     <div className="grid grid-cols-[2fr,1fr] gap-6">
       <div>
@@ -64,18 +82,32 @@ export function AdMediaViewer({
             className="relative cursor-crosshair"
             onClick={handleMediaClick}
           >
-            {fileType === 'image' ? (
+            {isImageFile(fileType, fileUrl) ? (
               <img 
                 src={fileUrl} 
                 alt="Ad content"
                 className="w-full h-[400px] object-contain bg-muted"
+                onError={(e) => {
+                  console.error('Failed to load image:', fileUrl);
+                  e.currentTarget.style.display = 'none';
+                }}
               />
-            ) : (
+            ) : isVideoFile(fileType, fileUrl) ? (
               <video 
                 src={fileUrl} 
                 controls 
                 className="w-full h-[400px] object-contain bg-muted"
+                onError={(e) => {
+                  console.error('Failed to load video:', fileUrl);
+                }}
               />
+            ) : (
+              <div className="w-full h-[400px] bg-muted flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-muted-foreground">Media format not supported</p>
+                  <p className="text-sm text-muted-foreground mt-2">File type: {fileType}</p>
+                </div>
+              </div>
             )}
             
             {comments.map((comment, idx) => (
