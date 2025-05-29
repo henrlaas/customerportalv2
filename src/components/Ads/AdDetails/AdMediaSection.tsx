@@ -66,12 +66,16 @@ export function AdMediaSection({
         adType = 'video';
       }
       
-      // Update ad with new file URL
+      // Update ad with new file URL and reset approval status to draft
       const { error: updateError } = await supabase
         .from('ads')
         .update({
           file_url: newFileUrl,
-          file_type: adType
+          file_type: adType,
+          approval_status: 'draft',
+          approved_by: null,
+          approved_at: null,
+          rejection_reason: null
         })
         .eq('id', adId);
       
@@ -108,7 +112,7 @@ export function AdMediaSection({
     onSuccess: () => {
       toast({ 
         title: 'Media uploaded',
-        description: 'The new media has been uploaded successfully and previous comments have been cleared.'
+        description: 'The new media has been uploaded successfully, comments cleared, and approval status reset to draft.'
       });
       queryClient.invalidateQueries({ queryKey: ['ad', adId] });
       queryClient.invalidateQueries({ queryKey: ['ad_comments', adId] });
