@@ -6,6 +6,8 @@ import { AdCommentMarker } from './AdCommentMarker';
 import { useToast } from '@/components/ui/use-toast';
 import { Check, MessageSquare } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Comment {
   x: number;
@@ -13,6 +15,7 @@ interface Comment {
   text: string;
   id?: string;
   isResolved?: boolean;
+  user_id?: string;
 }
 
 interface AdMediaViewerProps {
@@ -36,6 +39,26 @@ export function AdMediaViewer({
   const [newComment, setNewComment] = useState<Omit<Comment, 'id'> | null>(null);
   const [selectedComment, setSelectedComment] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Fetch user profiles for comments
+  const userIds = comments.map(c => c.user_id).filter(Boolean);
+  const { data: userProfiles = [] } = useQuery({
+    queryKey: ['user_profiles', userIds],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, first_name')
+        .in('id', userIds);
+      return data || [];
+    },
+    enabled: userIds.length > 0,
+  });
+
+  const getUserFirstName = (userId: string) => {
+    const profile = userProfiles.find(p => p.id === userId);
+    return profile?.first_name || 'Unknown User';
+  };
 
   const handleMediaClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isCommenting) return;
@@ -186,7 +209,7 @@ export function AdMediaViewer({
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground mt-2">
-                    Position: {comment.x.toFixed(0)}%, {comment.y.toFixed(0)}%
+                    By: {comment.user_id ? getUserFirstName(comment.user_id) : 'Unknown User'}
                   </div>
                 </div>
               ))
