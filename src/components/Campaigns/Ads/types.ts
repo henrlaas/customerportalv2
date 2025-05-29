@@ -1,8 +1,7 @@
-
 export interface FileInfo {
-  url: string;
-  type: string;
-  file: File;
+  file: File | null;
+  url?: string;
+  type: 'image' | 'video' | 'text';
 }
 
 export interface WatchedFields {

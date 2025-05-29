@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Play, Image as ImageIcon, FileText, MoreVertical, Edit, Trash2, Copy } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DeleteAdDialog } from './DeleteAdDialog/DeleteAdDialog';
+import { EditAdDialog } from './EditAdDialog/EditAdDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -17,7 +17,7 @@ interface Props {
   disableModifications?: boolean;
 }
 
-export function EnhancedAdCard({ ad, disableModifications, onAdUpdate }: Props) {
+export function EnhancedAdCard({ ad, disableModifications, onAdUpdate, campaignPlatform }: Props) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -80,6 +80,14 @@ export function EnhancedAdCard({ ad, disableModifications, onAdUpdate }: Props) 
   };
 
   const handleDeleteSuccess = () => {
+    // Refresh the ads list
+    queryClient.invalidateQueries({
+      queryKey: ['ads', ad.adset_id]
+    });
+    onAdUpdate?.();
+  };
+
+  const handleEditSuccess = () => {
     // Refresh the ads list
     queryClient.invalidateQueries({
       queryKey: ['ads', ad.adset_id]
@@ -181,10 +189,17 @@ export function EnhancedAdCard({ ad, disableModifications, onAdUpdate }: Props) 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </DropdownMenuItem>
+                <EditAdDialog
+                  ad={ad}
+                  campaignPlatform={campaignPlatform}
+                  onSuccess={handleEditSuccess}
+                  trigger={
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                  }
+                />
                 <DropdownMenuItem onClick={handleDuplicate}>
                   <Copy className="h-4 w-4 mr-2" />
                   Duplicate
