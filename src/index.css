@@ -130,4 +130,47 @@
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--border)) hsl(var(--muted));
   }
+
+  /* Enhanced ScrollArea scrollbar styles for dialog content */
+  [data-radix-scroll-area-viewport] {
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  /* Force scrollbar visibility when content overflows */
+  .force-scrollbar {
+    overflow-y: scroll !important;
+  }
+
+  .force-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    background: hsl(var(--muted));
+  }
+
+  .force-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+
+  .force-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
 }
