@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, ArrowLeft } from 'lucide-react';
+import { Edit, Trash2, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Card } from '@/components/ui/card';
 import { useState } from 'react';
@@ -16,7 +16,7 @@ import { EditAdDialog } from '@/components/Campaigns/Ads/EditAdDialog/EditAdDial
 import { DeleteAdDialog } from '@/components/Campaigns/Ads/DeleteAdDialog/DeleteAdDialog';
 import { Platform } from '@/components/Campaigns/types/campaign';
 
-function AdInformationBanner({ ad, onEdit, onDelete }: { ad: any; onEdit: () => void; onDelete: () => void }) {
+function AdInformationBanner({ ad, onEdit, onDelete, onReset }: { ad: any; onEdit: () => void; onDelete: () => void; onReset: () => void }) {
   const navigate = useNavigate();
 
   const handleBackClick = () => {
@@ -61,6 +61,9 @@ function AdInformationBanner({ ad, onEdit, onDelete }: { ad: any; onEdit: () => 
           </div>
           
           <div className="flex items-center gap-2">
+            <Button onClick={onReset} variant="ghost" size="icon" title="Reset to Draft">
+              <RotateCcw className="h-4 w-4" />
+            </Button>
             <Button onClick={onEdit} variant="ghost" size="icon">
               <Edit className="h-4 w-4" />
             </Button>
@@ -156,6 +159,29 @@ export default function AdDetailsPage() {
       toast({ title: 'Failed to delete', description: err.message, variant: 'destructive' });
     }
   });
+
+  const resetStatusMutation = useMutation({
+    mutationFn: async () => {
+      if (!adId) throw new Error('Missing adId');
+      const { error } = await supabase
+        .from('ads')
+        .update({ 
+          approval_status: 'draft',
+          approved_by: null,
+          approved_at: null,
+          rejection_reason: null
+        })
+        .eq('id', adId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: 'Ad status reset to draft' });
+      queryClient.invalidateQueries({ queryKey: ['ad', adId] });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Failed to reset status', description: err.message, variant: 'destructive' });
+    }
+  });
   
   // Query for ad-specific comments
   const { data: commentsRaw = [] } = useQuery({
@@ -249,6 +275,10 @@ export default function AdDetailsPage() {
     resolveCommentMutation.mutate(commentId);
   };
 
+  const handleResetStatus = () => {
+    resetStatusMutation.mutate();
+  };
+
   const safeParse = (json: any): any[] => {
     if (!json) return [];
     try {
@@ -270,6 +300,7 @@ export default function AdDetailsPage() {
         ad={ad}
         onEdit={() => setShowEdit(true)}
         onDelete={() => setShowDelete(true)}
+        onReset={handleResetStatus}
       />
       
       <div className="container max-w-7xl mx-auto py-8">
