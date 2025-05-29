@@ -17,10 +17,19 @@ interface DeleteAdDialogProps {
   adId: string;
   adName: string;
   trigger: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onSuccess?: () => void;
 }
 
-export function DeleteAdDialog({ adId, adName, trigger, onSuccess }: DeleteAdDialogProps) {
+export function DeleteAdDialog({ 
+  adId, 
+  adName, 
+  trigger, 
+  open, 
+  onOpenChange, 
+  onSuccess 
+}: DeleteAdDialogProps) {
   const { toast } = useToast();
 
   const handleDelete = async () => {
@@ -38,6 +47,7 @@ export function DeleteAdDialog({ adId, adName, trigger, onSuccess }: DeleteAdDia
       });
 
       onSuccess?.();
+      onOpenChange?.(false);
     } catch (error) {
       toast({
         title: 'Error',
@@ -48,10 +58,12 @@ export function DeleteAdDialog({ adId, adName, trigger, onSuccess }: DeleteAdDia
   };
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        {trigger}
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {trigger && (
+        <AlertDialogTrigger asChild>
+          {trigger}
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>

@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -344,7 +343,6 @@ export default function AdDetailsPage() {
         {showEdit && (
           <EditAdDialog
             ad={ad}
-            adsetId={ad.adset_id}
             trigger={null}
             open={showEdit}
             onOpenChange={setShowEdit}
@@ -354,10 +352,16 @@ export default function AdDetailsPage() {
         {/* Delete Dialog */}
         {showDelete && (
           <DeleteAdDialog
-            ad={ad}
+            adId={ad.id}
+            adName={ad.name}
             trigger={null}
             open={showDelete}
             onOpenChange={setShowDelete}
+            onSuccess={() => {
+              toast({ title: 'Ad deleted.' });
+              queryClient.invalidateQueries({ queryKey: ['ads'] });
+              navigate(-1);
+            }}
           />
         )}
       </div>
