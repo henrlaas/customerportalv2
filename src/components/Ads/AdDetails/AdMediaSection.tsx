@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,6 +77,17 @@ export function AdMediaSection({
       
       if (updateError) throw updateError;
       
+      // Delete all existing comments for this ad since they're no longer relevant
+      const { error: deleteCommentsError } = await supabase
+        .from('ad_comments')
+        .delete()
+        .eq('ad_id', adId);
+      
+      if (deleteCommentsError) {
+        console.warn('Could not delete existing comments:', deleteCommentsError);
+        // Don't throw error as this is not critical for the upload
+      }
+      
       // Create media upload record
       const { error: mediaError } = await supabase
         .from('media_uploads')
@@ -98,9 +108,10 @@ export function AdMediaSection({
     onSuccess: () => {
       toast({ 
         title: 'Media uploaded',
-        description: 'The new media has been uploaded successfully.'
+        description: 'The new media has been uploaded successfully and previous comments have been cleared.'
       });
       queryClient.invalidateQueries({ queryKey: ['ad', adId] });
+      queryClient.invalidateQueries({ queryKey: ['ad_comments', adId] });
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
