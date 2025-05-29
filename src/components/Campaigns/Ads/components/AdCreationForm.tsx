@@ -32,10 +32,10 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
     <ValidationProvider platform={platform}>
       <Form {...form}>
         <form onSubmit={handleSubmit} className="flex h-full w-full">
-          {/* Left Panel - Form Fields */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-6 max-w-3xl">
+          {/* Left Panel - Form Fields (60-70% width) */}
+          <div className="flex-1 flex flex-col overflow-hidden" style={{ minWidth: '0', maxWidth: 'calc(100% - 400px)' }}>
+            <div className="flex-1 overflow-y-auto p-8">
+              <div className="space-y-8 w-full max-w-4xl mx-auto">
                 {/* AI Assistant */}
                 <AIContentAssistant
                   form={form}
@@ -62,10 +62,10 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
             </div>
             
             {/* Submit Button - Fixed at bottom */}
-            <div className="flex-shrink-0 p-6 border-t bg-background">
+            <div className="flex-shrink-0 p-8 border-t bg-background">
               <Button 
                 type="submit" 
-                className="w-full max-w-md mx-auto"
+                className="w-full max-w-lg mx-auto"
                 disabled={uploading}
                 size="lg"
               >
@@ -81,7 +81,7 @@ export function AdCreationForm({ form, platform, fileInfo, setFileInfo, onSubmit
             </div>
           </div>
           
-          {/* Right Panel - Preview */}
+          {/* Right Panel - Preview (Fixed 400px width) */}
           <div className="w-[400px] flex-shrink-0 border-l bg-muted/20 overflow-y-auto">
             <AdPreviewPanel
               formData={formData}
