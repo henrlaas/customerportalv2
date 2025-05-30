@@ -195,7 +195,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
+        .select('id, first_name, last_name, avatar_url, role')
+        .in('role', ['admin', 'employee'])
         .order('first_name');
       
       if (error) {
