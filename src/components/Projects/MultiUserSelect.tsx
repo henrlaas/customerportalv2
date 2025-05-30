@@ -16,6 +16,7 @@ type User = {
   first_name: string | null;
   last_name: string | null;
   avatar_url?: string | null;
+  role: string;
 };
 
 type MultiUserSelectProps = {
@@ -44,8 +45,8 @@ export function MultiUserSelect({
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
-        .in('role', ['employee', 'admin']);
+        .select('id, first_name, last_name, avatar_url, role')
+        .in('role', ['admin', 'employee']);
         
       if (error) {
         console.error('Error fetching users:', error);
