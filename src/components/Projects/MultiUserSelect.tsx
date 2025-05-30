@@ -16,7 +16,6 @@ type User = {
   first_name: string | null;
   last_name: string | null;
   avatar_url?: string | null;
-  role?: string;
 };
 
 type MultiUserSelectProps = {
@@ -45,7 +44,7 @@ export function MultiUserSelect({
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, avatar_url, role')
+        .select('id, first_name, last_name, avatar_url')
         .in('role', ['employee', 'admin']);
         
       if (error) {
@@ -58,11 +57,8 @@ export function MultiUserSelect({
     enabled: !providedUsers // Only run the query if users are not provided
   });
 
-  // Use provided users or fetched users, and filter by role
-  const allUsers = providedUsers || fetchedUsers;
-  const users = allUsers.filter(user => 
-    user.role === 'admin' || user.role === 'employee'
-  );
+  // Use provided users or fetched users
+  const users = providedUsers || fetchedUsers;
 
   // Utility functions
   const getUserDisplayName = (user: User) => {

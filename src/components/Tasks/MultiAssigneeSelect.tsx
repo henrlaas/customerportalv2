@@ -11,7 +11,6 @@ type User = {
   first_name: string | null;
   last_name: string | null;
   avatar_url?: string | null;
-  role?: string;
 };
 
 type MultiAssigneeSelectProps = {
@@ -40,15 +39,12 @@ export function MultiAssigneeSelect({
     return (first + last).toUpperCase() || 'U';
   };
   
-  // Ensure users and selectedUserIds are always arrays, and filter by role
+  // Ensure users and selectedUserIds are always arrays
   const safeUsers = Array.isArray(users) ? users : [];
-  const filteredUsers = safeUsers.filter(user => 
-    user.role === 'admin' || user.role === 'employee'
-  );
   const safeSelectedUserIds = Array.isArray(selectedUserIds) ? selectedUserIds : [];
 
   // Format users for react-select
-  const options = filteredUsers.map(user => ({
+  const options = safeUsers.map(user => ({
     value: user.id,
     label: getUserDisplayName(user),
     user

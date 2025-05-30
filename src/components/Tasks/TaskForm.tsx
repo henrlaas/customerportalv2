@@ -47,7 +47,6 @@ type Contact = {
   first_name: string | null;
   last_name: string | null;
   avatar_url?: string | null;
-  role?: string;
 };
 
 // Ensure Campaign type includes the company_id property
@@ -100,11 +99,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Fetch existing task assignees if editing
   const [existingAssignees, setExistingAssignees] = useState<string[]>([]);
-
-  // Filter profiles to only include admin and employee roles
-  const filteredProfiles = profiles.filter(profile => 
-    profile.role === 'admin' || profile.role === 'employee'
-  );
 
   useEffect(() => {
     if (isEditing && taskId) {
@@ -500,7 +494,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               <FormLabel>Assignees</FormLabel>
               <FormControl>
                 <MultiAssigneeSelect
-                  users={filteredProfiles}
+                  users={profiles}
                   selectedUserIds={field.value || []}
                   onChange={field.onChange}
                   placeholder="Select assignees"
