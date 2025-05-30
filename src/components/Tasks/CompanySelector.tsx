@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Select from 'react-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Company } from '@/types/company';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 interface CompanySelectorProps {
   companies: Company[];
@@ -23,14 +24,71 @@ export function CompanySelector({
   isLoading = false,
   className,
 }: CompanySelectorProps) {
-  // Transform companies data for react-select
-  const options = companies.map(company => ({
-    value: company.id,
-    label: company.name,
-    isSubsidiary: !!company.parent_id,
-  }));
+  // Group companies by parent for better structure
+  const parentCompanies = companies.filter(company => !company.parent_id);
+  const subsidiaryCompanies = companies.filter(company => !!company.parent_id);
 
-  // Find the selected option
+  // Create structured options based on showSubsidiaries toggle
+  const createOptions = () => {
+    if (!showSubsidiaries) {
+      // Only show parent companies
+      return parentCompanies.map(company => ({
+        value: company.id,
+        label: company.name,
+        website: company.website,
+        logoUrl: company.logo_url,
+        isSubsidiary: false,
+        parentName: null,
+      }));
+    }
+
+    // Show all companies with better structure
+    const options: any[] = [];
+    
+    // Add parent companies first
+    parentCompanies.forEach(parent => {
+      options.push({
+        value: parent.id,
+        label: parent.name,
+        website: parent.website,
+        logoUrl: parent.logo_url,
+        isSubsidiary: false,
+        parentName: null,
+      });
+
+      // Add subsidiaries of this parent
+      const childCompanies = subsidiaryCompanies.filter(sub => sub.parent_id === parent.id);
+      childCompanies.forEach(child => {
+        options.push({
+          value: child.id,
+          label: child.name,
+          website: child.website,
+          logoUrl: child.logo_url,
+          isSubsidiary: true,
+          parentName: parent.name,
+        });
+      });
+    });
+
+    // Add any orphaned subsidiaries (subsidiaries without a parent in the current list)
+    const orphanedSubsidiaries = subsidiaryCompanies.filter(sub => 
+      !parentCompanies.some(parent => parent.id === sub.parent_id)
+    );
+    orphanedSubsidiaries.forEach(orphan => {
+      options.push({
+        value: orphan.id,
+        label: orphan.name,
+        website: orphan.website,
+        logoUrl: orphan.logo_url,
+        isSubsidiary: true,
+        parentName: null,
+      });
+    });
+
+    return options;
+  };
+
+  const options = createOptions();
   const selectedOption = options.find(option => option.value === selectedCompanyId);
   
   return (
@@ -45,12 +103,27 @@ export function CompanySelector({
           isLoading={isLoading}
           isClearable
           placeholder="Select company..."
-          formatOptionLabel={({ label, isSubsidiary }) => (
-            <div className="flex items-center">
-              <span className={isSubsidiary ? "pl-3" : ""}>{label}</span>
-              {isSubsidiary && (
-                <span className="ml-2 text-xs text-muted-foreground">(subsidiary)</span>
-              )}
+          formatOptionLabel={({ label, website, logoUrl, isSubsidiary, parentName }) => (
+            <div className={`flex items-center ${isSubsidiary ? 'pl-6' : ''}`}>
+              <div className="flex items-center space-x-2 flex-1">
+                <CompanyFavicon 
+                  companyName={label}
+                  website={website}
+                  logoUrl={logoUrl}
+                  size="sm"
+                />
+                <div className="flex flex-col">
+                  <span className={isSubsidiary ? "text-sm" : ""}>{label}</span>
+                  {isSubsidiary && parentName && (
+                    <span className="text-xs text-muted-foreground">
+                      Subsidiary of {parentName}
+                    </span>
+                  )}
+                  {isSubsidiary && !parentName && (
+                    <span className="text-xs text-muted-foreground">(subsidiary)</span>
+                  )}
+                </div>
+              </div>
             </div>
           )}
           styles={{
@@ -83,7 +156,8 @@ export function CompanySelector({
                 : isSelected 
                   ? 'hsl(var(--accent) / 0.2)'
                   : undefined,
-              color: 'hsl(var(--foreground))'
+              color: 'hsl(var(--foreground))',
+              padding: '8px 12px'
             }),
             singleValue: (baseStyles) => ({
               ...baseStyles,
