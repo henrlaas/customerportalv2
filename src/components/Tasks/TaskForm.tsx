@@ -41,12 +41,13 @@ import { Company } from '@/types/company';
 import { cn } from '@/lib/utils';
 import { Project } from '@/types/timeTracking';
 
-// Define types
+// Define types - updated Contact type to include role
 type Contact = {
   id: string;
   first_name: string | null;
   last_name: string | null;
   avatar_url?: string | null;
+  role: string;
 };
 
 // Ensure Campaign type includes the company_id property

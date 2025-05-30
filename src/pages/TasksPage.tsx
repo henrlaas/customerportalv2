@@ -73,12 +73,13 @@ type Task = {
   }[];
 };
 
-// Define the Contact type for assignees
+// Define the Contact type for assignees - updated to include role
 type Contact = {
   id: string;
   first_name: string | null;
   last_name: string | null;
   avatar_url?: string | null;
+  role: string;
 };
 
 // Campaign type
@@ -174,13 +175,14 @@ export const TasksPage = () => {
     return task.assignees?.some(assignee => assignee.user_id === currentUserId);
   });
 
-  // Fetch profiles for assignees and creator
+  // Fetch profiles for assignees and creator - updated to only include admin and employee users
   const { data: profiles = [] } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
+        .select('id, first_name, last_name, avatar_url, role')
+        .in('role', ['admin', 'employee'])
         .order('first_name');
       
       if (error) {
