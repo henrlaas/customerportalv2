@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -42,6 +41,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 // Define the task schema for simplified form validation
@@ -51,6 +51,7 @@ const taskSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']),
   status: z.enum(['todo', 'in_progress', 'completed']),
   due_date: z.string().optional(),
+  client_visible: z.boolean().optional(),
 });
 
 type CreateProjectTaskDialogProps = {
@@ -80,6 +81,7 @@ export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = (
       priority: 'medium',
       status: 'todo',
       due_date: '',
+      client_visible: false,
     },
   });
 
@@ -275,6 +277,27 @@ export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = (
                     </Popover>
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="client_visible"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between p-4 border rounded-md">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Visible to client</FormLabel>
+                    <div className="text-sm text-muted-foreground">
+                      Make this task visible in the client portal (Coming soon)
+                    </div>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

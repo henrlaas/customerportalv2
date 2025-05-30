@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +9,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -609,19 +610,19 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           control={form.control}
           name="client_visible"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-md">
+            <FormItem className="flex flex-row items-center justify-between p-4 border rounded-md">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Visible to client</FormLabel>
+                <div className="text-sm text-muted-foreground">
+                  Make this task visible in the client portal (Coming soon)
+                </div>
+              </div>
               <FormControl>
-                <Checkbox
+                <Switch
                   checked={field.value}
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="cursor-pointer">Visible to client</FormLabel>
-                <p className="text-sm text-muted-foreground">
-                  Make this task visible in the client portal (Coming soon)
-                </p>
-              </div>
             </FormItem>
           )}
         />
