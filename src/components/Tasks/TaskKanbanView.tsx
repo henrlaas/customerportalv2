@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { 
   DndContext, 
   closestCorners, 
   DragEndEvent,
-  DragOverEvent,
   DragStartEvent,
   KeyboardSensor,
   PointerSensor,
@@ -108,21 +106,6 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
     setActiveId(active.id as string);
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    
-    if (!over) return;
-    
-    const activeId = active.id;
-    const overId = over.id;
-    
-    // If the task is dragged over a container (status column)
-    if (overId === 'todo' || overId === 'in_progress' || overId === 'completed') {
-      // We'll handle the actual status update in handleDragEnd
-      console.log(`Task ${activeId} dragged over ${overId} status column`);
-    }
-  };
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -131,49 +114,60 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
       return;
     }
     
-    // Extract task ID and container ID
     const taskId = active.id as string;
-    const overId = over.id;
+    const overId = over.id as string;
     
-    // Only update if dropping in a valid status container
+    // Determine the target status column
+    let targetStatus: string | null = null;
+    
+    // Check if dropped directly on a column
     if (overId === 'todo' || overId === 'in_progress' || overId === 'completed') {
-      // Find the task in our local state
-      const findTaskStatus = Object.entries(localTasks).find(([status, tasks]) => 
-        tasks.some(task => task.id === taskId)
-      );
-      
-      if (findTaskStatus) {
-        const [currentStatus] = findTaskStatus;
-        
-        // Only proceed if the status has changed
-        if (currentStatus !== overId) {
-          console.log(`Moving task ${taskId} from ${currentStatus} to ${overId}`);
-          
-          // Get the task object
-          const task = localTasks[currentStatus as keyof typeof localTasks].find(t => t.id === taskId);
-          
-          if (task) {
-            // Update local state for immediate UI feedback (optimistic update)
-            setLocalTasks(prev => {
-              // Remove from current status
-              const updatedPrev = {
-                ...prev,
-                [currentStatus]: prev[currentStatus as keyof typeof prev].filter(t => t.id !== taskId)
-              };
-              
-              // Add to new status with updated status property
-              updatedPrev[overId as keyof typeof updatedPrev] = [
-                ...updatedPrev[overId as keyof typeof updatedPrev],
-                { ...task, status: overId as 'todo' | 'in_progress' | 'completed' }
-              ];
-              
-              return updatedPrev;
-            });
-            
-            // Call the prop to update in the database
-            onTaskMove(taskId, overId as string);
-          }
+      targetStatus = overId;
+    } else {
+      // Dropped on a task - find which column this task belongs to
+      Object.entries(localTasks).forEach(([status, tasks]) => {
+        if (tasks.some(task => task.id === overId)) {
+          targetStatus = status;
         }
+      });
+    }
+    
+    if (!targetStatus) {
+      setActiveId(null);
+      return;
+    }
+    
+    // Find the current status of the dragged task
+    const currentStatus = Object.entries(localTasks).find(([status, tasks]) => 
+      tasks.some(task => task.id === taskId)
+    )?.[0];
+    
+    if (currentStatus && currentStatus !== targetStatus) {
+      console.log(`Moving task ${taskId} from ${currentStatus} to ${targetStatus}`);
+      
+      // Get the task object
+      const task = localTasks[currentStatus as keyof typeof localTasks].find(t => t.id === taskId);
+      
+      if (task) {
+        // Update local state for immediate UI feedback (optimistic update)
+        setLocalTasks(prev => {
+          // Remove from current status
+          const updatedPrev = {
+            ...prev,
+            [currentStatus]: prev[currentStatus as keyof typeof prev].filter(t => t.id !== taskId)
+          };
+          
+          // Add to new status with updated status property
+          updatedPrev[targetStatus as keyof typeof updatedPrev] = [
+            ...updatedPrev[targetStatus as keyof typeof updatedPrev],
+            { ...task, status: targetStatus as 'todo' | 'in_progress' | 'completed' }
+          ];
+          
+          return updatedPrev;
+        });
+        
+        // Call the prop to update in the database
+        onTaskMove(taskId, targetStatus);
       }
     }
     
@@ -220,7 +214,6 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
     <DndContext 
       sensors={sensors}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       collisionDetection={closestCorners}
     >
@@ -365,15 +358,16 @@ const TaskStatusColumn: React.FC<TaskStatusColumnProps> = ({
   const { setNodeRef } = useDroppable({ id });
 
   return (
-    <div id={id} className="bg-muted/30 rounded-lg p-4">
+    <div 
+      ref={setNodeRef}
+      id={id} 
+      className="bg-muted/30 rounded-lg p-4 h-full"
+    >
       <div className="flex items-center mb-4">
         <h3 className="font-medium">{title}</h3>
         {getCountBadge(tasks.length)}
       </div>
-      <div 
-        ref={setNodeRef}  
-        className="space-y-2 min-h-[300px]"
-      >
+      <div className="space-y-2 min-h-[300px]">
         <SortableContext 
           items={tasks.map(task => task.id)}
           strategy={verticalListSortingStrategy}
