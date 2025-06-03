@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -19,6 +18,8 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from '@/components/ui/pagination';
+import { Eye, EyeOff } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Task {
   id: string;
@@ -87,6 +88,22 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   // Helper function to check if creator is valid
   const isValidCreator = (creator: any): creator is { id: string; first_name: string | null; last_name: string | null; avatar_url: string | null } => {
     return creator && typeof creator === 'object' && 'id' in creator && !('error' in creator);
+  };
+
+  // Helper function to get creator initials
+  const getCreatorInitials = (creator: any) => {
+    if (!creator || !isValidCreator(creator)) return '?';
+    
+    const first = creator.first_name?.[0] || '';
+    const last = creator.last_name?.[0] || '';
+    return (first + last).toUpperCase() || '?';
+  };
+
+  // Helper function to get creator display name
+  const getCreatorDisplayName = (creator: any) => {
+    if (!creator || !isValidCreator(creator)) return 'Unknown';
+    
+    return creator.first_name || 'Unknown User';
   };
 
   // Generate page numbers for pagination
@@ -177,7 +194,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                 <TableHead>Assignees</TableHead>
                 <TableHead>Creator</TableHead>
                 <TableHead>Due Date</TableHead>
-                <TableHead>Related To</TableHead>
+                <TableHead>Campaign/Project</TableHead>
                 <TableHead>Client Visible</TableHead>
               </TableRow>
             </TableHeader>
@@ -202,17 +219,22 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                     </TableCell>
                     <TableCell>
                       {isValidCreator(task.creator) ? (
-                        <UserAvatarGroup 
-                          users={[{
-                            id: task.creator.id,
-                            first_name: task.creator.first_name,
-                            last_name: task.creator.last_name,
-                            avatar_url: task.creator.avatar_url
-                          }]}
-                          size="sm"
-                        />
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage 
+                              src={task.creator.avatar_url || undefined} 
+                              alt={getCreatorDisplayName(task.creator)} 
+                            />
+                            <AvatarFallback className="text-xs bg-muted">
+                              {getCreatorInitials(task.creator)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">
+                            {getCreatorDisplayName(task.creator)}
+                          </span>
+                        </div>
                       ) : (
-                        'Unassigned'
+                        <span className="text-sm text-muted-foreground">Unknown</span>
                       )}
                     </TableCell>
                     <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
@@ -233,9 +255,9 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                     </TableCell>
                     <TableCell>
                       {task.client_visible ? (
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Visible</Badge>
+                        <Eye className="h-4 w-4 text-blue-600" />
                       ) : (
-                        <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200">Hidden</Badge>
+                        <EyeOff className="h-4 w-4 text-gray-400" style={{ strokeDasharray: '2,2' }} />
                       )}
                     </TableCell>
                   </TableRow>
