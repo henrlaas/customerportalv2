@@ -307,25 +307,36 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         <SheetContent className="sm:max-w-[700px] p-0">
           <div className="h-full flex flex-col">
             <SheetHeader className="p-6 pb-2">
-              <SheetTitle className="text-xl">
-                {isLoading ? 'Loading...' : task?.title || 'Task not found'}
-              </SheetTitle>
-              <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => setIsEditDialogOpen(true)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  className="text-red-600 hover:bg-red-50"
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <SheetTitle className="text-xl mb-3">
+                    {isLoading ? 'Loading...' : task?.title || 'Task not found'}
+                  </SheetTitle>
+                  {/* Status and Priority badges moved here */}
+                  {!isLoading && task && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {getStatusBadge(task.status)}
+                      {getPriorityBadge(task.priority)}
+                    </div>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => setIsEditDialogOpen(true)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="text-red-600 hover:bg-red-50"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </SheetHeader>
             
@@ -338,18 +349,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 </div>
               ) : task ? (
                 <>
-                  {/* Status and Priority section - Always visible */}
-                  <div className="mb-4 flex flex-wrap gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Status</h3>
-                      <div>{getStatusBadge(task.status)}</div>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Priority</h3>
-                      <div>{getPriorityBadge(task.priority)}</div>
-                    </div>
-                  </div>
-                  
                   {/* Description section - Always visible */}
                   {task.description && (
                     <div className="mb-4">
