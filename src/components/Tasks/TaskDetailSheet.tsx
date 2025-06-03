@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -18,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TaskTimer } from './TaskTimer';
 import { TaskAttachments } from './TaskAttachments';
+import { UserAvatarGroup } from './UserAvatarGroup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface TaskDetailSheetProps {
@@ -277,6 +277,23 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       .join(', ');
   };
 
+  // Function to get assignee users for UserAvatarGroup
+  const getAssigneeUsers = () => {
+    if (!task?.assignees) return [];
+    
+    return task.assignees
+      .map(assignee => {
+        const profile = profiles.find(p => p.id === assignee.user_id);
+        return profile ? {
+          id: profile.id,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          avatar_url: profile.avatar_url
+        } : null;
+      })
+      .filter(Boolean);
+  };
+
   // Function to format priority and status badges
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -372,7 +389,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Assigned to</h3>
                           <div className="flex items-center">
                             <UserPlus className="h-4 w-4 mr-2 text-gray-400" />
-                            <span>{getAssigneeNames()}</span>
+                            <UserAvatarGroup users={getAssigneeUsers()} max={5} size="sm" />
                           </div>
                         </div>
                         {task.due_date && (
