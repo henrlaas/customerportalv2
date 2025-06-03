@@ -407,21 +407,19 @@ export const TasksPage = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* View toggle switch - Changed order: Kanban first, then List */}
+          {/* View toggle switch - Icons only */}
           <div className="flex items-center mr-2 bg-muted rounded-md p-1">
             <div 
-              className={`flex items-center gap-1 px-3 py-1.5 rounded cursor-pointer ${viewMode === 'kanban' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
+              className={`flex items-center gap-1 px-2 py-1.5 rounded cursor-pointer ${viewMode === 'kanban' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
               onClick={() => setViewMode('kanban')}
             >
               <KanbanSquare className="h-4 w-4" />
-              <span className="text-sm hidden sm:inline">Kanban</span>
             </div>
             <div 
-              className={`flex items-center gap-1 px-3 py-1.5 rounded cursor-pointer ${viewMode === 'list' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
+              className={`flex items-center gap-1 px-2 py-1.5 rounded cursor-pointer ${viewMode === 'list' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
               onClick={() => setViewMode('list')}
             >
               <List className="h-4 w-4" />
-              <span className="text-sm hidden sm:inline">List</span>
             </div>
           </div>
 
