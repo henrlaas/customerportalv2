@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
@@ -335,7 +336,7 @@ const DealsPage = () => {
 
       {/* Search bar and stage filter tabs on the same line */}
       <div className="mb-6 flex items-center gap-4">
-        <div className="relative max-w-md">
+        <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             type="search"
@@ -346,7 +347,7 @@ const DealsPage = () => {
           />
         </div>
         
-        <div className="flex-1">
+        <div className="flex-shrink-0">
           <Tabs value={selectedStageFilter} onValueChange={setSelectedStageFilter}>
             <TabsList className="w-auto">
               <TabsTrigger value="all">All Deals</TabsTrigger>
