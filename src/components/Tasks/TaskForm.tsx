@@ -12,26 +12,9 @@ import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiAssigneeSelect } from './MultiAssigneeSelect';
 import { useAuth } from '@/contexts/AuthContext';
 import { CompanySelector } from './CompanySelector';
@@ -55,7 +38,6 @@ type Campaign = {
   name: string;
   company_id: string;
 };
-
 type TaskFormProps = {
   onSuccess: () => void;
   taskId?: string;
@@ -66,7 +48,9 @@ type TaskFormProps = {
 
 // Define the task schema for form validation
 const taskSchema = z.object({
-  title: z.string().min(1, { message: 'Title is required' }),
+  title: z.string().min(1, {
+    message: 'Title is required'
+  }),
   description: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high']),
   status: z.enum(['todo', 'in_progress', 'completed']),
@@ -76,41 +60,44 @@ const taskSchema = z.object({
   client_visible: z.boolean().default(false),
   related_type: z.enum(['none', 'campaign', 'project']).default('none'),
   company_id: z.string().nullable().optional(),
-  project_id: z.string().nullable().optional(), // Added project_id field
+  project_id: z.string().nullable().optional() // Added project_id field
 });
-
 export const TaskForm: React.FC<TaskFormProps> = ({
   onSuccess,
   taskId,
   initialData,
   profiles,
-  campaigns,
+  campaigns
 }) => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const isEditing = !!taskId;
   const [loadingAssignees, setLoadingAssignees] = useState(isEditing);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   const [timeoutId, setTimeoutId] = useState<number | null>(null);
 
   // Fetch companies
-  const { companies, isLoading: isLoadingCompanies } = useCompanyList(showSubsidiaries);
+  const {
+    companies,
+    isLoading: isLoadingCompanies
+  } = useCompanyList(showSubsidiaries);
 
   // Fetch existing task assignees if editing
   const [existingAssignees, setExistingAssignees] = useState<string[]>([]);
-
   useEffect(() => {
     if (isEditing && taskId) {
       const fetchTaskAssignees = async () => {
         try {
-          const { data, error } = await supabase
-            .from('task_assignees')
-            .select('user_id')
-            .eq('task_id', taskId);
-
+          const {
+            data,
+            error
+          } = await supabase.from('task_assignees').select('user_id').eq('task_id', taskId);
           if (error) throw error;
-          
           if (data) {
             const assigneeIds = data.map(record => record.user_id);
             setExistingAssignees(assigneeIds);
@@ -121,7 +108,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           setLoadingAssignees(false);
         }
       };
-
       fetchTaskAssignees();
     } else {
       setLoadingAssignees(false);
@@ -142,8 +128,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       client_visible: initialData?.client_visible || false,
       related_type: initialData?.related_type || 'none',
       company_id: initialData?.company_id || null,
-      project_id: initialData?.project_id || null,
-    },
+      project_id: initialData?.project_id || null
+    }
   });
 
   // Helper functions for colored select styling
@@ -159,7 +145,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         return '';
     }
   };
-
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'low':
@@ -182,36 +167,33 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const relatedType = form.watch('related_type');
 
   // Fetch projects based on selected company
-  const { data: projects = [], isLoading: isLoadingProjects } = useQuery({
+  const {
+    data: projects = [],
+    isLoading: isLoadingProjects
+  } = useQuery({
     queryKey: ['projects', selectedCompanyId],
     queryFn: async () => {
       if (!selectedCompanyId) return [];
-      
-      const { data, error } = await supabase
-        .from('projects')
-        .select('id, name, company_id')
-        .eq('company_id', selectedCompanyId)
-        .order('name');
-      
+      const {
+        data,
+        error
+      } = await supabase.from('projects').select('id, name, company_id').eq('company_id', selectedCompanyId).order('name');
       if (error) {
         console.error('Error fetching projects:', error);
         toast({
           title: 'Error fetching projects',
           description: error.message,
-          variant: 'destructive',
+          variant: 'destructive'
         });
         return [];
       }
-      
       return data as Project[];
     },
-    enabled: !!selectedCompanyId, // Only run query if company is selected
+    enabled: !!selectedCompanyId // Only run query if company is selected
   });
 
   // Filter campaigns based on selected company
-  const filteredCampaigns = campaigns.filter(campaign => 
-    !selectedCompanyId || campaign.company_id === selectedCompanyId
-  );
+  const filteredCampaigns = campaigns.filter(campaign => !selectedCompanyId || campaign.company_id === selectedCompanyId);
 
   // Update assignees when they're loaded
   useEffect(() => {
@@ -233,13 +215,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const taskMutation = useMutation({
     mutationFn: async (data: z.infer<typeof taskSchema>) => {
       console.log("Starting task mutation with data:", data);
-      
+
       // Clear any previous timeout
       if (timeoutId !== null) {
         window.clearTimeout(timeoutId);
         setTimeoutId(null);
       }
-      
+
       // Set a timeout to abort if the operation takes too long
       const timeoutPromise = new Promise((_, reject) => {
         const id = window.setTimeout(() => {
@@ -247,7 +229,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         }, 15000);
         setTimeoutId(Number(id));
       });
-      
+
       // Prepare the data for insertion
       const taskData = {
         title: data.title,
@@ -255,97 +237,88 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         priority: data.priority,
         status: data.status,
         due_date: data.due_date || null,
-        creator_id: user?.id || null, // Set creator_id to current user ID
+        creator_id: user?.id || null,
+        // Set creator_id to current user ID
         campaign_id: data.related_type === 'campaign' ? data.campaign_id : null,
-        project_id: data.related_type === 'project' ? data.project_id : null, // Set project_id if related_type is 'project'
+        project_id: data.related_type === 'project' ? data.project_id : null,
+        // Set project_id if related_type is 'project'
         client_visible: data.client_visible,
         related_type: data.related_type === 'none' ? null : data.related_type,
-        company_id: data.company_id || null,
+        company_id: data.company_id || null
       };
-      
       let taskResult;
-      
       try {
         // Create or update the task
         if (isEditing) {
           console.log(`Updating task with ID: ${taskId}`);
-          const { data: result, error } = await supabase
-            .from('tasks')
-            .update(taskData)
-            .eq('id', taskId)
-            .select()
-            .single();
-          
+          const {
+            data: result,
+            error
+          } = await supabase.from('tasks').update(taskData).eq('id', taskId).select().single();
           if (error) throw error;
           taskResult = result;
           console.log("Task updated successfully:", taskResult);
         } else {
           console.log("Creating new task");
-          const { data: result, error } = await supabase
-            .from('tasks')
-            .insert(taskData)
-            .select()
-            .single();
-          
+          const {
+            data: result,
+            error
+          } = await supabase.from('tasks').insert(taskData).select().single();
           if (error) throw error;
           taskResult = result;
           console.log("Task created successfully:", taskResult);
         }
-        
+
         // Now handle assignees - first remove existing assignees if updating
         if (isEditing && taskId) {
           console.log(`Removing existing assignees for task: ${taskId}`);
-          const { error: deleteError } = await supabase
-            .from('task_assignees')
-            .delete()
-            .eq('task_id', taskId);
-          
+          const {
+            error: deleteError
+          } = await supabase.from('task_assignees').delete().eq('task_id', taskId);
           if (deleteError) throw deleteError;
         }
-        
+
         // Insert new assignees
         if (data.assignees && data.assignees.length > 0 && taskResult && taskResult.id) {
           const assigneesData = data.assignees.map(userId => ({
             task_id: isEditing ? taskId : taskResult.id,
             user_id: userId
           }));
-          
           console.log(`Adding ${assigneesData.length} assignees`);
-          const { error: assignError } = await supabase
-            .from('task_assignees')
-            .insert(assigneesData);
-          
+          const {
+            error: assignError
+          } = await supabase.from('task_assignees').insert(assigneesData);
           if (assignError) throw assignError;
         }
-        
         if (timeoutId !== null) {
           window.clearTimeout(timeoutId);
           setTimeoutId(null);
         }
-        
         return taskResult;
       } catch (error) {
         console.error("Error in task mutation:", error);
         throw error;
       }
     },
-    onSuccess: (result) => {
+    onSuccess: result => {
       toast({
         title: isEditing ? 'Task updated' : 'Task created',
-        description: isEditing ? 'Your task has been updated' : 'Your task has been created',
+        description: isEditing ? 'Your task has been updated' : 'Your task has been created'
       });
       console.log("Task mutation completed successfully", result);
       onSuccess();
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({
+        queryKey: ['tasks']
+      });
     },
     onError: (error: any) => {
       console.error("Task mutation error:", error);
       toast({
         title: 'Error',
         description: `Failed to ${isEditing ? 'update' : 'create'} task: ${error.message}`,
-        variant: 'destructive',
+        variant: 'destructive'
       });
-    },
+    }
   });
 
   // Submit handler
@@ -354,62 +327,41 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     // Show immediate feedback to the user
     toast({
       title: isEditing ? 'Updating Task...' : 'Creating Task...',
-      description: 'Please wait while we save your changes...',
+      description: 'Please wait while we save your changes...'
     });
     taskMutation.mutate(data);
   };
-
   if (loadingAssignees) {
     return <div>Loading task details...</div>;
   }
-
-  return (
-    <Form {...form}>
+  return <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
+        <FormField control={form.control} name="title" render={({
+        field
+      }) => <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
                 <Input placeholder="Task title" {...field} />
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )}
-        />
+            </FormItem>} />
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
+        <FormField control={form.control} name="description" render={({
+        field
+      }) => <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder="Task description" 
-                  className="min-h-[100px]" 
-                  {...field} 
-                  value={field.value || ''}
-                />
+                <Textarea placeholder="Task description" className="min-h-[100px]" {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )}
-        />
+            </FormItem>} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
+          <FormField control={form.control} name="status" render={({
+          field
+        }) => <FormItem>
                 <FormLabel>Status</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger className={cn("transition-colors", getStatusColor(selectedStatus))}>
                       <SelectValue placeholder="Select status" />
@@ -437,20 +389,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   </SelectContent>
                 </Select>
                 <FormMessage />
-              </FormItem>
-            )}
-          />
+              </FormItem>} />
 
-          <FormField
-            control={form.control}
-            name="priority"
-            render={({ field }) => (
-              <FormItem>
+          <FormField control={form.control} name="priority" render={({
+          field
+        }) => <FormItem>
                 <FormLabel>Priority</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger className={cn("transition-colors", getPriorityColor(selectedPriority))}>
                       <SelectValue placeholder="Select priority" />
@@ -478,106 +423,61 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   </SelectContent>
                 </Select>
                 <FormMessage />
-              </FormItem>
-            )}
-          />
+              </FormItem>} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="due_date"
-            render={({ field }) => (
-              <FormItem>
+          <FormField control={form.control} name="due_date" render={({
+          field
+        }) => <FormItem>
                 <FormLabel>Due Date</FormLabel>
                 <FormControl>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          "flex h-10 rounded-md border border-input bg-background px-3 py-2",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
+                      <Button variant="outline" className={cn("w-full pl-3 text-left font-normal", "flex h-10 rounded-md border border-input bg-background px-3 py-2", !field.value && "text-muted-foreground")}>
                         {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-70" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0 shadow-md border border-input rounded-md bg-background" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value ? new Date(field.value) : undefined}
-                        onSelect={(date) => {
-                          if (date) {
-                            field.onChange(format(date, "yyyy-MM-dd"));
-                          }
-                        }}
-                        initialFocus
-                        className="p-3 pointer-events-auto rounded-md"
-                      />
+                      <Calendar mode="single" selected={field.value ? new Date(field.value) : undefined} onSelect={date => {
+                  if (date) {
+                    field.onChange(format(date, "yyyy-MM-dd"));
+                  }
+                }} initialFocus className="p-3 pointer-events-auto rounded-md" />
                     </PopoverContent>
                   </Popover>
                 </FormControl>
                 <FormMessage />
-              </FormItem>
-            )}
-          />
+              </FormItem>} />
 
-          <FormField
-            control={form.control}
-            name="company_id"
-            render={({ field }) => (
-              <FormItem>
+          <FormField control={form.control} name="company_id" render={({
+          field
+        }) => <FormItem>
                 <FormLabel>Company</FormLabel>
                 <FormControl>
-                  <CompanySelector
-                    companies={companies}
-                    selectedCompanyId={field.value || null}
-                    onSelect={(companyId) => field.onChange(companyId)}
-                    showSubsidiaries={showSubsidiaries}
-                    onToggleSubsidiaries={setShowSubsidiaries}
-                    isLoading={isLoadingCompanies}
-                  />
+                  <CompanySelector companies={companies} selectedCompanyId={field.value || null} onSelect={companyId => field.onChange(companyId)} showSubsidiaries={showSubsidiaries} onToggleSubsidiaries={setShowSubsidiaries} isLoading={isLoadingCompanies} />
                 </FormControl>
                 <FormMessage />
-              </FormItem>
-            )}
-          />
+              </FormItem>} />
         </div>
 
-        <FormField
-          control={form.control}
-          name="assignees"
-          render={({ field }) => (
-            <FormItem>
+        <FormField control={form.control} name="assignees" render={({
+        field
+      }) => <FormItem>
               <FormLabel>Assignees</FormLabel>
               <FormControl>
-                <MultiAssigneeSelect
-                  users={profiles}
-                  selectedUserIds={field.value || []}
-                  onChange={field.onChange}
-                  placeholder="Select assignees"
-                />
+                <MultiAssigneeSelect users={profiles} selectedUserIds={field.value || []} onChange={field.onChange} placeholder="Select assignees" />
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )}
-        />
+            </FormItem>} />
 
         {/* Only show Related To field when a company is selected */}
-        {selectedCompanyId && (
-          <FormField
-            control={form.control}
-            name="related_type"
-            render={({ field }) => (
-              <FormItem>
+        {selectedCompanyId && <FormField control={form.control} name="related_type" render={({
+        field
+      }) => <FormItem>
                 <FormLabel>Related To</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select relation" />
@@ -590,119 +490,66 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   </SelectContent>
                 </Select>
                 <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+              </FormItem>} />}
 
         {/* Show Campaign selector when related_type is 'campaign' and a company is selected */}
-        {selectedCompanyId && relatedType === 'campaign' && (
-          <FormField
-            control={form.control}
-            name="campaign_id"
-            render={({ field }) => (
-              <FormItem>
+        {selectedCompanyId && relatedType === 'campaign' && <FormField control={form.control} name="campaign_id" render={({
+        field
+      }) => <FormItem>
                 <FormLabel>Campaign</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select campaign" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {filteredCampaigns.length === 0 ? (
-                      <SelectItem value="no-campaigns" disabled>No campaigns available for this company</SelectItem>
-                    ) : (
-                      filteredCampaigns.map((campaign) => (
-                        <SelectItem key={campaign.id} value={campaign.id}>
+                    {filteredCampaigns.length === 0 ? <SelectItem value="no-campaigns" disabled>No campaigns available for this company</SelectItem> : filteredCampaigns.map(campaign => <SelectItem key={campaign.id} value={campaign.id}>
                           {campaign.name}
-                        </SelectItem>
-                      ))
-                    )}
+                        </SelectItem>)}
                   </SelectContent>
                 </Select>
                 <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+              </FormItem>} />}
 
         {/* Show Project selector when related_type is 'project' and a company is selected */}
-        {selectedCompanyId && relatedType === 'project' && (
-          <FormField
-            control={form.control}
-            name="project_id"
-            render={({ field }) => (
-              <FormItem>
+        {selectedCompanyId && relatedType === 'project' && <FormField control={form.control} name="project_id" render={({
+        field
+      }) => <FormItem>
                 <FormLabel>Project</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select project" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {isLoadingProjects ? (
-                      <SelectItem value="loading" disabled>Loading projects...</SelectItem>
-                    ) : projects.length === 0 ? (
-                      <SelectItem value="no-projects" disabled>No projects available for this company</SelectItem>
-                    ) : (
-                      projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
+                    {isLoadingProjects ? <SelectItem value="loading" disabled>Loading projects...</SelectItem> : projects.length === 0 ? <SelectItem value="no-projects" disabled>No projects available for this company</SelectItem> : projects.map(project => <SelectItem key={project.id} value={project.id}>
                           {project.name}
-                        </SelectItem>
-                      ))
-                    )}
+                        </SelectItem>)}
                   </SelectContent>
                 </Select>
                 <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+              </FormItem>} />}
 
-        <FormField
-          control={form.control}
-          name="client_visible"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between p-4 border rounded-md">
+        <FormField control={form.control} name="client_visible" render={({
+        field
+      }) => <FormItem className="flex flex-row items-center justify-between p-4 border rounded-md">
               <div className="space-y-0.5">
                 <FormLabel className="text-base">Visible to client</FormLabel>
-                <div className="text-sm text-muted-foreground">
-                  Make this task visible in the client portal (Coming soon)
-                </div>
+                <div className="text-sm text-muted-foreground">Make this task visible in the client portal</div>
               </div>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
-            </FormItem>
-          )}
-        />
+            </FormItem>} />
 
         <div className="flex justify-end gap-2">
-          <Button 
-            type="submit" 
-            disabled={taskMutation.isPending}
-          >
-            {isEditing ? (
-              taskMutation.isPending ? "Updating..." : "Update Task"
-            ) : (
-              taskMutation.isPending ? "Creating..." : "Create Task"
-            )}
+          <Button type="submit" disabled={taskMutation.isPending}>
+            {isEditing ? taskMutation.isPending ? "Updating..." : "Update Task" : taskMutation.isPending ? "Creating..." : "Create Task"}
           </Button>
         </div>
       </form>
-    </Form>
-  );
+    </Form>;
 };
-
 export default TaskForm;
