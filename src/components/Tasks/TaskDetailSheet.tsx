@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -314,20 +313,18 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               <div className="flex justify-end space-x-2">
                 <Button 
                   variant="outline" 
-                  size="sm"
+                  size="icon"
                   onClick={() => setIsEditDialogOpen(true)}
                 >
-                  <Pencil className="h-4 w-4 mr-1" />
-                  Edit
+                  <Pencil className="h-4 w-4" />
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="sm"
+                  size="icon"
                   className="text-red-600 hover:bg-red-50"
                   onClick={() => setIsDeleteDialogOpen(true)}
                 >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </SheetHeader>
