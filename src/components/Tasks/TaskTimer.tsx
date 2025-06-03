@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Clock, Play, Pause, Save } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -21,6 +23,8 @@ type TimeEntry = {
   start_time: string;
   end_time: string | null;
   created_at: string;
+  is_billable: boolean;
+  company_id: string | null;
 };
 
 export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
@@ -31,6 +35,28 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   const [seconds, setSeconds] = useState(0);
   const [activeEntry, setActiveEntry] = useState<any>(null);
   const [description, setDescription] = useState('');
+  const [showBillableDialog, setShowBillableDialog] = useState(false);
+  const [pendingTimeEntry, setPendingTimeEntry] = useState<any>(null);
+  
+  // Fetch task details to get company_id
+  const { data: task } = useQuery({
+    queryKey: ['task', taskId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('id, company_id')
+        .eq('id', taskId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching task:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!taskId,
+  });
   
   // Fetch time entries for this task
   const { data: timeEntries = [] } = useQuery({
@@ -122,13 +148,16 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
         throw new Error('User not authenticated');
       }
       
-      // Create new time entry
+      // Create new time entry with task and company assignment
       const { data, error } = await supabase
         .from('time_entries')
         .insert({
           task_id: taskId,
+          company_id: task?.company_id || null,
           start_time: new Date().toISOString(),
-          user_id: userId
+          user_id: userId,
+          description: description || null,
+          is_billable: false // Default to false, will be set when stopping
         })
         .select()
         .single();
@@ -152,12 +181,12 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     },
   });
   
-  // Stop timer mutation
+  // Stop timer mutation (first step - just stop and show dialog)
   const stopTimerMutation = useMutation({
     mutationFn: async () => {
       if (!activeEntry) throw new Error('No active timer to stop');
       
-      // Update time entry with end time and description
+      // Update time entry with end time but don't set billable status yet
       const { data, error } = await supabase
         .from('time_entries')
         .update({
@@ -172,16 +201,13 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
       
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setIsRunning(false);
       setSeconds(0);
-      setDescription('');
       setActiveEntry(null);
+      setPendingTimeEntry(data);
+      setShowBillableDialog(true);
       queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
-      toast({
-        title: 'Timer stopped',
-        description: 'Your time has been logged successfully',
-      });
     },
     onError: (error: any) => {
       toast({
@@ -191,6 +217,49 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
       });
     },
   });
+  
+  // Final save mutation with billable status
+  const finalizeTimeEntryMutation = useMutation({
+    mutationFn: async (isBillable: boolean) => {
+      if (!pendingTimeEntry) throw new Error('No pending time entry');
+      
+      const { data, error } = await supabase
+        .from('time_entries')
+        .update({
+          is_billable: isBillable,
+        })
+        .eq('id', pendingTimeEntry.id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      return data;
+    },
+    onSuccess: () => {
+      setShowBillableDialog(false);
+      setPendingTimeEntry(null);
+      setDescription('');
+      queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
+      toast({
+        title: 'Timer stopped',
+        description: 'Your time has been logged successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error finalizing time entry',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+  
+  // Handle billable selection
+  const handleBillableSelection = (isBillable: boolean) => {
+    finalizeTimeEntryMutation.mutate(isBillable);
+  };
   
   // Format seconds to HH:MM:SS
   const formatTime = (totalSeconds: number) => {
@@ -230,105 +299,141 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   };
   
   return (
-    <div className="space-y-4">
-      {/* Timer display */}
-      <div className="flex justify-center items-center border rounded-md p-4 bg-muted/30">
-        <div className="text-center">
-          <div className="text-3xl font-mono font-bold mb-2">
-            {formatTime(seconds)}
+    <>
+      <div className="space-y-4">
+        {/* Timer display */}
+        <div className="flex justify-center items-center border rounded-md p-4 bg-muted/30">
+          <div className="text-center">
+            <div className="text-3xl font-mono font-bold mb-2">
+              {formatTime(seconds)}
+            </div>
+            
+            <div className="flex justify-center gap-2">
+              {isRunning ? (
+                <Button
+                  onClick={() => stopTimerMutation.mutate()}
+                  disabled={stopTimerMutation.isPending}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  <Pause className="mr-2 h-4 w-4" />
+                  Stop
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => startTimerMutation.mutate()}
+                  disabled={startTimerMutation.isPending}
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  Start Timer
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Description field (only when timer is running) */}
+        {isRunning && (
+          <div>
+            <Textarea
+              placeholder="What are you working on? (Optional)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="resize-none"
+              rows={2}
+            />
+          </div>
+        )}
+        
+        <Separator className="my-4" />
+        
+        {/* Time entries summary */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium">Time Entries</h3>
+            <Link to="/time-tracking">
+              <Button variant="ghost" size="sm">View All</Button>
+            </Link>
           </div>
           
-          <div className="flex justify-center gap-2">
-            {isRunning ? (
-              <Button
-                onClick={() => stopTimerMutation.mutate()}
-                disabled={stopTimerMutation.isPending}
-                className="bg-red-500 hover:bg-red-600"
-              >
-                <Pause className="mr-2 h-4 w-4" />
-                Stop
-              </Button>
+          <div className="py-2">
+            <div className="flex justify-between items-center mb-2">
+              <Badge variant="outline" className="bg-muted">
+                <Clock className="h-3 w-3 mr-1" />
+                Total: {formatTime(calculateTotalTimeSpent())}
+              </Badge>
+            </div>
+            
+            {timeEntries.length > 0 ? (
+              <div className="space-y-2">
+                {timeEntries.slice(0, 5).map((entry) => (
+                  <div key={entry.id} className="text-sm border rounded-md p-2">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        {entry.end_time ? (
+                          <span>
+                            {formatTime(Math.floor(
+                              (new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / 1000
+                            ))}
+                          </span>
+                        ) : (
+                          <Badge variant="outline" className="bg-green-100 text-green-800">
+                            Running
+                          </Badge>
+                        )}
+                        {entry.is_billable && (
+                          <Badge variant="outline" className="bg-blue-100 text-blue-800 text-xs">
+                            Billable
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-muted-foreground text-xs">
+                        {formatDate(entry.start_time)}
+                      </div>
+                    </div>
+                    {entry.description && (
+                      <p className="mt-1 text-muted-foreground truncate">{entry.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
             ) : (
-              <Button
-                onClick={() => startTimerMutation.mutate()}
-                disabled={startTimerMutation.isPending}
-              >
-                <Play className="mr-2 h-4 w-4" />
-                Start Timer
-              </Button>
+              <div className="text-center py-4 text-sm text-muted-foreground">
+                No time entries yet
+              </div>
             )}
           </div>
         </div>
       </div>
-      
-      {/* Description field (only when timer is running) */}
-      {isRunning && (
-        <div>
-          <Textarea
-            placeholder="What are you working on? (Optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="resize-none"
-            rows={2}
-          />
-        </div>
-      )}
-      
-      <Separator className="my-4" />
-      
-      {/* Time entries summary */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <h3 className="font-medium">Time Entries</h3>
-          <Link to="/time-tracking">
-            <Button variant="ghost" size="sm">View All</Button>
-          </Link>
-        </div>
-        
-        <div className="py-2">
-          <div className="flex justify-between items-center mb-2">
-            <Badge variant="outline" className="bg-muted">
-              <Clock className="h-3 w-3 mr-1" />
-              Total: {formatTime(calculateTotalTimeSpent())}
-            </Badge>
+
+      {/* Billable confirmation dialog */}
+      <Dialog open={showBillableDialog} onOpenChange={setShowBillableDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Time Entry Settings</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">Should this time entry be marked as billable?</p>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => handleBillableSelection(true)}
+                disabled={finalizeTimeEntryMutation.isPending}
+                className="flex-1"
+              >
+                Billable
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleBillableSelection(false)}
+                disabled={finalizeTimeEntryMutation.isPending}
+                className="flex-1"
+              >
+                Non-Billable
+              </Button>
+            </div>
           </div>
-          
-          {timeEntries.length > 0 ? (
-            <div className="space-y-2">
-              {timeEntries.slice(0, 5).map((entry) => (
-                <div key={entry.id} className="text-sm border rounded-md p-2">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      {entry.end_time ? (
-                        <span>
-                          {formatTime(Math.floor(
-                            (new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / 1000
-                          ))}
-                        </span>
-                      ) : (
-                        <Badge variant="outline" className="bg-green-100 text-green-800">
-                          Running
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-muted-foreground text-xs">
-                      {formatDate(entry.start_time)}
-                    </div>
-                  </div>
-                  {entry.description && (
-                    <p className="mt-1 text-muted-foreground truncate">{entry.description}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4 text-sm text-muted-foreground">
-              No time entries yet
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
