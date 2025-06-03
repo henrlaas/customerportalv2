@@ -20,6 +20,7 @@ import { TaskAttachments } from './TaskAttachments';
 import { UserAvatarGroup } from './UserAvatarGroup';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useNavigate } from 'react-router-dom';
 
 interface TaskDetailSheetProps {
   isOpen: boolean;
@@ -76,6 +77,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -437,13 +439,23 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         {isValidCampaign(task.campaign) && (
                           <div>
                             <h3 className="text-sm font-medium text-gray-500 mb-1">Campaign</h3>
-                            <div>{task.campaign.name}</div>
+                            <button
+                              onClick={() => navigate(`/campaigns/${task.campaign.id}`)}
+                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                            >
+                              {task.campaign.name}
+                            </button>
                           </div>
                         )}
                         {isValidProject(task.project) && (
                           <div>
                             <h3 className="text-sm font-medium text-gray-500 mb-1">Project</h3>
-                            <div>{task.project.name}</div>
+                            <button
+                              onClick={() => navigate(`/projects/${task.project.id}`)}
+                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                            >
+                              {task.project.name}
+                            </button>
                           </div>
                         )}
                         <div>
