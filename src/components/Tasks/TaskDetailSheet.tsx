@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TaskTimer } from './TaskTimer';
 import { TaskAttachments } from './TaskAttachments';
 import { UserAvatarGroup } from './UserAvatarGroup';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface TaskDetailSheetProps {
@@ -35,6 +36,8 @@ interface TaskProject {
 interface TaskCompany {
   id: string;
   name: string;
+  website: string;
+  logo_url: string;
 }
 
 interface TaskCampaign {
@@ -404,7 +407,15 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         {isValidCompany(task.company) && (
                           <div>
                             <h3 className="text-sm font-medium text-gray-500 mb-1">Company</h3>
-                            <div>{task.company.name}</div>
+                            <div className="flex items-center">
+                              <CompanyFavicon 
+                                companyName={task.company.name}
+                                website={task.company.website}
+                                logoUrl={task.company.logo_url}
+                                size="sm"
+                              />
+                              <span className="ml-2">{task.company.name}</span>
+                            </div>
                           </div>
                         )}
                         {isValidCampaign(task.campaign) && (
