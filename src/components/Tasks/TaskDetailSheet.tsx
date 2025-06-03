@@ -80,6 +80,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [activeTab, setActiveTab] = useState('details');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  // Function to format date as DD.MM.YYYY
+  const formatDate = (date: string | Date) => {
+    return format(new Date(date), 'dd.MM.yyyy');
+  };
+
   const { data: task, isLoading } = useQuery({
     queryKey: ['task', taskId],
     queryFn: async () => {
@@ -411,7 +416,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                             <h3 className="text-sm font-medium text-gray-500 mb-1">Due date</h3>
                             <div className="flex items-center">
                               <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                              <span>{format(new Date(task.due_date), 'PPP')}</span>
+                              <span>{formatDate(task.due_date)}</span>
                             </div>
                           </div>
                         )}
@@ -466,7 +471,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         </div>
                         <div>
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Created</h3>
-                          <div>{format(new Date(task.created_at), 'PPP')}</div>
+                          <div>{formatDate(task.created_at)}</div>
                         </div>
                       </div>
                     </TabsContent>
