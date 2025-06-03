@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -141,10 +142,6 @@ export const TasksPage = () => {
       if (filters.search) {
         query = query.ilike('title', `%${filters.search}%`);
       }
-      // Filter by assignee from the task_assignees table
-      if (filters.assignee && filters.assignee !== 'all') {
-        query = query.contains('task_assignees.user_id', [filters.assignee]);
-      }
       
       // Handle campaign/project filtering
       if (filters.campaign && filters.campaign !== 'all') {
@@ -172,15 +169,22 @@ export const TasksPage = () => {
     },
   });
 
-  // Filter tasks based on the showOnlyMyTasks filter
+  // Filter tasks based on the showOnlyMyTasks filter and assignee filter
   const tasks = allTasks.filter(task => {
-    // If showing all tasks, return true
-    if (!filters.showOnlyMyTasks) {
-      return true;
+    // First apply the assignee filter if it's set
+    if (filters.assignee && filters.assignee !== 'all') {
+      const isAssignedToFilteredUser = task.assignees?.some(assignee => assignee.user_id === filters.assignee);
+      if (!isAssignedToFilteredUser) {
+        return false;
+      }
     }
     
-    // If showing only my tasks, check if the current user is assigned to this task
-    return task.assignees?.some(assignee => assignee.user_id === currentUserId);
+    // Then apply the showOnlyMyTasks filter
+    if (filters.showOnlyMyTasks) {
+      return task.assignees?.some(assignee => assignee.user_id === currentUserId);
+    }
+    
+    return true;
   });
 
   // Fetch profiles for assignees and creator - updated to only include admin and employee users
