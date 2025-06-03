@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -308,7 +309,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
           <div className="h-full flex flex-col">
             <SheetHeader className="p-6 pb-2">
               <div className="flex items-start justify-between">
-                <div className="flex-1">
+                <div className="flex-1 pr-4">
                   <SheetTitle className="text-xl mb-3">
                     {isLoading ? 'Loading...' : task?.title || 'Task not found'}
                   </SheetTitle>
@@ -320,7 +321,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 mt-8">
                   <Button 
                     variant="outline" 
                     size="icon"
