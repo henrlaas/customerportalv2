@@ -176,7 +176,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
           </TableCell>
           <TableCell><Skeleton className="h-5 w-24" /></TableCell>
           <TableCell><Skeleton className="h-6 w-32" /></TableCell>
-          <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+          <TableCell className="text-center"><Skeleton className="h-6 w-6 mx-auto" /></TableCell>
         </TableRow>
       ))}
     </>
@@ -196,7 +196,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                 <TableHead>Company</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead>Campaign/Project</TableHead>
-                <TableHead>Client Visible</TableHead>
+                <TableHead className="text-center">Client Visible</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -252,11 +252,11 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                           </Badge>
                         ) : 'None'}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         {task.client_visible ? (
-                          <Eye className="h-4 w-4 text-blue-600" />
+                          <Eye className="h-4 w-4 text-blue-600 mx-auto" />
                         ) : (
-                          <EyeOff className="h-4 w-4 text-gray-400" style={{ strokeDasharray: '2,2' }} />
+                          <EyeOff className="h-4 w-4 text-gray-400 mx-auto" style={{ strokeDasharray: '2,2' }} />
                         )}
                       </TableCell>
                     </TableRow>

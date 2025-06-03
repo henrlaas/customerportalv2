@@ -242,13 +242,13 @@ export const TasksPage = () => {
     },
   });
 
-  // Fetch companies for tasks
+  // Fetch companies for tasks - Updated to include website and logo_url
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('companies')
-        .select('id, name')
+        .select('id, name, website, logo_url')
         .order('name');
       
       if (error) {
@@ -260,11 +260,7 @@ export const TasksPage = () => {
         return [];
       }
       
-      // Transform to match Company type
-      return data.map(company => ({
-        id: company.id,
-        name: company.name,
-      })) as { id: string; name: string; }[];
+      return data as Company[];
     },
   });
 
