@@ -14,7 +14,7 @@ import { Calendar, Check, Clock, Link2, Pencil, Plus, Trash2, UserPlus } from 'l
 import { format } from 'date-fns';
 import { TaskForm } from './TaskForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TaskTimer } from './TaskTimer';
 import { TaskAttachments } from './TaskAttachments';
 import { UserAvatarGroup } from './UserAvatarGroup';
@@ -320,6 +320,18 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     }
   };
 
+  // Function to get creator initials
+  const getCreatorInitials = (creator: TaskCreator) => {
+    const first = creator.first_name?.[0] || '';
+    const last = creator.last_name?.[0] || '';
+    return (first + last).toUpperCase() || '?';
+  };
+
+  // Function to get creator display name
+  const getCreatorDisplayName = (creator: TaskCreator) => {
+    return `${creator.first_name || ''} ${creator.last_name || ''}`.trim() || 'Unknown User';
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -341,7 +353,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="flex space-x-2 mt-8">
+                <div className="flex space-x-2">
                   <Button 
                     variant="outline" 
                     size="icon"
@@ -436,9 +448,12 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                             {isValidCreator(task.creator) ? (
                               <>
                                 <Avatar className="h-6 w-6 mr-2">
-                                  <AvatarFallback>
-                                    {task.creator.first_name?.[0] || '?'}
-                                    {task.creator.last_name?.[0] || ''}
+                                  <AvatarImage 
+                                    src={task.creator.avatar_url || undefined} 
+                                    alt={getCreatorDisplayName(task.creator)} 
+                                  />
+                                  <AvatarFallback className="text-xs">
+                                    {getCreatorInitials(task.creator)}
                                   </AvatarFallback>
                                 </Avatar>
                                 <span>
