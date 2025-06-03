@@ -322,7 +322,7 @@ const DealsPage = () => {
   const isLoading = isLoadingDeals || isLoadingCompanies || isLoadingStages || isLoadingProfiles;
 
   return (
-    <div className="w-full px-4 py-6">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Deals</h1>
         <div className="flex items-center gap-4">
