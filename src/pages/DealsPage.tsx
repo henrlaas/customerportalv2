@@ -46,6 +46,7 @@ const DealsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentDeal, setCurrentDeal] = useState<Deal | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStageFilter, setSelectedStageFilter] = useState<string>('all');
 
   const { toast } = useToast();
   const { isAdmin, isEmployee, user } = useAuth();
@@ -292,15 +293,27 @@ const DealsPage = () => {
     return profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.id : 'Unknown User';
   };
 
-  const filteredDeals = deals.filter(deal => {
-    const matchesSearch =
-      deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getCompanyName(deal.company_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getStageName(deal.stage_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getAssignedToName(deal.assigned_to).toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter deals based on selected stage
+  const getFilteredDeals = () => {
+    let filtered = deals.filter(deal => {
+      const matchesSearch =
+        deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getCompanyName(deal.company_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getStageName(deal.stage_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getAssignedToName(deal.assigned_to).toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesSearch;
-  });
+      return matchesSearch;
+    });
+
+    // Filter by stage if not "all"
+    if (selectedStageFilter !== 'all') {
+      filtered = filtered.filter(deal => deal.stage_id === selectedStageFilter);
+    }
+
+    return filtered;
+  };
+
+  const filteredDeals = getFilteredDeals();
 
   // Check if user can modify deals (admin or employee)
   const canModify = isAdmin || isEmployee;
@@ -333,6 +346,20 @@ const DealsPage = () => {
         </div>
       </div>
 
+      {/* Stage Filter Tabs */}
+      <div className="mb-6">
+        <Tabs value={selectedStageFilter} onValueChange={setSelectedStageFilter}>
+          <TabsList className="w-full">
+            <TabsTrigger value="all">All Deals</TabsTrigger>
+            {stages.map((stage) => (
+              <TabsTrigger key={stage.id} value={stage.id}>
+                {stage.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center p-8">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -340,7 +367,7 @@ const DealsPage = () => {
       ) : (
         <DealKanbanView
           deals={filteredDeals}
-          stages={stages}
+          stages={selectedStageFilter === 'all' ? stages : stages.filter(s => s.id === selectedStageFilter)}
           companies={companies}
           profiles={profiles}
           canModify={canModify}
