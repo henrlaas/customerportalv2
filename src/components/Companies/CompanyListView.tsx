@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Company } from '@/types/company';
 import { companyService } from '@/services/companyService';
-import { userService } from '@/services/userService';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
@@ -57,10 +56,26 @@ export const CompanyListView = ({ companies, onCompanyClick, onCompanyDeleted }:
   
   const canModify = isAdmin || isEmployee;
   
-  // Fetch users to get advisor information
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['users'],
-    queryFn: userService.listUsers,
+  // Fetch profiles to get advisor information
+  const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
+    queryKey: ['profiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .order('first_name');
+      
+      if (error) {
+        toast({
+          title: 'Error fetching profiles',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return [];
+      }
+      
+      return data || [];
+    },
     // Only fetch if we have companies with advisors assigned
     enabled: companies.some(company => company.advisor_id)
   });
@@ -104,29 +119,26 @@ export const CompanyListView = ({ companies, onCompanyClick, onCompanyDeleted }:
   const getAdvisorDetails = (advisorId: string | null) => {
     if (!advisorId) return null;
     
-    const advisor = users.find(user => user.id === advisorId);
+    const advisor = profiles.find(profile => profile.id === advisorId);
     if (!advisor) return null;
     
-    const firstName = advisor.user_metadata?.first_name || '';
-    const lastName = advisor.user_metadata?.last_name || '';
+    const firstName = advisor.first_name || '';
+    const lastName = advisor.last_name || '';
     const fullName = `${firstName} ${lastName}`.trim();
     
     return {
-      name: fullName || advisor.email,
-      email: advisor.email,
-      avatar_url: advisor.user_metadata?.avatar_url || null,
-      initials: getInitials(firstName, lastName, advisor.email)
+      name: fullName || 'Unknown',
+      avatar_url: advisor.avatar_url || null,
+      initials: getInitials(firstName, lastName)
     };
   };
   
-  // Helper function to get initials from name or email
-  const getInitials = (firstName?: string, lastName?: string, email?: string): string => {
+  // Helper function to get initials from name
+  const getInitials = (firstName?: string, lastName?: string): string => {
     if (firstName && lastName) {
       return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
     } else if (firstName) {
       return firstName.charAt(0).toUpperCase();
-    } else if (email) {
-      return email.charAt(0).toUpperCase();
     }
     return '?';
   };
@@ -180,7 +192,7 @@ export const CompanyListView = ({ companies, onCompanyClick, onCompanyDeleted }:
     return pages;
   };
   
-  const isLoading = isLoadingUsers;
+  const isLoading = isLoadingProfiles;
   
   return (
     <div className="space-y-4">
