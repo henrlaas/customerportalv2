@@ -333,7 +333,8 @@ const DealsPage = () => {
         </div>
       </div>
 
-      <div className="mb-6">
+      {/* Search bar and stage filter tabs on the same line */}
+      <div className="mb-6 flex items-center gap-4">
         <div className="relative max-w-md">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
@@ -344,20 +345,19 @@ const DealsPage = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-      </div>
-
-      {/* Stage Filter Tabs */}
-      <div className="mb-6">
-        <Tabs value={selectedStageFilter} onValueChange={setSelectedStageFilter}>
-          <TabsList className="w-full">
-            <TabsTrigger value="all">All Deals</TabsTrigger>
-            {stages.map((stage) => (
-              <TabsTrigger key={stage.id} value={stage.id}>
-                {stage.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        
+        <div className="flex-1">
+          <Tabs value={selectedStageFilter} onValueChange={setSelectedStageFilter}>
+            <TabsList className="w-auto">
+              <TabsTrigger value="all">All Deals</TabsTrigger>
+              {stages.map((stage) => (
+                <TabsTrigger key={stage.id} value={stage.id}>
+                  {stage.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {isLoading ? (
