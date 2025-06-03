@@ -502,6 +502,7 @@ export const TasksPage = () => {
           getCampaignName={getCampaignName}
           getProjectName={getProjectName}
           profiles={profiles}
+          companies={companies}
           onTaskClick={handleTaskClick}
           isLoading={isLoadingTasks}
         />

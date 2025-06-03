@@ -609,6 +609,7 @@ const ProjectDetailsPage = () => {
                 getTaskAssignees={getTaskAssignees}
                 getCampaignName={getCampaignName}
                 profiles={profiles}
+                companies={[]}
                 onTaskClick={handleTaskClick}
                 getProjectName={getProjectName}
               />
