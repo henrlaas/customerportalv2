@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Check, Clock, Link2, Pencil, Plus, Trash2, UserPlus } from 'lucide-react';
+import { Calendar, Check, Clock, Link2, Pencil, Plus, Trash2, UserPlus, Megaphone, FolderOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { TaskForm } from './TaskForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -439,23 +439,29 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         {isValidCampaign(task.campaign) && (
                           <div>
                             <h3 className="text-sm font-medium text-gray-500 mb-1">Campaign</h3>
-                            <button
-                              onClick={() => navigate(`/campaigns/${task.campaign.id}`)}
-                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                            >
-                              {task.campaign.name}
-                            </button>
+                            <div className="flex items-center">
+                              <Megaphone className="h-4 w-4 mr-2 text-gray-400" />
+                              <button
+                                onClick={() => navigate(`/campaigns/${task.campaign.id}`)}
+                                className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                              >
+                                {task.campaign.name}
+                              </button>
+                            </div>
                           </div>
                         )}
                         {isValidProject(task.project) && (
                           <div>
                             <h3 className="text-sm font-medium text-gray-500 mb-1">Project</h3>
-                            <button
-                              onClick={() => navigate(`/projects/${task.project.id}`)}
-                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                            >
-                              {task.project.name}
-                            </button>
+                            <div className="flex items-center">
+                              <FolderOpen className="h-4 w-4 mr-2 text-gray-400" />
+                              <button
+                                onClick={() => navigate(`/projects/${task.project.id}`)}
+                                className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                              >
+                                {task.project.name}
+                              </button>
+                            </div>
                           </div>
                         )}
                         <div>
@@ -483,7 +489,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         </div>
                         <div>
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Created</h3>
-                          <div>{formatDate(task.created_at)}</div>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                            <span>{formatDate(task.created_at)}</span>
+                          </div>
                         </div>
                       </div>
                     </TabsContent>
