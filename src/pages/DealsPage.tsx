@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  LayoutGrid, List, Plus, Search, FileText,
+  Plus, Search, FileText,
   Calendar, Building, DollarSign, Tag, MoreVertical,
   Trash2, Edit, Download, Upload, AlertTriangle,
   CheckCircle, Clock, XCircle, Repeat
@@ -37,7 +37,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useDealsView } from '@/hooks/useDealsView';
 import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
 import { DealKanbanView } from '@/components/Deals/DealKanbanView';
-import { DealListView } from '@/components/Deals/DealListView';
 import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog';
 import { EditDealDialog } from '@/components/Deals/EditDealDialog';
 import { Deal, Company, Stage, Profile } from '@/components/Deals/types/deal';
@@ -47,7 +46,6 @@ const DealsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentDeal, setCurrentDeal] = useState<Deal | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const { currentView, toggleView, isKanbanView, setCurrentView } = useDealsView();
 
   const { toast } = useToast();
   const { isAdmin, isEmployee, user } = useAuth();
@@ -314,14 +312,6 @@ const DealsPage = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Deals</h1>
         <div className="flex items-center gap-4">
-          <ToggleGroup type="single" value={currentView} onValueChange={value => value && setCurrentView(value as 'kanban' | 'list')}>
-            <ToggleGroupItem value="kanban" aria-label="Kanban view">
-              <LayoutGrid className="h-4 w-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="list" aria-label="List view">
-              <List className="h-4 w-4" />
-            </ToggleGroupItem>
-          </ToggleGroup>
           {canModify && (
             <Button onClick={() => setIsCreating(true)}>
               <Plus className="mr-2 h-4 w-4" /> Add Deal
@@ -348,33 +338,17 @@ const DealsPage = () => {
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
       ) : (
-        <>
-          {currentView === 'kanban' ? (
-            <DealKanbanView
-              deals={filteredDeals}
-              stages={stages}
-              companies={companies}
-              profiles={profiles}
-              canModify={canModify}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onMove={handleMoveStage}
-              isLoading={isLoading}
-            />
-          ) : (
-            <DealListView
-              deals={filteredDeals}
-              stages={stages}
-              companies={companies}
-              profiles={profiles}
-              canModify={canModify}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onMove={handleMoveStage}
-              isLoading={isLoading}
-            />
-          )}
-        </>
+        <DealKanbanView
+          deals={filteredDeals}
+          stages={stages}
+          companies={companies}
+          profiles={profiles}
+          canModify={canModify}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onMove={handleMoveStage}
+          isLoading={isLoading}
+        />
       )}
 
       {/* Multi-Stage Edit Dialog */}
