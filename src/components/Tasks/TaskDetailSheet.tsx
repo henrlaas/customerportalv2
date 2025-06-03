@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -360,7 +361,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 mt-8">
                   <Button 
                     variant="outline" 
                     size="icon"
