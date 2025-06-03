@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Table,
@@ -19,7 +20,7 @@ import {
   PaginationPrevious 
 } from '@/components/ui/pagination';
 import { Eye, EyeOff } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 interface Task {
   id: string;
@@ -32,6 +33,7 @@ interface Task {
   due_date: string | null;
   related_type: string | null;
   client_visible: boolean | null;
+  company_id: string | null;
   assignees?: { id: string; user_id: string }[];
   creator?: {
     id: string;
@@ -48,6 +50,13 @@ interface Contact {
   avatar_url?: string | null;
 }
 
+interface Company {
+  id: string;
+  name: string;
+  website?: string | null;
+  logo_url?: string | null;
+}
+
 interface TaskListViewProps {
   tasks: Task[];
   getStatusBadge: (status: string) => React.ReactNode;
@@ -56,6 +65,7 @@ interface TaskListViewProps {
   getCampaignName: (campaignId: string | null) => string;
   getProjectName: (projectId: string | null) => string;
   profiles: Contact[];
+  companies: Company[];
   onTaskClick: (taskId: string) => void;
   isLoading?: boolean;
 }
@@ -68,6 +78,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   getCampaignName,
   getProjectName,
   profiles,
+  companies,
   onTaskClick,
   isLoading = false,
 }) => {
@@ -85,25 +96,12 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
   const paginatedTasks = getCurrentPageTasks();
 
-  // Helper function to check if creator is valid
-  const isValidCreator = (creator: any): creator is { id: string; first_name: string | null; last_name: string | null; avatar_url: string | null } => {
-    return creator && typeof creator === 'object' && 'id' in creator && !('error' in creator);
-  };
-
-  // Helper function to get creator initials
-  const getCreatorInitials = (creator: any) => {
-    if (!creator || !isValidCreator(creator)) return '?';
+  // Helper function to get company details
+  const getCompanyDetails = (companyId: string | null) => {
+    if (!companyId) return null;
     
-    const first = creator.first_name?.[0] || '';
-    const last = creator.last_name?.[0] || '';
-    return (first + last).toUpperCase() || '?';
-  };
-
-  // Helper function to get creator display name
-  const getCreatorDisplayName = (creator: any) => {
-    if (!creator || !isValidCreator(creator)) return 'Unknown';
-    
-    return creator.first_name || 'Unknown User';
+    const company = companies.find(c => c.id === companyId);
+    return company || null;
   };
 
   // Generate page numbers for pagination
@@ -171,7 +169,10 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
             </div>
           </TableCell>
           <TableCell>
-            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-6 w-6 rounded-full" />
+              <Skeleton className="h-5 w-24" />
+            </div>
           </TableCell>
           <TableCell><Skeleton className="h-5 w-24" /></TableCell>
           <TableCell><Skeleton className="h-6 w-32" /></TableCell>
@@ -192,7 +193,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Assignees</TableHead>
-                <TableHead>Creator</TableHead>
+                <TableHead>Company</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead>Campaign/Project</TableHead>
                 <TableHead>Client Visible</TableHead>
@@ -202,66 +203,65 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
               {isLoading ? (
                 <LoadingSkeleton />
               ) : tasks.length > 0 ? (
-                paginatedTasks.map(task => (
-                  <TableRow 
-                    key={task.id}
-                    className="cursor-pointer hover:bg-muted/60"
-                    onClick={() => onTaskClick(task.id)}
-                  >
-                    <TableCell className="font-medium">{task.title}</TableCell>
-                    <TableCell>{getStatusBadge(task.status)}</TableCell>
-                    <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                    <TableCell>
-                      <UserAvatarGroup 
-                        users={getTaskAssignees(task)}
-                        size="sm"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {isValidCreator(task.creator) ? (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage 
-                              src={task.creator.avatar_url || undefined} 
-                              alt={getCreatorDisplayName(task.creator)} 
+                paginatedTasks.map(task => {
+                  const company = getCompanyDetails(task.company_id);
+                  
+                  return (
+                    <TableRow 
+                      key={task.id}
+                      className="cursor-pointer hover:bg-muted/60"
+                      onClick={() => onTaskClick(task.id)}
+                    >
+                      <TableCell className="font-medium">{task.title}</TableCell>
+                      <TableCell>{getStatusBadge(task.status)}</TableCell>
+                      <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+                      <TableCell>
+                        <UserAvatarGroup 
+                          users={getTaskAssignees(task)}
+                          size="sm"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {company ? (
+                          <div className="flex items-center gap-2">
+                            <CompanyFavicon 
+                              companyName={company.name}
+                              website={company.website}
+                              logoUrl={company.logo_url}
+                              size="sm"
                             />
-                            <AvatarFallback className="text-xs bg-muted">
-                              {getCreatorInitials(task.creator)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm">
-                            {getCreatorDisplayName(task.creator)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Unknown</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
-                    <TableCell>
-                      {task.project_id ? (
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                          Project: {getProjectName(task.project_id)}
-                        </Badge>
-                      ) : task.campaign_id ? (
-                        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-                          Campaign: {getCampaignName(task.campaign_id)}
-                        </Badge>
-                      ) : task.related_type ? (
-                        <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
-                          {task.related_type}
-                        </Badge>
-                      ) : 'None'}
-                    </TableCell>
-                    <TableCell>
-                      {task.client_visible ? (
-                        <Eye className="h-4 w-4 text-blue-600" />
-                      ) : (
-                        <EyeOff className="h-4 w-4 text-gray-400" style={{ strokeDasharray: '2,2' }} />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                            <span className="text-sm">{company.name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">No company</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
+                      <TableCell>
+                        {task.project_id ? (
+                          <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                            Project: {getProjectName(task.project_id)}
+                          </Badge>
+                        ) : task.campaign_id ? (
+                          <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
+                            Campaign: {getCampaignName(task.campaign_id)}
+                          </Badge>
+                        ) : task.related_type ? (
+                          <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
+                            {task.related_type}
+                          </Badge>
+                        ) : 'None'}
+                      </TableCell>
+                      <TableCell>
+                        {task.client_visible ? (
+                          <Eye className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <EyeOff className="h-4 w-4 text-gray-400" style={{ strokeDasharray: '2,2' }} />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-4">
