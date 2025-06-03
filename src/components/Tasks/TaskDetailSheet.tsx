@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -11,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Check, Clock, Link2, Pencil, Plus, Trash2, UserPlus, Megaphone, FolderOpen } from 'lucide-react';
+import { Calendar, Check, Clock, Link2, Pencil, Plus, Trash2, UserPlus, Megaphone, FolderOpen, Eye, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { TaskForm } from './TaskForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -266,11 +265,50 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     }
   });
 
+  // Toggle client visible mutation
+  const toggleClientVisibleMutation = useMutation({
+    mutationFn: async ({ taskId, clientVisible }: { taskId: string; clientVisible: boolean }) => {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ client_visible: clientVisible })
+        .eq('id', taskId);
+      
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast({
+        title: 'Task updated',
+        description: 'Client visibility has been updated',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error updating task',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
   // Handle delete task
   const handleDeleteTask = () => {
     if (taskId) {
       deleteTaskMutation.mutate(taskId);
       setIsDeleteDialogOpen(false);
+    }
+  };
+
+  // Handle toggle client visible
+  const handleToggleClientVisible = () => {
+    if (taskId && task) {
+      toggleClientVisibleMutation.mutate({
+        taskId,
+        clientVisible: !task.client_visible
+      });
     }
   };
 
@@ -362,6 +400,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   )}
                 </div>
                 <div className="flex space-x-2 mt-8">
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={handleToggleClientVisible}
+                    disabled={toggleClientVisibleMutation.isPending || !task}
+                    title={task?.client_visible ? 'Hide from clients' : 'Show to clients'}
+                  >
+                    {task?.client_visible ? (
+                      <Eye className="h-4 w-4" />
+                    ) : (
+                      <EyeOff className="h-4 w-4" />
+                    )}
+                  </Button>
                   <Button 
                     variant="outline" 
                     size="icon"
