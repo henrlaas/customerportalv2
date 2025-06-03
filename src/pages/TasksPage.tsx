@@ -145,8 +145,16 @@ export const TasksPage = () => {
       if (filters.assignee && filters.assignee !== 'all') {
         query = query.contains('task_assignees.user_id', [filters.assignee]);
       }
+      
+      // Handle campaign/project filtering
       if (filters.campaign && filters.campaign !== 'all') {
-        query = query.eq('campaign_id', filters.campaign);
+        if (filters.campaign.startsWith('campaign_')) {
+          const campaignId = filters.campaign.replace('campaign_', '');
+          query = query.eq('campaign_id', campaignId);
+        } else if (filters.campaign.startsWith('project_')) {
+          const projectId = filters.campaign.replace('project_', '');
+          query = query.eq('project_id', projectId);
+        }
       }
         
       const { data, error } = await query;
@@ -482,6 +490,7 @@ export const TasksPage = () => {
               setFilters={setFilters}
               profiles={profiles}
               campaigns={campaigns}
+              projects={projects}
               currentUserId={currentUserId}
             />
           </CardContent>
