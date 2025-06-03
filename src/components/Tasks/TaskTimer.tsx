@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,8 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Clock, Play, Pause, Save } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Clock, Play, Pause, Save, DollarSign } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface TaskTimerProps {
   taskId: string;
@@ -30,6 +29,7 @@ type TimeEntry = {
 export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   
   const [isRunning, setIsRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -38,13 +38,13 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   const [showBillableDialog, setShowBillableDialog] = useState(false);
   const [pendingTimeEntry, setPendingTimeEntry] = useState<any>(null);
   
-  // Fetch task details to get company_id
+  // Fetch task details to get company_id and title
   const { data: task } = useQuery({
     queryKey: ['task', taskId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tasks')
-        .select('id, company_id')
+        .select('id, title, company_id')
         .eq('id', taskId)
         .single();
       
@@ -186,12 +186,18 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     mutationFn: async () => {
       if (!activeEntry) throw new Error('No active timer to stop');
       
+      // Set default description if user hasn't entered anything
+      let finalDescription = description;
+      if (!description.trim() && task?.title) {
+        finalDescription = `Worked with ${task.title}`;
+      }
+      
       // Update time entry with end time but don't set billable status yet
       const { data, error } = await supabase
         .from('time_entries')
         .update({
           end_time: new Date().toISOString(),
-          description: description || null,
+          description: finalDescription || null,
         })
         .eq('id', activeEntry.id)
         .select()
@@ -298,6 +304,11 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     return new Date(dateString).toLocaleString();
   };
   
+  // Handle time entry click to navigate to time tracking page
+  const handleTimeEntryClick = (entryId: string) => {
+    navigate(`/time-tracking?entry=${entryId}`);
+  };
+  
   return (
     <>
       <div className="space-y-4">
@@ -335,7 +346,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
         {isRunning && (
           <div>
             <Textarea
-              placeholder="What are you working on? (Optional)"
+              placeholder={`What are you working on? (Leave empty for "Worked with ${task?.title || 'this task'}")`}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="resize-none"
@@ -366,7 +377,11 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
             {timeEntries.length > 0 ? (
               <div className="space-y-2">
                 {timeEntries.slice(0, 5).map((entry) => (
-                  <div key={entry.id} className="text-sm border rounded-md p-2">
+                  <div 
+                    key={entry.id} 
+                    className="text-sm border rounded-md p-2 cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => handleTimeEntryClick(entry.id)}
+                  >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
                         {entry.end_time ? (
@@ -380,11 +395,17 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
                             Running
                           </Badge>
                         )}
-                        {entry.is_billable && (
-                          <Badge variant="outline" className="bg-blue-100 text-blue-800 text-xs">
-                            Billable
-                          </Badge>
-                        )}
+                        <Badge 
+                          variant={entry.is_billable ? "default" : "outline"}
+                          className={`flex items-center gap-1 ${
+                            entry.is_billable 
+                              ? 'bg-green-500 hover:bg-green-600 text-white' 
+                              : 'bg-gray-100 text-gray-700 border-gray-300'
+                          }`}
+                        >
+                          <DollarSign className="h-3 w-3" />
+                          {entry.is_billable ? 'Billable' : 'Non-billable'}
+                        </Badge>
                       </div>
                       <div className="text-muted-foreground text-xs">
                         {formatDate(entry.start_time)}
