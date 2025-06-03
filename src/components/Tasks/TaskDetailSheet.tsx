@@ -403,7 +403,6 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                         <div>
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Assigned to</h3>
                           <div className="flex items-center">
-                            <UserPlus className="h-4 w-4 mr-2 text-gray-400" />
                             <UserAvatarGroup users={getAssigneeUsers()} max={5} size="sm" />
                           </div>
                         </div>
