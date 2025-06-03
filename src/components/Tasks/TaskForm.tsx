@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -146,6 +145,37 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       project_id: initialData?.project_id || null,
     },
   });
+
+  // Helper functions for colored select styling
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'todo':
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'in_progress':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'completed':
+        return 'text-green-600 bg-green-50 border-green-200';
+      default:
+        return '';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'low':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'medium':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'high':
+        return 'text-red-600 bg-red-50 border-red-200';
+      default:
+        return '';
+    }
+  };
+
+  // Watch for status and priority changes to apply colors
+  const selectedStatus = form.watch('status');
+  const selectedPriority = form.watch('priority');
 
   // Watch for company_id changes to filter campaigns and projects
   const selectedCompanyId = form.watch('company_id');
@@ -381,14 +411,29 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className={cn("transition-colors", getStatusColor(selectedStatus))}>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="todo">Todo</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="todo" className="text-gray-600 focus:bg-gray-50">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-gray-400 mr-2"></div>
+                        Todo
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="in_progress" className="text-blue-600 focus:bg-blue-50">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                        In Progress
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="completed" className="text-green-600 focus:bg-green-50">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        Completed
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -407,14 +452,29 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className={cn("transition-colors", getPriorityColor(selectedPriority))}>
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="low" className="text-green-600 focus:bg-green-50">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        Low
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="medium" className="text-yellow-600 focus:bg-yellow-50">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+                        Medium
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="high" className="text-red-600 focus:bg-red-50">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                        High
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
