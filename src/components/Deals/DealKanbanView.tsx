@@ -175,10 +175,10 @@ export function DealKanbanView({
         />
       )}
       
-      {/* Horizontal scrollable container with fixed height */}
-      <div className="w-full overflow-x-auto overflow-y-hidden">
+      {/* Constrained kanban container */}
+      <div className="h-full overflow-x-auto overflow-y-hidden">
         <div 
-          className="flex gap-3 pb-4"
+          className="flex gap-3 h-full"
           style={{ 
             minWidth: `${stages.length * 250}px`,
             width: stages.length <= 4 ? '100%' : 'auto'
@@ -275,13 +275,13 @@ function StageColumn({
 
   return (
     <div className="flex flex-col h-full w-[250px] flex-shrink-0">
-      <div className="bg-muted p-3 rounded-t-lg">
+      <div className="bg-muted p-3 rounded-t-lg flex-shrink-0">
         <h3 className="font-semibold">{stage.name}</h3>
         <div className="text-xs text-muted-foreground">{formatCurrency(totalValue)}</div>
       </div>
       <div 
         ref={setNodeRef}
-        className="flex-1 p-2 bg-muted/50 rounded-b-lg min-h-[500px]"
+        className="flex-1 p-2 bg-muted/50 rounded-b-lg overflow-y-auto"
       >
         <SortableContext items={deals.map(deal => deal.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
