@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
@@ -7,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { PlusCircle, AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { PlusCircle, AlertCircle, ArrowLeft, ArrowRight, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -46,6 +45,8 @@ import { ProgressStepper } from '@/components/ui/progress-stepper';
 import { useCompanyList } from '@/hooks/useCompanyList';
 import { useCompanyTasks, useCompanyCampaigns, useCompanyProjects } from '@/hooks/useOptimizedTimeEntryData';
 import ReactSelect from 'react-select';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 // Time entry form schema
 const timeEntrySchema = z.object({
@@ -111,6 +112,80 @@ export const TimeEntryForm = ({
     resolver: zodResolver(timeEntrySchema),
     defaultValues,
   });
+
+  // Custom DateTimePicker component
+  const DateTimePicker = ({ field, label }: { field: any; label: string }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [tempDate, setTempDate] = useState<Date | undefined>(
+      field.value ? new Date(field.value) : undefined
+    );
+    const [tempTime, setTempTime] = useState(
+      field.value ? field.value.split('T')[1]?.substring(0, 5) || '12:00' : '12:00'
+    );
+
+    const handleDateSelect = (date: Date | undefined) => {
+      if (date) {
+        setTempDate(date);
+        // Combine date and time
+        const dateStr = date.toISOString().split('T')[0];
+        const newDateTime = `${dateStr}T${tempTime}`;
+        field.onChange(newDateTime);
+      }
+    };
+
+    const handleTimeChange = (time: string) => {
+      setTempTime(time);
+      if (tempDate) {
+        const dateStr = tempDate.toISOString().split('T')[0];
+        const newDateTime = `${dateStr}T${time}`;
+        field.onChange(newDateTime);
+      }
+    };
+
+    return (
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full justify-start text-left font-normal h-10",
+              !field.value && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {field.value ? (
+              format(new Date(field.value), "PPP 'at' HH:mm")
+            ) : (
+              <span>Pick a date and time</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <div className="p-3 space-y-3">
+            <Calendar
+              mode="single"
+              selected={tempDate}
+              onSelect={handleDateSelect}
+              initialFocus
+              className="rounded-md border"
+            />
+            <div className="flex items-center space-x-2">
+              <label htmlFor="time" className="text-sm font-medium">
+                Time:
+              </label>
+              <Input
+                id="time"
+                type="time"
+                value={tempTime}
+                onChange={(e) => handleTimeChange(e.target.value)}
+                className="w-32"
+              />
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
 
   // Get company list with memoized results
   const { companies: allCompanies = [], isLoading: isLoadingCompanies } = useCompanyList(showSubsidiaries);
@@ -445,7 +520,7 @@ export const TimeEntryForm = ({
             <FormItem>
               <FormLabel>Start Time</FormLabel>
               <FormControl>
-                <Input type="datetime-local" {...field} />
+                <DateTimePicker field={field} label="Start Time" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -458,7 +533,7 @@ export const TimeEntryForm = ({
             <FormItem>
               <FormLabel>End Time</FormLabel>
               <FormControl>
-                <Input type="datetime-local" {...field} />
+                <DateTimePicker field={field} label="End Time" />
               </FormControl>
               <FormMessage />
             </FormItem>
