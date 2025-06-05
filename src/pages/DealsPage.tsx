@@ -1,17 +1,41 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Plus, Search
+  Plus, Search, FileText,
+  Calendar, Building, DollarSign, Tag, MoreVertical,
+  Trash2, Edit, Download, Upload, AlertTriangle,
+  CheckCircle, Clock, XCircle, Repeat
 } from 'lucide-react';
+import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  Card, CardContent, CardHeader, CardTitle,
+} from '@/components/ui/card';
+import {
+  Dialog, DialogClose, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
+} from '@/components/ui/form';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useDealsView } from '@/hooks/useDealsView';
 import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
 import { DealKanbanView } from '@/components/Deals/DealKanbanView';
 import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog';
@@ -298,68 +322,62 @@ const DealsPage = () => {
   const isLoading = isLoadingDeals || isLoadingCompanies || isLoadingStages || isLoadingProfiles;
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Fixed Header */}
-      <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 py-6 border-b bg-white">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Deals</h1>
-          <div className="flex items-center gap-4">
-            {canModify && (
-              <Button onClick={() => setIsCreating(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Add Deal
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Search bar and stage filter tabs */}
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Deals</h1>
         <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              type="search"
-              placeholder="Search deals..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex-shrink-0">
-            <Tabs value={selectedStageFilter} onValueChange={setSelectedStageFilter}>
-              <TabsList className="w-auto">
-                <TabsTrigger value="all">All Deals</TabsTrigger>
-                {stages.map((stage) => (
-                  <TabsTrigger key={stage.id} value={stage.id}>
-                    {stage.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
+          {canModify && (
+            <Button onClick={() => setIsCreating(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Add Deal
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Scrollable Kanban Area */}
-      <div className="flex-1 overflow-hidden">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-          </div>
-        ) : (
-          <DealKanbanView
-            deals={filteredDeals}
-            stages={selectedStageFilter === 'all' ? stages : stages.filter(s => s.id === selectedStageFilter)}
-            companies={companies}
-            profiles={profiles}
-            canModify={canModify}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onMove={handleMoveStage}
-            isLoading={isLoading}
+      {/* Search bar and stage filter tabs on the same line */}
+      <div className="mb-6 flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            type="search"
+            placeholder="Search deals..."
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
-        )}
+        </div>
+        
+        <div className="flex-shrink-0">
+          <Tabs value={selectedStageFilter} onValueChange={setSelectedStageFilter}>
+            <TabsList className="w-auto">
+              <TabsTrigger value="all">All Deals</TabsTrigger>
+              {stages.map((stage) => (
+                <TabsTrigger key={stage.id} value={stage.id}>
+                  {stage.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
+
+      {isLoading ? (
+        <div className="flex justify-center p-8">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      ) : (
+        <DealKanbanView
+          deals={filteredDeals}
+          stages={selectedStageFilter === 'all' ? stages : stages.filter(s => s.id === selectedStageFilter)}
+          companies={companies}
+          profiles={profiles}
+          canModify={canModify}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onMove={handleMoveStage}
+          isLoading={isLoading}
+        />
+      )}
 
       {/* Multi-Stage Edit Dialog */}
       <EditDealDialog

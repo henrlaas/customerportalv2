@@ -174,37 +174,33 @@ export function DealKanbanView({
           gravity={0.3}
         />
       )}
-      
-      {/* Horizontally scrollable container for stages */}
-      <div className="h-full overflow-x-auto overflow-y-hidden">
-        <div className="flex gap-3 p-4 h-full" style={{ minWidth: `${stages.length * 250}px` }}>
-          {stages.map((stage) => {
-            const stageDeals = localDeals.filter(deal => deal.stage_id === stage.id);
-            const stageTotalValue = stageDeals.reduce((sum, deal) => sum + (deal.value || 0), 0);
-            
-            return (
-              <StageColumn 
-                key={stage.id}
-                stage={stage}
-                deals={stageDeals}
-                totalValue={stageTotalValue}
-                companies={companies}
-                profiles={profiles}
-                canModify={canModify}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onMove={onMove}
-                activeId={activeId}
-              />
-            );
-          })}
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 overflow-x-auto">
+        {stages.map((stage) => {
+          const stageDeals = localDeals.filter(deal => deal.stage_id === stage.id);
+          const stageTotalValue = stageDeals.reduce((sum, deal) => sum + (deal.value || 0), 0);
+          
+          return (
+            <StageColumn 
+              key={stage.id}
+              stage={stage}
+              deals={stageDeals}
+              totalValue={stageTotalValue}
+              companies={companies}
+              profiles={profiles}
+              canModify={canModify}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onMove={onMove}
+              activeId={activeId}
+            />
+          );
+        })}
       </div>
       
       {/* Add DragOverlay component for a better dragging experience */}
       <DragOverlay>
         {activeDeal ? (
-          <div className="opacity-80 w-[250px]">
+          <div className="opacity-80 w-full max-w-[250px]">
             <DealCard
               deal={activeDeal}
               companies={companies}
@@ -268,14 +264,14 @@ function StageColumn({
   });
 
   return (
-    <div className="w-[250px] flex-shrink-0 flex flex-col h-full">
-      <div className="bg-muted p-3 rounded-t-lg flex-shrink-0">
+    <div key={stage.id} className="flex flex-col h-full min-w-[250px]">
+      <div className="bg-muted p-3 rounded-t-lg">
         <h3 className="font-semibold">{stage.name}</h3>
         <div className="text-xs text-muted-foreground">{formatCurrency(totalValue)}</div>
       </div>
       <div 
         ref={setNodeRef}
-        className="flex-1 p-2 bg-muted/50 rounded-b-lg overflow-y-auto"
+        className="flex-1 p-2 bg-muted/50 rounded-b-lg min-h-[500px]"
       >
         <SortableContext items={deals.map(deal => deal.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
