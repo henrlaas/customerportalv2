@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -42,6 +42,8 @@ import {
 import { TimeEntry, Task, Campaign, Project } from '@/types/timeTracking';
 import { Company as CompanyType } from '@/types/company';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
+import { useCompanyList } from '@/hooks/useCompanyList';
+import { useCompanyTasks, useCompanyCampaigns, useCompanyProjects } from '@/hooks/useOptimizedTimeEntryData';
 
 // Time entry form schema
 const timeEntrySchema = z.object({
@@ -63,10 +65,6 @@ type TimeEntryFormProps = {
   currentEntry?: TimeEntry | null;
   onCancelEdit?: () => void;
   onComplete?: () => void;
-  tasks?: Task[];
-  companies?: CompanyType[];
-  campaigns?: Campaign[];
-  projects?: Project[];
   isCompletingTracking?: boolean;
 };
 
@@ -78,20 +76,12 @@ export const TimeEntryForm = ({
   currentEntry = null,
   onCancelEdit = () => {},
   onComplete = () => {},
-  tasks = [],
-  companies = [],
-  campaigns = [],
-  projects = [],
   isCompletingTracking = false
 }: TimeEntryFormProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([]);
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
-  const [canBeBillable, setCanBeBillable] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 2;
   
@@ -120,109 +110,50 @@ export const TimeEntryForm = ({
     defaultValues,
   });
 
-  // Use the useCompanyList hook with memoized results
-  const { data: allCompanies = [], isLoading: isLoadingCompanies } = useQuery({
-    queryKey: ['companyList', showSubsidiaries],
-    queryFn: async () => {
-      let query = supabase.from('companies').select('*').order('name');
+  // Get company list with memoized results
+  const { companies: allCompanies = [], isLoading: isLoadingCompanies } = useCompanyList(showSubsidiaries);
 
-      if (!showSubsidiaries) {
-        query = query.is('parent_id', null);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching companies:', error);
-        throw error;
-      }
-
-      return data as CompanyType[];
-    },
-  });
-
-  // Watch form values - memoized to prevent unnecessary re-renders
-  const watchedValues = form.watch();
-  const selectedCompanyId = watchedValues.company_id;
-  const isBillable = watchedValues.is_billable;
+  // Watch only the company_id field to minimize re-renders
+  const selectedCompanyId = form.watch('company_id');
+  const isBillable = form.watch('is_billable');
   
-  // Check if entry can be billable (when company is selected)
+  // Use optimized hooks to fetch company-specific data
+  const { data: companyTasks = [], isLoading: isLoadingTasks } = useCompanyTasks(selectedCompanyId);
+  const { data: companyCampaigns = [], isLoading: isLoadingCampaigns } = useCompanyCampaigns(selectedCompanyId);
+  const { data: companyProjects = [], isLoading: isLoadingProjects } = useCompanyProjects(selectedCompanyId);
+
+  // Memoize billable state calculation
+  const canBeBillable = useMemo(() => {
+    return !!selectedCompanyId && selectedCompanyId !== 'no-company';
+  }, [selectedCompanyId]);
+  
+  // Handle billable state when company changes
   useEffect(() => {
-    const canBill = !!selectedCompanyId && selectedCompanyId !== 'no-company';
-    setCanBeBillable(canBill);
-    
-    // If company is removed but billable is true, set to false
-    if ((!selectedCompanyId || selectedCompanyId === 'no-company') && isBillable) {
+    if (!canBeBillable && isBillable) {
       form.setValue('is_billable', false);
     }
-  }, [selectedCompanyId, isBillable, form]);
+  }, [canBeBillable, isBillable, form]);
 
-  // Filter campaigns, projects and tasks based on selected company - memoized
-  const filteredData = useMemo(() => {
-    if (!selectedCompanyId || selectedCompanyId === 'no-company') {
-      return {
-        campaigns: [],
-        projects: [],
-        tasks: []
-      };
+  // Clear related fields when company is deselected - memoized callback
+  const clearRelatedFields = useCallback(() => {
+    const currentValues = form.getValues();
+    if (currentValues.campaign_id) {
+      form.setValue('campaign_id', undefined);
     }
-    
-    const companyCampaigns = campaigns.filter(campaign => campaign.company_id === selectedCompanyId);
-    const companyProjects = projects.filter(project => project.company_id === selectedCompanyId);
-    
-    return {
-      campaigns: companyCampaigns,
-      projects: companyProjects,
-      tasks: [] // Will be fetched separately
-    };
-  }, [selectedCompanyId, campaigns, projects]);
+    if (currentValues.project_id) {
+      form.setValue('project_id', undefined);
+    }
+    if (currentValues.task_id) {
+      form.setValue('task_id', undefined);
+    }
+  }, [form]);
 
-  // Update filtered data when selection changes
+  // Handle company change
   useEffect(() => {
-    setFilteredCampaigns(filteredData.campaigns);
-    setFilteredProjects(filteredData.projects);
-    
-    // Clear related fields if company is deselected
     if (!selectedCompanyId || selectedCompanyId === 'no-company') {
-      const currentValues = form.getValues();
-      if (currentValues.campaign_id) {
-        form.setValue('campaign_id', undefined);
-      }
-      if (currentValues.project_id) {
-        form.setValue('project_id', undefined);
-      }
-      if (currentValues.task_id) {
-        form.setValue('task_id', undefined);
-      }
-      setFilteredTasks([]);
-      return;
+      clearRelatedFields();
     }
-    
-    // Fetch tasks for the selected company
-    const fetchTasks = async () => {
-      try {
-        const { data: companyTasks, error } = await supabase
-          .from('tasks')
-          .select('id,title')
-          .eq('company_id', selectedCompanyId);
-          
-        if (error) throw error;
-        
-        setFilteredTasks(companyTasks || []);
-        
-        // Reset task if not associated with this company
-        const currentTaskId = form.getValues('task_id');
-        if (currentTaskId && !companyTasks?.some(t => t.id === currentTaskId)) {
-          form.setValue('task_id', undefined);
-        }
-      } catch (error) {
-        console.error('Error fetching tasks by company:', error);
-        setFilteredTasks([]);
-      }
-    };
-
-    fetchTasks();
-  }, [selectedCompanyId, filteredData, form]);
+  }, [selectedCompanyId, clearRelatedFields]);
   
   // Handle mutual exclusivity between task, campaign, and project selections
   const updateMutualExclusivity = useCallback((field: string, value: string) => {
@@ -510,16 +441,16 @@ export const TimeEntryForm = ({
                 updateMutualExclusivity('project', value);
               }}
               value={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingProjects}
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a project" />
+                  <SelectValue placeholder={isLoadingProjects ? "Loading projects..." : "Select a project"} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
                 <SelectItem value="no-project">No project</SelectItem>
-                {filteredProjects.map(project => (
+                {companyProjects.map(project => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
                   </SelectItem>
@@ -543,16 +474,16 @@ export const TimeEntryForm = ({
                 updateMutualExclusivity('campaign', value);
               }}
               value={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingCampaigns}
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a campaign" />
+                  <SelectValue placeholder={isLoadingCampaigns ? "Loading campaigns..." : "Select a campaign"} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
                 <SelectItem value="no-campaign">No campaign</SelectItem>
-                {filteredCampaigns.map(campaign => (
+                {companyCampaigns.map(campaign => (
                   <SelectItem key={campaign.id} value={campaign.id}>
                     {campaign.name}
                   </SelectItem>
@@ -576,16 +507,16 @@ export const TimeEntryForm = ({
                 updateMutualExclusivity('task', value);
               }}
               value={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company'}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingTasks}
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Link to a task" />
+                  <SelectValue placeholder={isLoadingTasks ? "Loading tasks..." : "Link to a task"} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
                 <SelectItem value="no-task">No related task</SelectItem>
-                {filteredTasks.map(task => (
+                {companyTasks.map(task => (
                   <SelectItem key={task.id} value={task.id}>
                     {task.title}
                   </SelectItem>

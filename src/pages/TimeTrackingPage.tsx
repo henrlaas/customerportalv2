@@ -1,10 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { TimeEntry, Task, Campaign, ViewType, Project } from '@/types/timeTracking';
-import { Company } from '@/types/company';
+import { TimeEntry, ViewType } from '@/types/timeTracking';
 import { TimeTrackerHeader } from '@/components/TimeTracking/TimeTrackerHeader';
 import { TimeEntrySearch } from '@/components/TimeTracking/TimeEntrySearch';
 import { TimeEntryList } from '@/components/TimeTracking/TimeEntryList';
@@ -102,8 +102,9 @@ const TimeTrackingPage = () => {
     },
   });
   
-  // Fetch tasks for the dropdown
-  const { data: tasks = [], isLoading: isLoadingTasks } = useQuery({
+  // Only fetch additional data when needed for filtering/display
+  // This lazy loading approach improves initial page load performance
+  const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -112,20 +113,17 @@ const TimeTrackingPage = () => {
         .order('created_at', { ascending: false });
       
       if (error) {
-        toast({
-          title: 'Error fetching tasks',
-          description: error.message,
-          variant: 'destructive',
-        });
+        console.error('Error fetching tasks:', error);
         return [];
       }
       
-      return data as Task[];
+      return data;
     },
+    // Only fetch when we have time entries to display
+    enabled: timeEntries.length > 0,
   });
 
-  // Fetch companies for the dropdown
-  const { data: companies = [], isLoading: isLoadingCompanies } = useQuery({
+  const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -134,20 +132,17 @@ const TimeTrackingPage = () => {
         .order('name');
       
       if (error) {
-        toast({
-          title: 'Error fetching companies',
-          description: error.message,
-          variant: 'destructive',
-        });
+        console.error('Error fetching companies:', error);
         return [];
       }
       
-      return data as Company[];
+      return data;
     },
+    // Only fetch when we have time entries to display
+    enabled: timeEntries.length > 0,
   });
 
-  // Fetch campaigns for the dropdown
-  const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery({
+  const { data: campaigns = [] } = useQuery({
     queryKey: ['campaigns'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -156,20 +151,17 @@ const TimeTrackingPage = () => {
         .order('name');
       
       if (error) {
-        toast({
-          title: 'Error fetching campaigns',
-          description: error.message,
-          variant: 'destructive',
-        });
+        console.error('Error fetching campaigns:', error);
         return [];
       }
       
-      return data as Campaign[];
+      return data;
     },
+    // Only fetch when we have time entries to display
+    enabled: timeEntries.length > 0,
   });
   
-  // Fetch projects for the dropdown
-  const { data: projects = [], isLoading: isLoadingProjects } = useQuery({
+  const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -178,16 +170,14 @@ const TimeTrackingPage = () => {
         .order('name');
       
       if (error) {
-        toast({
-          title: 'Error fetching projects',
-          description: error.message,
-          variant: 'destructive',
-        });
+        console.error('Error fetching projects:', error);
         return [];
       }
       
-      return data as Project[];
+      return data;
     },
+    // Only fetch when we have time entries to display
+    enabled: timeEntries.length > 0,
   });
   
   // Edit time entry
@@ -236,9 +226,6 @@ const TimeTrackingPage = () => {
     return () => clearInterval(interval);
   }, [isTracking, activeEntry]);
   
-  // Calculate combined loading state
-  const isLoadingData = isLoading || isLoadingTasks || isLoadingCompanies || isLoadingCampaigns || isLoadingProjects;
-  
   // Filter entries by search query
   const filteredEntries = timeEntries.filter(entry => 
     entry.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -271,7 +258,7 @@ const TimeTrackingPage = () => {
           
           <TimeEntryList
             timeEntries={filteredEntries}
-            isLoading={isLoadingData}
+            isLoading={isLoading}
             tasks={tasks}
             companies={companies}
             campaigns={campaigns}
@@ -291,7 +278,7 @@ const TimeTrackingPage = () => {
           companies={companies}
           campaigns={campaigns}
           projects={projects}
-          isLoading={isLoadingData}
+          isLoading={isLoading}
         />
       )}
       
@@ -302,10 +289,6 @@ const TimeTrackingPage = () => {
           setIsEditing={setIsEditing}
           currentEntry={currentEntry}
           onCancelEdit={handleCancelEdit}
-          tasks={tasks}
-          companies={companies}
-          campaigns={campaigns}
-          projects={projects}
         />
       )}
       

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useMemo } from 'react';
 import Select from 'react-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Company } from '@/types/company';
@@ -24,12 +24,15 @@ export function CompanySelector({
   isLoading = false,
   className,
 }: CompanySelectorProps) {
-  // Group companies by parent for better structure
-  const parentCompanies = companies.filter(company => !company.parent_id);
-  const subsidiaryCompanies = companies.filter(company => !!company.parent_id);
+  // Memoize company hierarchy processing to prevent re-calculation on every render
+  const { parentCompanies, subsidiaryCompanies } = useMemo(() => {
+    const parents = companies.filter(company => !company.parent_id);
+    const subsidiaries = companies.filter(company => !!company.parent_id);
+    return { parentCompanies: parents, subsidiaryCompanies: subsidiaries };
+  }, [companies]);
 
-  // Create structured options based on showSubsidiaries toggle
-  const createOptions = () => {
+  // Memoize options creation based on showSubsidiaries toggle
+  const options = useMemo(() => {
     if (!showSubsidiaries) {
       // Only show parent companies
       return parentCompanies.map(company => ({
@@ -43,11 +46,11 @@ export function CompanySelector({
     }
 
     // Show all companies with better structure
-    const options: any[] = [];
+    const optionsList: any[] = [];
     
     // Add parent companies first
     parentCompanies.forEach(parent => {
-      options.push({
+      optionsList.push({
         value: parent.id,
         label: parent.name,
         website: parent.website,
@@ -59,7 +62,7 @@ export function CompanySelector({
       // Add subsidiaries of this parent
       const childCompanies = subsidiaryCompanies.filter(sub => sub.parent_id === parent.id);
       childCompanies.forEach(child => {
-        options.push({
+        optionsList.push({
           value: child.id,
           label: child.name,
           website: child.website,
@@ -75,7 +78,7 @@ export function CompanySelector({
       !parentCompanies.some(parent => parent.id === sub.parent_id)
     );
     orphanedSubsidiaries.forEach(orphan => {
-      options.push({
+      optionsList.push({
         value: orphan.id,
         label: orphan.name,
         website: orphan.website,
@@ -85,11 +88,13 @@ export function CompanySelector({
       });
     });
 
-    return options;
-  };
+    return optionsList;
+  }, [parentCompanies, subsidiaryCompanies, showSubsidiaries]);
 
-  const options = createOptions();
-  const selectedOption = options.find(option => option.value === selectedCompanyId);
+  // Memoize selected option to prevent unnecessary re-renders
+  const selectedOption = useMemo(() => {
+    return options.find(option => option.value === selectedCompanyId) || null;
+  }, [options, selectedCompanyId]);
   
   return (
     <div className={className}>
@@ -98,7 +103,7 @@ export function CompanySelector({
           className="react-select-container"
           classNamePrefix="react-select"
           options={options}
-          value={selectedOption || null}
+          value={selectedOption}
           onChange={(selected) => onSelect(selected ? selected.value : null)}
           isLoading={isLoading}
           isClearable
