@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { ExportHoursButton } from './ExportHoursButton';
 
 export const MonthlyHoursSummary = () => {
   const { user } = useAuth();
@@ -115,17 +116,20 @@ export const MonthlyHoursSummary = () => {
               </div>
             </div>
           </div>
-          <div className="text-right">
-            {isLoadingHours ? (
-              <div className="h-[3.75rem] flex items-center justify-end">
-                <div className="animate-pulse bg-muted rounded-md w-24 h-10"></div>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-3xl font-bold">{totalHours.toFixed(2)} hours</h2>
-                <p className="text-muted-foreground">Total hours this month</p>
-              </>
-            )}
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              {isLoadingHours ? (
+                <div className="h-[3.75rem] flex items-center justify-end">
+                  <div className="animate-pulse bg-muted rounded-md w-24 h-10"></div>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-3xl font-bold">{totalHours.toFixed(2)} hours</h2>
+                  <p className="text-muted-foreground">Total hours this month</p>
+                </>
+              )}
+            </div>
+            <ExportHoursButton selectedMonth={selectedMonth} />
           </div>
         </div>
       </CardContent>

@@ -6,9 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { TimeEntry } from "@/types/timeTracking";
 import { exportTimeEntriesToCSV } from "@/utils/exportUtils";
 import { DownloadCloud } from "lucide-react";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 
-export const ExportHoursButton = () => {
+interface ExportHoursButtonProps {
+  selectedMonth: Date;
+}
+
+export const ExportHoursButton = ({ selectedMonth }: ExportHoursButtonProps) => {
   const { toast } = useToast();
   const { user, profile } = useAuth();
 
@@ -23,12 +27,11 @@ export const ExportHoursButton = () => {
     }
 
     try {
-      // Get current month's start and end dates
-      const now = new Date();
-      const monthStart = startOfMonth(now).toISOString();
-      const monthEnd = endOfMonth(now).toISOString();
+      // Get selected month's start and end dates
+      const monthStart = startOfMonth(selectedMonth).toISOString();
+      const monthEnd = endOfMonth(selectedMonth).toISOString();
 
-      // Fetch time entries for current month
+      // Fetch time entries for selected month
       const { data, error } = await supabase
         .from("time_entries")
         .select("*")
@@ -44,7 +47,7 @@ export const ExportHoursButton = () => {
       if (!data || data.length === 0) {
         toast({
           title: "No entries found",
-          description: "No time entries found for the current month",
+          description: `No time entries found for ${format(selectedMonth, 'MMMM yyyy')}`,
         });
         return;
       }
@@ -55,11 +58,11 @@ export const ExportHoursButton = () => {
         : "User";
 
       // Export the data
-      await exportTimeEntriesToCSV(data as TimeEntry[], userName);
+      await exportTimeEntriesToCSV(data as TimeEntry[], userName, selectedMonth);
 
       toast({
         title: "Export successful",
-        description: "Time entries have been exported to CSV",
+        description: `Time entries for ${format(selectedMonth, 'MMMM yyyy')} have been exported to CSV`,
       });
     } catch (error) {
       console.error("Export error:", error);

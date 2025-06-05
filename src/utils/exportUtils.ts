@@ -6,7 +6,8 @@ import ExcelJS from "exceljs";
 // Function to export time entries to CSV file
 export const exportTimeEntriesToCSV = async (
   timeEntries: TimeEntry[],
-  userName: string
+  userName: string,
+  selectedMonth: Date
 ) => {
   // Create a new workbook and worksheet
   const workbook = new ExcelJS.Workbook();
@@ -15,9 +16,9 @@ export const exportTimeEntriesToCSV = async (
   // Add user name as title
   worksheet.addRow([userName]);
   
-  // Add current month
-  const currentMonth = format(new Date(), "MMMM yyyy");
-  worksheet.addRow([currentMonth]);
+  // Add selected month
+  const monthYear = format(selectedMonth, "MMMM yyyy");
+  worksheet.addRow([monthYear]);
   
   // Add empty row
   worksheet.addRow([]);
@@ -25,7 +26,9 @@ export const exportTimeEntriesToCSV = async (
   // Add headers
   worksheet.addRow(["Description", "Start Time", "End Time", "Duration (hh:mm)"]);
 
-  // Add time entries
+  // Calculate total hours and add time entries
+  let totalMinutes = 0;
+  
   timeEntries.forEach(entry => {
     const startTime = new Date(entry.start_time);
     const endTime = entry.end_time ? new Date(entry.end_time) : null;
@@ -36,6 +39,9 @@ export const exportTimeEntriesToCSV = async (
       const hours = Math.floor(durationMs / (1000 * 60 * 60));
       const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
       duration = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+      
+      // Add to total minutes
+      totalMinutes += hours * 60 + minutes;
     }
     
     worksheet.addRow([
@@ -45,6 +51,16 @@ export const exportTimeEntriesToCSV = async (
       duration
     ]);
   });
+
+  // Add empty row before total
+  worksheet.addRow([]);
+  
+  // Add total hours row
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+  const totalDuration = `${totalHours.toString().padStart(2, "0")}:${remainingMinutes.toString().padStart(2, "0")}`;
+  
+  worksheet.addRow(["TOTAL HOURS", "", "", totalDuration]);
 
   // Apply some basic styling
   worksheet.getColumn(1).width = 40;
@@ -57,6 +73,10 @@ export const exportTimeEntriesToCSV = async (
   
   // Make the header row bold
   worksheet.getRow(4).font = { bold: true };
+  
+  // Make the total row bold
+  const totalRowIndex = timeEntries.length + 6; // 1 (user) + 1 (month) + 1 (empty) + 1 (header) + entries + 1 (empty) + 1 (total)
+  worksheet.getRow(totalRowIndex).font = { bold: true };
 
   // Generate CSV file
   const buffer = await workbook.csv.writeBuffer();
@@ -68,7 +88,7 @@ export const exportTimeEntriesToCSV = async (
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `time_entries_${format(new Date(), "yyyy-MM")}.csv`;
+  link.download = `time_entries_${format(selectedMonth, "yyyy-MM")}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
