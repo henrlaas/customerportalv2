@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -159,78 +160,80 @@ export function DealKanbanView({
   const activeDeal = activeId ? localDeals.find(deal => deal.id === activeId) : null;
 
   return (
-    <DndContext 
-      sensors={sensors} 
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-      collisionDetection={closestCorners}
-    >
-      {showConfetti && (
-        <ReactConfetti
-          width={window.innerWidth}
-          height={window.innerHeight}
-          recycle={false}
-          numberOfPieces={200}
-          gravity={0.3}
-        />
-      )}
-      <div className="flex gap-3 overflow-x-auto pb-4">
-        {stages.map((stage) => {
-          const stageDeals = localDeals.filter(deal => deal.stage_id === stage.id);
-          const stageTotalValue = stageDeals.reduce((sum, deal) => sum + (deal.value || 0), 0);
-          
-          return (
-            <StageColumn 
-              key={stage.id}
-              stage={stage}
-              deals={stageDeals}
-              totalValue={stageTotalValue}
-              companies={companies}
-              profiles={profiles}
-              canModify={canModify}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onMove={onMove}
-              activeId={activeId}
-            />
-          );
-        })}
-      </div>
-      
-      {/* Add DragOverlay component for a better dragging experience */}
-      <DragOverlay>
-        {activeDeal ? (
-          <div className="opacity-80 w-full max-w-[250px]">
-            <DealCard
-              deal={activeDeal}
-              companies={companies}
-              stages={stages}
-              profiles={profiles}
-              canModify={false} // Disable interactions while dragging
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onMove={() => {}} // No-op for the overlay
-            />
-          </div>
-        ) : null}
-      </DragOverlay>
-      
-      {showConvertDialog && selectedDeal && tempCompanyData && (
-        <ConvertTempCompanyDialog
-          isOpen={showConvertDialog}
-          onClose={() => {
-            setShowConvertDialog(false);
-            setSelectedDeal(null);
-            setTempCompanyData(null);
-          }}
-          dealId={selectedDeal.id}
-          tempCompany={tempCompanyData}
-          dealValue={selectedDeal.value}
-          dealType={selectedDeal.client_deal_type}
-        />
-      )}
-    </DndContext>
+    <div className="h-full flex flex-col">
+      <DndContext 
+        sensors={sensors} 
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        collisionDetection={closestCorners}
+      >
+        {showConfetti && (
+          <ReactConfetti
+            width={window.innerWidth}
+            height={window.innerHeight}
+            recycle={false}
+            numberOfPieces={200}
+            gravity={0.3}
+          />
+        )}
+        <div className="flex gap-3 overflow-x-auto h-full pb-4">
+          {stages.map((stage) => {
+            const stageDeals = localDeals.filter(deal => deal.stage_id === stage.id);
+            const stageTotalValue = stageDeals.reduce((sum, deal) => sum + (deal.value || 0), 0);
+            
+            return (
+              <StageColumn 
+                key={stage.id}
+                stage={stage}
+                deals={stageDeals}
+                totalValue={stageTotalValue}
+                companies={companies}
+                profiles={profiles}
+                canModify={canModify}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onMove={onMove}
+                activeId={activeId}
+              />
+            );
+          })}
+        </div>
+        
+        {/* Add DragOverlay component for a better dragging experience */}
+        <DragOverlay>
+          {activeDeal ? (
+            <div className="opacity-80 w-full max-w-[250px]">
+              <DealCard
+                deal={activeDeal}
+                companies={companies}
+                stages={stages}
+                profiles={profiles}
+                canModify={false} // Disable interactions while dragging
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onMove={() => {}} // No-op for the overlay
+              />
+            </div>
+          ) : null}
+        </DragOverlay>
+        
+        {showConvertDialog && selectedDeal && tempCompanyData && (
+          <ConvertTempCompanyDialog
+            isOpen={showConvertDialog}
+            onClose={() => {
+              setShowConvertDialog(false);
+              setSelectedDeal(null);
+              setTempCompanyData(null);
+            }}
+            dealId={selectedDeal.id}
+            tempCompany={tempCompanyData}
+            dealValue={selectedDeal.value}
+            dealType={selectedDeal.client_deal_type}
+          />
+        )}
+      </DndContext>
+    </div>
   );
 }
 
@@ -272,7 +275,7 @@ function StageColumn({
       </div>
       <div 
         ref={setNodeRef}
-        className="flex-1 p-2 bg-muted/50 rounded-b-lg min-h-[500px]"
+        className="flex-1 p-2 bg-muted/50 rounded-b-lg overflow-y-auto"
       >
         <SortableContext items={deals.map(deal => deal.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
