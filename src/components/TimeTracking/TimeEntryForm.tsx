@@ -44,6 +44,7 @@ import { Company as CompanyType } from '@/types/company';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
 import { useCompanyList } from '@/hooks/useCompanyList';
 import { useCompanyTasks, useCompanyCampaigns, useCompanyProjects } from '@/hooks/useOptimizedTimeEntryData';
+import ReactSelect from 'react-select';
 
 // Time entry form schema
 const timeEntrySchema = z.object({
@@ -159,29 +160,45 @@ export const TimeEntryForm = ({
   }, [selectedCompanyId, clearRelatedFields]);
   
   // Handle mutual exclusivity between task, campaign, and project selections
-  const handleTaskSelection = useCallback((value: string) => {
-    form.setValue('task_id', value);
+  const handleTaskSelection = useCallback((value: string | null) => {
+    form.setValue('task_id', value || undefined);
     if (value && value !== 'no-task') {
       form.setValue('campaign_id', undefined);
       form.setValue('project_id', undefined);
     }
   }, [form]);
 
-  const handleCampaignSelection = useCallback((value: string) => {
-    form.setValue('campaign_id', value);
+  const handleCampaignSelection = useCallback((value: string | null) => {
+    form.setValue('campaign_id', value || undefined);
     if (value && value !== 'no-campaign') {
       form.setValue('task_id', undefined);
       form.setValue('project_id', undefined);
     }
   }, [form]);
 
-  const handleProjectSelection = useCallback((value: string) => {
-    form.setValue('project_id', value);
+  const handleProjectSelection = useCallback((value: string | null) => {
+    form.setValue('project_id', value || undefined);
     if (value && value !== 'no-project') {
       form.setValue('task_id', undefined);
       form.setValue('campaign_id', undefined);
     }
   }, [form]);
+
+  // Prepare options for react-select
+  const projectOptions = useMemo(() => [
+    { value: 'no-project', label: 'No project' },
+    ...companyProjects.map(project => ({ value: project.id, label: project.name }))
+  ], [companyProjects]);
+
+  const campaignOptions = useMemo(() => [
+    { value: 'no-campaign', label: 'No campaign' },
+    ...companyCampaigns.map(campaign => ({ value: campaign.id, label: campaign.name }))
+  ], [companyCampaigns]);
+
+  const taskOptions = useMemo(() => [
+    { value: 'no-task', label: 'No related task' },
+    ...companyTasks.map(task => ({ value: task.id, label: task.title }))
+  ], [companyTasks]);
 
   // Create time entry mutation
   const createMutation = useMutation({
@@ -459,31 +476,25 @@ export const TimeEntryForm = ({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Project</FormLabel>
-            <Select
-              onValueChange={handleProjectSelection}
-              value={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingProjects || !!selectedTaskId || !!selectedCampaignId}
-            >
-              <FormControl>
-                <SelectTrigger className={!!selectedTaskId || !!selectedCampaignId ? 'opacity-50' : ''}>
-                  <SelectValue placeholder={
-                    !!selectedTaskId || !!selectedCampaignId 
-                      ? "Clear other selections first"
-                      : isLoadingProjects 
-                        ? "Loading projects..." 
-                        : "Select a project"
-                  } />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="no-project">No project</SelectItem>
-                {companyProjects.map(project => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FormControl>
+              <ReactSelect
+                options={projectOptions}
+                value={projectOptions.find(option => option.value === field.value) || null}
+                onChange={(selected) => handleProjectSelection(selected?.value || null)}
+                isDisabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingProjects || !!selectedTaskId || !!selectedCampaignId}
+                placeholder={
+                  !!selectedTaskId || !!selectedCampaignId 
+                    ? "Clear other selections first"
+                    : isLoadingProjects 
+                      ? "Loading projects..." 
+                      : "Select a project"
+                }
+                className="react-select-container"
+                classNamePrefix="react-select"
+                isSearchable
+                isClearable
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}
@@ -495,31 +506,25 @@ export const TimeEntryForm = ({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Campaign</FormLabel>
-            <Select
-              onValueChange={handleCampaignSelection}
-              value={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingCampaigns || !!selectedTaskId || !!selectedProjectId}
-            >
-              <FormControl>
-                <SelectTrigger className={!!selectedTaskId || !!selectedProjectId ? 'opacity-50' : ''}>
-                  <SelectValue placeholder={
-                    !!selectedTaskId || !!selectedProjectId 
-                      ? "Clear other selections first"
-                      : isLoadingCampaigns 
-                        ? "Loading campaigns..." 
-                        : "Select a campaign"
-                  } />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="no-campaign">No campaign</SelectItem>
-                {companyCampaigns.map(campaign => (
-                  <SelectItem key={campaign.id} value={campaign.id}>
-                    {campaign.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FormControl>
+              <ReactSelect
+                options={campaignOptions}
+                value={campaignOptions.find(option => option.value === field.value) || null}
+                onChange={(selected) => handleCampaignSelection(selected?.value || null)}
+                isDisabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingCampaigns || !!selectedTaskId || !!selectedProjectId}
+                placeholder={
+                  !!selectedTaskId || !!selectedProjectId 
+                    ? "Clear other selections first"
+                    : isLoadingCampaigns 
+                      ? "Loading campaigns..." 
+                      : "Select a campaign"
+                }
+                className="react-select-container"
+                classNamePrefix="react-select"
+                isSearchable
+                isClearable
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}
@@ -531,31 +536,25 @@ export const TimeEntryForm = ({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Related Task</FormLabel>
-            <Select
-              onValueChange={handleTaskSelection}
-              value={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingTasks || !!selectedCampaignId || !!selectedProjectId}
-            >
-              <FormControl>
-                <SelectTrigger className={!!selectedCampaignId || !!selectedProjectId ? 'opacity-50' : ''}>
-                  <SelectValue placeholder={
-                    !!selectedCampaignId || !!selectedProjectId 
-                      ? "Clear other selections first"
-                      : isLoadingTasks 
-                        ? "Loading tasks..." 
-                        : "Link to a task"
-                  } />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="no-task">No related task</SelectItem>
-                {companyTasks.map(task => (
-                  <SelectItem key={task.id} value={task.id}>
-                    {task.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FormControl>
+              <ReactSelect
+                options={taskOptions}
+                value={taskOptions.find(option => option.value === field.value) || null}
+                onChange={(selected) => handleTaskSelection(selected?.value || null)}
+                isDisabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingTasks || !!selectedCampaignId || !!selectedProjectId}
+                placeholder={
+                  !!selectedCampaignId || !!selectedProjectId 
+                    ? "Clear other selections first"
+                    : isLoadingTasks 
+                      ? "Loading tasks..." 
+                      : "Link to a task"
+                }
+                className="react-select-container"
+                classNamePrefix="react-select"
+                isSearchable
+                isClearable
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}
