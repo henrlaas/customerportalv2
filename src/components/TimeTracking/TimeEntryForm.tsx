@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
@@ -199,6 +200,68 @@ export const TimeEntryForm = ({
     { value: 'no-task', label: 'No related task' },
     ...companyTasks.map(task => ({ value: task.id, label: task.title }))
   ], [companyTasks]);
+
+  // Custom styles for react-select to match shadcn/ui inputs
+  const customSelectStyles = {
+    control: (provided: any, state: any) => ({
+      ...provided,
+      minHeight: '40px',
+      height: '40px',
+      border: `1px solid ${state.isFocused ? 'hsl(var(--ring))' : 'hsl(var(--border))'}`,
+      borderRadius: '6px',
+      backgroundColor: 'hsl(var(--background))',
+      color: 'hsl(var(--foreground))',
+      fontSize: '14px',
+      boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
+      '&:hover': {
+        borderColor: 'hsl(var(--border))',
+      },
+    }),
+    valueContainer: (provided: any) => ({
+      ...provided,
+      height: '38px',
+      padding: '0 12px',
+    }),
+    input: (provided: any) => ({
+      ...provided,
+      margin: '0px',
+      color: 'hsl(var(--foreground))',
+    }),
+    indicatorSeparator: () => ({
+      display: 'none',
+    }),
+    indicatorsContainer: (provided: any) => ({
+      ...provided,
+      height: '38px',
+    }),
+    menu: (provided: any) => ({
+      ...provided,
+      backgroundColor: 'hsl(var(--popover))',
+      border: '1px solid hsl(var(--border))',
+      borderRadius: '6px',
+      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+    }),
+    option: (provided: any, state: any) => ({
+      ...provided,
+      backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'transparent',
+      color: 'hsl(var(--foreground))',
+      padding: '8px 12px',
+      fontSize: '14px',
+      '&:hover': {
+        backgroundColor: 'hsl(var(--accent))',
+      },
+    }),
+    placeholder: (provided: any) => ({
+      ...provided,
+      color: 'hsl(var(--muted-foreground))',
+      fontSize: '14px',
+    }),
+    singleValue: (provided: any) => ({
+      ...provided,
+      color: 'hsl(var(--foreground))',
+      fontSize: '14px',
+    }),
+  };
 
   // Create time entry mutation
   const createMutation = useMutation({
@@ -489,8 +552,7 @@ export const TimeEntryForm = ({
                       ? "Loading projects..." 
                       : "Select a project"
                 }
-                className="react-select-container"
-                classNamePrefix="react-select"
+                styles={customSelectStyles}
                 isSearchable
                 isClearable
               />
@@ -519,8 +581,7 @@ export const TimeEntryForm = ({
                       ? "Loading campaigns..." 
                       : "Select a campaign"
                 }
-                className="react-select-container"
-                classNamePrefix="react-select"
+                styles={customSelectStyles}
                 isSearchable
                 isClearable
               />
@@ -549,8 +610,7 @@ export const TimeEntryForm = ({
                       ? "Loading tasks..." 
                       : "Link to a task"
                 }
-                className="react-select-container"
-                classNamePrefix="react-select"
+                styles={customSelectStyles}
                 isSearchable
                 isClearable
               />
