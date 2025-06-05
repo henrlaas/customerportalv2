@@ -55,7 +55,7 @@ import ReactSelect from 'react-select';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
-// Time entry form schema
+// Enhanced time entry form schema with custom validation
 const timeEntrySchema = z.object({
   description: z.string().min(1, { message: 'Description is required' }),
   start_time: z.string().min(1, { message: 'Start time is required' }),
@@ -65,6 +65,16 @@ const timeEntrySchema = z.object({
   company_id: z.string().optional(),
   campaign_id: z.string().optional(),
   project_id: z.string().optional(),
+}).refine((data) => {
+  if (data.start_time && data.end_time) {
+    const startDate = new Date(data.start_time);
+    const endDate = new Date(data.end_time);
+    return endDate > startDate;
+  }
+  return true;
+}, {
+  message: "End time must be after start time",
+  path: ["end_time"],
 });
 
 type TimeEntryFormProps = {
@@ -95,11 +105,24 @@ export const TimeEntryForm = ({
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 2;
   
-  // Format dates properly for input fields
+  // Enhanced format dates for input fields - handles timezone properly
   const formatDateForInput = useCallback((dateString: string | null) => {
     if (!dateString) return '';
+    
+    // Create date object from the string
     const date = new Date(dateString);
-    return date.toISOString().substring(0, 16);
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) return '';
+    
+    // Format for datetime-local input (YYYY-MM-DDTHH:mm)
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }, []);
 
   // Memoize default values to prevent form re-initialization
@@ -120,22 +143,27 @@ export const TimeEntryForm = ({
     defaultValues,
   });
 
-  // Custom DateTimePicker component
+  // Enhanced DateTimePicker component with proper timezone handling
   const DateTimePicker = ({ field, label }: { field: any; label: string }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [tempDate, setTempDate] = useState<Date | undefined>(
-      field.value ? new Date(field.value) : undefined
-    );
+    
+    // Parse existing value or use current date
+    const currentValue = field.value ? new Date(field.value) : new Date();
+    const [tempDate, setTempDate] = useState<Date | undefined>(currentValue);
     const [tempTime, setTempTime] = useState(
-      field.value ? field.value.split('T')[1]?.substring(0, 5) || '12:00' : '12:00'
+      field.value 
+        ? format(new Date(field.value), 'HH:mm')
+        : format(new Date(), 'HH:mm')
     );
 
     const handleDateSelect = (date: Date | undefined) => {
       if (date) {
         setTempDate(date);
-        // Combine date and time
-        const dateStr = date.toISOString().split('T')[0];
-        const newDateTime = `${dateStr}T${tempTime}`;
+        // Create proper datetime string in local timezone
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const newDateTime = `${year}-${month}-${day}T${tempTime}`;
         field.onChange(newDateTime);
       }
     };
@@ -143,21 +171,27 @@ export const TimeEntryForm = ({
     const handleTimeChange = (time: string) => {
       setTempTime(time);
       if (tempDate) {
-        const dateStr = tempDate.toISOString().split('T')[0];
-        const newDateTime = `${dateStr}T${time}`;
+        const year = tempDate.getFullYear();
+        const month = String(tempDate.getMonth() + 1).padStart(2, '0');
+        const day = String(tempDate.getDate()).padStart(2, '0');
+        const newDateTime = `${year}-${month}-${day}T${time}`;
         field.onChange(newDateTime);
       }
     };
 
-    // Format display text as dd/mm/yy HH:mm
+    // Enhanced display formatting
     const formatDisplayText = (value: string) => {
       if (!value) return '';
+      
       const date = new Date(value);
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear().toString().slice(-2);
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
+      if (isNaN(date.getTime())) return 'Invalid date';
+      
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = String(date.getFullYear()).slice(-2);
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      
       return `${day}/${month}/${year} ${hours}:${minutes}`;
     };
 
@@ -184,7 +218,7 @@ export const TimeEntryForm = ({
               selected={tempDate}
               onSelect={handleDateSelect}
               initialFocus
-              className="rounded-md border"
+              className="rounded-md border pointer-events-auto"
             />
             <div className="flex items-center space-x-2">
               <label htmlFor="time" className="text-sm font-medium">
@@ -355,15 +389,19 @@ export const TimeEntryForm = ({
     }),
   };
 
-  // Create time entry mutation
+  // Create time entry mutation with enhanced data handling
   const createMutation = useMutation({
     mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
       if (!user) throw new Error('You must be logged in to create time entries');
       
+      // Convert local datetime strings to proper ISO strings for database storage
+      const startTime = new Date(values.start_time).toISOString();
+      const endTime = new Date(values.end_time).toISOString();
+      
       const timeEntryData = {
         description: values.description || null,
-        start_time: values.start_time,
-        end_time: values.end_time || null,
+        start_time: startTime,
+        end_time: endTime,
         task_id: values.task_id === 'no-task' ? null : values.task_id || null,
         user_id: user.id,
         is_billable: values.company_id && values.company_id !== 'no-company' ? values.is_billable : false,
@@ -407,15 +445,19 @@ export const TimeEntryForm = ({
     },
   });
 
-  // Update time entry mutation
+  // Update time entry mutation with enhanced data handling
   const updateMutation = useMutation({
     mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
       if (!currentEntry) return null;
       
+      // Convert local datetime strings to proper ISO strings for database storage
+      const startTime = new Date(values.start_time).toISOString();
+      const endTime = new Date(values.end_time).toISOString();
+      
       const timeEntryData = {
         description: values.description || null,
-        start_time: values.start_time,
-        end_time: values.end_time || null,
+        start_time: startTime,
+        end_time: endTime,
         task_id: values.task_id === 'no-task' ? null : values.task_id || null,
         is_billable: values.company_id && values.company_id !== 'no-company' ? values.is_billable : false,
         company_id: values.company_id === 'no-company' ? null : values.company_id || null,
