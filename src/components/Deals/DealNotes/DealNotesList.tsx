@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { DealNote } from '../types/dealNotes';
+import { DealNote, DealNoteFormData } from '../types/dealNotes';
 import { Profile } from '../types/deal';
 import { DealNoteItem } from './DealNoteItem';
 import { DealNoteForm } from './DealNoteForm';
@@ -116,8 +116,8 @@ export const DealNotesList: React.FC<DealNotesListProps> = ({
     },
   });
 
-  const handleCreateNote = (content: string) => {
-    createNoteMutation.mutate(content);
+  const handleCreateNote = (data: DealNoteFormData) => {
+    createNoteMutation.mutate(data.content);
   };
 
   const handleUpdateNote = (id: string, content: string) => {
