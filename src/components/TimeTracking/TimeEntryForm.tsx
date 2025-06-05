@@ -57,9 +57,9 @@ import { format } from 'date-fns';
 
 // Time entry form schema
 const timeEntrySchema = z.object({
-  description: z.string().optional(),
+  description: z.string().min(1, { message: 'Description is required' }),
   start_time: z.string().min(1, { message: 'Start time is required' }),
-  end_time: z.string().optional(),
+  end_time: z.string().min(1, { message: 'End time is required' }),
   task_id: z.string().optional(),
   is_billable: z.boolean().default(false),
   company_id: z.string().optional(),
