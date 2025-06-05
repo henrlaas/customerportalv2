@@ -117,6 +117,25 @@ export function MultiStageCompanyDialog({
 
   // Add a new handleNext function
   const handleNext = async () => {
+    // Handle stage 0 (method selection)
+    if (stage === 0) {
+      if (!creationMethod) return; // Don't proceed if no method selected
+      
+      if (creationMethod === 'manual') {
+        setStage(2); // Skip search stage, go directly to basic info
+      } else {
+        setStage(1); // Go to search stage
+      }
+      return;
+    }
+    
+    // Handle stage 1 (search)
+    if (stage === 1) {
+      if (!selectedBrregCompany) return; // Don't proceed if no company selected
+      setStage(2); // Go to basic info stage
+      return;
+    }
+    
     // For stages that need validation (2, 3, 4)
     if (stage >= 2) {
       const isValid = await validateCurrentStage();
@@ -227,16 +246,12 @@ export function MultiStageCompanyDialog({
 
   const handleMethodSelect = (method: CreationMethod) => {
     setCreationMethod(method);
-    if (method === 'manual') {
-      setStage(2); // Skip search stage, go directly to basic info
-    } else {
-      setStage(1); // Go to search stage
-    }
+    // Don't auto-advance here, let handleNext handle it
   };
 
   const handleBrregCompanySelect = (company: BrregCompany) => {
     setSelectedBrregCompany(company);
-    setStage(2); // Go to basic info stage
+    // Don't auto-advance here, let handleNext handle it
   };
 
   const getStageTitle = () => {
@@ -267,6 +282,17 @@ export function MultiStageCompanyDialog({
     return null;
   };
 
+  const getNextButtonText = () => {
+    if (stage === totalStages - 1) return 'Create Company';
+    return 'Next';
+  };
+
+  const isNextButtonDisabled = () => {
+    if (stage === 0) return !creationMethod;
+    if (stage === 1) return !selectedBrregCompany;
+    return createCompanyMutation.isPending;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
@@ -283,49 +309,44 @@ export function MultiStageCompanyDialog({
           <div className="space-y-4">
             {renderStageContent()}
 
-            {stage > 0 && (
-              <DialogFooter className="flex justify-between pt-4 sm:justify-between">
-                <div>
-                  {stage > 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={goBack}
-                      className="flex items-center gap-1"
-                    >
-                      <ChevronLeft className="h-4 w-4" /> Back
-                    </Button>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={onClose}>
-                    Cancel
+            <DialogFooter className="flex justify-between pt-4 sm:justify-between">
+              <div>
+                {stage > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={goBack}
+                    className="flex items-center gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Back
                   </Button>
-                  {stage >= 2 && (
-                    <Button
-                      type="button"
-                      onClick={handleNext}
-                      className={cn(
-                        "flex items-center gap-1 bg-black hover:bg-black/90",
-                        stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
-                      )}
-                      disabled={createCompanyMutation.isPending}
-                    >
-                      {createCompanyMutation.isPending
-                        ? 'Creating...'
-                        : stage === totalStages - 1
-                          ? 'Create Company'
-                          : (
-                            <>
-                              Next <ChevronRight className="h-4 w-4" />
-                            </>
-                          )
-                      }
-                    </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  className={cn(
+                    "flex items-center gap-1 bg-black hover:bg-black/90"
                   )}
-                </div>
-              </DialogFooter>
-            )}
+                  disabled={isNextButtonDisabled()}
+                >
+                  {createCompanyMutation.isPending
+                    ? 'Creating...'
+                    : stage === totalStages - 1
+                      ? getNextButtonText()
+                      : (
+                        <>
+                          {getNextButtonText()} <ChevronRight className="h-4 w-4" />
+                        </>
+                      )
+                  }
+                </Button>
+              </div>
+            </DialogFooter>
           </div>
         </Form>
       </DialogContent>
