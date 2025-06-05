@@ -149,22 +149,32 @@ export const TimeEntryForm = ({
       }
     };
 
+    // Format display text as dd/mm/yy HH:mm
+    const formatDisplayText = (value: string) => {
+      if (!value) return '';
+      const date = new Date(value);
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear().toString().slice(-2);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    };
+
     return (
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             className={cn(
-              "w-full justify-start text-left font-normal h-10",
+              "w-full justify-start text-left font-normal h-10 text-sm",
               !field.value && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {field.value ? (
-              format(new Date(field.value), "PPP 'at' HH:mm")
-            ) : (
-              <span>Pick a date and time</span>
-            )}
+            <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+            <span className="truncate">
+              {field.value ? formatDisplayText(field.value) : "Pick date & time"}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
