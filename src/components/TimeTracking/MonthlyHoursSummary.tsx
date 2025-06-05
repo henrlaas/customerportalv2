@@ -117,6 +117,7 @@ export const MonthlyHoursSummary = () => {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <ExportHoursButton selectedMonth={selectedMonth} />
             <div className="text-right">
               {isLoadingHours ? (
                 <div className="h-[3.75rem] flex items-center justify-end">
@@ -129,7 +130,6 @@ export const MonthlyHoursSummary = () => {
                 </>
               )}
             </div>
-            <ExportHoursButton selectedMonth={selectedMonth} />
           </div>
         </div>
       </CardContent>
