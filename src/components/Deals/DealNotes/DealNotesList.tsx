@@ -1,10 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { DealNote, DealNoteFormData } from '../types/dealNotes';
+import { DealNote } from '../types/dealNotes';
 import { Profile } from '../types/deal';
 import { DealNoteItem } from './DealNoteItem';
 import { DealNoteForm } from './DealNoteForm';
@@ -20,11 +19,10 @@ export const DealNotesList: React.FC<DealNotesListProps> = ({
   profiles,
   canModify,
 }) => {
-  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch notes for this deal
+  // Fetch deal notes
   const { data: notes = [], isLoading } = useQuery({
     queryKey: ['deal-notes', dealId],
     queryFn: async () => {
@@ -41,18 +39,11 @@ export const DealNotesList: React.FC<DealNotesListProps> = ({
 
   // Create note mutation
   const createNoteMutation = useMutation({
-    mutationFn: async (noteData: DealNoteFormData) => {
-      if (!user?.id) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('deal_notes')
-        .insert({
-          deal_id: dealId,
-          user_id: user.id,
-          content: noteData.content,
-        })
-        .select()
-        .single();
+    mutationFn: async (content: string) => {
+      const { data, error } = await insertWithUser('deal_notes', {
+        deal_id: dealId,
+        content: content.trim(),
+      });
 
       if (error) throw error;
       return data;
@@ -76,12 +67,9 @@ export const DealNotesList: React.FC<DealNotesListProps> = ({
   // Update note mutation
   const updateNoteMutation = useMutation({
     mutationFn: async ({ id, content }: { id: string; content: string }) => {
-      const { data, error } = await supabase
-        .from('deal_notes')
-        .update({ content, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error } = await updateWithUser('deal_notes', id, {
+        content: content.trim(),
+      });
 
       if (error) throw error;
       return data;
@@ -104,11 +92,11 @@ export const DealNotesList: React.FC<DealNotesListProps> = ({
 
   // Delete note mutation
   const deleteNoteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (noteId: string) => {
       const { error } = await supabase
         .from('deal_notes')
         .delete()
-        .eq('id', id);
+        .eq('id', noteId);
 
       if (error) throw error;
     },
@@ -128,26 +116,23 @@ export const DealNotesList: React.FC<DealNotesListProps> = ({
     },
   });
 
-  const handleCreateNote = (noteData: DealNoteFormData) => {
-    createNoteMutation.mutate(noteData);
+  const handleCreateNote = (content: string) => {
+    createNoteMutation.mutate(content);
   };
 
   const handleUpdateNote = (id: string, content: string) => {
     updateNoteMutation.mutate({ id, content });
   };
 
-  const handleDeleteNote = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      deleteNoteMutation.mutate(id);
-    }
+  const handleDeleteNote = (noteId: string) => {
+    // Remove any browser confirmation dialog - let the AlertDialog in DealNoteItem handle it
+    deleteNoteMutation.mutate(noteId);
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        <div className="h-4 bg-gray-200 rounded animate-pulse" />
-        <div className="h-16 bg-gray-200 rounded animate-pulse" />
-        <div className="h-12 bg-gray-200 rounded animate-pulse" />
+      <div className="flex justify-center p-4">
+        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
   }
@@ -160,10 +145,14 @@ export const DealNotesList: React.FC<DealNotesListProps> = ({
           isSubmitting={createNoteMutation.isPending}
         />
       )}
-      
-      {notes.length > 0 ? (
-        <div className="space-y-3">
-          {notes.map((note) => (
+
+      <div className="space-y-3">
+        {notes.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            No notes yet. {canModify && 'Add the first note above.'}
+          </div>
+        ) : (
+          notes.map((note) => (
             <DealNoteItem
               key={note.id}
               note={note}
@@ -172,14 +161,9 @@ export const DealNotesList: React.FC<DealNotesListProps> = ({
               onUpdate={handleUpdateNote}
               onDelete={handleDeleteNote}
             />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          <p>No notes yet.</p>
-          {canModify && <p className="text-sm">Add the first note to get started.</p>}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 };
