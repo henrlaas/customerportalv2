@@ -77,16 +77,39 @@ export function MultiStageCompanyDialog({
 
   // Initialize stage and method when defaultValues are provided (conversion scenario)
   useEffect(() => {
+    console.log('MultiStageCompanyDialog: Initializing with defaultValues:', defaultValues);
     if (defaultValues && Object.keys(defaultValues).length > 0) {
       // This is a conversion scenario, skip to basic info stage
+      console.log('MultiStageCompanyDialog: Setting stage to 2 for conversion');
       setStage(2);
       setCreationMethod('manual');
+      
+      // Reset form with default values to ensure they're properly applied
+      form.reset({
+        name: '',
+        organization_number: '',
+        client_types: [CLIENT_TYPES.MARKETING],
+        website: '',
+        phone: '',
+        invoice_email: '',
+        street_address: '',
+        city: '',
+        postal_code: '',
+        country: '',
+        parent_id: parentId || '',
+        trial_period: false,
+        is_partner: false,
+        advisor_id: user?.id || '',
+        mrr: 0,
+        ...defaultValues,
+      });
     } else {
       // Normal creation, start at method selection
+      console.log('MultiStageCompanyDialog: Setting stage to 0 for normal creation');
       setStage(0);
       setCreationMethod(null);
     }
-  }, [defaultValues]);
+  }, [defaultValues, form, parentId, user?.id]);
 
   const website = form.watch('website');
   const clientTypes = form.watch('client_types');
@@ -94,6 +117,7 @@ export function MultiStageCompanyDialog({
 
   // Add stage-specific validation logic
   const validateCurrentStage = async (): Promise<boolean> => {
+    console.log('MultiStageCompanyDialog: Validating stage', stage);
     let fieldsToValidate: (keyof CompanyFormValues)[] = [];
     
     switch (stage) {
@@ -122,18 +146,30 @@ export function MultiStageCompanyDialog({
         return true; // No validation for stage 0 and 1 (method selection and search)
     }
     
+    console.log('MultiStageCompanyDialog: Fields to validate:', fieldsToValidate);
+    console.log('MultiStageCompanyDialog: Current form values:', form.getValues());
+    
     // Trigger validation only for current stage fields
     const result = await form.trigger(fieldsToValidate as any);
+    console.log('MultiStageCompanyDialog: Validation result:', result);
+    
+    if (!result) {
+      console.log('MultiStageCompanyDialog: Validation errors:', form.formState.errors);
+    }
+    
     return result;
   };
 
   // Add a new handleNext function
   const handleNext = async () => {
+    console.log('MultiStageCompanyDialog: handleNext called at stage', stage);
+    
     // For stages that need validation (2, 3, 4)
     if (stage >= 2) {
       const isValid = await validateCurrentStage();
       
       if (!isValid) {
+        console.log('MultiStageCompanyDialog: Validation failed, not proceeding');
         // Validation failed, don't proceed
         return;
       }
@@ -141,14 +177,19 @@ export function MultiStageCompanyDialog({
     
     // If we're on the last stage, submit the form
     if (stage === totalStages - 1) {
+      console.log('MultiStageCompanyDialog: Final stage, submitting form');
       // Final validation of all fields before submission
       const isFormValid = await form.trigger();
       if (isFormValid) {
         const values = form.getValues();
+        console.log('MultiStageCompanyDialog: Submitting with values:', values);
         createCompanyMutation.mutate(values);
+      } else {
+        console.log('MultiStageCompanyDialog: Final validation failed');
       }
     } else {
       // Otherwise just go to next stage
+      console.log('MultiStageCompanyDialog: Moving to next stage:', stage + 1);
       setStage(stage + 1);
     }
   };
@@ -278,6 +319,8 @@ export function MultiStageCompanyDialog({
     }
     return null;
   };
+
+  console.log('MultiStageCompanyDialog: Rendering at stage', stage, 'with defaultValues:', !!defaultValues);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
