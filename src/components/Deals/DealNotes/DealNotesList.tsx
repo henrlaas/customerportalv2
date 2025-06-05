@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
+import { supabase, updateWithUser } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { DealNote, DealNoteFormData } from '../types/dealNotes';
 import { Profile } from '../types/deal';
@@ -40,10 +40,21 @@ export const DealNotesList: React.FC<DealNotesListProps> = ({
   // Create note mutation
   const createNoteMutation = useMutation({
     mutationFn: async (content: string) => {
-      const { data, error } = await insertWithUser('deal_notes', {
-        deal_id: dealId,
-        content: content.trim(),
-      });
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data, error } = await supabase
+        .from('deal_notes')
+        .insert({
+          deal_id: dealId,
+          content: content.trim(),
+          user_id: userId,
+        })
+        .select();
 
       if (error) throw error;
       return data;
