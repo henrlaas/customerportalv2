@@ -1,5 +1,5 @@
 
-import { format, formatDistance } from 'date-fns';
+import { format, formatDistance, isSameMonth } from 'date-fns';
 import { Calendar, Clock, Pencil, Building, Tag, Briefcase, DollarSign, Trash2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -39,6 +39,10 @@ export const TimeEntryCard = ({
   // Format times and calculate duration
   const startTime = new Date(entry.start_time);
   const endTime = entry.end_time ? new Date(entry.end_time) : null;
+  const currentDate = new Date();
+  
+  // Check if entry is from current month
+  const isCurrentMonth = isSameMonth(startTime, currentDate);
   
   let duration = '-- : --';
   if (endTime) {
@@ -126,12 +130,14 @@ export const TimeEntryCard = ({
           
           {/* Right side - Actions */}
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={(e) => {
-              e.stopPropagation();
-              onEdit(entry);
-            }}>
-              <Pencil className="h-4 w-4" />
-            </Button>
+            {isCurrentMonth && (
+              <Button variant="ghost" size="icon" onClick={(e) => {
+                e.stopPropagation();
+                onEdit(entry);
+              }}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={(e) => {
               e.stopPropagation();
               onDelete(entry);
