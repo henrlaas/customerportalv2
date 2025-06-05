@@ -1,4 +1,3 @@
-
 // ----- Imports
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -75,6 +74,19 @@ export function MultiStageCompanyDialog({
       ...defaultValues,
     },
   });
+
+  // Initialize stage and method when defaultValues are provided (conversion scenario)
+  useEffect(() => {
+    if (defaultValues && Object.keys(defaultValues).length > 0) {
+      // This is a conversion scenario, skip to basic info stage
+      setStage(2);
+      setCreationMethod('manual');
+    } else {
+      // Normal creation, start at method selection
+      setStage(0);
+      setCreationMethod(null);
+    }
+  }, [defaultValues]);
 
   const website = form.watch('website');
   const clientTypes = form.watch('client_types');
