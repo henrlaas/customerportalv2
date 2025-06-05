@@ -4,6 +4,17 @@ import { Edit, Trash2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { DealNote } from '../types/dealNotes';
 import { Profile } from '../types/deal';
@@ -55,6 +66,10 @@ export const DealNoteItem: React.FC<DealNoteItemProps> = ({
     setIsEditing(false);
   };
 
+  const handleDelete = () => {
+    onDelete(note.id);
+  };
+
   return (
     <div className="bg-gray-50 rounded-lg p-3 space-y-2 min-h-fit">
       <div className="flex justify-between items-start">
@@ -80,14 +95,31 @@ export const DealNoteItem: React.FC<DealNoteItemProps> = ({
               </Button>
             )}
             {canDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(note.id)}
-                className="h-6 w-6 p-0 text-red-600 hover:text-red-800"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-red-600 hover:text-red-800"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Note</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this note? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         )}
