@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 // Deal type matching our database schema
@@ -39,6 +38,7 @@ export type Profile = {
   first_name: string | null;
   last_name: string | null;
   role: string;
+  avatar_url?: string | null;
 };
 
 // Temp deal company type
