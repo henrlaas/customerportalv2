@@ -74,13 +74,17 @@ export function DealKanbanView({
   }, [deals]);
 
   // Fetch temp company info 
-  const { data: tempCompanies } = useQuery({
+  const { data: tempCompanies, isLoading: isLoadingTempCompanies } = useQuery({
     queryKey: ['temp-deal-companies'],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('temp_deal_companies')
         .select('*');
-      console.log("Temp companies fetched:", data?.length);
+      console.log("Temp companies fetched:", data?.length || 0, data);
+      if (error) {
+        console.error("Error fetching temp companies:", error);
+        return [];
+      }
       return data || [];
     },
   });
@@ -113,18 +117,30 @@ export function DealKanbanView({
     
     console.log(`Moving deal ${dealId} to stage ${newStageId}`);
     
-    // Check if we're dropping into "Closed Won" stage
+    // Find the target stage and deal
     const targetStage = stages.find(s => s.id === newStageId);
     const deal = deals.find(d => d.id === dealId);
-    const tempCompany = tempCompanies?.find(tc => tc.deal_id === dealId);
     
-    console.log("Target stage:", targetStage?.name);
-    console.log("Deal has company_id:", deal?.company_id ? "Yes" : "No");
-    console.log("Temp company found:", tempCompany ? "Yes" : "No");
+    console.log("Target stage found:", targetStage?.name);
+    console.log("Deal found:", !!deal);
+    console.log("Deal company_id:", deal?.company_id);
+    
+    // Wait for temp companies to be loaded before checking
+    if (isLoadingTempCompanies) {
+      console.log("Still loading temp companies, will retry...");
+      return;
+    }
+    
+    const tempCompany = tempCompanies?.find(tc => tc.deal_id === dealId);
+    console.log("Temp companies available:", tempCompanies?.length || 0);
+    console.log("Temp company for deal:", tempCompany);
     
     // Make sure we're not dropping on the same stage
     const dealData = localDeals.find(d => d.id === dealId);
-    if (!dealData || dealData.stage_id === newStageId) return;
+    if (!dealData || dealData.stage_id === newStageId) {
+      console.log("Same stage or deal not found, skipping");
+      return;
+    }
     
     // First, update the deal's stage (optimistic update)
     setLocalDeals(prevDeals => 
@@ -136,20 +152,37 @@ export function DealKanbanView({
     // Persist to database
     onMove(dealId, newStageId);
     
-    // Show confetti if moving to "Closed Won"
-    if (targetStage?.name.toLowerCase() === 'closed won') {
+    // Check if moving to "Closed Won" stage (case-insensitive and trimmed)
+    const isClosedWon = targetStage?.name?.toLowerCase().trim() === 'closed won';
+    console.log("Is Closed Won stage:", isClosedWon);
+    
+    if (isClosedWon) {
       setShowConfetti(true);
       // Hide confetti after 5 seconds
       setTimeout(() => setShowConfetti(false), 5000);
       
       // Check if we need to show the convert dialog
-      if (!deal?.company_id && tempCompany) {
+      const hasNoCompany = !deal?.company_id;
+      const hasTempCompany = !!tempCompany;
+      
+      console.log("Deal has no company:", hasNoCompany);
+      console.log("Has temp company:", hasTempCompany);
+      console.log("Should show convert dialog:", hasNoCompany && hasTempCompany);
+      
+      if (hasNoCompany && hasTempCompany && deal) {
+        console.log("Showing convert dialog for deal:", deal.id);
         // Wait 500ms before showing the dialog to let the drag animation complete
         setTimeout(() => {
           setSelectedDeal(deal);
           setTempCompanyData(tempCompany);
           setShowConvertDialog(true);
         }, 500);
+      } else {
+        console.log("Convert dialog conditions not met:", {
+          hasNoCompany,
+          hasTempCompany,
+          hasDeal: !!deal
+        });
       }
     }
   };
@@ -219,6 +252,7 @@ export function DealKanbanView({
         <ConvertTempCompanyDialog
           isOpen={showConvertDialog}
           onClose={() => {
+            console.log("Closing convert dialog");
             setShowConvertDialog(false);
             setSelectedDeal(null);
             setTempCompanyData(null);
