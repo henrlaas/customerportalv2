@@ -10,7 +10,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { TimeEntry, ViewType } from '@/types/timeTracking';
 import { TimeEntryForm } from './TimeEntryForm';
 import { Input } from '@/components/ui/input';
-import { ExportHoursButton } from './ExportHoursButton';
 
 type TimeTrackerHeaderProps = {
   isTracking: boolean;
@@ -196,8 +195,6 @@ export const TimeTrackerHeader = ({
                 </span>
               </div>
             )}
-            
-            <ExportHoursButton />
             
             <Button variant="outline" onClick={() => setIsCreating(true)}>
               Manual Entry
