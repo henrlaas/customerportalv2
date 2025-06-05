@@ -57,13 +57,21 @@ export const DealNoteItem: React.FC<DealNoteItemProps> = ({
     setIsEditing(false);
   };
 
+  console.log('Author data:', author);
+  console.log('Avatar URL:', author?.avatar_url);
+
   return (
     <div className="bg-gray-50 rounded-lg p-3 space-y-2">
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Avatar className="h-6 w-6">
-            <AvatarImage src={author?.avatar_url || undefined} alt={authorName} />
-            <AvatarFallback className="text-xs">{getInitials()}</AvatarFallback>
+            <AvatarImage 
+              src={author?.avatar_url || undefined} 
+              alt={authorName}
+            />
+            <AvatarFallback className="text-xs bg-blue-500 text-white">
+              {getInitials()}
+            </AvatarFallback>
           </Avatar>
           <span className="font-medium">{authorName}</span>
           <span className="mx-2">•</span>
