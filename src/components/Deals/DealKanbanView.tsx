@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -268,7 +266,7 @@ function StageColumn({
   });
 
   return (
-    <div key={stage.id} className="flex flex-col h-full w-[250px] flex-shrink-0">
+    <div className="flex flex-col h-full w-[250px] flex-shrink-0">
       <div className="bg-muted p-3 rounded-t-lg">
         <h3 className="font-semibold">{stage.name}</h3>
         <div className="text-xs text-muted-foreground">{formatCurrency(totalValue)}</div>
