@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
@@ -322,8 +323,7 @@ const DealsPage = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-8">
-      {/* Header Section */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Deals</h1>
         <div className="flex items-center gap-4">
           {canModify && (
@@ -334,8 +334,8 @@ const DealsPage = () => {
         </div>
       </div>
 
-      {/* Search and Filter Controls */}
-      <div className="flex items-center gap-4">
+      {/* Search bar and stage filter tabs on the same line */}
+      <div className="mb-6 flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
@@ -361,26 +361,23 @@ const DealsPage = () => {
         </div>
       </div>
 
-      {/* Kanban View Container */}
-      <div className="h-[calc(100vh-280px)] overflow-hidden">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-          </div>
-        ) : (
-          <DealKanbanView
-            deals={filteredDeals}
-            stages={selectedStageFilter === 'all' ? stages : stages.filter(s => s.id === selectedStageFilter)}
-            companies={companies}
-            profiles={profiles}
-            canModify={canModify}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onMove={handleMoveStage}
-            isLoading={isLoading}
-          />
-        )}
-      </div>
+      {isLoading ? (
+        <div className="flex justify-center p-8">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      ) : (
+        <DealKanbanView
+          deals={filteredDeals}
+          stages={selectedStageFilter === 'all' ? stages : stages.filter(s => s.id === selectedStageFilter)}
+          companies={companies}
+          profiles={profiles}
+          canModify={canModify}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onMove={handleMoveStage}
+          isLoading={isLoading}
+        />
+      )}
 
       {/* Multi-Stage Edit Dialog */}
       <EditDealDialog
