@@ -116,6 +116,9 @@ export const TimeEntryForm = ({
   // Watch only the company_id field to minimize re-renders
   const selectedCompanyId = form.watch('company_id');
   const isBillable = form.watch('is_billable');
+  const selectedTaskId = form.watch('task_id');
+  const selectedCampaignId = form.watch('campaign_id');
+  const selectedProjectId = form.watch('project_id');
   
   // Use optimized hooks to fetch company-specific data
   const { data: companyTasks = [], isLoading: isLoadingTasks } = useCompanyTasks(selectedCompanyId);
@@ -156,18 +159,27 @@ export const TimeEntryForm = ({
   }, [selectedCompanyId, clearRelatedFields]);
   
   // Handle mutual exclusivity between task, campaign, and project selections
-  const updateMutualExclusivity = useCallback((field: string, value: string) => {
-    if (value && value !== `no-${field}`) {
-      if (field === 'task') {
-        form.setValue('campaign_id', undefined);
-        form.setValue('project_id', undefined);
-      } else if (field === 'campaign') {
-        form.setValue('task_id', undefined);
-        form.setValue('project_id', undefined);
-      } else if (field === 'project') {
-        form.setValue('task_id', undefined);
-        form.setValue('campaign_id', undefined);
-      }
+  const handleTaskSelection = useCallback((value: string) => {
+    form.setValue('task_id', value);
+    if (value && value !== 'no-task') {
+      form.setValue('campaign_id', undefined);
+      form.setValue('project_id', undefined);
+    }
+  }, [form]);
+
+  const handleCampaignSelection = useCallback((value: string) => {
+    form.setValue('campaign_id', value);
+    if (value && value !== 'no-campaign') {
+      form.setValue('task_id', undefined);
+      form.setValue('project_id', undefined);
+    }
+  }, [form]);
+
+  const handleProjectSelection = useCallback((value: string) => {
+    form.setValue('project_id', value);
+    if (value && value !== 'no-project') {
+      form.setValue('task_id', undefined);
+      form.setValue('campaign_id', undefined);
     }
   }, [form]);
 
@@ -436,16 +448,19 @@ export const TimeEntryForm = ({
           <FormItem>
             <FormLabel>Project</FormLabel>
             <Select
-              onValueChange={(value) => {
-                field.onChange(value);
-                updateMutualExclusivity('project', value);
-              }}
+              onValueChange={handleProjectSelection}
               value={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingProjects}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingProjects || !!selectedTaskId || !!selectedCampaignId}
             >
               <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder={isLoadingProjects ? "Loading projects..." : "Select a project"} />
+                <SelectTrigger className={!!selectedTaskId || !!selectedCampaignId ? 'opacity-50' : ''}>
+                  <SelectValue placeholder={
+                    !!selectedTaskId || !!selectedCampaignId 
+                      ? "Clear other selections first"
+                      : isLoadingProjects 
+                        ? "Loading projects..." 
+                        : "Select a project"
+                  } />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -469,16 +484,19 @@ export const TimeEntryForm = ({
           <FormItem>
             <FormLabel>Campaign</FormLabel>
             <Select
-              onValueChange={(value) => {
-                field.onChange(value);
-                updateMutualExclusivity('campaign', value);
-              }}
+              onValueChange={handleCampaignSelection}
               value={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingCampaigns}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingCampaigns || !!selectedTaskId || !!selectedProjectId}
             >
               <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder={isLoadingCampaigns ? "Loading campaigns..." : "Select a campaign"} />
+                <SelectTrigger className={!!selectedTaskId || !!selectedProjectId ? 'opacity-50' : ''}>
+                  <SelectValue placeholder={
+                    !!selectedTaskId || !!selectedProjectId 
+                      ? "Clear other selections first"
+                      : isLoadingCampaigns 
+                        ? "Loading campaigns..." 
+                        : "Select a campaign"
+                  } />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -502,16 +520,19 @@ export const TimeEntryForm = ({
           <FormItem>
             <FormLabel>Related Task</FormLabel>
             <Select
-              onValueChange={(value) => {
-                field.onChange(value);
-                updateMutualExclusivity('task', value);
-              }}
+              onValueChange={handleTaskSelection}
               value={field.value}
-              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingTasks}
+              disabled={!selectedCompanyId || selectedCompanyId === 'no-company' || isLoadingTasks || !!selectedCampaignId || !!selectedProjectId}
             >
               <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder={isLoadingTasks ? "Loading tasks..." : "Link to a task"} />
+                <SelectTrigger className={!!selectedCampaignId || !!selectedProjectId ? 'opacity-50' : ''}>
+                  <SelectValue placeholder={
+                    !!selectedCampaignId || !!selectedProjectId 
+                      ? "Clear other selections first"
+                      : isLoadingTasks 
+                        ? "Loading tasks..." 
+                        : "Link to a task"
+                  } />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
