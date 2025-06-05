@@ -77,8 +77,13 @@ const TimeTrackingPage = () => {
       return entryId;
     },
     onSuccess: (deletedEntryId) => {
-      // Invalidate and refetch time entries
+      // Invalidate and refetch all time tracking related queries
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
+      queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       
       // Show success toast
       toast({

@@ -213,8 +213,14 @@ export const TimeEntryForm = ({
         title: 'Time entry created',
         description: 'Your time entry has been created successfully.',
       });
+      // Invalidate all time tracking related queries to refresh all views
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      
       setIsCreating(false);
       onComplete();
       form.reset();
@@ -259,8 +265,14 @@ export const TimeEntryForm = ({
         title: 'Time entry updated',
         description: 'Your time entry has been updated successfully.',
       });
+      // Invalidate all time tracking related queries to refresh all views
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      
       setIsEditing(false);
       onCancelEdit();
       onComplete();

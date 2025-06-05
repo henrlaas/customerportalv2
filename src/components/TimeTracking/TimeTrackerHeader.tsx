@@ -74,7 +74,9 @@ export const TimeTrackerHeader = ({
           title: 'Time tracking started',
           description: 'Your time is now being tracked.',
         });
+        // Invalidate all time tracking related queries to refresh all views
         queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
+        queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
       }
     },
     onError: (error: any) => {
@@ -115,6 +117,7 @@ export const TimeTrackerHeader = ({
         title: 'Time tracking stopped',
         description: 'Please provide additional details for your time entry.',
       });
+      // Invalidate all time tracking related queries to refresh all views
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
     },
