@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Edit, Trash2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { DealNote } from '../types/dealNotes';
 import { Profile } from '../types/deal';
@@ -32,6 +33,15 @@ export const DealNoteItem: React.FC<DealNoteItemProps> = ({
     ? `${author.first_name || ''} ${author.last_name || ''}`.trim() || 'Unknown User'
     : 'Unknown User';
 
+  const getInitials = () => {
+    if (author?.first_name || author?.last_name) {
+      const first = author.first_name?.[0] || '';
+      const last = author.last_name?.[0] || '';
+      return (first + last).toUpperCase();
+    }
+    return 'U';
+  };
+
   const canEdit = canModify && (user?.id === note.user_id);
   const canDelete = canModify && (user?.id === note.user_id);
 
@@ -50,7 +60,11 @@ export const DealNoteItem: React.FC<DealNoteItemProps> = ({
   return (
     <div className="bg-gray-50 rounded-lg p-3 space-y-2">
       <div className="flex justify-between items-start">
-        <div className="text-sm text-gray-600">
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={author?.avatar_url || undefined} alt={authorName} />
+            <AvatarFallback className="text-xs">{getInitials()}</AvatarFallback>
+          </Avatar>
           <span className="font-medium">{authorName}</span>
           <span className="mx-2">•</span>
           <span>{formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}</span>
