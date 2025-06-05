@@ -56,7 +56,7 @@ export const DealNoteItem: React.FC<DealNoteItemProps> = ({
   };
 
   return (
-    <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+    <div className="bg-gray-50 rounded-lg p-3 space-y-2 min-h-fit">
       <div className="flex justify-between items-start">
         <div className="text-sm text-gray-600 flex items-center gap-2">
           <Avatar className="h-6 w-6">
@@ -117,11 +117,13 @@ export const DealNoteItem: React.FC<DealNoteItemProps> = ({
         <Textarea
           value={editContent}
           onChange={(e) => setEditContent(e.target.value)}
-          className="min-h-[60px] text-sm"
+          className="min-h-[60px] text-sm resize-y"
           autoFocus
         />
       ) : (
-        <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.content}</p>
+        <div className="text-sm text-gray-800 whitespace-pre-wrap break-words overflow-wrap-anywhere">
+          {note.content}
+        </div>
       )}
     </div>
   );
