@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import type { Company } from '@/types/company';
 
@@ -5,7 +6,7 @@ import type { Company } from '@/types/company';
 export const stage1Schema = z.object({
   // For stage 2 (Basic Info) - stage numbering starts at 0
   name: z.string().min(1, { message: 'Company name is required' }),
-  organization_number: z.string().min(1, { message: 'Organization number is required' }),
+  organization_number: z.string().optional(),
   client_types: z.array(z.string()).min(1, { message: 'At least one client type is required' }),
 });
 
