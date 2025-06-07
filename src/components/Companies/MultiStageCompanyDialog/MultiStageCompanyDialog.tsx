@@ -1,5 +1,6 @@
+
 // ----- Imports
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { userService } from '@/services/userService';
@@ -42,6 +43,7 @@ export function MultiStageCompanyDialog({
   const [logo, setLogo] = useState<string | null>(null);
   const [creationMethod, setCreationMethod] = useState<CreationMethod | null>(null);
   const [selectedBrregCompany, setSelectedBrregCompany] = useState<BrregCompany | null>(null);
+  const hasInitialized = useRef(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -78,14 +80,15 @@ export function MultiStageCompanyDialog({
   // Initialize stage and method when defaultValues are provided (conversion scenario)
   useEffect(() => {
     console.log('MultiStageCompanyDialog: Initializing with defaultValues:', defaultValues);
-    if (defaultValues && Object.keys(defaultValues).length > 0) {
+    if (defaultValues && Object.keys(defaultValues).length > 0 && !hasInitialized.current) {
+      hasInitialized.current = true;
       // This is a conversion scenario, skip to basic info stage
       console.log('MultiStageCompanyDialog: Setting stage to 2 for conversion');
       setStage(2);
       setCreationMethod('manual');
       
       // Reset form with default values to ensure they're properly applied
-      form.reset({
+      const resetData = {
         name: '',
         organization_number: '',
         client_types: [CLIENT_TYPES.MARKETING],
@@ -102,14 +105,16 @@ export function MultiStageCompanyDialog({
         advisor_id: user?.id || '',
         mrr: 0,
         ...defaultValues,
-      });
-    } else {
+      };
+      console.log('MultiStageCompanyDialog: Resetting form with data:', resetData);
+      form.reset(resetData);
+    } else if (!defaultValues || Object.keys(defaultValues).length === 0) {
       // Normal creation, start at method selection
       console.log('MultiStageCompanyDialog: Setting stage to 0 for normal creation');
       setStage(0);
       setCreationMethod(null);
     }
-  }, [defaultValues, form, parentId, user?.id]);
+  }, [defaultValues, parentId, user?.id]);
 
   const website = form.watch('website');
   const clientTypes = form.watch('client_types');
@@ -118,6 +123,9 @@ export function MultiStageCompanyDialog({
   // Add stage-specific validation logic
   const validateCurrentStage = async (): Promise<boolean> => {
     console.log('MultiStageCompanyDialog: Validating stage', stage);
+    console.log('MultiStageCompanyDialog: Current form values before validation:', form.getValues());
+    console.log('MultiStageCompanyDialog: Form state errors before validation:', form.formState.errors);
+    
     let fieldsToValidate: (keyof CompanyFormValues)[] = [];
     
     switch (stage) {
@@ -143,18 +151,26 @@ export function MultiStageCompanyDialog({
         // Country is optional, trial_period and is_partner have defaults
         break;
       default:
+        console.log('MultiStageCompanyDialog: No validation needed for stage', stage);
         return true; // No validation for stage 0 and 1 (method selection and search)
     }
     
     console.log('MultiStageCompanyDialog: Fields to validate:', fieldsToValidate);
-    console.log('MultiStageCompanyDialog: Current form values:', form.getValues());
     
     // Trigger validation only for current stage fields
     const result = await form.trigger(fieldsToValidate as any);
     console.log('MultiStageCompanyDialog: Validation result:', result);
     
     if (!result) {
-      console.log('MultiStageCompanyDialog: Validation errors:', form.formState.errors);
+      console.log('MultiStageCompanyDialog: Validation failed with errors:', form.formState.errors);
+      // Log specific field errors
+      fieldsToValidate.forEach(field => {
+        if (form.formState.errors[field]) {
+          console.log(`MultiStageCompanyDialog: Error in field ${field}:`, form.formState.errors[field]);
+        }
+      });
+    } else {
+      console.log('MultiStageCompanyDialog: Validation passed for stage', stage);
     }
     
     return result;
@@ -163,16 +179,19 @@ export function MultiStageCompanyDialog({
   // Add a new handleNext function
   const handleNext = async () => {
     console.log('MultiStageCompanyDialog: handleNext called at stage', stage);
+    console.log('MultiStageCompanyDialog: Form is valid:', form.formState.isValid);
+    console.log('MultiStageCompanyDialog: Form has errors:', Object.keys(form.formState.errors).length > 0);
     
     // For stages that need validation (2, 3, 4)
     if (stage >= 2) {
+      console.log('MultiStageCompanyDialog: Stage requires validation, checking...');
       const isValid = await validateCurrentStage();
       
       if (!isValid) {
-        console.log('MultiStageCompanyDialog: Validation failed, not proceeding');
-        // Validation failed, don't proceed
+        console.log('MultiStageCompanyDialog: Validation failed, not proceeding to next stage');
         return;
       }
+      console.log('MultiStageCompanyDialog: Validation passed, proceeding');
     }
     
     // If we're on the last stage, submit the form
@@ -185,7 +204,7 @@ export function MultiStageCompanyDialog({
         console.log('MultiStageCompanyDialog: Submitting with values:', values);
         createCompanyMutation.mutate(values);
       } else {
-        console.log('MultiStageCompanyDialog: Final validation failed');
+        console.log('MultiStageCompanyDialog: Final validation failed, not submitting');
       }
     } else {
       // Otherwise just go to next stage
@@ -261,6 +280,7 @@ export function MultiStageCompanyDialog({
       setCreationMethod(null);
       setSelectedBrregCompany(null);
       setLogo(null);
+      hasInitialized.current = false; // Reset initialization flag
       onClose();
     },
     onError: (error: Error) => {
@@ -290,6 +310,11 @@ export function MultiStageCompanyDialog({
   const handleBrregCompanySelect = (company: BrregCompany) => {
     setSelectedBrregCompany(company);
     setStage(2); // Go to basic info stage
+  };
+
+  const handleClose = () => {
+    hasInitialized.current = false; // Reset initialization flag when dialog closes
+    onClose();
   };
 
   const getStageTitle = () => {
@@ -323,7 +348,7 @@ export function MultiStageCompanyDialog({
   console.log('MultiStageCompanyDialog: Rendering at stage', stage, 'with defaultValues:', !!defaultValues);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{parentId ? 'Add Subsidiary' : 'New Company'}</DialogTitle>
@@ -353,7 +378,7 @@ export function MultiStageCompanyDialog({
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={onClose}>
+                  <Button type="button" variant="outline" onClick={handleClose}>
                     Cancel
                   </Button>
                   {stage >= 2 && (
