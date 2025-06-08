@@ -360,7 +360,7 @@ export function MultiStageCompanyDialog({
         {stage > 0 && <ProgressStepper currentStep={stage} totalSteps={totalStages} />}
 
         <Form {...form}>
-          <div className="space-y-4">
+          <form className="space-y-4">
             {renderStageContent()}
 
             {stage > 0 && (
@@ -406,7 +406,7 @@ export function MultiStageCompanyDialog({
                 </div>
               </DialogFooter>
             )}
-          </div>
+          </form>
         </Form>
       </DialogContent>
     </Dialog>
