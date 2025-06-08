@@ -16,6 +16,10 @@ interface ConvertTempCompanyDialogProps {
     company_name: string;
     organization_number: string | null;
     website: string | null;
+    street_address?: string | null;
+    city?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
   };
   dealValue: number | null;
   dealType: string | null;
@@ -63,7 +67,7 @@ export const ConvertTempCompanyDialog = ({
   };
 
   if (showCompanyForm) {
-    // Use the full temporary company data for pre-filling
+    // Use the full temporary company data for pre-filling, with fallbacks
     const companyData = fullTempCompany || tempCompany;
     
     return (
@@ -76,7 +80,7 @@ export const ConvertTempCompanyDialog = ({
           website: companyData.website || '',
           client_types: dealType === 'web' ? [CLIENT_TYPES.WEB] : [CLIENT_TYPES.MARKETING],
           mrr: dealValue || 0,
-          // Include address fields from enhanced temp company data
+          // Include address fields from enhanced temp company data with safe fallbacks
           street_address: companyData.street_address || '',
           city: companyData.city || '',
           postal_code: companyData.postal_code || '',
