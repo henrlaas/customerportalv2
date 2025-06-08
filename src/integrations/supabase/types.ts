@@ -1353,30 +1353,42 @@ export type Database = {
       }
       temp_deal_companies: {
         Row: {
+          city: string | null
           company_name: string
+          country: string | null
           created_at: string
           created_by: string | null
           deal_id: string | null
           id: string
           organization_number: string | null
+          postal_code: string | null
+          street_address: string | null
           website: string | null
         }
         Insert: {
+          city?: string | null
           company_name: string
+          country?: string | null
           created_at?: string
           created_by?: string | null
           deal_id?: string | null
           id?: string
           organization_number?: string | null
+          postal_code?: string | null
+          street_address?: string | null
           website?: string | null
         }
         Update: {
+          city?: string | null
           company_name?: string
+          country?: string | null
           created_at?: string
           created_by?: string | null
           deal_id?: string | null
           id?: string
           organization_number?: string | null
+          postal_code?: string | null
+          street_address?: string | null
           website?: string | null
         }
         Relationships: [

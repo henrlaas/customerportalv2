@@ -2,21 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ChevronLeft } from 'lucide-react';
 import { CompanyCreationMethodStage } from './CompanyCreationMethodStage';
 import { BrunnøysundSearchStage } from './BrunnøysundSearchStage';
-
-const newCompanySchema = z.object({
-  company_name: z.string().min(1, 'Company name is required'),
-  organization_number: z.string().optional(),
-  website: z.string().url().or(z.literal('')).optional(),
-});
-
-type NewCompanyFormData = z.infer<typeof newCompanySchema>;
+import { newCompanyFormSchema, NewCompanyFormValues } from '../types/deal';
 
 type CreationMethod = 'manual' | 'brunnøysund';
 
@@ -32,9 +24,9 @@ interface BrregCompany {
 }
 
 interface NewCompanyFormProps {
-  onNext: (data: NewCompanyFormData) => void;
+  onNext: (data: NewCompanyFormValues) => void;
   onBack: () => void;
-  defaultValues?: Partial<NewCompanyFormData>;
+  defaultValues?: Partial<NewCompanyFormValues>;
 }
 
 export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
@@ -45,12 +37,16 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
   const [subStage, setSubStage] = useState<'method-selection' | 'search' | 'form'>('method-selection');
   const [creationMethod, setCreationMethod] = useState<CreationMethod | null>(null);
 
-  const form = useForm<NewCompanyFormData>({
-    resolver: zodResolver(newCompanySchema),
+  const form = useForm<NewCompanyFormValues>({
+    resolver: zodResolver(newCompanyFormSchema),
     defaultValues: {
       company_name: '',
       organization_number: '',
       website: '',
+      street_address: '',
+      city: '',
+      postal_code: '',
+      country: 'Norway',
       ...defaultValues,
     },
   });
@@ -65,9 +61,18 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
   };
 
   const handleBrregCompanySelect = (company: BrregCompany) => {
-    // Prefill form with selected company data
+    // Prefill form with selected company data including address
     form.setValue('company_name', company.navn);
     form.setValue('organization_number', company.organisasjonsnummer);
+    
+    const address = company.forretningsadresse;
+    if (address) {
+      if (address.land) form.setValue('country', address.land);
+      if (address.postnummer) form.setValue('postal_code', address.postnummer);
+      if (address.poststed) form.setValue('city', address.poststed);
+      if (address.adresse) form.setValue('street_address', address.adresse.join(', '));
+    }
+    
     setSubStage('form');
   };
 
@@ -80,7 +85,7 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
     setSubStage('search');
   };
 
-  const onSubmit = (data: NewCompanyFormData) => {
+  const onSubmit = (data: NewCompanyFormValues) => {
     onNext(data);
   };
 
@@ -132,7 +137,7 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           name="organization_number"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Organization Number</FormLabel>
+              <FormLabel>Organization Number*</FormLabel>
               <FormControl>
                 <Input placeholder="123456789" {...field} />
               </FormControl>
@@ -146,7 +151,7 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           name="website"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Website (optional)</FormLabel>
+              <FormLabel>Website*</FormLabel>
               <FormControl>
                 <Input placeholder="https://acme.com" {...field} />
               </FormControl>
@@ -154,6 +159,69 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
             </FormItem>
           )}
         />
+
+        {/* Show address fields if they were populated from Brunnøysund */}
+        {(form.watch('street_address') || form.watch('city') || form.watch('postal_code')) && (
+          <>
+            <FormField
+              control={form.control}
+              name="street_address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Street Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Street address" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="postal_code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Postal Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="1234" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Oslo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Norway" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
 
         <div className="flex justify-between pt-4">
           <Button 

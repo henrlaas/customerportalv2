@@ -72,7 +72,7 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
       dealId = deal.id;
 
       if (!dealData.existingCompanyId) {
-        // Create temporary company
+        // Create temporary company with enhanced address data
         const { error: tempCompanyError } = await supabase
           .from('temp_deal_companies')
           .insert({
@@ -80,6 +80,10 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
             company_name: dealData.newCompany.company_name,
             organization_number: dealData.newCompany.organization_number,
             website: dealData.newCompany.website,
+            street_address: dealData.newCompany.street_address || null,
+            city: dealData.newCompany.city || null,
+            postal_code: dealData.newCompany.postal_code || null,
+            country: dealData.newCompany.country || 'Norway',
             created_by: user?.id,
           });
 

@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 // Deal type matching our database schema
@@ -41,13 +42,17 @@ export type Profile = {
   avatar_url?: string | null;
 };
 
-// Temp deal company type
+// Temp deal company type with enhanced address fields
 export type TempDealCompany = {
   id: string;
   deal_id: string;
   company_name: string;
   organization_number?: string | null;
   website?: string | null;
+  street_address?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
   created_at: string;
   created_by?: string | null;
 };
@@ -65,11 +70,16 @@ export type TempDealContact = {
   created_by?: string | null;
 };
 
-// Schema for new company form
+// Schema for new company form - make org number and website required for manual creation
 export const newCompanyFormSchema = z.object({
   company_name: z.string().min(1, 'Company name is required'),
-  organization_number: z.string().optional(),
-  website: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
+  organization_number: z.string().min(1, 'Organization number is required'),
+  website: z.string().url('Please enter a valid URL').min(1, 'Website is required'),
+  // Address fields for Brunnøysund API data
+  street_address: z.string().optional(),
+  city: z.string().optional(),
+  postal_code: z.string().optional(),
+  country: z.string().optional(),
 });
 
 // Schema for contact form

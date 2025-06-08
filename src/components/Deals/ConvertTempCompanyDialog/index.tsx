@@ -1,8 +1,12 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { CLIENT_TYPES } from '@/components/Companies/MultiStageCompanyDialog/ClientTypes';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ConvertTempCompanyDialogProps {
   isOpen: boolean;
@@ -26,6 +30,27 @@ export const ConvertTempCompanyDialog = ({
   dealType,
 }: ConvertTempCompanyDialogProps) => {
   const [showCompanyForm, setShowCompanyForm] = useState(false);
+  const { user } = useAuth();
+
+  // Fetch complete temporary company data including address fields
+  const { data: fullTempCompany } = useQuery({
+    queryKey: ['temp-company', dealId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('temp_deal_companies')
+        .select('*')
+        .eq('deal_id', dealId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching temp company:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: isOpen && !!dealId,
+  });
 
   const handleConvert = () => {
     console.log("Converting temp company to permanent company:", tempCompany.company_name);
@@ -38,16 +63,30 @@ export const ConvertTempCompanyDialog = ({
   };
 
   if (showCompanyForm) {
+    // Use the full temporary company data for pre-filling
+    const companyData = fullTempCompany || tempCompany;
+    
     return (
       <MultiStageCompanyDialog
         isOpen={true}
         onClose={handleClose}
         defaultValues={{
-          name: tempCompany.company_name,
-          organization_number: tempCompany.organization_number || '',
-          website: tempCompany.website || '',
-          client_types: dealType === 'web' ? ['Web'] : ['Marketing'],
+          name: companyData.company_name,
+          organization_number: companyData.organization_number || '',
+          website: companyData.website || '',
+          client_types: dealType === 'web' ? [CLIENT_TYPES.WEB] : [CLIENT_TYPES.MARKETING],
           mrr: dealValue || 0,
+          // Include address fields from enhanced temp company data
+          street_address: companyData.street_address || '',
+          city: companyData.city || '',
+          postal_code: companyData.postal_code || '',
+          country: companyData.country || 'Norway',
+          // Provide defaults for required fields
+          phone: '',
+          invoice_email: '',
+          advisor_id: user?.id || '',
+          trial_period: false,
+          is_partner: false,
         }}
         dealId={dealId}
       />
