@@ -1,4 +1,3 @@
-
 // ----- Imports
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -80,6 +79,8 @@ export function MultiStageCompanyDialog({
   // Initialize stage and method when defaultValues are provided (conversion scenario)
   useEffect(() => {
     console.log('MultiStageCompanyDialog: Initializing with defaultValues:', defaultValues);
+    console.log('MultiStageCompanyDialog: hasInitialized.current:', hasInitialized.current);
+    
     if (defaultValues && Object.keys(defaultValues).length > 0 && !hasInitialized.current) {
       hasInitialized.current = true;
       // This is a conversion scenario, skip to basic info stage
@@ -114,23 +115,25 @@ export function MultiStageCompanyDialog({
       setStage(0);
       setCreationMethod(null);
     }
-  }, [defaultValues, parentId, user?.id]);
+  }, [parentId, user?.id]); // Removed defaultValues and form from dependencies
 
   const website = form.watch('website');
   const clientTypes = form.watch('client_types');
   const hasMarketingType = clientTypes?.includes(CLIENT_TYPES.MARKETING);
 
-  // Add stage-specific validation logic
+  // Add stage-specific validation logic with enhanced error logging
   const validateCurrentStage = async (): Promise<boolean> => {
     console.log('MultiStageCompanyDialog: Validating stage', stage);
     console.log('MultiStageCompanyDialog: Current form values before validation:', form.getValues());
     console.log('MultiStageCompanyDialog: Form state errors before validation:', form.formState.errors);
+    console.log('MultiStageCompanyDialog: Form state isDirty:', form.formState.isDirty);
+    console.log('MultiStageCompanyDialog: Form state isValid:', form.formState.isValid);
     
     let fieldsToValidate: (keyof CompanyFormValues)[] = [];
     
     switch (stage) {
       case 2: // Basic Info stage
-        fieldsToValidate = ['name', 'organization_number', 'client_types'];
+        fieldsToValidate = ['name', 'client_types']; // organization_number is now optional
         break;
       case 3: // Contact Details stage
         fieldsToValidate = ['website', 'phone', 'invoice_email'];
@@ -156,6 +159,12 @@ export function MultiStageCompanyDialog({
     }
     
     console.log('MultiStageCompanyDialog: Fields to validate:', fieldsToValidate);
+    
+    // Get current values for the fields we're validating
+    const currentValues = form.getValues();
+    fieldsToValidate.forEach(field => {
+      console.log(`MultiStageCompanyDialog: Current value for ${field}:`, currentValues[field]);
+    });
     
     // Trigger validation only for current stage fields
     const result = await form.trigger(fieldsToValidate as any);
