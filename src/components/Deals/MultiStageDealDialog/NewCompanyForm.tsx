@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -71,6 +70,9 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
       if (address.postnummer) form.setValue('postal_code', address.postnummer);
       if (address.poststed) form.setValue('city', address.poststed);
       if (address.adresse) form.setValue('street_address', address.adresse.join(', '));
+    } else {
+      // Set Norge as default for Norwegian companies from Brunnøysund
+      form.setValue('country', 'Norge');
     }
     
     setSubStage('form');
@@ -214,7 +216,7 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
                 <FormItem>
                   <FormLabel>Country</FormLabel>
                   <FormControl>
-                    <Input placeholder="Norway" {...field} />
+                    <Input placeholder="Norge" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

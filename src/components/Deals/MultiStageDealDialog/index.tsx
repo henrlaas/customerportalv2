@@ -83,7 +83,7 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
             street_address: dealData.newCompany.street_address || null,
             city: dealData.newCompany.city || null,
             postal_code: dealData.newCompany.postal_code || null,
-            country: dealData.newCompany.country || 'Norway',
+            country: dealData.newCompany.country || 'Norge',
             created_by: user?.id,
           });
 
