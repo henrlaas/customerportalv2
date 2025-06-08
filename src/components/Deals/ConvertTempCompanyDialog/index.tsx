@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
 import { useQuery } from '@tanstack/react-query';
@@ -102,6 +101,9 @@ export const ConvertTempCompanyDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Convert Temporary Company?</DialogTitle>
+          <DialogDescription>
+            Creating a permanent company record will allow you to manage this company and track all future deals with them in one place.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 pt-4">
           <p className="text-sm text-muted-foreground">
