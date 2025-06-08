@@ -103,7 +103,7 @@ export function DealKanbanView({
     // Or for more complex logic like sorting within columns
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     setActiveId(null);
     
     if (!canModify) return;
@@ -124,16 +124,6 @@ export function DealKanbanView({
     console.log("Target stage found:", targetStage?.name);
     console.log("Deal found:", !!deal);
     console.log("Deal company_id:", deal?.company_id);
-    
-    // Wait for temp companies to be loaded before checking
-    if (isLoadingTempCompanies) {
-      console.log("Still loading temp companies, will retry...");
-      return;
-    }
-    
-    const tempCompany = tempCompanies?.find(tc => tc.deal_id === dealId);
-    console.log("Temp companies available:", tempCompanies?.length || 0);
-    console.log("Temp company for deal:", tempCompany);
     
     // Make sure we're not dropping on the same stage
     const dealData = localDeals.find(d => d.id === dealId);
@@ -156,33 +146,46 @@ export function DealKanbanView({
     const isClosedWon = targetStage?.name?.toLowerCase().trim() === 'closed won';
     console.log("Is Closed Won stage:", isClosedWon);
     
-    if (isClosedWon) {
+    if (isClosedWon && deal) {
       setShowConfetti(true);
       // Hide confetti after 5 seconds
       setTimeout(() => setShowConfetti(false), 5000);
       
       // Check if we need to show the convert dialog
       const hasNoCompany = !deal?.company_id;
-      const hasTempCompany = !!tempCompany;
       
       console.log("Deal has no company:", hasNoCompany);
-      console.log("Has temp company:", hasTempCompany);
-      console.log("Should show convert dialog:", hasNoCompany && hasTempCompany);
       
-      if (hasNoCompany && hasTempCompany && deal) {
-        console.log("Showing convert dialog for deal:", deal.id);
-        // Wait 500ms before showing the dialog to let the drag animation complete
-        setTimeout(() => {
-          setSelectedDeal(deal);
-          setTempCompanyData(tempCompany);
-          setShowConvertDialog(true);
-        }, 500);
+      if (hasNoCompany) {
+        // Fetch temp company data specifically for this deal
+        console.log("Fetching temp company for deal:", dealId);
+        
+        try {
+          const { data: tempCompany, error } = await supabase
+            .from('temp_deal_companies')
+            .select('*')
+            .eq('deal_id', dealId)
+            .maybeSingle();
+          
+          console.log("Temp company query result:", tempCompany);
+          console.log("Temp company query error:", error);
+          
+          if (tempCompany && !error) {
+            console.log("Found temp company, showing convert dialog for deal:", deal.id);
+            // Wait 500ms before showing the dialog to let the drag animation complete
+            setTimeout(() => {
+              setSelectedDeal(deal);
+              setTempCompanyData(tempCompany);
+              setShowConvertDialog(true);
+            }, 500);
+          } else {
+            console.log("No temp company found for deal or error occurred");
+          }
+        } catch (error) {
+          console.error("Error fetching temp company:", error);
+        }
       } else {
-        console.log("Convert dialog conditions not met:", {
-          hasNoCompany,
-          hasTempCompany,
-          hasDeal: !!deal
-        });
+        console.log("Deal already has a company, no conversion needed");
       }
     }
   };
