@@ -43,7 +43,7 @@ export function BasicInfoStage({ form, logo }: { form: any; logo: string | null 
               <Input placeholder="123456-7890" {...field} />
             </FormControl>
             <FormDescription>
-              Official registration number of the company (optional)
+              Official registration number of the company
             </FormDescription>
             <FormMessage />
           </FormItem>

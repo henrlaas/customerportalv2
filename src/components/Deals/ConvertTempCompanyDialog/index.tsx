@@ -3,8 +3,6 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MultiStageCompanyDialog } from '@/components/Companies/MultiStageCompanyDialog';
-import { CLIENT_TYPES } from '@/components/Companies/MultiStageCompanyDialog/ClientTypes';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface ConvertTempCompanyDialogProps {
   isOpen: boolean;
@@ -28,7 +26,6 @@ export const ConvertTempCompanyDialog = ({
   dealType,
 }: ConvertTempCompanyDialogProps) => {
   const [showCompanyForm, setShowCompanyForm] = useState(false);
-  const { user } = useAuth();
 
   const handleConvert = () => {
     console.log("Converting temp company to permanent company:", tempCompany.company_name);
@@ -41,32 +38,17 @@ export const ConvertTempCompanyDialog = ({
   };
 
   if (showCompanyForm) {
-    // Provide comprehensive default values for all required fields
-    const defaultValues = {
-      name: tempCompany.company_name,
-      organization_number: tempCompany.organization_number || '',
-      website: tempCompany.website || '',
-      client_types: dealType === 'web' ? [CLIENT_TYPES.WEB] : [CLIENT_TYPES.MARKETING],
-      mrr: dealValue || 0,
-      // Provide default empty strings for all required fields
-      phone: '',
-      invoice_email: '',
-      street_address: '',
-      city: '',
-      postal_code: '',
-      country: '',
-      advisor_id: user?.id || '', // Set default advisor to current user
-      trial_period: false,
-      is_partner: false,
-    };
-
-    console.log("ConvertTempCompanyDialog: Providing default values:", defaultValues);
-
     return (
       <MultiStageCompanyDialog
         isOpen={true}
         onClose={handleClose}
-        defaultValues={defaultValues}
+        defaultValues={{
+          name: tempCompany.company_name,
+          organization_number: tempCompany.organization_number || '',
+          website: tempCompany.website || '',
+          client_types: dealType === 'web' ? ['Web'] : ['Marketing'],
+          mrr: dealValue || 0,
+        }}
         dealId={dealId}
       />
     );
