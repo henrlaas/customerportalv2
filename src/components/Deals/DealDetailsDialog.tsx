@@ -10,7 +10,7 @@ import { MessageSquare } from 'lucide-react';
 import { Company, Deal, Profile } from './types/deal';
 import { DealNotesList } from './DealNotes/DealNotesList';
 import { useAuth } from '@/contexts/AuthContext';
-import { DealHeader, CompanyContactCard, DealInfoCard } from './DealDetailsDialog';
+import { DealHeader, CompanyContactCard, DealInfoCard } from './DealDetailsDialog/index';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface DealDetailsDialogProps {
