@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { useDraggable } from '@dnd-kit/core';
 
 // Import types from the deal types file
-import { Deal, Company, Stage, Profile, TempDealCompany } from '@/components/Deals/types/deal';
+import { Deal, Company, Stage, Profile } from '@/components/Deals/types/deal';
 
 // Import formatters
 import { formatCurrency, formatDate, getCompanyName, getAssigneeName } from './utils/formatters';
@@ -30,23 +30,23 @@ import { DealDetailsDialog } from './DealDetailsDialog';
 interface DealCardProps {
   deal: Deal;
   companies: Company[];
-  stages: Stage[];
   profiles: Profile[];
+  stages: Stage[];
   canModify: boolean;
   onEdit: (deal: Deal) => void;
   onDelete: (id: string) => void;
-  onMove: (deal: Deal) => void;
+  onViewDetails: (deal: Deal) => void;
 }
 
 export const DealCard = ({ 
   deal, 
   companies, 
-  stages, 
   profiles,
+  stages,
   canModify, 
   onEdit, 
   onDelete,
-  onMove
+  onViewDetails
 }: DealCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
   
@@ -187,7 +187,8 @@ export const DealCard = ({
         deal={deal}
         companies={companies}
         profiles={profiles}
-        tempCompanies={tempCompanies}
+        stages={stages}
+        tempCompanies={tempCompanies || []}
       />
     </>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DndContext, closestCenter } from '@dnd-kit/core';
@@ -75,6 +76,18 @@ export const DealKanbanView: React.FC<DealKanbanViewProps> = ({
     },
   });
 
+  const { data: tempContacts = [] } = useQuery({
+    queryKey: ['temp-deal-contacts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('temp_deal_contacts')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const handleViewDetails = (deal: Deal) => {
     setSelectedDeal(deal);
     setIsDetailsOpen(true);
@@ -107,7 +120,7 @@ export const DealKanbanView: React.FC<DealKanbanViewProps> = ({
                     deal={deal}
                     companies={companies}
                     profiles={profiles}
-                    tempCompanies={tempCompanies}
+                    stages={stages}
                     canModify={canModify}
                     onEdit={onEdit}
                     onDelete={onDelete}
@@ -130,6 +143,7 @@ export const DealKanbanView: React.FC<DealKanbanViewProps> = ({
           profiles={profiles}
           stages={stages}
           tempCompanies={tempCompanies}
+          tempContacts={tempContacts}
         />
       )}
     </DndContext>
