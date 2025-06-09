@@ -1,26 +1,21 @@
 
-import { z } from 'zod';
+import * as z from 'zod';
 
 export const convertTempCompanySchema = z.object({
-  // Pre-filled fields that can be edited
-  name: z.string().min(1, { message: 'Company name is required' }),
-  organization_number: z.string().min(1, { message: 'Organization number is required' }),
-  website: z.string().url().min(1, { message: 'Valid website URL is required' }),
-  phone: z.string().min(1, { message: 'Phone number is required' }),
-  client_types: z.array(z.string()).min(1, { message: 'At least one client type is required' }),
-  mrr: z.coerce.number().min(0, { message: 'MRR must be at least 0' }),
-  
-  // Address fields (may be pre-filled from Brunnøysund)
-  street_address: z.string().min(1, { message: 'Street address is required' }),
-  city: z.string().min(1, { message: 'City is required' }),
-  postal_code: z.string().min(1, { message: 'Postal code is required' }),
-  country: z.string().optional(),
-  
-  // New fields to collect
-  invoice_email: z.string().email({ message: 'Valid email is required' }),
+  name: z.string().min(1, 'Company name is required'),
+  organization_number: z.string().optional(),
+  website: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
+  phone: z.string().min(1, 'Phone number is required'),
+  invoice_email: z.string().email('Please enter a valid email address'),
+  street_address: z.string().min(1, 'Street address is required'),
+  city: z.string().min(1, 'City is required'),
+  postal_code: z.string().min(1, 'Postal code is required'),
+  country: z.string().min(1, 'Country is required'),
+  client_types: z.array(z.string()).min(1, 'At least one client type must be selected'),
+  mrr: z.number().min(0, 'MRR must be a positive number'),
   trial_period: z.boolean().default(false),
   is_partner: z.boolean().default(false),
-  advisor_id: z.string().min(1, { message: 'Please select an advisor' }),
+  advisor_id: z.string().min(1, 'Advisor is required'),
 });
 
 export type ConvertTempCompanyFormValues = z.infer<typeof convertTempCompanySchema>;
@@ -28,8 +23,9 @@ export type ConvertTempCompanyFormValues = z.infer<typeof convertTempCompanySche
 export interface AdvisorOption {
   value: string;
   label: string;
-  avatar_url?: string;
-  first_name?: string;
-  last_name?: string;
-  email: string;
+  avatar_url?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string;
+  role?: string;
 }

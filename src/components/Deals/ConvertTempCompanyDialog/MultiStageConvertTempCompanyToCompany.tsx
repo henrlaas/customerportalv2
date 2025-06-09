@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -45,15 +46,15 @@ export const MultiStageConvertTempCompanyToCompany = ({
 
   // Fetch user profiles for advisor selection (admin and employees only)
   const { data: profiles = [] } = useQuery({
-    queryKey: ['profiles'],
+    queryKey: ['advisor-profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, first_name, last_name, avatar_url, role')
         .in('role', ['admin', 'employee']);
         
       if (error) {
-        console.error('Error fetching profiles:', error);
+        console.error('Error fetching advisor profiles:', error);
         return [];
       }
       return data || [];
@@ -69,7 +70,8 @@ export const MultiStageConvertTempCompanyToCompany = ({
     avatar_url: profile.avatar_url,
     first_name: profile.first_name,
     last_name: profile.last_name,
-    email: '' // Email is not available in profiles table
+    email: '', // Email is not available in profiles table
+    role: profile.role
   }));
 
   const form = useForm<ConvertTempCompanyFormValues>({
