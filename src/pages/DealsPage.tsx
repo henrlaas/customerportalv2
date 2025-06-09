@@ -142,6 +142,28 @@ const DealsPage = () => {
     },
   });
 
+  // Fetch temp contacts
+  const { data: tempContacts = [] } = useQuery({
+    queryKey: ['temp-deal-contacts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('temp_deal_contacts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        toast({
+          title: 'Error fetching contacts',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return [];
+      }
+
+      return data;
+    },
+  });
+
   // Update stage mutation
   const updateStageMutation = useMutation({
     mutationFn: async ({ dealId, stageId }: { dealId: string; stageId: string }) => {

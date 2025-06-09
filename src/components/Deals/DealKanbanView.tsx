@@ -1,30 +1,20 @@
 import React, { useState } from 'react';
-import { 
-  DndContext, 
-  useSensors, 
-  useSensor, 
-  PointerSensor,
-  DragEndEvent,
-  useDroppable,
-  DragStartEvent,
-  DragOverEvent,
-  KeyboardSensor,
-  closestCorners,
-  DragOverlay
-} from '@dnd-kit/core';
-import { 
-  SortableContext, 
-  verticalListSortingStrategy,
-  sortableKeyboardCoordinates 
-} from '@dnd-kit/sortable';
-import ReactConfetti from 'react-confetti';
-import { Deal, Stage, Company, Profile } from '@/components/Deals/types/deal';
-import { DealCard } from './DealCard';
-import { DealKanbanViewSkeleton } from './DealKanbanViewSkeleton';
 import { useQuery } from '@tanstack/react-query';
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSensors, useSensor, PointerSensor, useDroppable } from '@dnd-kit/core';
 import { supabase } from '@/integrations/supabase/client';
-import { ConvertTempCompanyDialog } from './ConvertTempCompanyDialog';
-import { formatCurrency } from '../Deals/utils/formatters';
+import { Deal, Company, Stage, Profile } from './types/deal';
+import { DealCard } from './DealCard';
+import { MoreVertical } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { DealDetailsDialog } from './DealDetailsDialog';
 
 interface DealKanbanViewProps {
   deals: Deal[];
@@ -35,10 +25,10 @@ interface DealKanbanViewProps {
   onEdit: (deal: Deal) => void;
   onDelete: (id: string) => void;
   onMove: (dealId: string, newStageId: string) => void;
-  isLoading?: boolean;
+  isLoading: boolean;
 }
 
-export function DealKanbanView({
+export const DealKanbanView: React.FC<DealKanbanViewProps> = ({
   deals,
   stages,
   companies,
@@ -47,296 +37,101 @@ export function DealKanbanView({
   onEdit,
   onDelete,
   onMove,
-  isLoading = false,
-}: DealKanbanViewProps) {
+  isLoading,
+}) => {
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 10,
       },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [localDeals, setLocalDeals] = useState<Deal[]>(deals);
-  const [showConvertDialog, setShowConvertDialog] = useState(false);
-  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
-  const [tempCompanyData, setTempCompanyData] = useState<any>(null);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  
-  // Update local deals when props change
-  React.useEffect(() => {
-    setLocalDeals(deals);
-    console.log("DealKanbanView received deals:", deals.length);
-  }, [deals]);
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
 
-  // Fetch temp company info 
-  const { data: tempCompanies, isLoading: isLoadingTempCompanies } = useQuery({
+    if (!over) return;
+
+    if (active.id !== over.id) {
+      const dealId = active.id as string;
+      const newStageId = over.id as string;
+
+      onMove(dealId, newStageId);
+    }
+  };
+
+  const { data: tempCompanies = [] } = useQuery({
     queryKey: ['temp-deal-companies'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('temp_deal_companies')
         .select('*');
-      console.log("Temp companies fetched:", data?.length || 0, data);
-      if (error) {
-        console.error("Error fetching temp companies:", error);
-        return [];
-      }
-      return data || [];
+      
+      if (error) throw error;
+      return data;
     },
   });
 
-  if (isLoading) {
-    return <DealKanbanViewSkeleton />;
-  }
-
-  const handleDragStart = (event: DragStartEvent) => {
-    console.log("Drag started:", event.active.id);
-    setActiveId(event.active.id as string);
+  const handleViewDetails = (deal: Deal) => {
+    setSelectedDeal(deal);
+    setIsDetailsOpen(true);
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    // This can be used for visual feedback during dragging
-    // Or for more complex logic like sorting within columns
+  const handleCloseDetails = () => {
+    setIsDetailsOpen(false);
+    setSelectedDeal(null);
   };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    setActiveId(null);
-    
-    if (!canModify) return;
-    
-    const { active, over } = event;
-    
-    if (!active || !over) return;
-    
-    const dealId = String(active.id);
-    const newStageId = String(over.id);
-    
-    console.log(`Moving deal ${dealId} to stage ${newStageId}`);
-    
-    // Find the target stage and deal
-    const targetStage = stages.find(s => s.id === newStageId);
-    const deal = deals.find(d => d.id === dealId);
-    
-    console.log("Target stage found:", targetStage?.name);
-    console.log("Deal found:", !!deal);
-    console.log("Deal company_id:", deal?.company_id);
-    
-    // Make sure we're not dropping on the same stage
-    const dealData = localDeals.find(d => d.id === dealId);
-    if (!dealData || dealData.stage_id === newStageId) {
-      console.log("Same stage or deal not found, skipping");
-      return;
-    }
-    
-    // First, update the deal's stage (optimistic update)
-    setLocalDeals(prevDeals => 
-      prevDeals.map(deal => 
-        deal.id === dealId ? { ...deal, stage_id: newStageId } : deal
-      )
-    );
-    
-    // Persist to database
-    onMove(dealId, newStageId);
-    
-    // Check if moving to "Closed Won" stage (case-insensitive and trimmed)
-    const isClosedWon = targetStage?.name?.toLowerCase().trim() === 'closed won';
-    console.log("Is Closed Won stage:", isClosedWon);
-    
-    if (isClosedWon && deal) {
-      setShowConfetti(true);
-      // Hide confetti after 5 seconds
-      setTimeout(() => setShowConfetti(false), 5000);
-      
-      // Check if we need to show the convert dialog
-      const hasNoCompany = !deal?.company_id;
-      
-      console.log("Deal has no company:", hasNoCompany);
-      
-      if (hasNoCompany) {
-        // Fetch temp company data specifically for this deal
-        console.log("Fetching temp company for deal:", dealId);
-        
-        try {
-          const { data: tempCompany, error } = await supabase
-            .from('temp_deal_companies')
-            .select('*')
-            .eq('deal_id', dealId)
-            .maybeSingle();
-          
-          console.log("Temp company query result:", tempCompany);
-          console.log("Temp company query error:", error);
-          
-          if (tempCompany && !error) {
-            console.log("Found temp company, showing convert dialog for deal:", deal.id);
-            // Wait 500ms before showing the dialog to let the drag animation complete
-            setTimeout(() => {
-              setSelectedDeal(deal);
-              setTempCompanyData(tempCompany);
-              setShowConvertDialog(true);
-            }, 500);
-          } else {
-            console.log("No temp company found for deal or error occurred");
-          }
-        } catch (error) {
-          console.error("Error fetching temp company:", error);
-        }
-      } else {
-        console.log("Deal already has a company, no conversion needed");
-      }
-    }
-  };
-
-  // Find active deal for the drag overlay
-  const activeDeal = activeId ? localDeals.find(deal => deal.id === activeId) : null;
 
   return (
-    <DndContext 
-      sensors={sensors} 
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
-      collisionDetection={closestCorners}
     >
-      {showConfetti && (
-        <ReactConfetti
-          width={window.innerWidth}
-          height={window.innerHeight}
-          recycle={false}
-          numberOfPieces={200}
-          gravity={0.3}
-        />
-      )}
-      
-      {/* Responsive Grid Container */}
-      <div className="w-full overflow-hidden">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3 min-h-[500px]">
-          {stages.map((stage) => {
-            const stageDeals = localDeals.filter(deal => deal.stage_id === stage.id);
-            const stageTotalValue = stageDeals.reduce((sum, deal) => sum + (deal.value || 0), 0);
-            
-            return (
-              <StageColumn 
-                key={stage.id}
-                stage={stage}
-                deals={stageDeals}
-                totalValue={stageTotalValue}
-                companies={companies}
-                profiles={profiles}
-                canModify={canModify}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onMove={onMove}
-                activeId={activeId}
-              />
-            );
-          })}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 min-h-[600px]">
+        {stages.map(stage => {
+          const stageDeals = deals.filter(deal => deal.stage_id === stage.id);
+
+          return (
+          <SortableContext key={stage.id} items={stageDeals.map(d => d.id)} strategy={verticalListSortingStrategy}>
+            <div className="bg-gray-50 rounded-lg p-4 min-h-[500px]">
+              <h3 className="font-semibold text-gray-700">{stage.name}</h3>
+              
+              <div className="space-y-3 mt-4">
+                {stageDeals.map(deal => (
+                  <DealCard
+                    key={deal.id}
+                    deal={deal}
+                    companies={companies}
+                    profiles={profiles}
+                    tempCompanies={tempCompanies}
+                    canModify={canModify}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onViewDetails={handleViewDetails}
+                  />
+                ))}
+              </div>
+            </div>
+          </SortableContext>
+        )})}
       </div>
-      
-      {/* Add DragOverlay component for a better dragging experience */}
-      <DragOverlay>
-        {activeDeal ? (
-          <div className="opacity-80 w-full max-w-[280px]">
-            <DealCard
-              deal={activeDeal}
-              companies={companies}
-              stages={stages}
-              profiles={profiles}
-              canModify={false} // Disable interactions while dragging
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onMove={() => {}} // No-op for the overlay
-            />
-          </div>
-        ) : null}
-      </DragOverlay>
-      
-      {showConvertDialog && selectedDeal && tempCompanyData && (
-        <ConvertTempCompanyDialog
-          isOpen={showConvertDialog}
-          onClose={() => {
-            console.log("Closing convert dialog");
-            setShowConvertDialog(false);
-            setSelectedDeal(null);
-            setTempCompanyData(null);
-          }}
-          dealId={selectedDeal.id}
-          tempCompany={tempCompanyData}
-          dealValue={selectedDeal.value}
-          dealType={selectedDeal.client_deal_type}
+
+      {/* Deal Details Dialog */}
+      {selectedDeal && (
+        <DealDetailsDialog
+          isOpen={isDetailsOpen}
+          onClose={handleCloseDetails}
+          deal={selectedDeal}
+          companies={companies}
+          profiles={profiles}
+          stages={stages}
+          tempCompanies={tempCompanies}
         />
       )}
     </DndContext>
   );
-}
-
-interface StageColumnProps {
-  stage: Stage;
-  deals: Deal[];
-  totalValue: number;
-  companies: Company[];
-  profiles: Profile[];
-  canModify: boolean;
-  onEdit: (deal: Deal) => void;
-  onDelete: (id: string) => void;
-  onMove: (dealId: string, newStageId: string) => void;
-  activeId: string | null;
-}
-
-function StageColumn({
-  stage,
-  deals,
-  totalValue,
-  companies,
-  profiles,
-  canModify,
-  onEdit,
-  onDelete,
-  onMove,
-  activeId
-}: StageColumnProps) {
-  // Setup the drop area for this stage column
-  const { setNodeRef } = useDroppable({
-    id: stage.id,
-  });
-
-  return (
-    <div className="flex flex-col h-full w-full min-w-0">
-      <div className="bg-muted p-3 rounded-t-lg">
-        <h3 className="font-semibold text-sm lg:text-base truncate">{stage.name}</h3>
-        <div className="text-xs text-muted-foreground">{formatCurrency(totalValue)}</div>
-      </div>
-      <div 
-        ref={setNodeRef}
-        className="flex-1 p-2 bg-muted/50 rounded-b-lg min-h-[500px]"
-      >
-        <SortableContext items={deals.map(deal => deal.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-2">
-            {deals.map((deal) => (
-              <DealCard
-                key={deal.id}
-                deal={deal}
-                companies={companies}
-                stages={[]}
-                profiles={profiles}
-                canModify={canModify}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onMove={() => {}} // This is handled by DragEnd
-              />
-            ))}
-            {deals.length === 0 && (
-              <div className="bg-background p-4 rounded-md border border-dashed border-border text-center text-muted-foreground text-sm">
-                No deals in this stage
-              </div>
-            )}
-          </div>
-        </SortableContext>
-      </div>
-    </div>
-  );
-}
+};
