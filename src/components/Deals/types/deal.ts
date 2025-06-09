@@ -24,6 +24,7 @@ export type Company = {
   id: string;
   name: string;
   parent_id?: string | null;
+  website?: string | null;
 };
 
 // Stage type for deal stages

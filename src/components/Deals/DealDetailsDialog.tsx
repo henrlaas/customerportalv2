@@ -10,7 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare } from 'lucide-react';
 import { Company, Deal, Profile } from './types/deal';
 import { DealNotesList } from './DealNotes/DealNotesList';
-import { DealHeader, CompanyContactCard, DealInfoCard } from './DealDetailsDialog';
+import { DealHeader } from './DealDetailsDialog/DealHeader';
+import { CompanyContactCard } from './DealDetailsDialog/CompanyContactCard';
+import { DealInfoCard } from './DealDetailsDialog/DealInfoCard';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface DealDetailsDialogProps {
