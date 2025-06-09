@@ -1,9 +1,16 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { CountrySelector } from '@/components/ui/CountrySelector/selector';
+import CountrySelector from '@/components/ui/CountrySelector/selector';
+import { COUNTRIES } from '@/components/ui/CountrySelector/countries';
+import { useState } from 'react';
 
 export function AddressInformationStage({ form }: { form: any }) {
+  const [isCountrySelectorOpen, setIsCountrySelectorOpen] = useState(false);
+  
+  const selectedCountryCode = form.watch('country') || 'NO';
+  const selectedCountry = COUNTRIES.find(country => country.value === selectedCountryCode) || COUNTRIES.find(country => country.value === 'NO')!;
+
   return (
     <div className="space-y-4">
       <div className="bg-muted/50 p-4 rounded-lg">
@@ -65,8 +72,14 @@ export function AddressInformationStage({ form }: { form: any }) {
             <FormLabel>Country</FormLabel>
             <FormControl>
               <CountrySelector
-                value={field.value || 'NO'}
-                onChange={field.onChange}
+                id="country-selector"
+                open={isCountrySelectorOpen}
+                onToggle={() => setIsCountrySelectorOpen(!isCountrySelectorOpen)}
+                selectedValue={selectedCountry}
+                onChange={(value) => {
+                  field.onChange(value);
+                  setIsCountrySelectorOpen(false);
+                }}
               />
             </FormControl>
             <FormMessage />

@@ -9,7 +9,6 @@ import { Form } from '@/components/ui/form';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { userService } from '@/services/userService';
 import { companyService } from '@/services/companyService';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
@@ -45,25 +44,34 @@ export const MultiStageConvertTempCompanyToCompany = ({
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Fetch users for advisor selection (admin and employees only)
-  const { data: users = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => userService.listUsers(),
+  // Fetch user profiles for advisor selection (admin and employees only)
+  const { data: profiles = [] } = useQuery({
+    queryKey: ['profiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('role', ['admin', 'employee']);
+        
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        return [];
+      }
+      return data || [];
+    },
   });
 
-  // Filter users to only include admins and employees, and format for react-select
-  const advisorOptions: AdvisorOption[] = users
-    .filter(user => user.role === 'admin' || user.role === 'employee')
-    .map(user => ({
-      value: user.id,
-      label: user.first_name && user.last_name 
-        ? `${user.first_name} ${user.last_name}`
-        : user.email || user.id,
-      avatar_url: user.avatar_url,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      email: user.email || ''
-    }));
+  // Format profiles for react-select
+  const advisorOptions: AdvisorOption[] = profiles.map(profile => ({
+    value: profile.id,
+    label: profile.first_name && profile.last_name 
+      ? `${profile.first_name} ${profile.last_name}`
+      : 'Unknown User',
+    avatar_url: profile.avatar_url,
+    first_name: profile.first_name,
+    last_name: profile.last_name,
+    email: '' // Email is not available in profiles table
+  }));
 
   const form = useForm<ConvertTempCompanyFormValues>({
     resolver: zodResolver(convertTempCompanySchema),
