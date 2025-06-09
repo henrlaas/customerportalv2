@@ -112,8 +112,20 @@ export function MultiStageCompanyDialog({
       };
       console.log('MultiStageCompanyDialog: Resetting form with data:', resetData);
       
+      // Reset form and clear all errors
+      form.reset(resetData, {
+        keepErrors: false,
+        keepDirty: false,
+        keepDirtyValues: false,
+        keepValues: false,
+        keepDefaultValues: false,
+        keepIsSubmitted: false,
+        keepTouched: false,
+        keepIsValid: false,
+        keepSubmitCount: false,
+      });
+      
       // Use setTimeout to ensure form reset completes
-      form.reset(resetData);
       setTimeout(() => {
         setIsFormReady(true); // Mark form as ready after reset
       }, 100);
@@ -135,6 +147,9 @@ export function MultiStageCompanyDialog({
     console.log('MultiStageCompanyDialog: Validating stage', stage);
     console.log('MultiStageCompanyDialog: Current form values before validation:', form.getValues());
     console.log('MultiStageCompanyDialog: Form state errors before validation:', form.formState.errors);
+    
+    // Clear any existing errors first
+    form.clearErrors();
     
     let fieldsToValidate: (keyof CompanyFormValues)[] = [];
     
@@ -172,7 +187,17 @@ export function MultiStageCompanyDialog({
     
     console.log('MultiStageCompanyDialog: Fields to validate:', fieldsToValidate);
     
-    // Trigger validation only for current stage fields
+    // Get current values for the fields we're validating
+    const currentValues = form.getValues();
+    const valuesToValidate = fieldsToValidate.reduce((acc, field) => {
+      acc[field] = currentValues[field];
+      return acc;
+    }, {} as any);
+    console.log('MultiStageCompanyDialog: Values to validate:', valuesToValidate);
+    
+    // Manually trigger validation with a small delay to ensure form state is ready
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
     const result = await form.trigger(fieldsToValidate as any);
     console.log('MultiStageCompanyDialog: Validation result:', result);
     
