@@ -4,8 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export function ClientTypeAndMrrStage({ form }: { form: any }) {
-  const clientTypes = form.watch('client_types') || [];
-
   return (
     <div className="space-y-4">
       <div className="bg-muted/50 p-4 rounded-lg">
@@ -75,27 +73,25 @@ export function ClientTypeAndMrrStage({ form }: { form: any }) {
         )}
       />
 
-      {clientTypes?.includes('marketing') && (
-        <FormField
-          control={form.control}
-          name="mrr"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Monthly Recurring Revenue (MRR)*</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              </FormControl>
-              <FormDescription>Monthly recurring revenue in NOK</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
+      <FormField
+        control={form.control}
+        name="mrr"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Monthly Recurring Revenue (MRR)</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                placeholder="0"
+                {...field}
+                onChange={(e) => field.onChange(Number(e.target.value))}
+              />
+            </FormControl>
+            <FormDescription>Monthly recurring revenue in NOK</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 }

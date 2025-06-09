@@ -14,15 +14,36 @@ export function CompanySettingsStage({ form, advisorOptions }: CompanySettingsSt
   const selectedAdvisorId = form.watch('advisor_id');
   const selectedAdvisor = advisorOptions.find(option => option.value === selectedAdvisorId);
 
-  const formatOptionLabel = (option: AdvisorOption) => (
-    <div className="flex items-center gap-2">
+  // Helper function to get user initials
+  const getUserInitials = (firstName: string | null, lastName: string | null) => {
+    const first = firstName?.[0] || '';
+    const last = lastName?.[0] || '';
+    return (first + last).toUpperCase() || 'U';
+  };
+
+  // Custom option component for react-select with avatar
+  const CustomOption = ({ data, ...props }: any) => (
+    <div {...props.innerProps} className="flex items-center gap-2 p-2 hover:bg-gray-100 cursor-pointer">
       <Avatar className="h-6 w-6">
-        <AvatarImage src={option.avatar_url} alt={option.label} />
+        <AvatarImage src={data.avatar_url || undefined} />
         <AvatarFallback className="text-xs">
-          {option.first_name?.[0]}{option.last_name?.[0]}
+          {getUserInitials(data.first_name, data.last_name)}
         </AvatarFallback>
       </Avatar>
-      <span>{option.label}</span>
+      <span>{data.label}</span>
+    </div>
+  );
+
+  // Custom single value component for react-select with avatar
+  const CustomSingleValue = ({ data }: any) => (
+    <div className="flex items-center gap-2">
+      <Avatar className="h-5 w-5">
+        <AvatarImage src={data.avatar_url || undefined} />
+        <AvatarFallback className="text-xs">
+          {getUserInitials(data.first_name, data.last_name)}
+        </AvatarFallback>
+      </Avatar>
+      <span>{data.label}</span>
     </div>
   );
 
@@ -43,14 +64,70 @@ export function CompanySettingsStage({ form, advisorOptions }: CompanySettingsSt
             <FormLabel>Assigned Advisor*</FormLabel>
             <FormControl>
               <Select
-                value={selectedAdvisor}
-                onChange={(option) => field.onChange(option?.value || '')}
                 options={advisorOptions}
-                formatOptionLabel={formatOptionLabel}
+                value={selectedAdvisor || null}
+                onChange={(option) => field.onChange(option ? option.value : '')}
                 placeholder="Select an advisor"
-                isClearable={false}
-                className="text-sm"
+                className="react-select-container"
                 classNamePrefix="react-select"
+                components={{
+                  Option: CustomOption,
+                  SingleValue: CustomSingleValue,
+                }}
+                styles={{
+                  control: (baseStyles, state) => ({
+                    ...baseStyles,
+                    borderColor: 'hsl(var(--input))',
+                    backgroundColor: 'hsl(var(--background))',
+                    borderRadius: 'var(--radius)',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      borderColor: 'hsl(var(--input))'
+                    },
+                    minHeight: '44px',
+                    height: '44px',
+                    padding: '0 8px',
+                  }),
+                  valueContainer: (baseStyles) => ({
+                    ...baseStyles,
+                    height: '44px',
+                    padding: '0 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }),
+                  input: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'hsl(var(--foreground))',
+                    margin: 0,
+                    padding: 0,
+                  }),
+                  placeholder: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'hsl(var(--muted-foreground))',
+                    margin: 0,
+                  }),
+                  singleValue: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'hsl(var(--foreground))',
+                    margin: 0,
+                  }),
+                  menu: (baseStyles) => ({
+                    ...baseStyles,
+                    backgroundColor: 'hsl(var(--background))',
+                    borderColor: 'hsl(var(--border))',
+                    zIndex: 50
+                  }),
+                  option: (baseStyles) => ({
+                    ...baseStyles,
+                    backgroundColor: 'transparent',
+                    color: 'hsl(var(--foreground))',
+                    padding: 0,
+                  }),
+                  indicatorsContainer: (baseStyles) => ({
+                    ...baseStyles,
+                    height: '44px',
+                  }),
+                }}
               />
             </FormControl>
             <FormDescription>Select the advisor responsible for this company</FormDescription>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -149,11 +148,7 @@ export const MultiStageConvertTempCompanyToCompany = ({
         fieldsToValidate = ['phone', 'invoice_email'];
         break;
       case 3: // Client Type & MRR
-        fieldsToValidate = ['client_types'];
-        // If marketing is selected, also validate MRR
-        if (form.getValues('client_types')?.includes('marketing')) {
-          fieldsToValidate.push('mrr');
-        }
+        fieldsToValidate = ['client_types', 'mrr'];
         break;
       case 4: // Address Information
         fieldsToValidate = ['street_address', 'city', 'postal_code'];
