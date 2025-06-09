@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Company, CompanyContact } from '@/types/company';
 
@@ -193,8 +192,9 @@ const companyMutationService = {
       const formattedCompanyData: any = { ...companyData };
       
       if (companyData.client_types) {
-        formattedCompanyData.is_marketing_client = companyData.client_types.includes('Marketing');
-        formattedCompanyData.is_web_client = companyData.client_types.includes('Web');
+        // Fixed: Check for lowercase client types instead of capitalized ones
+        formattedCompanyData.is_marketing_client = companyData.client_types.includes('marketing');
+        formattedCompanyData.is_web_client = companyData.client_types.includes('web');
         delete formattedCompanyData.client_types; // Remove client_types as it's not a column
       }
       
@@ -224,8 +224,9 @@ const companyMutationService = {
       const formattedCompanyData: any = { ...company };
       
       if (company.client_types) {
-        formattedCompanyData.is_marketing_client = company.client_types.includes('Marketing');
-        formattedCompanyData.is_web_client = company.client_types.includes('Web');
+        // Fixed: Check for lowercase client types instead of capitalized ones
+        formattedCompanyData.is_marketing_client = company.client_types.includes('marketing');
+        formattedCompanyData.is_web_client = company.client_types.includes('web');
         delete formattedCompanyData.client_types; // Remove client_types as it's not a column
       }
       
@@ -358,8 +359,9 @@ const companyMutationService = {
         deal_id_param: dealId,
         name_param: companyData.name,
         organization_number_param: companyData.organization_number || null,
-        is_marketing_param: companyData.client_types?.includes('Marketing') || false,
-        is_web_param: companyData.client_types?.includes('Web') || false,
+        // Fixed: Check for lowercase client types instead of capitalized ones
+        is_marketing_param: companyData.client_types?.includes('marketing') || false,
+        is_web_param: companyData.client_types?.includes('web') || false,
         website_param: companyData.website || null,
         phone_param: companyData.phone || null,
         invoice_email_param: companyData.invoice_email || null,
