@@ -257,7 +257,7 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                   options={assigneeOptions}
                   value={assigneeOptions.find(option => option.value === field.value)}
                   onChange={(selectedOption) => field.onChange(selectedOption?.value || '')}
-                  placeholder="Select a team member..."
+                  placeholder="Search for a team member..."
                   isSearchable
                   components={{
                     SingleValue,
@@ -276,7 +276,8 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                         borderColor: 'hsl(var(--input))'
                       },
                       height: '40px',
-                      minHeight: '40px'
+                      minHeight: '40px',
+                      cursor: 'text'
                     }),
                     valueContainer: (baseStyles) => ({
                       ...baseStyles,
@@ -289,7 +290,19 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                       ...baseStyles,
                       margin: '0',
                       padding: '0',
-                      color: 'hsl(var(--foreground))'
+                      color: 'hsl(var(--foreground))',
+                      fontSize: '14px',
+                      lineHeight: '1.25',
+                      caretColor: 'hsl(var(--foreground))',
+                      opacity: 1,
+                      '&:focus': {
+                        outline: 'none'
+                      }
+                    }),
+                    inputContainer: (baseStyles) => ({
+                      ...baseStyles,
+                      margin: '0',
+                      padding: '0'
                     }),
                     indicatorsContainer: (baseStyles) => ({
                       ...baseStyles,
@@ -297,7 +310,8 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                     }),
                     placeholder: (baseStyles) => ({
                       ...baseStyles,
-                      color: 'hsl(var(--muted-foreground))'
+                      color: 'hsl(var(--muted-foreground))',
+                      fontSize: '14px'
                     }),
                     menu: (baseStyles) => ({
                       ...baseStyles,
@@ -324,6 +338,12 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                         color: 'hsl(var(--foreground) / 0.8)'
                       }
                     })
+                  }}
+                  filterOption={(option, inputValue) => {
+                    if (!inputValue) return true;
+                    const searchTerm = inputValue.toLowerCase();
+                    const label = option.label.toLowerCase();
+                    return label.includes(searchTerm);
                   }}
                 />
               </FormControl>
