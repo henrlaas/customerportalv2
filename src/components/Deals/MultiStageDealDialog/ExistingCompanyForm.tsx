@@ -49,12 +49,13 @@ const SingleValue = ({ data }: { data: CompanyOption }) => (
   </div>
 );
 
-const Option = ({ data, ...props }: any) => (
+const Option = ({ innerRef, innerProps, data, isFocused, isSelected }: any) => (
   <div
-    {...props}
-    className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-accent ${
-      props.isFocused ? 'bg-accent' : ''
-    } ${props.isSelected ? 'bg-accent' : ''}`}
+    ref={innerRef}
+    {...innerProps}
+    className={`flex items-center gap-2 p-2 cursor-pointer ${
+      isFocused ? 'bg-accent' : ''
+    } ${isSelected ? 'bg-primary text-primary-foreground' : ''}`}
   >
     <CompanyFavicon 
       companyName={data.label} 
@@ -177,16 +178,13 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
                         borderColor: 'hsl(var(--border))',
                         zIndex: 50
                       }),
-                      option: (baseStyles, { isFocused, isSelected }) => ({
+                      option: (baseStyles) => ({
                         ...baseStyles,
-                        backgroundColor: isFocused 
-                          ? 'hsl(var(--accent) / 0.1)' 
-                          : isSelected 
-                            ? 'hsl(var(--accent))'
-                            : undefined,
-                        color: isSelected 
-                          ? 'hsl(var(--accent-foreground))'
-                          : 'hsl(var(--foreground))'
+                        backgroundColor: 'transparent',
+                        padding: 0,
+                        '&:hover': {
+                          backgroundColor: 'transparent'
+                        }
                       }),
                       input: (baseStyles) => ({
                         ...baseStyles,

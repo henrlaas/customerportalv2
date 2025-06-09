@@ -60,12 +60,13 @@ const SingleValue = ({ data }: { data: AssigneeOption }) => (
   </div>
 );
 
-const Option = ({ data, ...props }: any) => (
+const Option = ({ innerRef, innerProps, data, isFocused, isSelected }: any) => (
   <div
-    {...props}
-    className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-accent ${
-      props.isFocused ? 'bg-accent' : ''
-    } ${props.isSelected ? 'bg-accent' : ''}`}
+    ref={innerRef}
+    {...innerProps}
+    className={`flex items-center gap-2 p-2 cursor-pointer ${
+      isFocused ? 'bg-accent' : ''
+    } ${isSelected ? 'bg-primary text-primary-foreground' : ''}`}
   >
     <Avatar className="h-6 w-6">
       <AvatarImage src={data.avatar_url || undefined} />
@@ -274,24 +275,7 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                       '&:hover': {
                         borderColor: 'hsl(var(--input))'
                       },
-                      minHeight: '40px',
-                      height: '40px' // Fixed height to match other form inputs
-                    }),
-                    valueContainer: (baseStyles) => ({
-                      ...baseStyles,
-                      height: '40px',
-                      padding: '0 8px'
-                    }),
-                    input: (baseStyles) => ({
-                      ...baseStyles,
-                      margin: '0',
-                      paddingTop: '0',
-                      paddingBottom: '0',
-                      color: 'hsl(var(--foreground))'
-                    }),
-                    indicatorsContainer: (baseStyles) => ({
-                      ...baseStyles,
-                      height: '40px'
+                      minHeight: '40px'
                     }),
                     placeholder: (baseStyles) => ({
                       ...baseStyles,
@@ -306,10 +290,14 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                     option: (baseStyles) => ({
                       ...baseStyles,
                       backgroundColor: 'transparent',
-                      color: 'hsl(var(--foreground))',
+                      padding: 0,
                       '&:hover': {
-                        backgroundColor: 'hsl(var(--accent))'
+                        backgroundColor: 'transparent'
                       }
+                    }),
+                    input: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'hsl(var(--foreground))'
                     }),
                     singleValue: (baseStyles) => ({
                       ...baseStyles,
