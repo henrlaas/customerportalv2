@@ -43,9 +43,6 @@ export function MultiStageCompanyDialog({
   const [logo, setLogo] = useState<string | null>(null);
   const [creationMethod, setCreationMethod] = useState<CreationMethod | null>(null);
   const [selectedBrregCompany, setSelectedBrregCompany] = useState<BrregCompany | null>(null);
-  const [isFormReady, setIsFormReady] = useState(false);
-  const [validationReady, setValidationReady] = useState(false);
-  const [formInitialized, setFormInitialized] = useState(false);
   const hasInitialized = useRef(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -70,12 +67,12 @@ export function MultiStageCompanyDialog({
       street_address: '',
       city: '',
       postal_code: '',
-      country: '',
+      country: '', // Remove default "Norge"
       parent_id: parentId || '',
       trial_period: false,
       is_partner: false,
       advisor_id: user?.id || '',
-      mrr: 0,
+      mrr: 0, // Default to 0 instead of undefined
       ...defaultValues,
     },
   });
@@ -83,24 +80,18 @@ export function MultiStageCompanyDialog({
   // Initialize stage and method when defaultValues are provided (conversion scenario)
   useEffect(() => {
     console.log('MultiStageCompanyDialog: Initializing with defaultValues:', defaultValues);
-    console.log('MultiStageCompanyDialog: hasInitialized.current:', hasInitialized.current);
-    
     if (defaultValues && Object.keys(defaultValues).length > 0 && !hasInitialized.current) {
       hasInitialized.current = true;
-      setIsFormReady(false);
-      setValidationReady(false);
-      setFormInitialized(false);
-      
       // This is a conversion scenario, skip to basic info stage
       console.log('MultiStageCompanyDialog: Setting stage to 2 for conversion');
       setStage(2);
       setCreationMethod('manual');
       
-      // Prepare form data with proper client_types handling
+      // Reset form with default values to ensure they're properly applied
       const resetData = {
         name: '',
         organization_number: '',
-        client_types: [CLIENT_TYPES.MARKETING], // Default fallback
+        client_types: [CLIENT_TYPES.MARKETING],
         website: '',
         phone: '',
         invoice_email: '',
@@ -115,69 +106,15 @@ export function MultiStageCompanyDialog({
         mrr: 0,
         ...defaultValues,
       };
-
-      // Ensure client_types is always an array and not empty
-      if (!resetData.client_types || !Array.isArray(resetData.client_types) || resetData.client_types.length === 0) {
-        resetData.client_types = [CLIENT_TYPES.MARKETING];
-      }
-
       console.log('MultiStageCompanyDialog: Resetting form with data:', resetData);
-      console.log('MultiStageCompanyDialog: Client types being set:', resetData.client_types);
-      
-      // Reset form and clear all errors
-      form.reset(resetData, {
-        keepErrors: false,
-        keepDirty: false,
-        keepDirtyValues: false,
-        keepValues: false,
-        keepDefaultValues: false,
-        keepIsSubmitted: false,
-        keepTouched: false,
-        keepIsValid: false,
-        keepSubmitCount: false,
-      });
-      
-      // Wait for form to be fully reset and verify state
-      const checkFormState = () => {
-        console.log('MultiStageCompanyDialog: Checking form state after reset');
-        console.log('MultiStageCompanyDialog: Form isLoading:', form.formState.isLoading);
-        console.log('MultiStageCompanyDialog: Current form values:', form.getValues());
-        console.log('MultiStageCompanyDialog: Form errors:', form.formState.errors);
-        
-        const currentValues = form.getValues();
-        const hasValidName = currentValues.name && currentValues.name.trim().length > 0;
-        const hasValidClientTypes = currentValues.client_types && Array.isArray(currentValues.client_types) && currentValues.client_types.length > 0;
-        
-        console.log('MultiStageCompanyDialog: Form validation - hasValidName:', hasValidName, 'hasValidClientTypes:', hasValidClientTypes);
-        
-        if (hasValidName && hasValidClientTypes && !form.formState.isLoading) {
-          console.log('MultiStageCompanyDialog: Form state is ready, enabling form and validation');
-          setFormInitialized(true);
-          setIsFormReady(true);
-          
-          // Add additional delay before enabling validation to ensure React Hook Form is fully stable
-          setTimeout(() => {
-            console.log('MultiStageCompanyDialog: Enabling validation after form stabilization');
-            setValidationReady(true);
-          }, 300);
-        } else {
-          console.log('MultiStageCompanyDialog: Form state not ready yet, retrying...');
-          setTimeout(checkFormState, 100);
-        }
-      };
-      
-      // Start checking form state after initial reset
-      setTimeout(checkFormState, 500);
+      form.reset(resetData);
     } else if (!defaultValues || Object.keys(defaultValues).length === 0) {
       // Normal creation, start at method selection
       console.log('MultiStageCompanyDialog: Setting stage to 0 for normal creation');
       setStage(0);
       setCreationMethod(null);
-      setIsFormReady(true);
-      setValidationReady(true);
-      setFormInitialized(true);
     }
-  }, [defaultValues, parentId, user?.id, form]);
+  }, [defaultValues, parentId, user?.id]);
 
   const website = form.watch('website');
   const clientTypes = form.watch('client_types');
@@ -186,30 +123,14 @@ export function MultiStageCompanyDialog({
   // Add stage-specific validation logic
   const validateCurrentStage = async (): Promise<boolean> => {
     console.log('MultiStageCompanyDialog: Validating stage', stage);
-    console.log('MultiStageCompanyDialog: Validation ready:', validationReady);
-    console.log('MultiStageCompanyDialog: Form initialized:', formInitialized);
     console.log('MultiStageCompanyDialog: Current form values before validation:', form.getValues());
     console.log('MultiStageCompanyDialog: Form state errors before validation:', form.formState.errors);
-    
-    // Don't validate if validation is not ready yet
-    if (!validationReady || !formInitialized) {
-      console.log('MultiStageCompanyDialog: Validation not ready, skipping validation');
-      return false;
-    }
-    
-    // Clear any existing errors first
-    form.clearErrors();
     
     let fieldsToValidate: (keyof CompanyFormValues)[] = [];
     
     switch (stage) {
       case 2: // Basic Info stage
-        fieldsToValidate = ['name', 'client_types'];
-        // Only validate organization_number if it has a value (since it's now optional)
-        const orgNumber = form.getValues('organization_number');
-        if (orgNumber && orgNumber.trim() !== '') {
-          fieldsToValidate.push('organization_number');
-        }
+        fieldsToValidate = ['name', 'organization_number', 'client_types'];
         break;
       case 3: // Contact Details stage
         fieldsToValidate = ['website', 'phone', 'invoice_email'];
@@ -226,6 +147,8 @@ export function MultiStageCompanyDialog({
         if (hasMarketingType) {
           fieldsToValidate.push('mrr');
         }
+        
+        // Country is optional, trial_period and is_partner have defaults
         break;
       default:
         console.log('MultiStageCompanyDialog: No validation needed for stage', stage);
@@ -234,32 +157,7 @@ export function MultiStageCompanyDialog({
     
     console.log('MultiStageCompanyDialog: Fields to validate:', fieldsToValidate);
     
-    // Get current values for the fields we're validating
-    const currentValues = form.getValues();
-    const valuesToValidate = fieldsToValidate.reduce((acc, field) => {
-      acc[field] = currentValues[field];
-      return acc;
-    }, {} as any);
-    console.log('MultiStageCompanyDialog: Values to validate:', valuesToValidate);
-    
-    // Additional client_types validation for conversion scenario
-    if (stage === 2 && fieldsToValidate.includes('client_types')) {
-      const clientTypesValue = currentValues.client_types;
-      console.log('MultiStageCompanyDialog: Validating client_types:', clientTypesValue);
-      
-      if (!clientTypesValue || !Array.isArray(clientTypesValue) || clientTypesValue.length === 0) {
-        console.log('MultiStageCompanyDialog: Client types validation failed - empty or invalid array');
-        form.setError('client_types', { 
-          type: 'manual', 
-          message: 'At least one client type is required' 
-        });
-        return false;
-      }
-    }
-    
-    // Manually trigger validation with a delay to ensure form state is ready
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    // Trigger validation only for current stage fields
     const result = await form.trigger(fieldsToValidate as any);
     console.log('MultiStageCompanyDialog: Validation result:', result);
     
@@ -283,9 +181,6 @@ export function MultiStageCompanyDialog({
     console.log('MultiStageCompanyDialog: handleNext called at stage', stage);
     console.log('MultiStageCompanyDialog: Form is valid:', form.formState.isValid);
     console.log('MultiStageCompanyDialog: Form has errors:', Object.keys(form.formState.errors).length > 0);
-    console.log('MultiStageCompanyDialog: Form ready:', isFormReady);
-    console.log('MultiStageCompanyDialog: Validation ready:', validationReady);
-    console.log('MultiStageCompanyDialog: Form initialized:', formInitialized);
     
     // For stages that need validation (2, 3, 4)
     if (stage >= 2) {
@@ -385,10 +280,7 @@ export function MultiStageCompanyDialog({
       setCreationMethod(null);
       setSelectedBrregCompany(null);
       setLogo(null);
-      hasInitialized.current = false;
-      setIsFormReady(false);
-      setValidationReady(false);
-      setFormInitialized(false);
+      hasInitialized.current = false; // Reset initialization flag
       onClose();
     },
     onError: (error: Error) => {
@@ -421,13 +313,7 @@ export function MultiStageCompanyDialog({
   };
 
   const handleClose = () => {
-    hasInitialized.current = false;
-    setIsFormReady(false);
-    setValidationReady(false);
-    setFormInitialized(false);
-    setStage(0);
-    setCreationMethod(null);
-    form.reset();
+    hasInitialized.current = false; // Reset initialization flag when dialog closes
     onClose();
   };
 
@@ -459,21 +345,7 @@ export function MultiStageCompanyDialog({
     return null;
   };
 
-  // Calculate if next button should be disabled
-  const isNextButtonDisabled = () => {
-    const baseDisabled = createCompanyMutation.isPending || !isFormReady;
-    
-    // For conversion scenarios (when we start at stage 2), also check validation readiness
-    if (defaultValues && Object.keys(defaultValues).length > 0) {
-      return baseDisabled || !validationReady || !formInitialized;
-    }
-    
-    return baseDisabled;
-  };
-
   console.log('MultiStageCompanyDialog: Rendering at stage', stage, 'with defaultValues:', !!defaultValues);
-  console.log('MultiStageCompanyDialog: Form ready:', isFormReady, 'Validation ready:', validationReady, 'Form initialized:', formInitialized);
-  console.log('MultiStageCompanyDialog: Next button disabled:', isNextButtonDisabled());
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -517,7 +389,7 @@ export function MultiStageCompanyDialog({
                         "flex items-center gap-1 bg-black hover:bg-black/90",
                         stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
                       )}
-                      disabled={isNextButtonDisabled()}
+                      disabled={createCompanyMutation.isPending}
                     >
                       {createCompanyMutation.isPending
                         ? 'Creating...'

@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CLIENT_TYPES } from './ClientTypes';
 
 export function BasicInfoStage({ form, logo }: { form: any; logo: string | null }) {
+  const clientTypes = form.watch('client_types');
   return (
     <>
       <div className="flex items-start gap-4">
@@ -32,7 +33,6 @@ export function BasicInfoStage({ form, logo }: { form: any; logo: string | null 
           />
         </div>
       </div>
-
       <FormField
         control={form.control}
         name="organization_number"
@@ -49,11 +49,10 @@ export function BasicInfoStage({ form, logo }: { form: any; logo: string | null 
           </FormItem>
         )}
       />
-
       <FormField
         control={form.control}
         name="client_types"
-        render={({ field }: any) => (
+        render={() => (
           <FormItem>
             <div className="mb-2">
               <FormLabel>Client Type*</FormLabel>
@@ -62,37 +61,46 @@ export function BasicInfoStage({ form, logo }: { form: any; logo: string | null 
               </FormDescription>
             </div>
             <div className="space-y-2">
-              <div className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox 
-                    checked={field.value?.includes(CLIENT_TYPES.MARKETING)}
-                    onCheckedChange={(checked) => {
-                      const current = field.value || [];
-                      const updated = checked
-                        ? [...current, CLIENT_TYPES.MARKETING]
-                        : current.filter((value: string) => value !== CLIENT_TYPES.MARKETING);
-                      field.onChange(updated.length > 0 ? updated : current);
-                    }}
-                  />
-                </FormControl>
-                <FormLabel className="font-normal cursor-pointer">Marketing</FormLabel>
-              </div>
-              
-              <div className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox 
-                    checked={field.value?.includes(CLIENT_TYPES.WEB)}
-                    onCheckedChange={(checked) => {
-                      const current = field.value || [];
-                      const updated = checked
-                        ? [...current, CLIENT_TYPES.WEB]
-                        : current.filter((value: string) => value !== CLIENT_TYPES.WEB);
-                      field.onChange(updated.length > 0 ? updated : current);
-                    }}
-                  />
-                </FormControl>
-                <FormLabel className="font-normal cursor-pointer">Web</FormLabel>
-              </div>
+              <FormField
+                control={form.control}
+                name="client_types"
+                render={({ field }: any) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox checked={field.value?.includes(CLIENT_TYPES.MARKETING)}
+                        onCheckedChange={(checked) => {
+                          const current = field.value || [];
+                          const updated = checked
+                            ? [...current, CLIENT_TYPES.MARKETING]
+                            : current.filter((value: string) => value !== CLIENT_TYPES.MARKETING);
+                          field.onChange(updated.length > 0 ? updated : current);
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal cursor-pointer">Marketing</FormLabel>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="client_types"
+                render={({ field }: any) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox checked={field.value?.includes(CLIENT_TYPES.WEB)}
+                        onCheckedChange={(checked) => {
+                          const current = field.value || [];
+                          const updated = checked
+                            ? [...current, CLIENT_TYPES.WEB]
+                            : current.filter((value: string) => value !== CLIENT_TYPES.WEB);
+                          field.onChange(updated.length > 0 ? updated : current);
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal cursor-pointer">Web</FormLabel>
+                  </FormItem>
+                )}
+              />
             </div>
             <FormMessage />
           </FormItem>

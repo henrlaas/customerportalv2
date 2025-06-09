@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,7 +35,6 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
 }) => {
   const [subStage, setSubStage] = useState<'method-selection' | 'search' | 'form'>('method-selection');
   const [creationMethod, setCreationMethod] = useState<CreationMethod | null>(null);
-  const [isFromBrunnøysund, setIsFromBrunnøysund] = useState(false);
 
   const form = useForm<NewCompanyFormValues>({
     resolver: zodResolver(newCompanyFormSchema),
@@ -55,7 +53,6 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
   const handleMethodSelect = (method: CreationMethod) => {
     setCreationMethod(method);
     if (method === 'manual') {
-      setIsFromBrunnøysund(false);
       setSubStage('form');
     } else {
       setSubStage('search');
@@ -78,15 +75,12 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
       form.setValue('country', 'Norge');
     }
     
-    // Mark as from Brunnøysund to hide address fields
-    setIsFromBrunnøysund(true);
     setSubStage('form');
   };
 
   const handleBackToMethodSelection = () => {
     setSubStage('method-selection');
     setCreationMethod(null);
-    setIsFromBrunnøysund(false);
   };
 
   const handleBackToSearch = () => {
@@ -168,8 +162,8 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           )}
         />
 
-        {/* Only show address fields for manual creation or if they weren't populated from Brunnøysund */}
-        {!isFromBrunnøysund && (form.watch('street_address') || form.watch('city') || form.watch('postal_code')) && (
+        {/* Show address fields if they were populated from Brunnøysund */}
+        {(form.watch('street_address') || form.watch('city') || form.watch('postal_code')) && (
           <>
             <FormField
               control={form.control}
@@ -228,16 +222,6 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
                 </FormItem>
               )}
             />
-          </>
-        )}
-
-        {/* Hidden fields to preserve address data from Brunnøysund */}
-        {isFromBrunnøysund && (
-          <>
-            <input type="hidden" {...form.register('street_address')} />
-            <input type="hidden" {...form.register('city')} />
-            <input type="hidden" {...form.register('postal_code')} />
-            <input type="hidden" {...form.register('country')} />
           </>
         )}
 
