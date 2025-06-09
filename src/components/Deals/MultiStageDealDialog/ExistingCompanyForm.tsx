@@ -166,7 +166,25 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
                         '&:hover': {
                           borderColor: 'hsl(var(--input))'
                         },
+                        height: '40px',
                         minHeight: '40px'
+                      }),
+                      valueContainer: (baseStyles) => ({
+                        ...baseStyles,
+                        height: '38px',
+                        padding: '0 8px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }),
+                      input: (baseStyles) => ({
+                        ...baseStyles,
+                        margin: '0',
+                        padding: '0',
+                        color: 'hsl(var(--foreground))'
+                      }),
+                      indicatorsContainer: (baseStyles) => ({
+                        ...baseStyles,
+                        height: '38px'
                       }),
                       placeholder: (baseStyles) => ({
                         ...baseStyles,
@@ -185,10 +203,6 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
                         '&:hover': {
                           backgroundColor: 'transparent'
                         }
-                      }),
-                      input: (baseStyles) => ({
-                        ...baseStyles,
-                        color: 'hsl(var(--foreground))'
                       }),
                       singleValue: (baseStyles) => ({
                         ...baseStyles,
