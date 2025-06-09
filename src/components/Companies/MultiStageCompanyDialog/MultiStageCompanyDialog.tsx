@@ -1,4 +1,5 @@
 
+
 // ----- Imports
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -43,6 +44,7 @@ export function MultiStageCompanyDialog({
   const [logo, setLogo] = useState<string | null>(null);
   const [creationMethod, setCreationMethod] = useState<CreationMethod | null>(null);
   const [selectedBrregCompany, setSelectedBrregCompany] = useState<BrregCompany | null>(null);
+  const [isFormReady, setIsFormReady] = useState(false);
   const hasInitialized = useRef(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -82,6 +84,8 @@ export function MultiStageCompanyDialog({
     console.log('MultiStageCompanyDialog: Initializing with defaultValues:', defaultValues);
     if (defaultValues && Object.keys(defaultValues).length > 0 && !hasInitialized.current) {
       hasInitialized.current = true;
+      setIsFormReady(false); // Mark form as not ready
+      
       // This is a conversion scenario, skip to basic info stage
       console.log('MultiStageCompanyDialog: Setting stage to 2 for conversion');
       setStage(2);
@@ -107,14 +111,20 @@ export function MultiStageCompanyDialog({
         ...defaultValues,
       };
       console.log('MultiStageCompanyDialog: Resetting form with data:', resetData);
+      
+      // Use setTimeout to ensure form reset completes
       form.reset(resetData);
+      setTimeout(() => {
+        setIsFormReady(true); // Mark form as ready after reset
+      }, 100);
     } else if (!defaultValues || Object.keys(defaultValues).length === 0) {
       // Normal creation, start at method selection
       console.log('MultiStageCompanyDialog: Setting stage to 0 for normal creation');
       setStage(0);
       setCreationMethod(null);
+      setIsFormReady(true); // Form is ready for normal creation
     }
-  }, [defaultValues, parentId, user?.id]);
+  }, [defaultValues, parentId, user?.id, form]);
 
   const website = form.watch('website');
   const clientTypes = form.watch('client_types');
@@ -130,7 +140,12 @@ export function MultiStageCompanyDialog({
     
     switch (stage) {
       case 2: // Basic Info stage
-        fieldsToValidate = ['name', 'organization_number', 'client_types'];
+        fieldsToValidate = ['name', 'client_types'];
+        // Only validate organization_number if it has a value
+        const orgNumber = form.getValues('organization_number');
+        if (orgNumber && orgNumber.trim() !== '') {
+          fieldsToValidate.push('organization_number');
+        }
         break;
       case 3: // Contact Details stage
         fieldsToValidate = ['website', 'phone', 'invoice_email'];
@@ -281,6 +296,7 @@ export function MultiStageCompanyDialog({
       setSelectedBrregCompany(null);
       setLogo(null);
       hasInitialized.current = false; // Reset initialization flag
+      setIsFormReady(false);
       onClose();
     },
     onError: (error: Error) => {
@@ -314,6 +330,10 @@ export function MultiStageCompanyDialog({
 
   const handleClose = () => {
     hasInitialized.current = false; // Reset initialization flag when dialog closes
+    setIsFormReady(false);
+    setStage(0);
+    setCreationMethod(null);
+    form.reset(); // Reset form to initial state
     onClose();
   };
 
@@ -389,7 +409,7 @@ export function MultiStageCompanyDialog({
                         "flex items-center gap-1 bg-black hover:bg-black/90",
                         stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
                       )}
-                      disabled={createCompanyMutation.isPending}
+                      disabled={createCompanyMutation.isPending || !isFormReady}
                     >
                       {createCompanyMutation.isPending
                         ? 'Creating...'
@@ -412,3 +432,4 @@ export function MultiStageCompanyDialog({
     </Dialog>
   );
 }
+
