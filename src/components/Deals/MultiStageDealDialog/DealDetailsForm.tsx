@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,14 +20,61 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from '@/components/ui/radio-group';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { dealDetailsFormSchema, DealDetailsFormValues } from '@/components/Deals/types/deal';
+import * as z from 'zod';
+
+// Update schema to make assigned_to required
+const requiredDealDetailsFormSchema = dealDetailsFormSchema.extend({
+  assigned_to: z.string().min(1, 'Assigned to is required'),
+});
+
+type RequiredDealDetailsFormValues = z.infer<typeof requiredDealDetailsFormSchema>;
 
 interface DealDetailsFormProps {
-  onSubmit: (data: DealDetailsFormValues) => void;
+  onSubmit: (data: RequiredDealDetailsFormValues) => void;
   onBack: () => void;
   isSubmitting?: boolean;
-  defaultValues?: Partial<DealDetailsFormValues>;
+  defaultValues?: Partial<RequiredDealDetailsFormValues>;
 }
+
+interface AssigneeOption {
+  value: string;
+  label: string;
+  avatar_url?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+}
+
+// Custom components for react-select with avatars
+const SingleValue = ({ data }: { data: AssigneeOption }) => (
+  <div className="flex items-center gap-2">
+    <Avatar className="h-6 w-6">
+      <AvatarImage src={data.avatar_url || undefined} />
+      <AvatarFallback className="text-xs">
+        {data.first_name?.[0]}{data.last_name?.[0]}
+      </AvatarFallback>
+    </Avatar>
+    <span>{data.label}</span>
+  </div>
+);
+
+const Option = ({ data, ...props }: any) => (
+  <div
+    {...props}
+    className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-accent ${
+      props.isFocused ? 'bg-accent' : ''
+    } ${props.isSelected ? 'bg-accent' : ''}`}
+  >
+    <Avatar className="h-6 w-6">
+      <AvatarImage src={data.avatar_url || undefined} />
+      <AvatarFallback className="text-xs">
+        {data.first_name?.[0]}{data.last_name?.[0]}
+      </AvatarFallback>
+    </Avatar>
+    <span>{data.label}</span>
+  </div>
+);
 
 export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
   onSubmit,
@@ -38,8 +84,8 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
 }) => {
   const { user } = useAuth();
   
-  const form = useForm<DealDetailsFormValues>({
-    resolver: zodResolver(dealDetailsFormSchema),
+  const form = useForm<RequiredDealDetailsFormValues>({
+    resolver: zodResolver(requiredDealDetailsFormSchema),
     defaultValues: {
       title: '',
       description: '',
@@ -56,7 +102,7 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, role')
+        .select('id, first_name, last_name, role, avatar_url')
         .order('first_name');
 
       if (error) {
@@ -72,14 +118,14 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
     (profile: any) => profile.role === 'admin' || profile.role === 'employee'
   );
 
-  // Format profiles for react-select
-  const assigneeOptions = [
-    { value: 'unassigned', label: 'Unassigned' },
-    ...eligibleProfiles.map((profile: any) => ({
-      value: profile.id,
-      label: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'
-    }))
-  ];
+  // Format profiles for react-select with avatars
+  const assigneeOptions: AssigneeOption[] = eligibleProfiles.map((profile: any) => ({
+    value: profile.id,
+    label: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User',
+    avatar_url: profile.avatar_url,
+    first_name: profile.first_name,
+    last_name: profile.last_name
+  }));
 
   return (
     <Form {...form}>
@@ -203,15 +249,18 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
           name="assigned_to"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assigned To (optional)</FormLabel>
+              <FormLabel>Assigned To *</FormLabel>
               <FormControl>
                 <Select
                   options={assigneeOptions}
                   value={assigneeOptions.find(option => option.value === field.value)}
-                  onChange={(selectedOption) => field.onChange(selectedOption?.value || 'unassigned')}
+                  onChange={(selectedOption) => field.onChange(selectedOption?.value || '')}
                   placeholder="Select a team member..."
-                  isClearable
                   isSearchable
+                  components={{
+                    SingleValue,
+                    Option
+                  }}
                   className="react-select-container"
                   classNamePrefix="react-select"
                   styles={{
@@ -236,16 +285,13 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                       borderColor: 'hsl(var(--border))',
                       zIndex: 50
                     }),
-                    option: (baseStyles, { isFocused, isSelected }) => ({
+                    option: (baseStyles) => ({
                       ...baseStyles,
-                      backgroundColor: isFocused 
-                        ? 'hsl(var(--accent) / 0.1)' 
-                        : isSelected 
-                          ? 'hsl(var(--accent))'
-                          : undefined,
-                      color: isSelected 
-                        ? 'hsl(var(--accent-foreground))'
-                        : 'hsl(var(--foreground))'
+                      backgroundColor: 'transparent',
+                      color: 'hsl(var(--foreground))',
+                      '&:hover': {
+                        backgroundColor: 'hsl(var(--accent))'
+                      }
                     }),
                     input: (baseStyles) => ({
                       ...baseStyles,
@@ -256,13 +302,6 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                       color: 'hsl(var(--foreground))'
                     }),
                     dropdownIndicator: (baseStyles) => ({
-                      ...baseStyles,
-                      color: 'hsl(var(--foreground) / 0.5)',
-                      '&:hover': {
-                        color: 'hsl(var(--foreground) / 0.8)'
-                      }
-                    }),
-                    clearIndicator: (baseStyles) => ({
                       ...baseStyles,
                       color: 'hsl(var(--foreground) / 0.5)',
                       '&:hover': {
