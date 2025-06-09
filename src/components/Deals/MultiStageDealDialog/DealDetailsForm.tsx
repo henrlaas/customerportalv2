@@ -299,11 +299,6 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                         outline: 'none'
                       }
                     }),
-                    inputContainer: (baseStyles) => ({
-                      ...baseStyles,
-                      margin: '0',
-                      padding: '0'
-                    }),
                     indicatorsContainer: (baseStyles) => ({
                       ...baseStyles,
                       height: '38px'
