@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -60,7 +61,7 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
   };
 
   const handleBrregCompanySelect = (company: BrregCompany) => {
-    // Prefill form with selected company data including address
+    // Prefill form with selected company data including address (but address won't be shown in UI)
     form.setValue('company_name', company.navn);
     form.setValue('organization_number', company.organisasjonsnummer);
     
@@ -162,8 +163,8 @@ export const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           )}
         />
 
-        {/* Show address fields if they were populated from Brunnøysund */}
-        {(form.watch('street_address') || form.watch('city') || form.watch('postal_code')) && (
+        {/* Only show address fields for manual creation method */}
+        {creationMethod === 'manual' && (
           <>
             <FormField
               control={form.control}
