@@ -11,6 +11,7 @@ interface DealDetailsDialogProps {
   profiles: Profile[];
   stages: Stage[];
   tempCompanies: any;
+  tempContacts?: any[];
 }
 
 export const DealDetailsDialog = ({
@@ -21,6 +22,7 @@ export const DealDetailsDialog = ({
   profiles,
   stages,
   tempCompanies,
+  tempContacts = [],
 }: DealDetailsDialogProps) => {
   return (
     <DealDetailsSidebar
@@ -31,6 +33,7 @@ export const DealDetailsDialog = ({
       profiles={profiles}
       stages={stages}
       tempCompanies={tempCompanies}
+      tempContacts={tempContacts}
     />
   );
 };
