@@ -13,10 +13,12 @@ import { userService } from '@/services/userService';
 import { companyService } from '@/services/companyService';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
-import { CompanyDataReviewStage } from './CompanyDataReviewStage';
-import { CompanyDetailsStage } from './CompanyDetailsStage';
+import { CompanyBasicInfoStage } from './CompanyBasicInfoStage';
+import { ContactInformationStage } from './ContactInformationStage';
+import { ClientTypeAndMrrStage } from './ClientTypeAndMrrStage';
+import { AddressInformationStage } from './AddressInformationStage';
 import { CompanySettingsStage } from './CompanySettingsStage';
-import { convertTempCompanySchema, ConvertTempCompanyFormValues } from './types';
+import { convertTempCompanySchema, ConvertTempCompanyFormValues, AdvisorOption } from './types';
 
 interface MultiStageConvertTempCompanyToCompanyProps {
   isOpen: boolean;
@@ -38,16 +40,30 @@ export const MultiStageConvertTempCompanyToCompany = ({
   dealType
 }: MultiStageConvertTempCompanyToCompanyProps) => {
   const [currentStage, setCurrentStage] = useState(1);
-  const totalStages = 3;
+  const totalStages = 5;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Fetch users for advisor selection
+  // Fetch users for advisor selection (admin and employees only)
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => userService.listUsers(),
   });
+
+  // Filter users to only include admins and employees, and format for react-select
+  const advisorOptions: AdvisorOption[] = users
+    .filter(user => user.role === 'admin' || user.role === 'employee')
+    .map(user => ({
+      value: user.id,
+      label: user.first_name && user.last_name 
+        ? `${user.first_name} ${user.last_name}`
+        : user.email || user.id,
+      avatar_url: user.avatar_url,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email || ''
+    }));
 
   const form = useForm<ConvertTempCompanyFormValues>({
     resolver: zodResolver(convertTempCompanySchema),
@@ -60,7 +76,7 @@ export const MultiStageConvertTempCompanyToCompany = ({
       street_address: tempCompany?.street_address || '',
       city: tempCompany?.city || '',
       postal_code: tempCompany?.postal_code || '',
-      country: tempCompany?.country || 'Norway',
+      country: tempCompany?.country || 'NO',
       
       // Determine client types from deal type
       client_types: dealType === 'web' ? ['web'] : ['marketing'],
@@ -118,13 +134,23 @@ export const MultiStageConvertTempCompanyToCompany = ({
     let fieldsToValidate: (keyof ConvertTempCompanyFormValues)[] = [];
     
     switch (currentStage) {
-      case 1: // Company Data Review
-        fieldsToValidate = ['name', 'organization_number', 'website', 'phone', 'client_types'];
+      case 1: // Company Basic Info
+        fieldsToValidate = ['name', 'organization_number', 'website'];
         break;
-      case 2: // Company Details
-        fieldsToValidate = ['invoice_email', 'street_address', 'city', 'postal_code'];
+      case 2: // Contact Information
+        fieldsToValidate = ['phone', 'invoice_email'];
         break;
-      case 3: // Company Settings (final stage)
+      case 3: // Client Type & MRR
+        fieldsToValidate = ['client_types'];
+        // If marketing is selected, also validate MRR
+        if (form.getValues('client_types')?.includes('marketing')) {
+          fieldsToValidate.push('mrr');
+        }
+        break;
+      case 4: // Address Information
+        fieldsToValidate = ['street_address', 'city', 'postal_code'];
+        break;
+      case 5: // Company Settings (final stage)
         const isValid = await form.trigger();
         if (isValid) {
           convertMutation.mutate(form.getValues());
@@ -146,9 +172,11 @@ export const MultiStageConvertTempCompanyToCompany = ({
 
   const getStageTitle = () => {
     switch (currentStage) {
-      case 1: return 'Review Company Data';
-      case 2: return 'Complete Company Details';
-      case 3: return 'Company Settings';
+      case 1: return 'Company Basic Information';
+      case 2: return 'Contact Information';
+      case 3: return 'Client Type & Revenue';
+      case 4: return 'Address Information';
+      case 5: return 'Company Settings';
       default: return 'Convert Company';
     }
   };
@@ -156,11 +184,15 @@ export const MultiStageConvertTempCompanyToCompany = ({
   const renderStageContent = () => {
     switch (currentStage) {
       case 1:
-        return <CompanyDataReviewStage form={form} />;
+        return <CompanyBasicInfoStage form={form} />;
       case 2:
-        return <CompanyDetailsStage form={form} />;
+        return <ContactInformationStage form={form} />;
       case 3:
-        return <CompanySettingsStage form={form} users={users} />;
+        return <ClientTypeAndMrrStage form={form} />;
+      case 4:
+        return <AddressInformationStage form={form} />;
+      case 5:
+        return <CompanySettingsStage form={form} advisorOptions={advisorOptions} />;
       default:
         return null;
     }
@@ -168,7 +200,7 @@ export const MultiStageConvertTempCompanyToCompany = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Convert to Company - {getStageTitle()}</DialogTitle>
         </DialogHeader>

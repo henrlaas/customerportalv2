@@ -24,3 +24,12 @@ export const convertTempCompanySchema = z.object({
 });
 
 export type ConvertTempCompanyFormValues = z.infer<typeof convertTempCompanySchema>;
+
+export interface AdvisorOption {
+  value: string;
+  label: string;
+  avatar_url?: string;
+  first_name?: string;
+  last_name?: string;
+  email: string;
+}

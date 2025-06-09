@@ -1,9 +1,31 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Select from 'react-select';
+import { AdvisorOption } from './types';
 
-export function CompanySettingsStage({ form, users }: { form: any; users: any[] }) {
+interface CompanySettingsStageProps {
+  form: any;
+  advisorOptions: AdvisorOption[];
+}
+
+export function CompanySettingsStage({ form, advisorOptions }: CompanySettingsStageProps) {
+  const selectedAdvisorId = form.watch('advisor_id');
+  const selectedAdvisor = advisorOptions.find(option => option.value === selectedAdvisorId);
+
+  const formatOptionLabel = (option: AdvisorOption) => (
+    <div className="flex items-center gap-2">
+      <Avatar className="h-6 w-6">
+        <AvatarImage src={option.avatar_url} alt={option.label} />
+        <AvatarFallback className="text-xs">
+          {option.first_name?.[0]}{option.last_name?.[0]}
+        </AvatarFallback>
+      </Avatar>
+      <span>{option.label}</span>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       <div className="bg-muted/50 p-4 rounded-lg">
@@ -19,22 +41,18 @@ export function CompanySettingsStage({ form, users }: { form: any; users: any[] 
         render={({ field }) => (
           <FormItem>
             <FormLabel>Assigned Advisor*</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an advisor" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.first_name && user.last_name
-                      ? `${user.first_name} ${user.last_name}`
-                      : user.email || user.id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FormControl>
+              <Select
+                value={selectedAdvisor}
+                onChange={(option) => field.onChange(option?.value || '')}
+                options={advisorOptions}
+                formatOptionLabel={formatOptionLabel}
+                placeholder="Select an advisor"
+                isClearable={false}
+                className="text-sm"
+                classNamePrefix="react-select"
+              />
+            </FormControl>
             <FormDescription>Select the advisor responsible for this company</FormDescription>
             <FormMessage />
           </FormItem>
@@ -45,19 +63,19 @@ export function CompanySettingsStage({ form, users }: { form: any; users: any[] 
         control={form.control}
         name="trial_period"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-            <FormControl>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel>Trial Period</FormLabel>
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <FormLabel className="text-base">Trial Period</FormLabel>
               <FormDescription>
                 This company is currently in a trial period
               </FormDescription>
             </div>
+            <FormControl>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}
@@ -67,19 +85,19 @@ export function CompanySettingsStage({ form, users }: { form: any; users: any[] 
         control={form.control}
         name="is_partner"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-            <FormControl>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel>Partner Company</FormLabel>
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <FormLabel className="text-base">Partner Company</FormLabel>
               <FormDescription>
                 This company is a business partner
               </FormDescription>
             </div>
+            <FormControl>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}
