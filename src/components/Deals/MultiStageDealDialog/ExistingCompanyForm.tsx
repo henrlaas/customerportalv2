@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 const formSchema = z.object({
   company_id: z.string().min(1, 'Please select a company'),
@@ -26,6 +27,44 @@ interface ExistingCompanyFormProps {
   onBack: () => void;
   defaultValue?: string;
 }
+
+interface CompanyOption {
+  value: string;
+  label: string;
+  website?: string | null;
+  logo_url?: string | null;
+  parent_id?: string | null;
+}
+
+// Custom components for react-select with company favicons
+const SingleValue = ({ data }: { data: CompanyOption }) => (
+  <div className="flex items-center gap-2">
+    <CompanyFavicon 
+      companyName={data.label} 
+      website={data.website}
+      logoUrl={data.logo_url}
+      size="sm"
+    />
+    <span>{data.parent_id ? `↳ ${data.label}` : data.label}</span>
+  </div>
+);
+
+const Option = ({ data, ...props }: any) => (
+  <div
+    {...props}
+    className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-accent ${
+      props.isFocused ? 'bg-accent' : ''
+    } ${props.isSelected ? 'bg-accent' : ''}`}
+  >
+    <CompanyFavicon 
+      companyName={data.label} 
+      website={data.website}
+      logoUrl={data.logo_url}
+      size="sm"
+    />
+    <span>{data.parent_id ? `↳ ${data.label}` : data.label}</span>
+  </div>
+);
 
 export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   onNext,
@@ -47,7 +86,7 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     queryFn: async () => {
       let query = supabase
         .from('companies')
-        .select('id, name, parent_id')
+        .select('id, name, parent_id, website, logo_url')
         .order('name');
 
       // Only show top-level companies when not showing subsidiaries
@@ -66,10 +105,13 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     },
   });
 
-  // Format companies for react-select
-  const companyOptions = companies.map((company: any) => ({
+  // Format companies for react-select with favicon data
+  const companyOptions: CompanyOption[] = companies.map((company: any) => ({
     value: company.id,
-    label: company.parent_id ? `↳ ${company.name}` : company.name
+    label: company.name,
+    website: company.website,
+    logo_url: company.logo_url,
+    parent_id: company.parent_id
   }));
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
@@ -107,6 +149,10 @@ export const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
                     isClearable
                     isSearchable
                     isLoading={isLoading}
+                    components={{
+                      SingleValue,
+                      Option
+                    }}
                     className="react-select-container"
                     classNamePrefix="react-select"
                     styles={{

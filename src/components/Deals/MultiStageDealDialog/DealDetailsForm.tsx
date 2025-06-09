@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -273,7 +274,24 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                       '&:hover': {
                         borderColor: 'hsl(var(--input))'
                       },
-                      minHeight: '40px'
+                      minHeight: '40px',
+                      height: '40px' // Fixed height to match other form inputs
+                    }),
+                    valueContainer: (baseStyles) => ({
+                      ...baseStyles,
+                      height: '40px',
+                      padding: '0 8px'
+                    }),
+                    input: (baseStyles) => ({
+                      ...baseStyles,
+                      margin: '0',
+                      paddingTop: '0',
+                      paddingBottom: '0',
+                      color: 'hsl(var(--foreground))'
+                    }),
+                    indicatorsContainer: (baseStyles) => ({
+                      ...baseStyles,
+                      height: '40px'
                     }),
                     placeholder: (baseStyles) => ({
                       ...baseStyles,
@@ -292,10 +310,6 @@ export const DealDetailsForm: React.FC<DealDetailsFormProps> = ({
                       '&:hover': {
                         backgroundColor: 'hsl(var(--accent))'
                       }
-                    }),
-                    input: (baseStyles) => ({
-                      ...baseStyles,
-                      color: 'hsl(var(--foreground))'
                     }),
                     singleValue: (baseStyles) => ({
                       ...baseStyles,
