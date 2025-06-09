@@ -1,5 +1,3 @@
-
-
 // ----- Imports
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -45,6 +43,7 @@ export function MultiStageCompanyDialog({
   const [creationMethod, setCreationMethod] = useState<CreationMethod | null>(null);
   const [selectedBrregCompany, setSelectedBrregCompany] = useState<BrregCompany | null>(null);
   const [isFormReady, setIsFormReady] = useState(false);
+  const [validationReady, setValidationReady] = useState(false);
   const hasInitialized = useRef(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -85,6 +84,7 @@ export function MultiStageCompanyDialog({
     if (defaultValues && Object.keys(defaultValues).length > 0 && !hasInitialized.current) {
       hasInitialized.current = true;
       setIsFormReady(false); // Mark form as not ready
+      setValidationReady(false); // Mark validation as not ready
       
       // This is a conversion scenario, skip to basic info stage
       console.log('MultiStageCompanyDialog: Setting stage to 2 for conversion');
@@ -125,16 +125,19 @@ export function MultiStageCompanyDialog({
         keepSubmitCount: false,
       });
       
-      // Use setTimeout to ensure form reset completes
+      // Use a longer timeout to ensure form reset completes and state is stable
       setTimeout(() => {
+        console.log('MultiStageCompanyDialog: Form reset complete, enabling form and validation');
         setIsFormReady(true); // Mark form as ready after reset
-      }, 100);
+        setValidationReady(true); // Mark validation as ready
+      }, 200); // Increased delay
     } else if (!defaultValues || Object.keys(defaultValues).length === 0) {
       // Normal creation, start at method selection
       console.log('MultiStageCompanyDialog: Setting stage to 0 for normal creation');
       setStage(0);
       setCreationMethod(null);
       setIsFormReady(true); // Form is ready for normal creation
+      setValidationReady(true); // Validation is ready for normal creation
     }
   }, [defaultValues, parentId, user?.id, form]);
 
@@ -145,8 +148,15 @@ export function MultiStageCompanyDialog({
   // Add stage-specific validation logic
   const validateCurrentStage = async (): Promise<boolean> => {
     console.log('MultiStageCompanyDialog: Validating stage', stage);
+    console.log('MultiStageCompanyDialog: Validation ready:', validationReady);
     console.log('MultiStageCompanyDialog: Current form values before validation:', form.getValues());
     console.log('MultiStageCompanyDialog: Form state errors before validation:', form.formState.errors);
+    
+    // Don't validate if validation is not ready yet
+    if (!validationReady) {
+      console.log('MultiStageCompanyDialog: Validation not ready, skipping validation');
+      return false;
+    }
     
     // Clear any existing errors first
     form.clearErrors();
@@ -156,7 +166,7 @@ export function MultiStageCompanyDialog({
     switch (stage) {
       case 2: // Basic Info stage
         fieldsToValidate = ['name', 'client_types'];
-        // Only validate organization_number if it has a value
+        // Only validate organization_number if it has a value (since it's now optional)
         const orgNumber = form.getValues('organization_number');
         if (orgNumber && orgNumber.trim() !== '') {
           fieldsToValidate.push('organization_number');
@@ -195,8 +205,8 @@ export function MultiStageCompanyDialog({
     }, {} as any);
     console.log('MultiStageCompanyDialog: Values to validate:', valuesToValidate);
     
-    // Manually trigger validation with a small delay to ensure form state is ready
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Manually trigger validation with a delay to ensure form state is ready
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     const result = await form.trigger(fieldsToValidate as any);
     console.log('MultiStageCompanyDialog: Validation result:', result);
@@ -221,6 +231,8 @@ export function MultiStageCompanyDialog({
     console.log('MultiStageCompanyDialog: handleNext called at stage', stage);
     console.log('MultiStageCompanyDialog: Form is valid:', form.formState.isValid);
     console.log('MultiStageCompanyDialog: Form has errors:', Object.keys(form.formState.errors).length > 0);
+    console.log('MultiStageCompanyDialog: Form ready:', isFormReady);
+    console.log('MultiStageCompanyDialog: Validation ready:', validationReady);
     
     // For stages that need validation (2, 3, 4)
     if (stage >= 2) {
@@ -322,6 +334,7 @@ export function MultiStageCompanyDialog({
       setLogo(null);
       hasInitialized.current = false; // Reset initialization flag
       setIsFormReady(false);
+      setValidationReady(false);
       onClose();
     },
     onError: (error: Error) => {
@@ -356,6 +369,7 @@ export function MultiStageCompanyDialog({
   const handleClose = () => {
     hasInitialized.current = false; // Reset initialization flag when dialog closes
     setIsFormReady(false);
+    setValidationReady(false);
     setStage(0);
     setCreationMethod(null);
     form.reset(); // Reset form to initial state
@@ -391,6 +405,7 @@ export function MultiStageCompanyDialog({
   };
 
   console.log('MultiStageCompanyDialog: Rendering at stage', stage, 'with defaultValues:', !!defaultValues);
+  console.log('MultiStageCompanyDialog: Form ready:', isFormReady, 'Validation ready:', validationReady);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -434,7 +449,7 @@ export function MultiStageCompanyDialog({
                         "flex items-center gap-1 bg-black hover:bg-black/90",
                         stage === totalStages - 1 ? "" : "bg-black hover:bg-black/90"
                       )}
-                      disabled={createCompanyMutation.isPending || !isFormReady}
+                      disabled={createCompanyMutation.isPending || !isFormReady || !validationReady}
                     >
                       {createCompanyMutation.isPending
                         ? 'Creating...'
@@ -457,4 +472,3 @@ export function MultiStageCompanyDialog({
     </Dialog>
   );
 }
-
