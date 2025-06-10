@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Select from 'react-select';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,13 +18,25 @@ interface CompanyOption {
 }
 
 export function CompanySelectionStage({ formData, setFormData }: CompanySelectionStageProps) {
+  const [searchInput, setSearchInput] = useState('');
+
   const { data: companies = [], isLoading } = useQuery({
-    queryKey: ['companies-for-contracts'],
+    queryKey: ['companies-for-contracts', searchInput],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('companies')
         .select('id, name, organization_number, street_address, postal_code, city, country, website, logo_url, mrr')
         .order('name');
+      
+      // If there's a search input, filter by name
+      if (searchInput.trim()) {
+        query = query.ilike('name', `%${searchInput}%`);
+      }
+      
+      // Limit to 5 results to prevent overflow
+      query = query.limit(5);
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data;
@@ -61,12 +73,18 @@ export function CompanySelectionStage({ formData, setFormData }: CompanySelectio
     </div>
   );
 
+  const customNoOptionsMessage = () => (
+    <div className="p-3 text-sm text-gray-500">
+      {searchInput.trim() ? 'No companies found. Try a different search term.' : 'Type to search for companies...'}
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold mb-2">Select Company</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Choose the company for this contract
+          Choose the company for this contract. Type to search through your companies.
         </p>
       </div>
 
@@ -83,14 +101,56 @@ export function CompanySelectionStage({ formData, setFormData }: CompanySelectio
               contact: null // Reset contact when company changes
             });
           }}
+          onInputChange={(inputValue) => {
+            setSearchInput(inputValue);
+          }}
           components={{
             Option: customOption,
-            SingleValue: customSingleValue
+            SingleValue: customSingleValue,
+            NoOptionsMessage: customNoOptionsMessage
           }}
           placeholder="Search and select a company..."
+          noOptionsMessage={customNoOptionsMessage}
           isSearchable
+          menuPortalTarget={document.body}
           className="react-select-container"
           classNamePrefix="react-select"
+          styles={{
+            control: (baseStyles, state) => ({
+              ...baseStyles,
+              minHeight: '44px',
+              height: '44px',
+              borderColor: state.isFocused ? 'hsl(var(--ring))' : 'hsl(var(--border))',
+              boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
+              '&:hover': {
+                borderColor: 'hsl(var(--border))'
+              }
+            }),
+            valueContainer: (baseStyles) => ({
+              ...baseStyles,
+              height: '44px',
+              padding: '0 12px',
+              display: 'flex',
+              alignItems: 'center'
+            }),
+            input: (baseStyles) => ({
+              ...baseStyles,
+              margin: 0,
+              padding: 0
+            }),
+            indicatorsContainer: (baseStyles) => ({
+              ...baseStyles,
+              height: '44px'
+            }),
+            menu: (baseStyles) => ({
+              ...baseStyles,
+              zIndex: 9999
+            }),
+            menuPortal: (baseStyles) => ({
+              ...baseStyles,
+              zIndex: 9999
+            })
+          }}
         />
       </div>
 

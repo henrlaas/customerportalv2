@@ -1,19 +1,22 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { FormData } from './types';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { replacePlaceholders } from '@/utils/contractUtils';
-import { format } from 'date-fns';
+import { ChevronDown, ChevronRight, FileText } from 'lucide-react';
 
 interface ConfirmationStageProps {
   formData: FormData;
 }
 
 export function ConfirmationStage({ formData }: ConfirmationStageProps) {
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
   const { company, contact, template } = formData;
 
   // Prepare data for placeholder replacement
@@ -42,7 +45,7 @@ export function ConfirmationStage({ formData }: ConfirmationStageProps) {
       <div>
         <h3 className="text-lg font-semibold mb-2">Confirmation</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Review your selections and the contract preview before creating
+          Review your selections before creating the contract
         </p>
       </div>
 
@@ -127,26 +130,47 @@ export function ConfirmationStage({ formData }: ConfirmationStageProps) {
 
       <Separator />
 
-      {/* Contract Preview */}
+      {/* Collapsible Contract Preview */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Contract Preview</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Live preview with placeholders replaced
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Contract Preview</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Preview the contract with placeholders replaced
+              </p>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {contractContent ? (
-            <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
-              <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                {contractContent}
-              </div>
-            </div>
-          ) : (
-            <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <p className="text-muted-foreground">Complete all selections to see preview</p>
-            </div>
-          )}
+          <Collapsible open={isPreviewExpanded} onOpenChange={setIsPreviewExpanded}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  {isPreviewExpanded ? 'Hide Contract Preview' : 'View Contract Preview'}
+                </div>
+                {isPreviewExpanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4">
+              {contractContent ? (
+                <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {contractContent}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gray-50 p-4 rounded-lg text-center">
+                  <p className="text-muted-foreground">Complete all selections to see preview</p>
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
     </div>
