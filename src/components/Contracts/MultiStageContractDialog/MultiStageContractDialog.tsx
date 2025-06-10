@@ -270,9 +270,6 @@ export function MultiStageContractDialog({ isOpen, onClose }: MultiStageContract
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Contract</DialogTitle>
-          <DialogDescription>
-            Step {currentStep} of {totalSteps}: {getStepTitle()}
-          </DialogDescription>
         </DialogHeader>
 
         <ProgressStepper currentStep={currentStep} totalSteps={totalSteps} />

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { FormData } from './types';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
@@ -118,8 +117,7 @@ export function ConfirmationStage({ formData }: ConfirmationStageProps) {
           <CardContent className="pt-0">
             {template ? (
               <div>
-                <p className="font-medium truncate">{template.name}</p>
-                <Badge variant="outline" className="text-xs mt-1">{template.type}</Badge>
+                <p className="font-medium truncate">{template.type}</p>
               </div>
             ) : (
               <p className="text-muted-foreground">No template selected</p>
