@@ -39,7 +39,8 @@ import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
 import { DealKanbanView } from '@/components/Deals/DealKanbanView';
 import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog';
 import { EditDealDialog } from '@/components/Deals/EditDealDialog';
-import { Deal, Company, Stage, Profile } from '@/components/Deals/types/deal';
+import { Deal, Stage, Profile } from '@/components/Deals/types/deal';
+import { Company } from '@/types/company';
 
 const DealsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -75,13 +76,13 @@ const DealsPage = () => {
     },
   });
 
-  // Fetch companies for the dropdown
+  // Fetch companies for the dropdown - updated to get complete company data
   const { data: companies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('companies')
-        .select('id, name')
+        .select('*')
         .order('name');
 
       if (error) {
