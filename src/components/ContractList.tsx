@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
@@ -26,6 +27,17 @@ import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useNavigate } from 'react-router-dom';
 import { MultiStageContractDialog } from './Contracts/MultiStageContractDialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+
+const CONTRACTS_PER_PAGE = 5;
 
 export const ContractList = () => {
   const { user, profile } = useAuth();
@@ -38,6 +50,7 @@ export const ContractList = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState<ContractWithDetails | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const isClient = profile?.role === 'client';
   
@@ -107,6 +120,21 @@ export const ContractList = () => {
       signedContracts: filteredContracts.filter(contract => contract.status === 'signed')
     };
   }, [filteredContracts]);
+
+  // Pagination logic
+  const paginatedContracts = useMemo(() => {
+    const startIndex = (currentPage - 1) * CONTRACTS_PER_PAGE;
+    const endIndex = startIndex + CONTRACTS_PER_PAGE;
+    return filteredContracts.slice(startIndex, endIndex);
+  }, [filteredContracts, currentPage]);
+
+  const totalPages = Math.ceil(filteredContracts.length / CONTRACTS_PER_PAGE);
+  const showPagination = filteredContracts.length > CONTRACTS_PER_PAGE;
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   // Memoize action handlers to prevent unnecessary re-renders
   const downloadPdf = useCallback(async (contract: ContractWithDetails, e?: React.MouseEvent) => {
@@ -257,148 +285,193 @@ export const ContractList = () => {
   
   // Contract table component with memoization - updated with enhanced status badges
   const ContractTable = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => (
-    <div className="border border-gray-200 rounded-xl overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Company</TableHead>
-            <TableHead>Contact</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Created Date</TableHead>
-            <TableHead>Created By</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {contracts.length > 0 ? (
-            contracts.map((contract) => (
-              <TableRow 
-                key={contract.id} 
-                onClick={() => viewContract(contract)}
-                className="cursor-pointer hover:bg-gray-100"
-              >
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <CompanyFavicon 
-                      companyName={contract.company?.name || 'Unknown'} 
-                      website={contract.company?.website || null}
-                      logoUrl={contract.company?.logo_url || null}
-                      size="sm"
-                    />
-                    <span>{contract.company?.name || 'N/A'}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {contract.contact && (
-                      <UserAvatarGroup 
-                        users={[{
-                          id: contract.contact.user_id,
-                          first_name: contract.contact.first_name || '',
-                          last_name: contract.contact.last_name || '',
-                          avatar_url: contract.contact.avatar_url
-                        }]}
+    <div className="space-y-4">
+      <div className="border border-gray-200 rounded-xl overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Company</TableHead>
+              <TableHead>Contact</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Created Date</TableHead>
+              <TableHead>Created By</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {contracts.length > 0 ? (
+              contracts.map((contract) => (
+                <TableRow 
+                  key={contract.id} 
+                  onClick={() => viewContract(contract)}
+                  className="cursor-pointer hover:bg-gray-100"
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <CompanyFavicon 
+                        companyName={contract.company?.name || 'Unknown'} 
+                        website={contract.company?.website || null}
+                        logoUrl={contract.company?.logo_url || null}
                         size="sm"
                       />
-                    )}
-                    <span>
-                      {contract.contact ? 
-                        `${contract.contact.first_name || ''} ${contract.contact.last_name || ''}`.trim() || 'N/A'
-                        : 'N/A'
-                      }
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
-                    {contract.template_type}
-                  </Badge>
-                </TableCell>
-                <TableCell>{format(new Date(contract.created_at), 'MMM d, yyyy')}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {contract.created_by ? (
-                      <>
+                      <span>{contract.company?.name || 'N/A'}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {contract.contact && (
                         <UserAvatarGroup 
                           users={[{
-                            id: contract.created_by,
-                            first_name: contract.creator?.first_name || '',
-                            last_name: contract.creator?.last_name || '',
-                            avatar_url: contract.creator?.avatar_url
+                            id: contract.contact.user_id,
+                            first_name: contract.contact.first_name || '',
+                            last_name: contract.contact.last_name || '',
+                            avatar_url: contract.contact.avatar_url
                           }]}
                           size="sm"
                         />
-                        <span>
-                          {contract.creator ? 
-                            `${contract.creator.first_name || ''} ${contract.creator.last_name || ''}`.trim() || 'N/A'
-                            : 'System'
-                          }
-                        </span>
-                      </>
-                    ) : (
-                      <span>System</span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge 
-                    variant={contract.status === 'signed' ? "default" : "outline"} 
-                    className={`inline-flex items-center gap-1 w-fit ${
-                      contract.status === 'signed' 
-                        ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800"
-                        : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800"
-                    }`}
-                  >
-                    {contract.status === 'signed' ? (
-                      <>
-                        <CheckCircle className="h-3 w-3" />
-                        <span>Signed</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-3 w-3" />
-                        <span>Unsigned</span>
-                      </>
-                    )}
-                  </Badge>
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={(e) => downloadPdf(contract, e)}
-                      disabled={isDownloading === contract.id}
-                      title="Download PDF"
-                    >
-                      {isDownloading === contract.id ? (
-                        <span className="w-4 h-4 block rounded-full border-2 border-b-transparent border-r-transparent border-gray-400 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4" />
                       )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => handleDeleteClick(contract, e)}
-                      title="Delete Contract"
+                      <span>
+                        {contract.contact ? 
+                          `${contract.contact.first_name || ''} ${contract.contact.last_name || ''}`.trim() || 'N/A'
+                          : 'N/A'
+                        }
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
+                      {contract.template_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{format(new Date(contract.created_at), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {contract.created_by ? (
+                        <>
+                          <UserAvatarGroup 
+                            users={[{
+                              id: contract.created_by,
+                              first_name: contract.creator?.first_name || '',
+                              last_name: contract.creator?.last_name || '',
+                              avatar_url: contract.creator?.avatar_url
+                            }]}
+                            size="sm"
+                          />
+                          <span>
+                            {contract.creator ? 
+                              `${contract.creator.first_name || ''} ${contract.creator.last_name || ''}`.trim() || 'N/A'
+                              : 'System'
+                            }
+                          </span>
+                        </>
+                      ) : (
+                        <span>System</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={contract.status === 'signed' ? "default" : "outline"} 
+                      className={`inline-flex items-center gap-1 w-fit ${
+                        contract.status === 'signed' 
+                          ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800"
+                          : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800"
+                      }`}
                     >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
+                      {contract.status === 'signed' ? (
+                        <>
+                          <CheckCircle className="h-3 w-3" />
+                          <span>Signed</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-3 w-3" />
+                          <span>Unsigned</span>
+                        </>
+                      )}
+                    </Badge>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={(e) => downloadPdf(contract, e)}
+                        disabled={isDownloading === contract.id}
+                        title="Download PDF"
+                      >
+                        {isDownloading === contract.id ? (
+                          <span className="w-4 h-4 block rounded-full border-2 border-b-transparent border-r-transparent border-gray-400 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleDeleteClick(contract, e)}
+                        title="Delete Contract"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  No contracts found
                 </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center py-8">
-                No contracts found
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      
+      {showPagination && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (currentPage > 1) setCurrentPage(currentPage - 1);
+                }}
+                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+              />
+            </PaginationItem>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentPage(page);
+                  }}
+                  isActive={currentPage === page}
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                }}
+                className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   ));
 
@@ -470,7 +543,7 @@ export const ContractList = () => {
           </TabsContent>
         </Tabs>
       ) : (
-        isLoading ? <TableSkeleton /> : <ContractTable contracts={filteredContracts} />
+        isLoading ? <TableSkeleton /> : <ContractTable contracts={paginatedContracts} />
       )}
       
       {contractToDelete && (
