@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createContract, replacePlaceholders } from '@/utils/contractUtils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useEmailSender } from '@/hooks/useEmailSender';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -31,12 +33,102 @@ export function MultiStageContractDialog({ isOpen, onClose }: MultiStageContract
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const emailSender = useEmailSender();
   
   const [formData, setFormData] = useState<FormData>({
     company: null,
     contact: null,
     template: null,
   });
+
+  // Function to fetch email template from workspace settings
+  const fetchEmailTemplate = async () => {
+    const { data, error } = await supabase
+      .from('workspace_settings')
+      .select('setting_value')
+      .eq('setting_key', 'email.template.default')
+      .single();
+    
+    if (error || !data) {
+      console.error('Error fetching email template:', error);
+      return null;
+    }
+    
+    return data.setting_value;
+  };
+
+  // Function to get contact's email
+  const getContactEmail = async (contactUserId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(`
+        id,
+        first_name,
+        last_name
+      `)
+      .eq('id', contactUserId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching contact profile:', error);
+      return null;
+    }
+
+    // Get email from auth.users using the get_users_email function
+    const { data: emailData, error: emailError } = await supabase
+      .rpc('get_users_email', { user_ids: [contactUserId] });
+
+    if (emailError || !emailData || emailData.length === 0) {
+      console.error('Error fetching contact email:', emailError);
+      return null;
+    }
+
+    return {
+      email: emailData[0].email,
+      name: `${data.first_name || ''} ${data.last_name || ''}`.trim()
+    };
+  };
+
+  // Function to send contract notification email
+  const sendContractNotificationEmail = async () => {
+    if (!formData.contact) return;
+
+    try {
+      // Fetch email template
+      const emailTemplate = await fetchEmailTemplate();
+      if (!emailTemplate) {
+        console.warn('No email template found, skipping email notification');
+        return;
+      }
+
+      // Get contact's email
+      const contactInfo = await getContactEmail(formData.contact.user_id);
+      if (!contactInfo) {
+        console.warn('Contact email not found, skipping email notification');
+        return;
+      }
+
+      // Replace placeholders in email template
+      const subject = "A new contract is ready to sign";
+      const message = "A new contract is ready to be signed in Box Workspace. Please login to review and sign the contract.";
+      
+      let emailContent = emailTemplate;
+      emailContent = emailContent.replace(/\$\{data\.subject\}/g, subject);
+      emailContent = emailContent.replace(/\$\{data\.message\}/g, message);
+
+      // Send email
+      emailSender.mutate({
+        to: contactInfo.email,
+        subject: subject,
+        html: emailContent
+      });
+
+      console.log(`Contract notification email sent to ${contactInfo.email}`);
+    } catch (error) {
+      console.error('Error sending contract notification email:', error);
+      // Don't show error to user since this is a secondary feature
+    }
+  };
 
   const createContractMutation = useMutation({
     mutationFn: async () => {
@@ -77,12 +169,16 @@ export function MultiStageContractDialog({ isOpen, onClose }: MultiStageContract
       
       return await createContract(contractData);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: 'Contract created',
         description: 'The contract has been created successfully',
       });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      
+      // Send email notification after successful contract creation
+      await sendContractNotificationEmail();
+      
       handleClose();
     },
     onError: (error: Error) => {
