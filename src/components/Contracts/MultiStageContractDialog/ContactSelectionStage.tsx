@@ -12,16 +12,20 @@ interface ContactSelectionStageProps {
 }
 
 export function ContactSelectionStage({ formData, setFormData }: ContactSelectionStageProps) {
+  // Determine which company ID to use for fetching contacts
+  const contactCompanyId = formData.company?.parent_id || formData.company?.id;
+  const isSubsidiary = formData.company?.parent_id ? true : false;
+
   const { data: contacts = [], isLoading } = useQuery({
-    queryKey: ['company-contacts', formData.company?.id],
+    queryKey: ['company-contacts', contactCompanyId],
     queryFn: async () => {
-      if (!formData.company?.id) return [];
+      if (!contactCompanyId) return [];
       
       // First, get company contacts
       const { data: companyContacts, error: contactsError } = await supabase
         .from('company_contacts')
         .select('id, user_id, position')
-        .eq('company_id', formData.company.id);
+        .eq('company_id', contactCompanyId);
       
       if (contactsError) throw contactsError;
       if (!companyContacts || companyContacts.length === 0) return [];
@@ -48,7 +52,25 @@ export function ContactSelectionStage({ formData, setFormData }: ContactSelectio
         };
       });
     },
-    enabled: !!formData.company?.id,
+    enabled: !!contactCompanyId,
+  });
+
+  // Function to get the parent company name for display
+  const { data: parentCompany } = useQuery({
+    queryKey: ['parent-company', formData.company?.parent_id],
+    queryFn: async () => {
+      if (!formData.company?.parent_id) return null;
+      
+      const { data, error } = await supabase
+        .from('companies')
+        .select('name')
+        .eq('id', formData.company.parent_id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!formData.company?.parent_id,
   });
 
   if (!formData.company) {
@@ -64,7 +86,11 @@ export function ContactSelectionStage({ formData, setFormData }: ContactSelectio
       <div>
         <h3 className="text-lg font-semibold mb-2">Select Contact</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Choose the contact from {formData.company.name} who will sign this contract
+          {isSubsidiary && parentCompany ? (
+            <>Choose the contact from {parentCompany.name} (parent company) who will sign this contract for {formData.company.name}</>
+          ) : (
+            <>Choose the contact from {formData.company.name} who will sign this contract</>
+          )}
         </p>
       </div>
 
@@ -78,7 +104,12 @@ export function ContactSelectionStage({ formData, setFormData }: ContactSelectio
         </div>
       ) : contacts.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">No contacts found for this company</p>
+          <p className="text-muted-foreground">
+            {isSubsidiary && parentCompany ? 
+              `No contacts found for the parent company ${parentCompany.name}` : 
+              'No contacts found for this company'
+            }
+          </p>
         </div>
       ) : (
         <div className="space-y-3">

@@ -11,6 +11,7 @@ export interface FormData {
     website?: string;
     logo_url?: string;
     mrr?: number;
+    parent_id?: string;
   } | null;
   contact: {
     id: string;

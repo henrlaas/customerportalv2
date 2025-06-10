@@ -25,7 +25,7 @@ export function CompanySelectionStage({ formData, setFormData }: CompanySelectio
     queryFn: async () => {
       let query = supabase
         .from('companies')
-        .select('id, name, organization_number, street_address, postal_code, city, country, website, logo_url, mrr')
+        .select('id, name, organization_number, street_address, postal_code, city, country, website, logo_url, mrr, parent_id')
         .order('name');
       
       // If there's a search input, filter by name, otherwise show first 5 companies
@@ -119,6 +119,7 @@ export function CompanySelectionStage({ formData, setFormData }: CompanySelectio
           placeholder="Search and select a company..."
           noOptionsMessage={customNoOptionsMessage}
           isSearchable
+          isClearable
           className="react-select-container"
           classNamePrefix="react-select"
           styles={{
