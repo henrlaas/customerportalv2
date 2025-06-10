@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ContractWithDetails } from '@/utils/contractUtils';
 import { format } from 'date-fns';
@@ -10,6 +9,7 @@ import SignaturePad from 'signature_pad';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { signContract } from '@/utils/contractUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { useEmailSender } from '@/hooks/useEmailSender';
 import { 
   Download, 
   CheckCircle, 
@@ -17,7 +17,8 @@ import {
   Edit, 
   FileText, 
   ArrowLeft, 
-  Trash2 
+  Trash2,
+  Mail 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +43,7 @@ const ContractDetailsPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const queryClient = useQueryClient();
+  const emailSender = useEmailSender();
   
   // Fetch project details if contract has project_id
   const { data: projectData } = useQuery({
@@ -63,6 +65,108 @@ const ContractDetailsPage = () => {
       return data;
     },
     enabled: !!contract?.project_id,
+  });
+
+  // Function to fetch email template from workspace settings
+  const fetchEmailTemplate = async () => {
+    const { data, error } = await supabase
+      .from('workspace_settings')
+      .select('setting_value')
+      .eq('setting_key', 'email.template.default')
+      .single();
+    
+    if (error || !data) {
+      console.error('Error fetching email template:', error);
+      return null;
+    }
+    
+    return data.setting_value;
+  };
+
+  // Function to get contact's email
+  const getContactEmail = async (contactUserId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(`
+        id,
+        first_name,
+        last_name
+      `)
+      .eq('id', contactUserId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching contact profile:', error);
+      return null;
+    }
+
+    // Get email from auth.users using the get_users_email function
+    const { data: emailData, error: emailError } = await supabase
+      .rpc('get_users_email', { user_ids: [contactUserId] });
+
+    if (emailError || !emailData || emailData.length === 0) {
+      console.error('Error fetching contact email:', emailError);
+      return null;
+    }
+
+    return {
+      email: emailData[0].email,
+      name: `${data.first_name || ''} ${data.last_name || ''}`.trim()
+    };
+  };
+
+  // Mutation for sending reminder email
+  const sendReminderMutation = useMutation({
+    mutationFn: async () => {
+      if (!contract?.contact?.user_id) {
+        throw new Error('No contact found for this contract');
+      }
+
+      // Fetch email template
+      const emailTemplate = await fetchEmailTemplate();
+      if (!emailTemplate) {
+        throw new Error('No email template found');
+      }
+
+      // Get contact's email
+      const contactInfo = await getContactEmail(contract.contact.user_id);
+      if (!contactInfo) {
+        throw new Error('Contact email not found');
+      }
+
+      // Replace placeholders in email template
+      const subject = "A new contract is ready to sign";
+      const message = "A new contract is ready to be signed in Box Workspace. Please login to review and sign the contract.";
+      
+      let emailContent = emailTemplate;
+      emailContent = emailContent.replace(/\$\{data\.subject\}/g, subject);
+      emailContent = emailContent.replace(/\$\{data\.message\}/g, message);
+
+      // Send email using the emailSender mutation
+      return new Promise((resolve, reject) => {
+        emailSender.mutate({
+          to: contactInfo.email,
+          subject: subject,
+          html: emailContent
+        }, {
+          onSuccess: resolve,
+          onError: reject
+        });
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Reminder sent',
+        description: 'The contract signing reminder has been sent to the contact.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed to send reminder',
+        description: error.message || 'Failed to send the reminder email.',
+        variant: 'destructive',
+      });
+    },
   });
   
   useEffect(() => {
@@ -499,6 +603,18 @@ const ContractDetailsPage = () => {
           Back to Contracts
         </Button>
         <div className="flex gap-2">
+          {contract.status === 'unsigned' && (profile?.role === 'admin' || profile?.role === 'employee') && (
+            <Button 
+              variant="outline" 
+              onClick={() => sendReminderMutation.mutate()}
+              disabled={sendReminderMutation.isPending}
+              className="flex items-center gap-2"
+            >
+              <Mail className="h-4 w-4" />
+              {sendReminderMutation.isPending ? 'Sending...' : 'Send Reminder'}
+            </Button>
+          )}
+          
           <Button 
             variant="outline" 
             onClick={downloadContract}
