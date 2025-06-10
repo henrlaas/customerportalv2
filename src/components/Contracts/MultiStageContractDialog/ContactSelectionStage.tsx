@@ -17,30 +17,36 @@ export function ContactSelectionStage({ formData, setFormData }: ContactSelectio
     queryFn: async () => {
       if (!formData.company?.id) return [];
       
-      const { data, error } = await supabase
+      // First, get company contacts
+      const { data: companyContacts, error: contactsError } = await supabase
         .from('company_contacts')
-        .select(`
-          id,
-          user_id,
-          position,
-          profiles!company_contacts_user_id_fkey (
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
+        .select('id, user_id, position')
         .eq('company_id', formData.company.id);
       
-      if (error) throw error;
+      if (contactsError) throw contactsError;
+      if (!companyContacts || companyContacts.length === 0) return [];
       
-      return data.map(contact => ({
-        id: contact.id,
-        user_id: contact.user_id,
-        position: contact.position,
-        first_name: contact.profiles?.first_name,
-        last_name: contact.profiles?.last_name,
-        avatar_url: contact.profiles?.avatar_url
-      }));
+      // Then get profile information for each contact
+      const userIds = companyContacts.map(contact => contact.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .in('id', userIds);
+      
+      if (profilesError) throw profilesError;
+      
+      // Combine the data
+      return companyContacts.map(contact => {
+        const profile = profiles?.find(p => p.id === contact.user_id);
+        return {
+          id: contact.id,
+          user_id: contact.user_id,
+          position: contact.position,
+          first_name: profile?.first_name,
+          last_name: profile?.last_name,
+          avatar_url: profile?.avatar_url
+        };
+      });
     },
     enabled: !!formData.company?.id,
   });
