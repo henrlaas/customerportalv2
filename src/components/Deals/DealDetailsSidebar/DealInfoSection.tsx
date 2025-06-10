@@ -26,7 +26,7 @@ export const DealInfoSection = ({ deal, profiles }: DealInfoSectionProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="h-5 w-5" />
-          Deal
+          Deal Information
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

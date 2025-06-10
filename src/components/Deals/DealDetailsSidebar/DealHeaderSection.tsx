@@ -28,6 +28,8 @@ export const DealHeaderSection = ({
   onEdit,
   onDelete,
 }: DealHeaderSectionProps) => {
+  const currentStage = stages.find(stage => stage.id === deal.stage_id);
+
   const getDealTypeBadgeProps = (dealType: string | null) => {
     if (dealType === 'recurring') {
       return {
@@ -58,38 +60,39 @@ export const DealHeaderSection = ({
     <div className="space-y-4">
       <div className="flex justify-between items-start">
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 truncate">
-                {deal.title}
-              </h1>
-              <div className="flex items-center gap-3 mt-2">
-                <span className="text-xl font-semibold text-green-600">
-                  {formatCurrency(deal.value)}
-                </span>
-              </div>
-            </div>
+          <h1 className="text-2xl font-bold text-gray-900 truncate">
+            {deal.title}
+          </h1>
+          <div className="flex items-center gap-3 mt-2">
+            <span className="text-xl font-semibold text-green-600">
+              {formatCurrency(deal.value)}
+            </span>
+            {currentStage && (
+              <Badge variant="secondary" className="text-xs">
+                {currentStage.name}
+              </Badge>
+            )}
+          </div>
+          
+          {/* Deal Types with colored badges */}
+          <div className="flex gap-2 mt-3">
+            <Badge {...getDealTypeBadgeProps(deal.deal_type)} className="flex items-center gap-1">
+              {deal.deal_type === 'recurring' ? (
+                <Repeat className="h-3 w-3" />
+              ) : (
+                <CircleDollarSign className="h-3 w-3" />
+              )}
+              <span className="capitalize">{deal.deal_type || 'One-time'}</span>
+            </Badge>
             
-            {/* Deal Types moved to the right */}
-            <div className="flex flex-col gap-2 flex-shrink-0">
-              <Badge {...getDealTypeBadgeProps(deal.deal_type)} className="flex items-center gap-1">
-                {deal.deal_type === 'recurring' ? (
-                  <Repeat className="h-3 w-3" />
-                ) : (
-                  <CircleDollarSign className="h-3 w-3" />
-                )}
-                <span className="capitalize">{deal.deal_type || 'One-time'}</span>
-              </Badge>
-              
-              <Badge {...getClientTypeBadgeProps(deal.client_deal_type)} className="flex items-center gap-1">
-                {deal.client_deal_type === 'web' ? (
-                  <Globe className="h-3 w-3" />
-                ) : (
-                  <Megaphone className="h-3 w-3" />
-                )}
-                <span className="capitalize">{deal.client_deal_type || 'Marketing'}</span>
-              </Badge>
-            </div>
+            <Badge {...getClientTypeBadgeProps(deal.client_deal_type)} className="flex items-center gap-1">
+              {deal.client_deal_type === 'web' ? (
+                <Globe className="h-3 w-3" />
+              ) : (
+                <Megaphone className="h-3 w-3" />
+              )}
+              <span className="capitalize">{deal.client_deal_type || 'Marketing'}</span>
+            </Badge>
           </div>
         </div>
         
