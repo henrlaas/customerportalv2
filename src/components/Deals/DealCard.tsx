@@ -15,6 +15,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { useDraggable } from '@dnd-kit/core';
 
@@ -49,6 +59,7 @@ export const DealCard = ({
   onMove
 }: DealCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   // Fetch temp company info if needed
   const { data: tempCompanies } = useQuery({
@@ -86,6 +97,16 @@ export const DealCard = ({
     if (!(e.target as HTMLElement).closest('.dropdown-trigger')) {
       setShowDetails(true);
     }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    onDelete(deal.id);
+    setShowDeleteDialog(false);
   };
   
   return (
@@ -151,10 +172,7 @@ export const DealCard = ({
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-red-600" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(deal.id);
-                      }}
+                      onClick={handleDeleteClick}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
@@ -192,6 +210,24 @@ export const DealCard = ({
         onEdit={onEdit}
         onDelete={onDelete}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the deal "{deal.title}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
