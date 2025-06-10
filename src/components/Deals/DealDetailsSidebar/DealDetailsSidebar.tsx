@@ -72,7 +72,7 @@ export const DealDetailsSidebar = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-[600px] max-w-full p-0 overflow-hidden">
+      <SheetContent side="right" className="w-[800px] max-w-full p-0 overflow-hidden">
         <div className="flex flex-col h-full">
           <SheetHeader className="p-6 pb-4 border-b">
             <DealHeaderSection 

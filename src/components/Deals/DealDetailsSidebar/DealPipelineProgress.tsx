@@ -13,30 +13,30 @@ export const DealPipelineProgress = ({ deal, stages }: DealPipelineProgressProps
   const currentStageIndex = sortedStages.findIndex(stage => stage.id === deal.stage_id);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-gray-700">Deal Pipeline</h3>
-        <span className="text-xs text-gray-500">
-          Stage {currentStageIndex + 1} of {sortedStages.length}
+        <h3 className="text-lg font-semibold text-gray-900">Deal Pipeline</h3>
+        <span className="text-sm text-gray-500">
+          Stage {currentStageIndex >= 0 ? currentStageIndex + 1 : 1} of {sortedStages.length}
         </span>
       </div>
       
       <div className="relative">
-        {/* Progress Line Background */}
-        <div className="absolute top-4 left-4 right-4 h-0.5 bg-gray-200"></div>
+        {/* Connecting Line Background */}
+        <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 rounded-full transform -translate-y-1/2"></div>
         
-        {/* Progress Line Active */}
+        {/* Progress Line */}
         <div 
-          className="absolute top-4 left-4 h-0.5 bg-blue-500 transition-all duration-300"
+          className="absolute top-1/2 left-0 h-1 bg-blue-500 rounded-full transform -translate-y-1/2 transition-all duration-500"
           style={{ 
-            width: currentStageIndex >= 0 
-              ? `${((currentStageIndex) / (sortedStages.length - 1)) * 100}%` 
+            width: currentStageIndex >= 0 && sortedStages.length > 1
+              ? `${(currentStageIndex / (sortedStages.length - 1)) * 100}%` 
               : '0%' 
           }}
         ></div>
         
-        {/* Stage Dots */}
-        <div className="relative flex justify-between">
+        {/* Stage Pills */}
+        <div className="relative flex justify-between items-center">
           {sortedStages.map((stage, index) => {
             const isCompleted = index < currentStageIndex;
             const isCurrent = index === currentStageIndex;
@@ -44,23 +44,25 @@ export const DealPipelineProgress = ({ deal, stages }: DealPipelineProgressProps
             
             return (
               <div key={stage.id} className="flex flex-col items-center">
+                {/* Stage Pill */}
                 <div className={`
-                  w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-200
+                  px-4 py-2 rounded-full border-2 flex items-center justify-center min-w-[100px] transition-all duration-200 shadow-sm
                   ${isCompleted ? 'bg-green-500 border-green-500 text-white' : ''}
                   ${isCurrent ? 'bg-blue-500 border-blue-500 text-white ring-4 ring-blue-100' : ''}
-                  ${isPending ? 'bg-white border-gray-300 text-gray-400' : ''}
+                  ${isPending ? 'bg-white border-gray-300 text-gray-600' : ''}
                 `}>
                   {isCompleted ? (
                     <Check className="h-4 w-4" />
                   ) : (
-                    <span className="text-xs font-medium">{index + 1}</span>
+                    <span className="text-sm font-medium">{index + 1}</span>
                   )}
                 </div>
                 
-                <div className="mt-2 text-center max-w-16">
+                {/* Stage Name */}
+                <div className="mt-3 text-center">
                   <span className={`
-                    text-xs font-medium block leading-tight
-                    ${isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-400'}
+                    text-sm font-medium block leading-tight
+                    ${isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-500'}
                   `}>
                     {stage.name}
                   </span>
