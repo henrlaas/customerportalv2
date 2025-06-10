@@ -87,7 +87,7 @@ export const DealDetailsSidebar = ({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="right" className="w-[35rem] p-0 overflow-hidden">
+        <SheetContent side="right" className="w-[35rem] max-w-none p-0 overflow-hidden">
           <div className="flex flex-col h-full">
             {/* Action buttons positioned at top right */}
             {canModify && (
@@ -153,3 +153,5 @@ export const DealDetailsSidebar = ({
     </>
   );
 };
+
+export default DealDetailsSidebar;
