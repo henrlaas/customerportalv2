@@ -35,9 +35,18 @@ export function DealListView({
     setLocalDeals(deals);
   }, [deals]);
 
-  const handleViewDetails = (deal: Deal) => {
-    // This function can be used to open deal details
-    console.log('View details for deal:', deal.id);
+  const handleMove = (dealToMove: Deal, newStageId: string) => {
+    if (!canModify) return;
+    
+    // Optimistic update - update local state immediately
+    setLocalDeals(prevDeals => 
+      prevDeals.map(deal => 
+        deal.id === dealToMove.id ? { ...deal, stage_id: newStageId } : deal
+      )
+    );
+    
+    // Then persist to database
+    onMove(dealToMove.id, newStageId);
   };
 
   if (isLoading) {
@@ -51,12 +60,17 @@ export function DealListView({
           key={deal.id}
           deal={deal}
           companies={companies}
-          profiles={profiles}
           stages={stages}
+          profiles={profiles}
           canModify={canModify}
           onEdit={onEdit}
           onDelete={onDelete}
-          onViewDetails={handleViewDetails}
+          onMove={(dealToMove) => {
+            // In list view, we just update the stage using the current stage
+            if (dealToMove.stage_id) {
+              handleMove(deal, dealToMove.stage_id);
+            }
+          }}
         />
       ))}
     </div>
