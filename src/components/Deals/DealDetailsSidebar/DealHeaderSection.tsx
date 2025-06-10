@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Edit, Trash2, MoreVertical, Repeat, CircleDollarSign, Globe, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -30,6 +30,32 @@ export const DealHeaderSection = ({
 }: DealHeaderSectionProps) => {
   const currentStage = stages.find(stage => stage.id === deal.stage_id);
 
+  const getDealTypeBadgeProps = (dealType: string | null) => {
+    if (dealType === 'recurring') {
+      return {
+        variant: 'default' as const,
+        className: 'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200'
+      };
+    }
+    return {
+      variant: 'default' as const,
+      className: 'bg-green-100 text-green-800 hover:bg-green-200 border-green-200'
+    };
+  };
+
+  const getClientTypeBadgeProps = (clientType: string | null) => {
+    if (clientType === 'web') {
+      return {
+        variant: 'default' as const,
+        className: 'bg-purple-100 text-purple-800 hover:bg-purple-200 border-purple-200'
+      };
+    }
+    return {
+      variant: 'default' as const,
+      className: 'bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200'
+    };
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-start">
@@ -46,6 +72,27 @@ export const DealHeaderSection = ({
                 {currentStage.name}
               </Badge>
             )}
+          </div>
+          
+          {/* Deal Types with colored badges */}
+          <div className="flex gap-2 mt-3">
+            <Badge {...getDealTypeBadgeProps(deal.deal_type)} className="flex items-center gap-1">
+              {deal.deal_type === 'recurring' ? (
+                <Repeat className="h-3 w-3" />
+              ) : (
+                <CircleDollarSign className="h-3 w-3" />
+              )}
+              <span className="capitalize">{deal.deal_type || 'One-time'}</span>
+            </Badge>
+            
+            <Badge {...getClientTypeBadgeProps(deal.client_deal_type)} className="flex items-center gap-1">
+              {deal.client_deal_type === 'web' ? (
+                <Globe className="h-3 w-3" />
+              ) : (
+                <Megaphone className="h-3 w-3" />
+              )}
+              <span className="capitalize">{deal.client_deal_type || 'Marketing'}</span>
+            </Badge>
           </div>
         </div>
         

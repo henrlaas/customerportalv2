@@ -9,8 +9,26 @@ interface DealPipelineProgressProps {
 }
 
 export const DealPipelineProgress = ({ deal, stages }: DealPipelineProgressProps) => {
+  // Add debugging to understand the data
+  console.log('DealPipelineProgress - deal:', deal);
+  console.log('DealPipelineProgress - stages:', stages);
+  
+  if (!stages || stages.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">Deal Pipeline</h3>
+          <span className="text-sm text-gray-500">Loading stages...</span>
+        </div>
+      </div>
+    );
+  }
+
   const sortedStages = [...stages].sort((a, b) => a.position - b.position);
   const currentStageIndex = sortedStages.findIndex(stage => stage.id === deal.stage_id);
+  
+  console.log('DealPipelineProgress - sortedStages:', sortedStages);
+  console.log('DealPipelineProgress - currentStageIndex:', currentStageIndex);
 
   return (
     <div className="space-y-4">

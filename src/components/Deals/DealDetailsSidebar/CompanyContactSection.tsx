@@ -137,13 +137,13 @@ export const CompanyContactSection = ({
                 </div>
               )}
               
-              {/* Address - Display horizontally */}
+              {/* Address - Display horizontally on same line */}
               {formatAddress(displayCompany) && (
-                <div className="space-y-1">
-                  <span className="text-gray-600 text-sm">Address:</span>
-                  <div className="text-sm text-gray-900">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Address:</span>
+                  <span className="text-sm text-gray-900 flex-1 text-right ml-2">
                     {formatAddress(displayCompany)}
-                  </div>
+                  </span>
                 </div>
               )}
             </div>
