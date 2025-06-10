@@ -121,13 +121,13 @@ const DealsPage = () => {
     },
   });
 
-  // Fetch profiles for assigned to dropdown
+  // Fetch profiles for assigned to dropdown - Updated to include avatar_url
   const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, role')
+        .select('id, first_name, last_name, role, avatar_url')
         .order('first_name');
 
       if (error) {

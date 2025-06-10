@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -239,10 +240,10 @@ export function DealKanbanView({
         </div>
       </div>
       
-      {/* Add DragOverlay component for a better dragging experience */}
+      {/* Improved DragOverlay - only show when dragging */}
       <DragOverlay>
         {activeDeal ? (
-          <div className="opacity-80 w-full max-w-[280px]">
+          <div className="w-full max-w-[280px] opacity-90 transform rotate-3 shadow-xl">
             <EnhancedDealCard
               deal={activeDeal}
               companies={companies}

@@ -92,7 +92,7 @@ export const EnhancedDealCard = ({
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     zIndex: isDragging ? 10 : 'auto',
-    opacity: isDragging ? 0.8 : 1,
+    opacity: isDragging ? 0 : 1, // Hide the original card completely when dragging
   } : undefined;
   
   // Handle card click without opening details when clicking on dropdown
