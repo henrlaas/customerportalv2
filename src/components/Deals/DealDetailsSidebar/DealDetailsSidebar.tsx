@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Edit, Trash2 } from 'lucide-react';
@@ -87,7 +88,7 @@ export const DealDetailsSidebar = ({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="right" className="w-[35rem] max-w-none p-0 overflow-hidden">
+        <SheetContent side="right" className="!w-[35rem] !max-w-none !min-w-[35rem] p-0 overflow-hidden">
           <div className="flex flex-col h-full">
             {/* Action buttons positioned at top right */}
             {canModify && (
