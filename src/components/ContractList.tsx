@@ -18,7 +18,6 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Download, Trash2, ClipboardList, FilePlus, FileCheck, CheckCircle, XCircle } from 'lucide-react';
-import { CreateContractDialog } from './CreateContractDialog';
 import { DeleteContractDialog } from './DeleteContractDialog';
 import { createPDF } from '@/utils/pdfUtils';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,6 +25,7 @@ import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useNavigate } from 'react-router-dom';
+import { MultiStageContractDialog } from './Contracts/MultiStageContractDialog';
 
 export const ContractList = () => {
   const { user, profile } = useAuth();
@@ -37,6 +37,7 @@ export const ContractList = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'unsigned' | 'signed'>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState<ContractWithDetails | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   
   const isClient = profile?.role === 'client';
   
@@ -447,7 +448,10 @@ export const ContractList = () => {
         <div className="flex items-center gap-4">
           <FilterToggle />
           {!isClient && (
-            <CreateContractDialog onContractCreated={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })} />
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <FilePlus className="h-4 w-4 mr-2" />
+              Create Contract
+            </Button>
           )}
         </div>
       </div>
@@ -481,6 +485,11 @@ export const ContractList = () => {
           onDeleted={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })}
         />
       )}
+
+      <MultiStageContractDialog
+        isOpen={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+      />
     </div>
   );
 };
