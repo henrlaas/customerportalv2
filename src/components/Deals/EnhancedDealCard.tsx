@@ -243,20 +243,18 @@ export const EnhancedDealCard = ({
             {getClientTypeBadge()}
           </div>
 
-          {/* Deal Holder */}
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-600">Deal holder</span>
-            <div className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={assignedUser?.avatar_url || undefined} />
-                <AvatarFallback className="text-xs bg-gray-100 text-gray-600">
-                  {getUserInitials(assignedUser)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-xs text-gray-700 truncate max-w-20">
-                {assignedUser ? `${assignedUser.first_name || ''} ${assignedUser.last_name || ''}`.trim() || 'Unknown' : 'Unassigned'}
-              </span>
-            </div>
+          {/* Deal Holder - Updated layout */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-600 flex-shrink-0">Deal holder</span>
+            <Avatar className="h-5 w-5 flex-shrink-0">
+              <AvatarImage src={assignedUser?.avatar_url || undefined} />
+              <AvatarFallback className="text-xs bg-gray-100 text-gray-600">
+                {getUserInitials(assignedUser)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs text-gray-700 truncate flex-1 min-w-0">
+              {assignedUser ? `${assignedUser.first_name || ''} ${assignedUser.last_name || ''}`.trim() || 'Unknown' : 'Unassigned'}
+            </span>
           </div>
 
           {/* Progress Bar (if probability exists) */}
