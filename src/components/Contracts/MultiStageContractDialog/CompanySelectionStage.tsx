@@ -28,7 +28,7 @@ export function CompanySelectionStage({ formData, setFormData }: CompanySelectio
         .select('id, name, organization_number, street_address, postal_code, city, country, website, logo_url, mrr')
         .order('name');
       
-      // If there's a search input, filter by name
+      // If there's a search input, filter by name, otherwise show first 5 companies
       if (searchInput.trim()) {
         query = query.ilike('name', `%${searchInput}%`);
       }
@@ -49,17 +49,24 @@ export function CompanySelectionStage({ formData, setFormData }: CompanySelectio
     company: company
   }));
 
-  const customOption = ({ data, ...props }: any) => (
-    <div ref={props.innerRef} {...props.innerProps} className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer">
-      <CompanyFavicon 
-        companyName={data.company.name}
-        website={data.company.website}
-        logoUrl={data.company.logo_url}
-        size="sm"
-      />
-      <span>{data.label}</span>
-    </div>
-  );
+  const customOption = (props: any) => {
+    const { data, innerRef, innerProps } = props;
+    return (
+      <div 
+        ref={innerRef} 
+        {...innerProps} 
+        className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
+      >
+        <CompanyFavicon 
+          companyName={data.company.name}
+          website={data.company.website}
+          logoUrl={data.company.logo_url}
+          size="sm"
+        />
+        <span>{data.label}</span>
+      </div>
+    );
+  };
 
   const customSingleValue = ({ data }: any) => (
     <div className="flex items-center gap-2">
@@ -75,7 +82,7 @@ export function CompanySelectionStage({ formData, setFormData }: CompanySelectio
 
   const customNoOptionsMessage = () => (
     <div className="p-3 text-sm text-gray-500">
-      {searchInput.trim() ? 'No companies found. Try a different search term.' : 'Type to search for companies...'}
+      {searchInput.trim() ? 'No companies found. Try a different search term.' : 'Type to search for more companies...'}
     </div>
   );
 
@@ -112,7 +119,6 @@ export function CompanySelectionStage({ formData, setFormData }: CompanySelectio
           placeholder="Search and select a company..."
           noOptionsMessage={customNoOptionsMessage}
           isSearchable
-          menuPortalTarget={document.body}
           className="react-select-container"
           classNamePrefix="react-select"
           styles={{
@@ -144,11 +150,11 @@ export function CompanySelectionStage({ formData, setFormData }: CompanySelectio
             }),
             menu: (baseStyles) => ({
               ...baseStyles,
-              zIndex: 9999
+              zIndex: 50
             }),
-            menuPortal: (baseStyles) => ({
+            menuList: (baseStyles) => ({
               ...baseStyles,
-              zIndex: 9999
+              maxHeight: '200px'
             })
           }}
         />
