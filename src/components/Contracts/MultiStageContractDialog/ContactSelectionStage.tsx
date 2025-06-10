@@ -23,7 +23,7 @@ export function ContactSelectionStage({ formData, setFormData }: ContactSelectio
           id,
           user_id,
           position,
-          profiles:user_id (
+          profiles!company_contacts_user_id_fkey (
             first_name,
             last_name,
             avatar_url
