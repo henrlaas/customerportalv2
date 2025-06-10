@@ -39,7 +39,7 @@ export function TemplateSelectionStage({ formData, setFormData }: TemplateSelect
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
             <div key={i} className="animate-pulse">
-              <div className="h-24 bg-gray-200 rounded-lg"></div>
+              <div className="h-16 bg-gray-200 rounded-lg"></div>
             </div>
           ))}
         </div>
@@ -61,18 +61,15 @@ export function TemplateSelectionStage({ formData, setFormData }: TemplateSelect
                 onClick={() => setFormData({ ...formData, template })}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div>
                         <h4 className="font-medium">{template.name}</h4>
-                        <Badge variant="outline">{template.type}</Badge>
+                        <Badge variant="outline" className="mt-1">{template.type}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {template.content.substring(0, 150)}...
-                      </p>
                     </div>
                     {isSelected && (
-                      <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center ml-3">
+                      <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
                         <div className="w-2 h-2 bg-white rounded-full"></div>
                       </div>
                     )}

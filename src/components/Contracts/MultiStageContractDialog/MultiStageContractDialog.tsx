@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createContract } from '@/utils/contractUtils';
+import { createContract, replacePlaceholders } from '@/utils/contractUtils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -45,11 +44,33 @@ export function MultiStageContractDialog({ isOpen, onClose }: MultiStageContract
         throw new Error("Missing required data to create contract");
       }
 
+      // Prepare placeholder data for replacement
+      const placeholderData = {
+        company: {
+          name: formData.company.name,
+          organization_number: formData.company.organization_number,
+          street_address: formData.company.street_address,
+          address: formData.company.street_address,
+          postal_code: formData.company.postal_code,
+          city: formData.company.city,
+          country: formData.company.country,
+          mrr: formData.company.mrr
+        },
+        contact: {
+          first_name: formData.contact.first_name,
+          last_name: formData.contact.last_name,
+          position: formData.contact.position
+        }
+      };
+
+      // Replace placeholders in the template content
+      const processedContent = replacePlaceholders(formData.template.content, placeholderData);
+
       const contractData = {
         company_id: formData.company.id,
         contact_id: formData.contact.id,
         template_type: formData.template.type,
-        content: formData.template.content,
+        content: processedContent, // Use the processed content with placeholders replaced
         title: `${formData.template.name} - ${formData.company.name}`,
         created_by: user.id,
       };
