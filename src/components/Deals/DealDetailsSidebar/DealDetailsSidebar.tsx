@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,7 +71,7 @@ export const DealDetailsSidebar = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-[800px] max-w-full p-0 overflow-hidden">
+      <SheetContent side="right" className="w-[800px] sm:w-[800px] max-w-[90vw] p-0 overflow-hidden">
         <div className="flex flex-col h-full">
           <SheetHeader className="p-6 pb-4 border-b">
             <DealHeaderSection 
