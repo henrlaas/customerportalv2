@@ -23,19 +23,19 @@ export const DealPipelineProgress = ({ deal, stages }: DealPipelineProgressProps
       
       <div className="relative">
         {/* Connecting Line Background */}
-        <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 rounded-full transform -translate-y-1/2"></div>
+        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 transform -translate-y-1/2 mx-6"></div>
         
         {/* Progress Line */}
         <div 
-          className="absolute top-1/2 left-0 h-1 bg-blue-500 rounded-full transform -translate-y-1/2 transition-all duration-500"
+          className="absolute top-1/2 left-0 h-0.5 bg-blue-500 transform -translate-y-1/2 transition-all duration-500 mx-6"
           style={{ 
             width: currentStageIndex >= 0 && sortedStages.length > 1
-              ? `${(currentStageIndex / (sortedStages.length - 1)) * 100}%` 
+              ? `calc(${(currentStageIndex / (sortedStages.length - 1)) * 100}% - 12px)` 
               : '0%' 
           }}
         ></div>
         
-        {/* Stage Pills */}
+        {/* Stage Circles */}
         <div className="relative flex justify-between items-center">
           {sortedStages.map((stage, index) => {
             const isCompleted = index < currentStageIndex;
@@ -44,24 +44,24 @@ export const DealPipelineProgress = ({ deal, stages }: DealPipelineProgressProps
             
             return (
               <div key={stage.id} className="flex flex-col items-center">
-                {/* Stage Pill */}
+                {/* Stage Circle */}
                 <div className={`
-                  px-4 py-2 rounded-full border-2 flex items-center justify-center min-w-[100px] transition-all duration-200 shadow-sm
+                  w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-200 shadow-sm relative z-10
                   ${isCompleted ? 'bg-green-500 border-green-500 text-white' : ''}
                   ${isCurrent ? 'bg-blue-500 border-blue-500 text-white ring-4 ring-blue-100' : ''}
                   ${isPending ? 'bg-white border-gray-300 text-gray-600' : ''}
                 `}>
                   {isCompleted ? (
-                    <Check className="h-4 w-4" />
+                    <Check className="h-5 w-5" />
                   ) : (
-                    <span className="text-sm font-medium">{index + 1}</span>
+                    <span className="text-sm font-semibold">{index + 1}</span>
                   )}
                 </div>
                 
                 {/* Stage Name */}
-                <div className="mt-3 text-center">
+                <div className="mt-3 text-center max-w-20">
                   <span className={`
-                    text-sm font-medium block leading-tight
+                    text-xs font-medium block leading-tight
                     ${isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-500'}
                   `}>
                     {stage.name}
