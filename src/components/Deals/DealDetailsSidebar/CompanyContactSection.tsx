@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Building, Copy, ExternalLink, Mail, Phone, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -79,7 +78,7 @@ export const CompanyContactSection = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Building className="h-5 w-5" />
-          Company & Contact
+          Company
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

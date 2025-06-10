@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Calendar, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +25,7 @@ export const DealInfoSection = ({ deal, profiles }: DealInfoSectionProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="h-5 w-5" />
-          Deal Information
+          Deal
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

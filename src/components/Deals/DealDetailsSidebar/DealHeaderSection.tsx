@@ -28,8 +28,6 @@ export const DealHeaderSection = ({
   onEdit,
   onDelete,
 }: DealHeaderSectionProps) => {
-  const currentStage = stages.find(stage => stage.id === deal.stage_id);
-
   const getDealTypeBadgeProps = (dealType: string | null) => {
     if (dealType === 'recurring') {
       return {
@@ -67,32 +65,27 @@ export const DealHeaderSection = ({
             <span className="text-xl font-semibold text-green-600">
               {formatCurrency(deal.value)}
             </span>
-            {currentStage && (
-              <Badge variant="secondary" className="text-xs">
-                {currentStage.name}
-              </Badge>
-            )}
-          </div>
-          
-          {/* Deal Types with colored badges */}
-          <div className="flex gap-2 mt-3">
-            <Badge {...getDealTypeBadgeProps(deal.deal_type)} className="flex items-center gap-1">
-              {deal.deal_type === 'recurring' ? (
-                <Repeat className="h-3 w-3" />
-              ) : (
-                <CircleDollarSign className="h-3 w-3" />
-              )}
-              <span className="capitalize">{deal.deal_type || 'One-time'}</span>
-            </Badge>
             
-            <Badge {...getClientTypeBadgeProps(deal.client_deal_type)} className="flex items-center gap-1">
-              {deal.client_deal_type === 'web' ? (
-                <Globe className="h-3 w-3" />
-              ) : (
-                <Megaphone className="h-3 w-3" />
-              )}
-              <span className="capitalize">{deal.client_deal_type || 'Marketing'}</span>
-            </Badge>
+            {/* Deal Types with colored badges - moved here */}
+            <div className="flex gap-2">
+              <Badge {...getDealTypeBadgeProps(deal.deal_type)} className="flex items-center gap-1">
+                {deal.deal_type === 'recurring' ? (
+                  <Repeat className="h-3 w-3" />
+                ) : (
+                  <CircleDollarSign className="h-3 w-3" />
+                )}
+                <span className="capitalize">{deal.deal_type || 'One-time'}</span>
+              </Badge>
+              
+              <Badge {...getClientTypeBadgeProps(deal.client_deal_type)} className="flex items-center gap-1">
+                {deal.client_deal_type === 'web' ? (
+                  <Globe className="h-3 w-3" />
+                ) : (
+                  <Megaphone className="h-3 w-3" />
+                )}
+                <span className="capitalize">{deal.client_deal_type || 'Marketing'}</span>
+              </Badge>
+            </div>
           </div>
         </div>
         
