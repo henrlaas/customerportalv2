@@ -74,7 +74,7 @@ export const EnhancedDealCard = ({
       
       const { data } = await supabase
         .from('temp_deal_companies')
-        .select('deal_id, company_name')
+        .select('deal_id, company_name, website')
         .eq('deal_id', deal.id);
         
       return data || null;
@@ -116,6 +116,7 @@ export const EnhancedDealCard = ({
   // Get company info
   const company = companies.find(c => c.id === deal.company_id);
   const companyName = getCompanyName(deal.company_id, companies, tempCompanies, deal.id);
+  const tempCompany = tempCompanies?.[0];
   
   // Get assigned user info
   const assignedUser = profiles.find(p => p.id === deal.assigned_to);
@@ -179,7 +180,7 @@ export const EnhancedDealCard = ({
               <div className="flex-shrink-0">
                 <CompanyFavicon
                   companyName={companyName}
-                  website={company?.website}
+                  website={company?.website || tempCompany?.website}
                   logoUrl={company?.logo_url}
                   size="md"
                 />
@@ -242,9 +243,9 @@ export const EnhancedDealCard = ({
             {getClientTypeBadge()}
           </div>
 
-          {/* Assigned User */}
+          {/* Deal Holder */}
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-600">Assigned to</span>
+            <span className="text-xs font-medium text-gray-600">Deal holder</span>
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6">
                 <AvatarImage src={assignedUser?.avatar_url || undefined} />

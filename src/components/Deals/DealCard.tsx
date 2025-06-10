@@ -27,9 +27,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { useDraggable } from '@dnd-kit/core';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 // Import types from the deal types file
-import { Deal, Company, Stage, Profile, TempDealCompany } from '@/components/Deals/types/deal';
+import { Deal, Stage, Profile, TempDealCompany } from '@/components/Deals/types/deal';
+import { Company } from '@/types/company';
 
 // Import formatters
 import { formatCurrency, formatDate, getCompanyName, getAssigneeName } from './utils/formatters';
@@ -70,7 +72,7 @@ export const DealCard = ({
       
       const { data } = await supabase
         .from('temp_deal_companies')
-        .select('deal_id, company_name')
+        .select('deal_id, company_name, website')
         .eq('deal_id', deal.id);
         
       return data || null;
@@ -108,6 +110,10 @@ export const DealCard = ({
     onDelete(deal.id);
     setShowDeleteDialog(false);
   };
+
+  // Get company info
+  const company = companies.find(c => c.id === deal.company_id);
+  const tempCompany = tempCompanies?.[0];
   
   return (
     <>
@@ -121,7 +127,22 @@ export const DealCard = ({
       >
         <CardHeader className="pb-2 pt-4 px-4">
           <div className="flex justify-between items-start">
-            <h3 className="text-base font-semibold">{deal.title}</h3>
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              {/* Company Logo */}
+              <div className="flex-shrink-0">
+                <CompanyFavicon
+                  companyName={getCompanyName(deal.company_id, companies, tempCompanies, deal.id)}
+                  website={company?.website || tempCompany?.website}
+                  logoUrl={company?.logo_url}
+                  size="sm"
+                />
+              </div>
+              
+              {/* Title */}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold truncate">{deal.title}</h3>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               {/* Deal Type Icon with Tooltip */}
               <TooltipProvider>
@@ -194,7 +215,7 @@ export const DealCard = ({
           </div>
           <div className="flex items-center text-gray-600">
             <User className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span>{getAssigneeName(deal.assigned_to, profiles)}</span>
+            <span>Deal holder: {getAssigneeName(deal.assigned_to, profiles)}</span>
           </div>
         </CardContent>
       </Card>
