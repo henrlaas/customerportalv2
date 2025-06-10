@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -19,7 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import ReactConfetti from 'react-confetti';
 import { Deal, Stage, Company, Profile } from '@/components/Deals/types/deal';
-import { DealCard } from './DealCard';
+import { EnhancedDealCard } from './EnhancedDealCard';
 import { DealKanbanViewSkeleton } from './DealKanbanViewSkeleton';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -242,7 +243,7 @@ export function DealKanbanView({
       <DragOverlay>
         {activeDeal ? (
           <div className="opacity-80 w-full max-w-[280px]">
-            <DealCard
+            <EnhancedDealCard
               deal={activeDeal}
               companies={companies}
               stages={stages}
@@ -320,7 +321,7 @@ function StageColumn({
         <SortableContext items={deals.map(deal => deal.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
             {deals.map((deal) => (
-              <DealCard
+              <EnhancedDealCard
                 key={deal.id}
                 deal={deal}
                 companies={companies}
