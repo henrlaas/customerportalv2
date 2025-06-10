@@ -226,6 +226,7 @@ export function DealKanbanView({
                 totalValue={stageTotalValue}
                 companies={companies}
                 profiles={profiles}
+                stages={stages}
                 canModify={canModify}
                 onEdit={onEdit}
                 onDelete={onDelete}
@@ -280,6 +281,7 @@ interface StageColumnProps {
   totalValue: number;
   companies: Company[];
   profiles: Profile[];
+  stages: Stage[];
   canModify: boolean;
   onEdit: (deal: Deal) => void;
   onDelete: (id: string) => void;
@@ -293,6 +295,7 @@ function StageColumn({
   totalValue,
   companies,
   profiles,
+  stages,
   canModify,
   onEdit,
   onDelete,
@@ -321,7 +324,7 @@ function StageColumn({
                 key={deal.id}
                 deal={deal}
                 companies={companies}
-                stages={[]}
+                stages={stages}
                 profiles={profiles}
                 canModify={canModify}
                 onEdit={onEdit}
