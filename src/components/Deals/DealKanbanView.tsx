@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   DndContext, 
@@ -19,7 +18,8 @@ import {
   sortableKeyboardCoordinates 
 } from '@dnd-kit/sortable';
 import ReactConfetti from 'react-confetti';
-import { Deal, Stage, Company, Profile } from '@/components/Deals/types/deal';
+import { Deal, Stage, Profile } from '@/components/Deals/types/deal';
+import { Company } from '@/types/company';
 import { EnhancedDealCard } from './EnhancedDealCard';
 import { DealKanbanViewSkeleton } from './DealKanbanViewSkeleton';
 import { useQuery } from '@tanstack/react-query';

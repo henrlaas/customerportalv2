@@ -31,8 +31,9 @@ import { Badge } from '@/components/ui/badge';
 import { useDraggable } from '@dnd-kit/core';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 
-// Import types from the deal types file
-import { Deal, Company, Stage, Profile, TempDealCompany } from '@/components/Deals/types/deal';
+// Import types from the deal types file and main company types
+import { Deal, Stage, Profile, TempDealCompany } from '@/components/Deals/types/deal';
+import { Company } from '@/types/company';
 
 // Import formatters
 import { formatCurrency, formatDate, getCompanyName, getAssigneeName } from './utils/formatters';
