@@ -1,0 +1,2 @@
+
+export { DealDetailsSidebar } from './DealDetailsSidebar';

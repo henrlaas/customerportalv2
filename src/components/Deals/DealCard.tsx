@@ -25,7 +25,7 @@ import { Deal, Company, Stage, Profile, TempDealCompany } from '@/components/Dea
 import { formatCurrency, formatDate, getCompanyName, getAssigneeName } from './utils/formatters';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { DealDetailsDialog } from './DealDetailsDialog';
+import { DealDetailsSidebar } from './DealDetailsSidebar';
 
 interface DealCardProps {
   deal: Deal;
@@ -181,13 +181,16 @@ export const DealCard = ({
         </CardContent>
       </Card>
 
-      <DealDetailsDialog
+      <DealDetailsSidebar
         isOpen={showDetails}
         onClose={() => setShowDetails(false)}
         deal={deal}
         companies={companies}
         profiles={profiles}
-        tempCompanies={tempCompanies}
+        stages={stages}
+        canModify={canModify}
+        onEdit={onEdit}
+        onDelete={onDelete}
       />
     </>
   );
