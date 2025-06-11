@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -125,29 +125,31 @@ export const EditProjectDialog: React.FC<EditProjectDialogProps> = ({
 
         <ProgressStepper stages={stages} currentStage={currentStage} />
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          {renderStage()}
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            {renderStage()}
 
-          <div className="flex justify-between pt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={currentStage === 1 ? handleClose : handlePrevious}
-            >
-              {currentStage === 1 ? 'Cancel' : 'Previous'}
-            </Button>
+            <div className="flex justify-between pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={currentStage === 1 ? handleClose : handlePrevious}
+              >
+                {currentStage === 1 ? 'Cancel' : 'Previous'}
+              </Button>
 
-            {currentStage < stages.length ? (
-              <Button type="button" onClick={handleNext}>
-                Next
-              </Button>
-            ) : (
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Save Changes'}
-              </Button>
-            )}
-          </div>
-        </form>
+              {currentStage < stages.length ? (
+                <Button type="button" onClick={handleNext}>
+                  Next
+                </Button>
+              ) : (
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Saving...' : 'Save Changes'}
+                </Button>
+              )}
+            </div>
+          </form>
+        </FormProvider>
       </DialogContent>
     </Dialog>
   );
