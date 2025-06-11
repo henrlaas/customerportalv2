@@ -26,6 +26,7 @@ import { EditProjectDialog } from '@/components/Projects/EditProjectDialog/EditP
 import { DeleteProjectDialog } from '@/components/Projects/DeleteProjectDialog';
 import { useProjectOperations } from '@/hooks/useProjectOperations';
 import { Edit, Trash2 } from 'lucide-react';
+import { MultiStageProjectContractDialog } from '@/components/Contracts/MultiStageProjectContractDialog';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -745,7 +746,7 @@ const ProjectDetailsPage = () => {
 
       {/* Contract creation dialog */}
       {isContractDialogOpen && selectedProject && (
-        <CreateProjectContractDialog
+        <MultiStageProjectContractDialog
           isOpen={isContractDialogOpen}
           onClose={() => setIsContractDialogOpen(false)}
           projectId={projectId || ''}

@@ -434,6 +434,7 @@ export function replacePlaceholders(text: string, data: Record<string, any>) {
     contactposition: data.contact?.position || null,
     todaydate: format(new Date(), 'dd.MM.yyyy'),
     mrrprice: data.company?.mrr ? `${data.company.mrr} NOK` : null,
+    // Project-specific placeholders
     description: data.project?.description || null,
     deadline: data.project?.deadline 
       ? format(new Date(data.project.deadline), 'dd.MM.yyyy')
