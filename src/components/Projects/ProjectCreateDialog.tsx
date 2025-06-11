@@ -228,14 +228,14 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
   );
 
   const CompanySingleValue = ({ data }: any) => (
-    <div className="flex items-center gap-2 h-8">
+    <div className="flex items-center gap-2 w-full">
       <CompanyFavicon 
         companyName={data.label} 
         website={data.website}
         logoUrl={data.logoUrl}
         size="sm"
       />
-      <span className="truncate">{data.label}</span>
+      <span className="truncate flex-1">{data.label}</span>
     </div>
   );
 
@@ -285,13 +285,17 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
     valueContainer: (base: any) => ({
       ...base,
       height: '38px',
-      padding: '0 8px'
+      padding: '0 8px',
+      display: 'flex',
+      alignItems: 'center'
     }),
     singleValue: (base: any) => ({
       ...base,
       height: '100%',
       display: 'flex',
-      alignItems: 'center'
+      alignItems: 'center',
+      width: '100%',
+      margin: 0
     }),
     menu: (base: any) => ({
       ...base,
