@@ -516,5 +516,3 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
     </Dialog>
   );
 };
-
-</edits_to_apply>
