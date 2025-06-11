@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -228,14 +227,14 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
   );
 
   const CompanySingleValue = ({ data }: any) => (
-    <div className="flex items-center gap-2 w-full">
+    <div className="flex items-center gap-2 w-full h-full overflow-hidden min-h-0">
       <CompanyFavicon 
         companyName={data.label} 
         website={data.website}
         logoUrl={data.logoUrl}
         size="sm"
       />
-      <span className="truncate flex-1">{data.label}</span>
+      <span className="truncate flex-1 min-w-0">{data.label}</span>
     </div>
   );
 
@@ -287,7 +286,8 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
       height: '38px',
       padding: '0 8px',
       display: 'flex',
-      alignItems: 'center'
+      alignItems: 'center',
+      overflow: 'hidden'
     }),
     singleValue: (base: any) => ({
       ...base,
@@ -295,7 +295,9 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
       display: 'flex',
       alignItems: 'center',
       width: '100%',
-      margin: 0
+      margin: 0,
+      overflow: 'hidden',
+      maxHeight: '36px'
     }),
     menu: (base: any) => ({
       ...base,
@@ -514,3 +516,5 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
     </Dialog>
   );
 };
+
+</edits_to_apply>
