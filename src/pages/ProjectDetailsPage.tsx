@@ -27,7 +27,6 @@ import { DeleteProjectDialog } from '@/components/Projects/DeleteProjectDialog';
 import { useProjectOperations } from '@/hooks/useProjectOperations';
 import { Edit, Trash2 } from 'lucide-react';
 import { MultiStageProjectContractDialog } from '@/components/Contracts/MultiStageProjectContractDialog';
-import { CompactProjectInfoCard } from '@/components/Projects/CompactProjectInfoCard';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -37,6 +36,7 @@ const ProjectDetailsPage = () => {
   const { assignees } = useProjectAssignees(projectId);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [projectCardTab, setProjectCardTab] = useState<'info' | 'finance'>('info');
   const { isAdmin } = useAuth();
   
   // Add state for edit and delete dialogs
@@ -417,15 +417,204 @@ const ProjectDetailsPage = () => {
         </div>
       </div>
       
-      {/* New Compact Project Info Card */}
-      <div className="mb-6">
-        <CompactProjectInfoCard 
-          project={selectedProject}
-          assignees={assignees}
-          financialData={financialData}
-          isLoadingFinancial={isLoadingFinancial}
-        />
-      </div>
+      <Card className="bg-gradient-to-br from-white to-gray-50 shadow-lg border-t-4 border-t-primary mb-6 overflow-hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <Briefcase className="h-5 w-5 text-primary" />
+            Project Information
+            <div className="ml-auto">
+              <div className="flex items-center mr-2 bg-muted rounded-md p-1">
+                <button
+                  onClick={() => setProjectCardTab('info')}
+                  className={`px-3 py-1 rounded-sm text-sm ${
+                    projectCardTab === 'info' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                  }`}
+                >
+                  Information
+                </button>
+                {/* Only show Finance tab button if user is admin */}
+                {isAdmin && (
+                  <button
+                    onClick={() => setProjectCardTab('finance')}
+                    className={`px-3 py-1 rounded-sm text-sm ${
+                      projectCardTab === 'finance' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                    }`}
+                  >
+                    Finance
+                  </button>
+                )}
+              </div>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Project Information Tab */}
+            {projectCardTab === 'info' && (
+              <>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Building className="h-5 w-5 text-blue-600 shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500 font-medium">Company</p>
+                      <div className="flex items-center gap-2">
+                        {selectedProject?.company && (
+                          <CompanyFavicon 
+                            companyName={selectedProject.company.name} 
+                            website={selectedProject.company.website}
+                            size="sm"
+                          />
+                        )}
+                        <span className="font-semibold">{selectedProject?.company?.name || 'Not assigned'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-emerald-600 shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500 font-medium">Description</p>
+                      <p className="text-gray-800">{selectedProject?.description || 'No description provided'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="h-5 w-5 text-green-600 shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500 font-medium">Value</p>
+                      <p className="text-gray-800 font-semibold">
+                        {selectedProject?.value ? (
+                          `${selectedProject.value.toLocaleString()} NOK`
+                        ) : (
+                          'Not specified'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <Users className="h-5 w-5 text-indigo-600 shrink-0 mt-1" />
+                    <div>
+                      <p className="text-sm text-gray-500 font-medium">Team Members</p>
+                      {assignees && assignees.length > 0 ? (
+                        <div className="mt-1">
+                          <UserAvatarGroup
+                            users={assignees.map(assignee => ({
+                              id: assignee.user_id,
+                              first_name: assignee.profiles?.first_name,
+                              last_name: assignee.profiles?.last_name,
+                              avatar_url: assignee.profiles?.avatar_url
+                            }))}
+                            size="md"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            {assignees.length} {assignees.length === 1 ? 'member' : 'members'} assigned
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-gray-600">No team members assigned</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-orange-600 shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500 font-medium">Price Type</p>
+                      <p className="text-gray-800">{formatPriceType(selectedProject?.price_type)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-red-600 shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500 font-medium">Deadline</p>
+                      <p className="text-gray-800">{selectedProject?.deadline ? formatDate(selectedProject.deadline) : 'No deadline set'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-5 w-5 text-purple-600 shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500 font-medium">Created</p>
+                      <p className="text-gray-800">{formatDate(selectedProject?.created_at)}</p>
+                    </div>
+                  </div>
+
+                  {selectedProject?.creator && (
+                    <div className="flex items-center gap-3">
+                      <User className="h-5 w-5 text-indigo-600 shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Created By</p>
+                        <p className="text-gray-800">
+                          {`${selectedProject.creator.first_name || ''} ${selectedProject.creator.last_name || ''}`.trim() || 'Unknown'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Finance Tab - Only render if user is admin */}
+            {projectCardTab === 'finance' && isAdmin && (
+              <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col justify-center">
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 gap-4">
+                      {/* Project Value Card */}
+                      <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
+                        <div className="text-sm text-gray-500 font-medium">Project Value</div>
+                        <div className="text-2xl font-bold">
+                          {formatCurrency(selectedProject?.value)}
+                        </div>
+                      </div>
+                      
+                      {/* Cost to Date Card */}
+                      <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
+                        <div className="text-sm text-gray-500 font-medium">Cost to Date</div>
+                        <div className="text-2xl font-bold">
+                          {isLoadingFinancial ? (
+                            <span className="text-lg">Loading...</span>
+                          ) : (
+                            formatCurrency(financialData?.totalCost || 0)
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Projected Profit Card */}
+                      <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
+                        <div className="text-sm text-gray-500 font-medium">Projected Profit</div>
+                        {isLoadingFinancial ? (
+                          <span className="text-lg">Loading...</span>
+                        ) : (
+                          <div className="text-2xl font-bold">
+                            <span className={calculateProjectProfit().profit >= 0 ? 'text-green-600' : 'text-red-600'}>
+                              {formatCurrency(calculateProjectProfit().profit)} 
+                              ({calculateProjectProfit().profitPercentage.toFixed(0)}%)
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-center items-center">
+                  <div className="w-full h-full">
+                    <ProjectFinancialChart 
+                      projectId={projectId || ''} 
+                      projectValue={selectedProject?.value || null}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Updated Tabs */}
       <Tabs defaultValue="milestones">
