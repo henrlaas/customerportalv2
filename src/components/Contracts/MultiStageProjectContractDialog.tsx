@@ -57,14 +57,14 @@ export function MultiStageProjectContractDialog({
     },
   });
 
-  // Fetch project template
+  // Fetch project template - Fixed to use "Project" instead of "project"
   const { data: projectTemplate, isLoading: isLoadingTemplate } = useQuery({
-    queryKey: ['contract-template', 'project'],
+    queryKey: ['contract-template', 'Project'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contract_templates')
         .select('*')
-        .eq('type', 'project')
+        .eq('type', 'Project')
         .maybeSingle();
       
       if (error) {
@@ -157,7 +157,7 @@ export function MultiStageProjectContractDialog({
         company_id: companyId,
         contact_id: values.contact_id,
         project_id: projectId,
-        template_type: 'project',
+        template_type: 'Project', // Fixed to use "Project" instead of "project"
         content: projectTemplate.content,
         created_by: user.id,
       };
