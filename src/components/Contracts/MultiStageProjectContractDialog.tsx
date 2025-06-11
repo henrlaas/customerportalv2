@@ -184,14 +184,28 @@ export function MultiStageProjectContractDialog({
       if (!projectTemplate) {
         throw new Error("No project template found. Please create a project template first.");
       }
+
+      // Prepare placeholder data for replacement
+      const placeholderData = {
+        company: companyData,
+        contact: {
+          first_name: selectedContact?.profiles?.first_name,
+          last_name: selectedContact?.profiles?.last_name,
+          position: selectedContact?.position,
+        },
+        project: projectData,
+      };
+
+      // Process the template content with placeholders replaced
+      const processedContent = replacePlaceholders(projectTemplate.content, placeholderData);
       
       const contractData = {
         title: values.title,
         company_id: companyId,
         contact_id: values.contact_id,
         project_id: projectId,
-        template_type: 'Project', // Fixed to use "Project" instead of "project"
-        content: projectTemplate.content,
+        template_type: 'Project',
+        content: processedContent, // Use processed content instead of raw template
         created_by: user.id,
       };
       
