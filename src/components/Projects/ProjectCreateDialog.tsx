@@ -25,12 +25,12 @@ import { CompanyFavicon } from "@/components/CompanyFavicon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from '@tanstack/react-query';
 
-// Define the form schema
+// Define the form schema with updated validation
 const projectSchema = z.object({
   name: z.string().min(1, "Project name is required"),
-  description: z.string().optional(),
+  description: z.string().min(1, "Project description is required"),
   company_id: z.string().min(1, "Company is required"),
-  value: z.coerce.number().min(0, "Value must be a positive number"),
+  value: z.coerce.number().min(0, "Value must be 0 or higher"),
   price_type: z.enum(["fixed", "estimated"]),
   deadline: z.date().optional(),
 });
@@ -97,6 +97,13 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
 
   const onSubmit = async (data: ProjectFormValues) => {
     if (!profile) return;
+    
+    // Validate team members
+    if (selectedUserIds.length === 0) {
+      toast.error("At least 1 team member must be assigned");
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -215,21 +222,20 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
         size="sm"
       />
       <div>
-        {data.isSubsidiary && <span className="text-muted-foreground">↳ </span>}
         {data.label}
       </div>
     </div>
   );
 
   const CompanySingleValue = ({ data }: any) => (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 h-8">
       <CompanyFavicon 
         companyName={data.label} 
         website={data.website}
         logoUrl={data.logoUrl}
         size="sm"
       />
-      <span>{data.label}</span>
+      <span className="truncate">{data.label}</span>
     </div>
   );
 
@@ -273,7 +279,19 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
         borderColor: 'hsl(var(--input))'
       },
       boxShadow: 'none',
-      minHeight: '40px'
+      minHeight: '40px',
+      height: '40px'
+    }),
+    valueContainer: (base: any) => ({
+      ...base,
+      height: '38px',
+      padding: '0 8px'
+    }),
+    singleValue: (base: any) => ({
+      ...base,
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center'
     }),
     menu: (base: any) => ({
       ...base,
@@ -309,7 +327,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
           {step === 1 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Project Name</Label>
+                <Label htmlFor="name">Project Name *</Label>
                 <Input 
                   id="name" 
                   placeholder="Enter project name" 
@@ -320,7 +338,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="company_id">Company</Label>
+                <Label htmlFor="company_id">Company *</Label>
                 <Select
                   className="react-select-container"
                   classNamePrefix="react-select"
@@ -340,7 +358,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
               </div>
               
               <div className="space-y-2">
-                <Label>Price Type</Label>
+                <Label>Price Type *</Label>
                 <div className="grid grid-cols-2 gap-4">
                   <Card 
                     className={cn(
@@ -381,7 +399,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="value">Project Value (NOK)</Label>
+                <Label htmlFor="value">Project Value (NOK) *</Label>
                 <Input 
                   id="value" 
                   type="number" 
@@ -398,13 +416,14 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
           {step === 2 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Description *</Label>
                 <Textarea 
                   id="description" 
                   className="min-h-[120px]" 
                   placeholder="Project description..." 
                   {...register("description")} 
                 />
+                {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
               </div>
               
               <div className="space-y-2">
@@ -438,7 +457,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
               </div>
               
               <div className="space-y-2">
-                <Label>Assign Team Members</Label>
+                <Label>Assign Team Members *</Label>
                 <Select
                   isMulti
                   className="react-select-container"
@@ -454,6 +473,9 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
                   onChange={handleUsersChange}
                   styles={selectStyles}
                 />
+                {selectedUserIds.length === 0 && (
+                  <p className="text-sm text-red-500">At least 1 team member must be assigned</p>
+                )}
               </div>
             </div>
           )}
@@ -476,7 +498,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
               <Button 
                 type="button"
                 onClick={handleSubmit(onSubmit)} 
-                disabled={isSubmitting} 
+                disabled={isSubmitting || selectedUserIds.length === 0} 
                 className="bg-evergreen hover:bg-evergreen/90"
               >
                 {isSubmitting ? "Creating..." : "Create Project"}
