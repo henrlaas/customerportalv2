@@ -76,31 +76,64 @@ export function MultiStageProjectContractDialog({
     },
   });
 
-  // Fetch company contacts with corrected relationship
+  // Fetch company contacts using the proven two-step approach
   const { data: companyContacts = [], isLoading: isLoadingContacts } = useQuery({
     queryKey: ['company-contacts', companyId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('company_contacts')
-        .select(`
-          id,
-          user_id,
-          position,
-          profiles!company_contacts_user_id_fkey (
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
-        .eq('company_id', companyId);
+      if (!companyId) return [];
       
-      if (error) {
-        console.error('Error fetching company contacts:', error);
+      try {
+        // Step 1: Get company contacts
+        const { data: companyContactsData, error: contactsError } = await supabase
+          .from('company_contacts')
+          .select('id, user_id, position')
+          .eq('company_id', companyId);
+        
+        if (contactsError) {
+          console.error('Error fetching company contacts:', contactsError);
+          throw contactsError;
+        }
+        
+        if (!companyContactsData || companyContactsData.length === 0) {
+          console.log('No company contacts found for company:', companyId);
+          return [];
+        }
+        
+        // Step 2: Get profile information for each contact
+        const userIds = companyContactsData.map(contact => contact.user_id);
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .in('id', userIds);
+        
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          throw profilesError;
+        }
+        
+        // Step 3: Combine the data
+        const combinedData = companyContactsData.map(contact => {
+          const profile = profiles?.find(p => p.id === contact.user_id);
+          return {
+            id: contact.id,
+            user_id: contact.user_id,
+            position: contact.position,
+            profiles: {
+              first_name: profile?.first_name || null,
+              last_name: profile?.last_name || null,
+              avatar_url: profile?.avatar_url || null,
+            }
+          };
+        });
+        
+        console.log('Successfully fetched company contacts:', combinedData);
+        return combinedData;
+      } catch (error) {
+        console.error('Error in company contacts query:', error);
         throw error;
       }
-      
-      return data || [];
     },
+    enabled: !!companyId,
   });
 
   // Fetch company data for contract placeholders
