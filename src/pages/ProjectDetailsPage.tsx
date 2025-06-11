@@ -612,6 +612,8 @@ const ProjectDetailsPage = () => {
                 companies={[]}
                 onTaskClick={handleTaskClick}
                 getProjectName={getProjectName}
+                hideCompanyColumn={true}
+                hideCampaignProjectColumn={true}
               />
             </>
           ) : (

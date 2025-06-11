@@ -68,6 +68,8 @@ interface TaskListViewProps {
   companies: Company[];
   onTaskClick: (taskId: string) => void;
   isLoading?: boolean;
+  hideCompanyColumn?: boolean;
+  hideCampaignProjectColumn?: boolean;
 }
 
 export const TaskListView: React.FC<TaskListViewProps> = ({
@@ -81,6 +83,8 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   companies,
   onTaskClick,
   isLoading = false,
+  hideCompanyColumn = false,
+  hideCampaignProjectColumn = false,
 }) => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -168,14 +172,18 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
               <Skeleton className="h-8 w-8 rounded-full" />
             </div>
           </TableCell>
-          <TableCell>
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-6 w-6 rounded-full" />
-              <Skeleton className="h-5 w-24" />
-            </div>
-          </TableCell>
+          {!hideCompanyColumn && (
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-5 w-24" />
+              </div>
+            </TableCell>
+          )}
           <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-          <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+          {!hideCampaignProjectColumn && (
+            <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+          )}
           <TableCell className="text-center"><Skeleton className="h-6 w-6 mx-auto" /></TableCell>
         </TableRow>
       ))}
@@ -193,9 +201,9 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Assignees</TableHead>
-                <TableHead>Company</TableHead>
+                {!hideCompanyColumn && <TableHead>Company</TableHead>}
                 <TableHead>Due Date</TableHead>
-                <TableHead>Campaign/Project</TableHead>
+                {!hideCampaignProjectColumn && <TableHead>Campaign/Project</TableHead>}
                 <TableHead className="text-center">Client Visible</TableHead>
               </TableRow>
             </TableHeader>
@@ -221,37 +229,41 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                           size="sm"
                         />
                       </TableCell>
-                      <TableCell>
-                        {company ? (
-                          <div className="flex items-center gap-2">
-                            <CompanyFavicon 
-                              companyName={company.name}
-                              website={company.website}
-                              logoUrl={company.logo_url}
-                              size="sm"
-                            />
-                            <span className="text-sm">{company.name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">No company</span>
-                        )}
-                      </TableCell>
+                      {!hideCompanyColumn && (
+                        <TableCell>
+                          {company ? (
+                            <div className="flex items-center gap-2">
+                              <CompanyFavicon 
+                                companyName={company.name}
+                                website={company.website}
+                                logoUrl={company.logo_url}
+                                size="sm"
+                              />
+                              <span className="text-sm">{company.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">No company</span>
+                          )}
+                        </TableCell>
+                      )}
                       <TableCell>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</TableCell>
-                      <TableCell>
-                        {task.project_id ? (
-                          <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                            Project: {getProjectName(task.project_id)}
-                          </Badge>
-                        ) : task.campaign_id ? (
-                          <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-                            Campaign: {getCampaignName(task.campaign_id)}
-                          </Badge>
-                        ) : task.related_type ? (
-                          <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
-                            {task.related_type}
-                          </Badge>
-                        ) : 'None'}
-                      </TableCell>
+                      {!hideCampaignProjectColumn && (
+                        <TableCell>
+                          {task.project_id ? (
+                            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                              Project: {getProjectName(task.project_id)}
+                            </Badge>
+                          ) : task.campaign_id ? (
+                            <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
+                              Campaign: {getCampaignName(task.campaign_id)}
+                            </Badge>
+                          ) : task.related_type ? (
+                            <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
+                              {task.related_type}
+                            </Badge>
+                          ) : 'None'}
+                        </TableCell>
+                      )}
                       <TableCell className="text-center">
                         {task.client_visible ? (
                           <Eye className="h-4 w-4 text-blue-600 mx-auto" />
@@ -264,7 +276,7 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-4">
+                  <TableCell colSpan={hideCompanyColumn && hideCampaignProjectColumn ? 6 : hideCompanyColumn || hideCampaignProjectColumn ? 7 : 8} className="text-center py-4">
                     No tasks found
                   </TableCell>
                 </TableRow>
