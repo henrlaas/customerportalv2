@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,8 +19,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { MultiAssigneeSelect } from '@/components/Tasks/MultiAssigneeSelect';
 
-// Define the task schema for simplified form validation
+// Updated task schema to include assignees
 const taskSchema = z.object({
   title: z.string().min(1, {
     message: 'Title is required'
@@ -28,8 +30,10 @@ const taskSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']),
   status: z.enum(['todo', 'in_progress', 'completed']),
   due_date: z.string().optional(),
-  client_visible: z.boolean().optional()
+  client_visible: z.boolean().optional(),
+  assignees: z.array(z.string()).optional()
 });
+
 type CreateProjectTaskDialogProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -37,8 +41,16 @@ type CreateProjectTaskDialogProps = {
   companyId: string | null;
   projectAssignees: {
     user_id: string;
+    profiles?: {
+      id: string;
+      first_name: string | null;
+      last_name: string | null;
+      avatar_url: string | null;
+      role: string;
+    } | null;
   }[];
 };
+
 export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = ({
   isOpen,
   onClose,
@@ -46,12 +58,21 @@ export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = (
   companyId,
   projectAssignees
 }) => {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Set up the form with default values
+  // Transform project assignees to the format expected by MultiAssigneeSelect
+  const availableUsers = projectAssignees
+    .filter(assignee => assignee.profiles)
+    .map(assignee => ({
+      id: assignee.user_id,
+      first_name: assignee.profiles!.first_name,
+      last_name: assignee.profiles!.last_name,
+      avatar_url: assignee.profiles!.avatar_url,
+      role: assignee.profiles!.role
+    }));
+
+  // Set up the form with default values including assignees
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -60,7 +81,8 @@ export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = (
       priority: 'medium',
       status: 'todo',
       due_date: '',
-      client_visible: false
+      client_visible: false,
+      assignees: []
     }
   });
 
@@ -81,23 +103,28 @@ export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = (
       };
 
       // Create the task
-      const {
-        data: taskResult,
-        error
-      } = await supabase.from('tasks').insert(taskData).select().single();
+      const { data: taskResult, error } = await supabase
+        .from('tasks')
+        .insert(taskData)
+        .select()
+        .single();
+      
       if (error) throw error;
 
-      // If we have project assignees, add them as task assignees
-      if (projectAssignees.length > 0 && taskResult) {
-        const assigneesData = projectAssignees.map(assignee => ({
+      // If assignees are selected, add them as task assignees
+      if (data.assignees && data.assignees.length > 0 && taskResult) {
+        const assigneesData = data.assignees.map(userId => ({
           task_id: taskResult.id,
-          user_id: assignee.user_id
+          user_id: userId
         }));
-        const {
-          error: assignError
-        } = await supabase.from('task_assignees').insert(assigneesData);
+        
+        const { error: assignError } = await supabase
+          .from('task_assignees')
+          .insert(assigneesData);
+        
         if (assignError) throw assignError;
       }
+      
       return taskResult;
     },
     onSuccess: () => {
@@ -119,7 +146,9 @@ export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = (
   const onSubmit = (data: z.infer<typeof taskSchema>) => {
     createTaskMutation.mutate(data);
   };
-  return <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+
+  return (
+    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
@@ -127,30 +156,64 @@ export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = (
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="title" render={({
-            field
-          }) => <FormItem>
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
                     <Input placeholder="Task title" {...field} />
                   </FormControl>
                   <FormMessage />
-                </FormItem>} />
+                </FormItem>
+              )}
+            />
 
-            <FormField control={form.control} name="description" render={({
-            field
-          }) => <FormItem>
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Task description" className="min-h-[100px]" {...field} value={field.value || ''} />
+                    <Textarea 
+                      placeholder="Task description" 
+                      className="min-h-[100px]" 
+                      {...field} 
+                      value={field.value || ''} 
+                    />
                   </FormControl>
                   <FormMessage />
-                </FormItem>} />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="assignees"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assignees</FormLabel>
+                  <FormControl>
+                    <MultiAssigneeSelect
+                      users={availableUsers}
+                      selectedUserIds={field.value || []}
+                      onChange={field.onChange}
+                      placeholder="Select team members for this task"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="status" render={({
-              field
-            }) => <FormItem>
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
                     <FormLabel>Status</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
@@ -165,11 +228,15 @@ export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = (
                       </SelectContent>
                     </Select>
                     <FormMessage />
-                  </FormItem>} />
+                  </FormItem>
+                )}
+              />
 
-              <FormField control={form.control} name="priority" render={({
-              field
-            }) => <FormItem>
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
                     <FormLabel>Priority</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
@@ -184,44 +251,76 @@ export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = (
                       </SelectContent>
                     </Select>
                     <FormMessage />
-                  </FormItem>} />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <FormField control={form.control} name="due_date" render={({
-            field
-          }) => <FormItem>
+            <FormField
+              control={form.control}
+              name="due_date"
+              render={({ field }) => (
+                <FormItem>
                   <FormLabel>Due Date</FormLabel>
                   <FormControl>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className={cn("w-full pl-3 text-left font-normal", "flex h-10 rounded-md border border-input bg-background px-3 py-2", !field.value && "text-muted-foreground")}>
-                          {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            "flex h-10 rounded-md border border-input bg-background px-3 py-2",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(new Date(field.value), "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-70" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 shadow-md border border-input rounded-md bg-background" align="start">
-                        <Calendar mode="single" selected={field.value ? new Date(field.value) : undefined} onSelect={date => {
-                    if (date) {
-                      field.onChange(format(date, "yyyy-MM-dd"));
-                    }
-                  }} initialFocus className="p-3 pointer-events-auto rounded-md" />
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? new Date(field.value) : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              field.onChange(format(date, "yyyy-MM-dd"));
+                            }
+                          }}
+                          initialFocus
+                          className="p-3 pointer-events-auto rounded-md"
+                        />
                       </PopoverContent>
                     </Popover>
                   </FormControl>
                   <FormMessage />
-                </FormItem>} />
+                </FormItem>
+              )}
+            />
 
-            <FormField control={form.control} name="client_visible" render={({
-            field
-          }) => <FormItem className="flex flex-row items-center justify-between p-4 border rounded-md">
+            <FormField
+              control={form.control}
+              name="client_visible"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between p-4 border rounded-md">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Visible to client</FormLabel>
-                    <div className="text-sm text-muted-foreground">Make this task visible in the client portal</div>
+                    <div className="text-sm text-muted-foreground">
+                      Make this task visible in the client portal
+                    </div>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
-                </FormItem>} />
+                </FormItem>
+              )}
+            />
 
             <DialogFooter className="mt-6">
               <DialogClose asChild>
@@ -234,5 +333,6 @@ export const CreateProjectTaskDialog: React.FC<CreateProjectTaskDialogProps> = (
           </form>
         </Form>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
