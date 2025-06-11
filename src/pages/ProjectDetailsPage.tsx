@@ -49,6 +49,9 @@ const ProjectDetailsPage = () => {
   // Get project operations hook
   const { updateProject, deleteProject } = useProjectOperations();
 
+  // Find the selected project from the projects array
+  const selectedProject = projects?.find(project => project.id === projectId);
+
   // Fetch tasks related to this project
   const { data: projectTasks, isLoading: isLoadingTasks, error: tasksError, refetch: refetchTasks } = useQuery({
     queryKey: ['project-tasks', projectId],
