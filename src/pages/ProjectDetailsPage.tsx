@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,10 @@ import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
 import { ProjectTimeTrackingTab } from '@/components/TimeTracking/ProjectTimeTrackingTab';
 import { ProjectFinancialChart } from '@/components/Projects/ProjectFinancialChart';
 import { useAuth } from '@/contexts/AuthContext';
+import { EditProjectDialog } from '@/components/Projects/EditProjectDialog/EditProjectDialog';
+import { DeleteProjectDialog } from '@/components/Projects/DeleteProjectDialog';
+import { useProjectOperations } from '@/hooks/useProjectOperations';
+import { Edit, Trash2 } from 'lucide-react';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -33,14 +36,18 @@ const ProjectDetailsPage = () => {
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [projectCardTab, setProjectCardTab] = useState<'info' | 'finance'>('info');
-  const { isAdmin } = useAuth(); // Get the user role from auth context
+  const { isAdmin } = useAuth();
+  
+  // Add state for edit and delete dialogs
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // Add state for task detail sheet
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isTaskDetailSheetOpen, setIsTaskDetailSheetOpen] = useState(false);
 
-  // Get selected project details
-  const selectedProject = projects?.find(p => p.id === projectId);
+  // Get project operations hook
+  const { updateProject, deleteProject } = useProjectOperations();
 
   // Fetch tasks related to this project
   const { data: projectTasks, isLoading: isLoadingTasks, error: tasksError, refetch: refetchTasks } = useQuery({
@@ -339,6 +346,32 @@ const ProjectDetailsPage = () => {
     });
   };
 
+  // Handle edit project
+  const handleEditProject = (data: any) => {
+    if (!projectId) return;
+    
+    updateProject.mutate(
+      { projectId, data },
+      {
+        onSuccess: () => {
+          setIsEditDialogOpen(false);
+        }
+      }
+    );
+  };
+
+  // Handle delete project
+  const handleDeleteProject = () => {
+    if (!projectId) return;
+    
+    deleteProject.mutate(projectId, {
+      onSuccess: () => {
+        setIsDeleteDialogOpen(false);
+        navigate('/projects');
+      }
+    });
+  };
+
   if (!selectedProject) {
     return (
       <div className="container p-6 mx-auto">
@@ -366,6 +399,17 @@ const ProjectDetailsPage = () => {
             Back to Projects
           </Button>
           <h1 className="text-2xl font-bold">{selectedProject?.name}</h1>
+        </div>
+        {/* Add edit and delete buttons */}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button variant="outline" onClick={() => setIsDeleteDialogOpen(true)} className="text-red-600 hover:text-red-700">
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
         </div>
       </div>
       
@@ -724,6 +768,28 @@ const ProjectDetailsPage = () => {
         onOpenChange={setIsTaskDetailSheetOpen}
         taskId={selectedTaskId}
       />
+
+      {/* Add the edit and delete dialogs */}
+      {selectedProject && (
+        <>
+          <EditProjectDialog
+            isOpen={isEditDialogOpen}
+            onClose={() => setIsEditDialogOpen(false)}
+            onSave={handleEditProject}
+            project={selectedProject}
+            assignees={assignees || []}
+            isLoading={updateProject.isPending}
+          />
+
+          <DeleteProjectDialog
+            isOpen={isDeleteDialogOpen}
+            onClose={() => setIsDeleteDialogOpen(false)}
+            onConfirm={handleDeleteProject}
+            projectName={selectedProject.name}
+            isDeleting={deleteProject.isPending}
+          />
+        </>
+      )}
     </div>
   );
 };
