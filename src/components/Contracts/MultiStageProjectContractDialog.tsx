@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProgressStepper } from '@/components/ui/progress-stepper';
+import { Form } from '@/components/ui/form';
 import { ContractTitleContactStage } from './MultiStageProjectContractDialog/ContractTitleContactStage';
 import { ProjectContractConfirmationStage } from './MultiStageProjectContractDialog/ProjectContractConfirmationStage';
 import { createContract } from '@/utils/contractUtils';
@@ -64,7 +65,7 @@ export function MultiStageProjectContractDialog({
         .from('contract_templates')
         .select('*')
         .eq('type', 'project')
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching project template:', error);
@@ -75,7 +76,7 @@ export function MultiStageProjectContractDialog({
     },
   });
 
-  // Fetch company contacts
+  // Fetch company contacts with corrected relationship
   const { data: companyContacts = [], isLoading: isLoadingContacts } = useQuery({
     queryKey: ['company-contacts', companyId],
     queryFn: async () => {
@@ -85,7 +86,7 @@ export function MultiStageProjectContractDialog({
           id,
           user_id,
           position,
-          profiles:user_id (
+          profiles!company_contacts_user_id_fkey (
             first_name,
             last_name,
             avatar_url
@@ -143,8 +144,12 @@ export function MultiStageProjectContractDialog({
   // Create contract mutation
   const createContractMutation = useMutation({
     mutationFn: async (values: ProjectContractFormValues) => {
-      if (!user || !projectTemplate) {
-        throw new Error("Missing required data");
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
+      if (!projectTemplate) {
+        throw new Error("No project template found. Please create a project template first.");
       }
       
       const contractData = {
@@ -208,6 +213,25 @@ export function MultiStageProjectContractDialog({
     onClose();
   };
 
+  // Show error if no template exists
+  if (!isLoadingTemplate && !projectTemplate) {
+    return (
+      <Dialog open={isOpen} onOpenChange={handleDialogClose}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Cannot Create Contract</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-center">
+            <p className="text-muted-foreground mb-4">
+              No project contract template found. Please create a project template first.
+            </p>
+            <Button onClick={handleDialogClose}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -217,62 +241,64 @@ export function MultiStageProjectContractDialog({
 
         <ProgressStepper currentStep={currentStep} totalSteps={totalSteps} />
         
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {currentStep === 1 && (
-            <ContractTitleContactStage 
-              form={form}
-              companyContacts={companyContacts}
-              isLoadingContacts={isLoadingContacts}
-            />
-          )}
-          
-          {currentStep === 2 && (
-            <ProjectContractConfirmationStage 
-              form={form}
-              selectedContact={selectedContact}
-              projectTemplate={projectTemplate}
-              companyData={companyData}
-              projectData={projectData}
-              isLoadingTemplate={isLoadingTemplate}
-            />
-          )}
-          
-          <DialogFooter className="flex justify-between pt-4 sm:justify-between">
-            <div>
-              {currentStep > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={goToPreviousStep}
-                  className="flex items-center gap-1"
-                >
-                  <ChevronLeft className="h-4 w-4" /> Back
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {currentStep === 1 && (
+              <ContractTitleContactStage 
+                form={form}
+                companyContacts={companyContacts}
+                isLoadingContacts={isLoadingContacts}
+              />
+            )}
+            
+            {currentStep === 2 && (
+              <ProjectContractConfirmationStage 
+                form={form}
+                selectedContact={selectedContact}
+                projectTemplate={projectTemplate}
+                companyData={companyData}
+                projectData={projectData}
+                isLoadingTemplate={isLoadingTemplate}
+              />
+            )}
+            
+            <DialogFooter className="flex justify-between pt-4 sm:justify-between">
+              <div>
+                {currentStep > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={goToPreviousStep}
+                    className="flex items-center gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Back
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={handleDialogClose}>
+                  Cancel
                 </Button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={handleDialogClose}>
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                className="flex items-center gap-1"
-                disabled={createContractMutation.isPending}
-              >
-                {createContractMutation.isPending 
-                  ? 'Creating...' 
-                  : currentStep === totalSteps 
-                    ? 'Create Contract' 
-                    : (
-                      <>
-                        Next <ChevronRight className="h-4 w-4" />
-                      </>
-                    )
-                }
-              </Button>
-            </div>
-          </DialogFooter>
-        </form>
+                <Button 
+                  type="submit"
+                  className="flex items-center gap-1"
+                  disabled={createContractMutation.isPending}
+                >
+                  {createContractMutation.isPending 
+                    ? 'Creating...' 
+                    : currentStep === totalSteps 
+                      ? 'Create Contract' 
+                      : (
+                        <>
+                          Next <ChevronRight className="h-4 w-4" />
+                        </>
+                      )
+                  }
+                </Button>
+              </div>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
