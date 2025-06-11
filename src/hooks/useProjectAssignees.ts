@@ -12,6 +12,7 @@ export interface ProjectAssignee {
     first_name: string | null;
     last_name: string | null;
     avatar_url: string | null;
+    role: string;
   } | null;
 }
 
@@ -35,12 +36,12 @@ export const useProjectAssignees = (projectId?: string) => {
         throw assigneesError;
       }
 
-      // Then get the profiles for those assignees
+      // Then get the profiles for those assignees including the role
       const assigneesWithProfiles = await Promise.all(
         assigneesData.map(async (assignee) => {
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('id, first_name, last_name, avatar_url')
+            .select('id, first_name, last_name, avatar_url, role')
             .eq('id', assignee.user_id)
             .single();
 
