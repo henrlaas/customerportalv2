@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +19,7 @@ import { ProgressStepper } from '@/components/ui/progress-stepper';
 import { Form } from '@/components/ui/form';
 import { ContractTitleContactStage } from './MultiStageProjectContractDialog/ContractTitleContactStage';
 import { ProjectContractConfirmationStage } from './MultiStageProjectContractDialog/ProjectContractConfirmationStage';
-import { createContract } from '@/utils/contractUtils';
+import { createContract, replacePlaceholders } from '@/utils/contractUtils';
 
 const projectContractSchema = z.object({
   title: z.string().min(1, { message: 'Contract title is required' }),
