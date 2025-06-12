@@ -3,23 +3,24 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MilestoneStatus } from './useProjectMilestones';
 
-export type CreateMilestoneParams = {
+type CreateMilestoneParams = {
   projectId: string;
   name: string;
-  dueDate?: string | null;
+  status: MilestoneStatus;
+  dueDate?: string;
 };
 
 export const useCreateMilestone = () => {
   const queryClient = useQueryClient();
   
-  const mutation = useMutation({
-    mutationFn: async ({ projectId, name, dueDate }: CreateMilestoneParams) => {
+  const { mutateAsync, isPending, error } = useMutation({
+    mutationFn: async ({ projectId, name, status, dueDate }: CreateMilestoneParams) => {
       const { data, error } = await supabase
         .from('milestones')
         .insert({
           project_id: projectId,
           name,
-          status: 'created' as MilestoneStatus,
+          status,
           due_date: dueDate || null
         })
         .select()
@@ -39,8 +40,8 @@ export const useCreateMilestone = () => {
   });
   
   return {
-    mutateAsync: mutation.mutateAsync,
-    isPending: mutation.isPending,
-    error: mutation.error
+    createMilestone: mutateAsync,
+    isLoading: isPending,
+    error
   };
 };

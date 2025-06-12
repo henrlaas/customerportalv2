@@ -2,11 +2,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+interface DeleteMilestoneParams {
+  milestoneId: string;
+}
+
 export const useDeleteMilestone = () => {
   const queryClient = useQueryClient();
   
-  const mutation = useMutation({
-    mutationFn: async (milestoneId: string) => {
+  const { mutateAsync, isPending: isLoading, error } = useMutation({
+    mutationFn: async ({ milestoneId }: DeleteMilestoneParams) => {
       const { data, error } = await supabase
         .from('milestones')
         .delete()
@@ -28,8 +32,8 @@ export const useDeleteMilestone = () => {
   });
   
   return {
-    mutateAsync: mutation.mutateAsync,
-    isPending: mutation.isPending,
-    error: mutation.error
+    deleteMilestone: mutateAsync,
+    isLoading,
+    error
   };
 };

@@ -52,7 +52,7 @@ const ProjectDetailsPage = () => {
   // Find the selected project from the projects array
   const selectedProject = projects?.find(project => project.id === projectId);
 
-  // Fetch tasks related to this project with proper profile joins for assignees
+  // Fetch tasks related to this project
   const { data: projectTasks, isLoading: isLoadingTasks, error: tasksError, refetch: refetchTasks } = useQuery({
     queryKey: ['project-tasks', projectId],
     queryFn: async () => {
@@ -61,28 +61,10 @@ const ProjectDetailsPage = () => {
       console.log('Fetching tasks for project ID:', projectId);
       
       try {
-        // Fetch tasks with assignees and their profiles in one query
+        // First fetch tasks
         const { data: tasksData, error: tasksError } = await supabase
           .from('tasks')
-          .select(`
-            *,
-            task_assignees (
-              id,
-              user_id,
-              profiles (
-                id,
-                first_name,
-                last_name,
-                avatar_url
-              )
-            ),
-            creator:profiles!creator_id (
-              id,
-              first_name,
-              last_name,
-              avatar_url
-            )
-          `)
+          .select('*')
           .eq('project_id', projectId)
           .order('created_at', { ascending: false });
         
@@ -95,11 +77,31 @@ const ProjectDetailsPage = () => {
         // Debug the returned tasks
         console.log('Found tasks:', tasksData?.length, tasksData);
         
-        // Transform the data to match the expected structure
-        const tasksWithDetails = (tasksData || []).map(task => ({
-          ...task,
-          assignees: task.task_assignees || [],
-          creator: task.creator
+        // For each task, fetch its assignees and creator info separately
+        const tasksWithDetails = await Promise.all((tasksData || []).map(async (task) => {
+          // Fetch assignees for this task
+          const { data: assigneesData } = await supabase
+            .from('task_assignees')
+            .select('id, user_id')
+            .eq('task_id', task.id);
+            
+          // Fetch creator info if creator_id exists
+          let creatorData = null;
+          if (task.creator_id) {
+            const { data: creator } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name, avatar_url')
+              .eq('id', task.creator_id)
+              .single();
+              
+            creatorData = creator;
+          }
+          
+          return {
+            ...task,
+            assignees: assigneesData || [],
+            creator: creatorData
+          };
         }));
         
         return tasksWithDetails || [];
@@ -197,8 +199,8 @@ const ProjectDetailsPage = () => {
     if (!task.assignees) return [];
     
     return task.assignees.map((assignee: any) => {
-      // The profiles data is now directly available in the assignee object
-      return assignee.profiles || { id: assignee.user_id };
+      const profile = profiles.find((p: any) => p.id === assignee.user_id);
+      return profile || { id: assignee.user_id };
     });
   };
 

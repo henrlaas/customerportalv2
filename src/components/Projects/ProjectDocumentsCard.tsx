@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,15 +43,14 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
 
   const uploadDocument = useMutation({
     mutationFn: async (file: File) => {
-      // Upload file to storage with proper file path structure
+      // Upload file to storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${projectId}/${Date.now()}_${file.name}`;
-
-      console.log('Uploading file to path:', fileName);
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${projectId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('project-documents')
-        .upload(fileName, file);
+        .upload(filePath, file);
 
       if (uploadError) {
         console.error('Error uploading file:', uploadError);
@@ -60,9 +60,7 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
       // Get public URL
       const { data: urlData } = supabase.storage
         .from('project-documents')
-        .getPublicUrl(fileName);
-
-      console.log('File uploaded successfully, URL:', urlData.publicUrl);
+        .getPublicUrl(filePath);
 
       // Save document record
       const { data, error } = await supabase
@@ -82,7 +80,7 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
         throw error;
       }
 
-      return data;
+      return urlData.publicUrl;
     },
     onSuccess: () => {
       toast.success('Document uploaded successfully');
@@ -97,20 +95,18 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
 
   const deleteDocument = useMutation({
     mutationFn: async (document: any) => {
-      // Extract file name from URL or use stored path
-      const filePath = `${projectId}/${document.name}`;
-      
       // Delete from storage
+      const filePath = `${projectId}/${document.name}`;
       const { error: storageError } = await supabase.storage
         .from('project-documents')
         .remove([filePath]);
 
       if (storageError) {
         console.error('Error deleting file from storage:', storageError);
-        // Don't throw here as the file might not exist in storage
+        throw storageError;
       }
 
-      // Delete record from database
+      // Delete record
       const { error } = await supabase
         .from('project_documents')
         .delete()
@@ -246,10 +242,7 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
           </DialogHeader>
           <div className="mt-4">
             <FileUploader
-              onUpload={async (file) => {
-                await uploadDocument.mutateAsync(file);
-                return file.name; // Return the file name as a string
-              }}
+              onUpload={(file) => uploadDocument.mutateAsync(file)}
               accept={{
                 'application/pdf': ['.pdf'],
                 'application/msword': ['.doc'],
