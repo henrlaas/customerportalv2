@@ -27,6 +27,7 @@ import { Edit, Trash2 } from 'lucide-react';
 import { MultiStageProjectContractDialog } from '@/components/Contracts/MultiStageProjectContractDialog';
 import { ProjectOverviewTab } from '@/components/Projects/ProjectOverviewTab';
 import { TaskSummaryCards } from '@/components/Projects/TaskSummaryCards';
+import { ContractSummaryCards } from '@/components/Projects/ContractSummaryCards';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -151,7 +152,7 @@ const ProjectDetailsPage = () => {
     enabled: !!projectId
   });
 
-  // Fetch contracts related to this project
+  // Fetch contracts related to this project with enhanced data
   const { data: projectContracts, isLoading: isLoadingContracts, error: contractsError } = useQuery({
     queryKey: ['project-contracts', projectId],
     queryFn: async () => {
@@ -163,18 +164,44 @@ const ProjectDetailsPage = () => {
           .select(`
             *,
             company:company_id (name, organization_number),
-            contact:contact_id (id, user_id, position)
+            contact:contact_id (
+              id, 
+              user_id, 
+              position,
+              profiles:user_id (
+                first_name,
+                last_name,
+                avatar_url
+              )
+            )
           `)
           .eq('project_id', projectId)
           .order('created_at', { ascending: false });
         
         if (error) {
           console.error('Error fetching project contracts:', error);
-          toast.error('Failed to load contracts');
           throw error;
         }
         
-        return data || [];
+        // Fetch creator profiles for each contract
+        const contractsWithCreators = await Promise.all((data || []).map(async (contract) => {
+          let creator = null;
+          if (contract.created_by) {
+            const { data: creatorData } = await supabase
+              .from('profiles')
+              .select('first_name, last_name, avatar_url')
+              .eq('id', contract.created_by)
+              .single();
+            creator = creatorData;
+          }
+          
+          return {
+            ...contract,
+            creator
+          };
+        }));
+        
+        return contractsWithCreators || [];
       } catch (error) {
         console.error('Error in project contracts query:', error);
         return [];
@@ -456,62 +483,71 @@ const ProjectDetailsPage = () => {
         </TabsContent>
         
         <TabsContent value="contracts">
-          {contractsError ? (
-            <div className="bg-white rounded-lg shadow p-6 text-center">
-              <p className="text-red-500 mb-4">Error loading contracts. Please try again.</p>
-              <Button variant="outline" onClick={() => refetchTasks()}>
-                Refresh
-              </Button>
+          <div>
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Contracts</h3>
             </div>
-          ) : isLoadingContracts ? (
-            <CenteredSpinner />
-          ) : projectContracts && projectContracts.length > 0 ? (
-            <>
-              <div className="mb-4 flex justify-between items-center">
-                <h3 className="text-lg font-medium">Project Contracts ({projectContracts.length})</h3>
-                {projectContracts.length < 1 && (
-                  <Button onClick={() => setIsContractDialogOpen(true)}>
-                    <FileInput className="mr-2 h-4 w-4" /> Create Contract
-                  </Button>
-                )}
+
+            {contractsError ? (
+              <div className="bg-white rounded-lg shadow p-6 text-center">
+                <p className="text-red-500 mb-4">Error loading contracts. Please try again.</p>
+                <Button variant="outline" onClick={() => refetchTasks()}>
+                  Refresh
+                </Button>
               </div>
-              <div className="space-y-4">
-                {projectContracts.map((contract) => (
-                  <Card 
-                    key={contract.id} 
-                    className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => handleContractClick(contract.id)}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <FileInput className="h-5 w-5 text-blue-600" />
-                            <h3 className="font-medium text-lg">{contract.title}</h3>
+            ) : isLoadingContracts ? (
+              <CenteredSpinner />
+            ) : projectContracts && projectContracts.length > 0 ? (
+              <>
+                {/* Contract Overview Card */}
+                <ContractSummaryCards contracts={projectContracts} />
+                
+                <div className="mb-4 flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Project Contracts ({projectContracts.length})</h3>
+                  {projectContracts.length < 1 && (
+                    <Button onClick={() => setIsContractDialogOpen(true)}>
+                      <FileInput className="mr-2 h-4 w-4" /> Create Contract
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-4">
+                  {projectContracts.map((contract) => (
+                    <Card 
+                      key={contract.id} 
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handleContractClick(contract.id)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <FileInput className="h-5 w-5 text-blue-600" />
+                              <h3 className="font-medium text-lg">{contract.title}</h3>
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              <p>Company: {contract.company?.name}</p>
+                              <p>Created: {formatDate(contract.created_at)}</p>
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-600">
-                            <p>Company: {contract.company?.name}</p>
-                            <p>Created: {formatDate(contract.created_at)}</p>
-                          </div>
+                          <div>{getContractStatusBadge(contract.status)}</div>
                         </div>
-                        <div>{getContractStatusBadge(contract.status)}</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="bg-white rounded-lg shadow p-6 text-center">
+                <div className="mb-4 flex flex-col items-center">
+                  <FileInput className="h-12 w-12 text-gray-400 mb-2" />
+                  <p className="text-gray-500 mb-4">No contracts associated with this project yet.</p>
+                </div>
+                <Button onClick={() => setIsContractDialogOpen(true)}>
+                  <FileInput className="mr-2 h-4 w-4" /> Create Contract
+                </Button>
               </div>
-            </>
-          ) : (
-            <div className="bg-white rounded-lg shadow p-6 text-center">
-              <div className="mb-4 flex flex-col items-center">
-                <FileInput className="h-12 w-12 text-gray-400 mb-2" />
-                <p className="text-gray-500 mb-4">No contracts associated with this project yet.</p>
-              </div>
-              <Button onClick={() => setIsContractDialogOpen(true)}>
-                <FileInput className="mr-2 h-4 w-4" /> Create Contract
-              </Button>
-            </div>
-          )}
+            )}
+          </div>
         </TabsContent>
       </Tabs>
 
