@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { ContractTitleContactStage } from './MultiStageProjectContractDialog/ContractTitleContactStage';
-import { ProjectContractConfirmationStage } from './ProjectContractConfirmationStage';
+import { ProjectContractConfirmationStage } from './MultiStageProjectContractDialog/ProjectContractConfirmationStage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -15,7 +16,7 @@ interface MultiStageProjectContractDialogProps {
   projectId: string;
   companyId: string;
   projectName: string;
-  onSuccess?: () => void; // Add optional success callback
+  onSuccess?: () => void;
 }
 
 interface FormData {

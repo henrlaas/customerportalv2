@@ -1,52 +1,33 @@
 
-import { useState } from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp, FileText, User, Building } from 'lucide-react';
-import { replacePlaceholders } from '@/utils/contractUtils';
+import { Building, FileText, User } from 'lucide-react';
 
 interface ProjectContractConfirmationStageProps {
-  form: UseFormReturn<any>;
-  selectedContact: any;
-  projectTemplate: any;
-  companyData: any;
-  projectData: any;
-  isLoadingTemplate: boolean;
+  formData: {
+    title: string;
+    contactId: string;
+    templateId: string;
+  };
+  contacts: any[];
+  templates: any[];
+  projectName: string;
+  companyId: string;
 }
 
-export function ProjectContractConfirmationStage({ 
-  form, 
-  selectedContact, 
-  projectTemplate, 
-  companyData, 
-  projectData, 
-  isLoadingTemplate 
-}: ProjectContractConfirmationStageProps) {
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  
-  const title = form.watch('title');
-  
-  // Prepare data for placeholder replacement
-  const placeholderData = {
-    company: companyData,
-    contact: {
-      first_name: selectedContact?.profiles?.first_name,
-      last_name: selectedContact?.profiles?.last_name,
-      position: selectedContact?.position,
-    },
-    project: projectData,
-  };
-  
-  const processedContent = projectTemplate?.content 
-    ? replacePlaceholders(projectTemplate.content, placeholderData)
-    : '';
+export const ProjectContractConfirmationStage: React.FC<ProjectContractConfirmationStageProps> = ({
+  formData,
+  contacts,
+  templates,
+  projectName,
+  companyId
+}) => {
+  const selectedContact = contacts.find(c => c.id === formData.contactId);
+  const selectedTemplate = templates.find(t => t.id === formData.templateId);
 
   return (
     <div className="space-y-6">
-      {/* Summary Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -57,19 +38,19 @@ export function ProjectContractConfirmationStage({
         <CardContent className="space-y-4">
           <div>
             <label className="text-sm font-medium text-muted-foreground">Contract Title</label>
-            <p className="mt-1 font-medium">{title}</p>
+            <p className="mt-1 font-medium">{formData.title}</p>
           </div>
           
           <div>
-            <label className="text-sm font-medium text-muted-foreground">Company</label>
+            <label className="text-sm font-medium text-muted-foreground">Project</label>
             <div className="mt-1 flex items-center gap-2">
               <Building className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{companyData?.name}</span>
+              <span className="font-medium">{projectName}</span>
             </div>
           </div>
           
           <div>
-            <label className="text-sm font-medium text-muted-foreground">Signing Contact</label>
+            <label className="text-sm font-medium text-muted-foreground">Contact</label>
             <div className="mt-1 flex items-center gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={selectedContact?.profiles?.avatar_url || undefined} />
@@ -95,55 +76,11 @@ export function ProjectContractConfirmationStage({
           </div>
           
           <div>
-            <label className="text-sm font-medium text-muted-foreground">Project</label>
-            <p className="mt-1 font-medium">{projectData?.name}</p>
+            <label className="text-sm font-medium text-muted-foreground">Template</label>
+            <p className="mt-1 font-medium">{selectedTemplate?.name || 'No template selected'}</p>
           </div>
         </CardContent>
       </Card>
-
-      {/* Contract Preview */}
-      <Card>
-        <Collapsible open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Contract Preview
-                </span>
-                <Button variant="ghost" size="sm">
-                  {isPreviewOpen ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </CardTitle>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="pt-0">
-              {isLoadingTemplate ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Loading contract template...
-                </div>
-              ) : projectTemplate ? (
-                <div className="bg-muted/30 rounded-md p-4 max-h-96 overflow-y-auto">
-                  <div className="prose prose-sm max-w-none">
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {processedContent}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No template found
-                </div>
-              )}
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
     </div>
   );
-}
+};
