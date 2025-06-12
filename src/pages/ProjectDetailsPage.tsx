@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -78,13 +79,13 @@ const ProjectDetailsPage = () => {
         
         // For each task, fetch its assignees and creator info separately
         const tasksWithDetails = await Promise.all((tasksData || []).map(async (task) => {
-          // Fetch assignees for this task with profile information using correct join
+          // Fetch assignees for this task with profile information using the correct join syntax
           const { data: assigneesData, error: assigneesError } = await supabase
             .from('task_assignees')
             .select(`
               id, 
               user_id,
-              profiles!task_assignees_user_id_fkey (
+              profiles (
                 id,
                 first_name,
                 last_name,
