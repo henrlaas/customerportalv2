@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,33 +42,45 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
 
   const uploadDocument = useMutation({
     mutationFn: async (file: File) => {
+      console.log('Starting file upload for:', file.name);
+      
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.error('User not authenticated');
         throw new Error("User not authenticated");
       }
 
-      // Upload file to storage
+      // Upload file to storage with proper path structure
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const filePath = `${projectId}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      console.log('Uploading to path:', filePath);
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('project-documents')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) {
-        console.error('Error uploading file:', uploadError);
-        throw uploadError;
+        console.error('Storage upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
-      // Get public URL
+      console.log('Upload successful:', uploadData);
+
+      // Get public URL for the uploaded file
       const { data: urlData } = supabase.storage
         .from('project-documents')
         .getPublicUrl(filePath);
 
-      // Save document record
-      const { data, error } = await supabase
+      console.log('Generated public URL:', urlData.publicUrl);
+
+      // Save document record to database
+      const { data: docData, error: dbError } = await supabase
         .from('project_documents')
         .insert({
           project_id: projectId,
@@ -82,31 +93,41 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
         .select()
         .single();
 
-      if (error) {
-        console.error('Error saving document record:', error);
-        throw error;
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        // Clean up uploaded file if database insert fails
+        await supabase.storage
+          .from('project-documents')
+          .remove([filePath]);
+        throw new Error(`Database error: ${dbError.message}`);
       }
 
-      // Return the URL string that FileUploader expects
+      console.log('Document record created:', docData);
       return urlData.publicUrl;
     },
     onSuccess: () => {
+      console.log('Upload completed successfully');
       toast.success('Document uploaded successfully');
       queryClient.invalidateQueries({ queryKey: ['project-documents', projectId] });
       setIsUploadDialogOpen(false);
     },
     onError: (error: any) => {
-      console.error('Error uploading document:', error);
+      console.error('Upload mutation error:', error);
       toast.error(`Failed to upload document: ${error.message}`);
     }
   });
 
   const deleteDocument = useMutation({
     mutationFn: async (document: any) => {
+      console.log('Deleting document:', document);
+      
       // Extract file path from URL for deletion
       const urlParts = document.file_url.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      const filePath = `${projectId}/${fileName}`;
+      const bucketIndex = urlParts.findIndex(part => part === 'project-documents');
+      const pathParts = urlParts.slice(bucketIndex + 1);
+      const filePath = pathParts.join('/');
+      
+      console.log('Deleting file at path:', filePath);
       
       // Delete from storage
       const { error: storageError } = await supabase.storage
@@ -115,31 +136,34 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
 
       if (storageError) {
         console.error('Error deleting file from storage:', storageError);
-        // Don't throw error here as the record might still need to be deleted
+        // Continue with database deletion even if storage deletion fails
       }
 
-      // Delete record
-      const { error } = await supabase
+      // Delete record from database
+      const { error: dbError } = await supabase
         .from('project_documents')
         .delete()
         .eq('id', document.id);
 
-      if (error) {
-        console.error('Error deleting document record:', error);
-        throw error;
+      if (dbError) {
+        console.error('Error deleting document record:', dbError);
+        throw new Error(`Failed to delete document: ${dbError.message}`);
       }
+
+      console.log('Document deleted successfully');
     },
     onSuccess: () => {
       toast.success('Document deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['project-documents', projectId] });
     },
     onError: (error: any) => {
-      console.error('Error deleting document:', error);
+      console.error('Delete mutation error:', error);
       toast.error(`Failed to delete document: ${error.message}`);
     }
   });
 
   const downloadDocument = (document: any) => {
+    console.log('Downloading document:', document.name);
     window.open(document.file_url, '_blank');
   };
 
