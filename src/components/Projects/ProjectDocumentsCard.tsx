@@ -24,6 +24,8 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
     queryFn: async () => {
       if (!projectId) return [];
       
+      console.log('Fetching documents for project:', projectId);
+      
       const { data, error } = await supabase
         .from('project_documents')
         .select('*')
@@ -35,6 +37,7 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
         throw error;
       }
       
+      console.log('Fetched documents:', data);
       return data || [];
     },
     enabled: !!projectId
@@ -50,6 +53,8 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
         console.error('User not authenticated');
         throw new Error("User not authenticated");
       }
+
+      console.log('User authenticated:', user.id);
 
       // Generate a clean file name with timestamp
       const fileExt = file.name.split('.').pop();
@@ -90,7 +95,16 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
 
       console.log('Generated public URL:', urlData.publicUrl);
 
-      // Save document record to database
+      // Save document record to database with explicit user ID
+      console.log('Inserting document record with:', {
+        project_id: projectId,
+        name: file.name,
+        file_url: urlData.publicUrl,
+        file_size: file.size,
+        file_type: file.type,
+        uploaded_by: user.id
+      });
+
       const { data: docData, error: dbError } = await supabase
         .from('project_documents')
         .insert({
@@ -114,7 +128,7 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
       }
 
       console.log('Document record created:', docData);
-      return urlData.publicUrl;
+      return docData;
     },
     onSuccess: () => {
       console.log('Upload completed successfully');
