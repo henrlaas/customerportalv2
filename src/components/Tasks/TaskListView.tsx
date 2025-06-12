@@ -9,7 +9,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
@@ -20,7 +19,7 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from '@/components/ui/pagination';
-import { Eye, EyeOff, Plus } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 interface Task {
@@ -71,8 +70,6 @@ interface TaskListViewProps {
   isLoading?: boolean;
   hideCompanyColumn?: boolean;
   hideCampaignProjectColumn?: boolean;
-  showCreateButton?: boolean;
-  onCreateTask?: () => void;
 }
 
 export const TaskListView: React.FC<TaskListViewProps> = ({
@@ -88,8 +85,6 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
   isLoading = false,
   hideCompanyColumn = false,
   hideCampaignProjectColumn = false,
-  showCreateButton = false,
-  onCreateTask,
 }) => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -197,15 +192,6 @@ export const TaskListView: React.FC<TaskListViewProps> = ({
 
   return (
     <div className="space-y-4">
-      {showCreateButton && onCreateTask && (
-        <div className="flex justify-end">
-          <Button onClick={onCreateTask}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Task
-          </Button>
-        </div>
-      )}
-      
       <div className="bg-white rounded-md border shadow-sm overflow-hidden w-full">
         <div className="overflow-x-auto">
           <Table>

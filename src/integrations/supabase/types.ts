@@ -1070,53 +1070,6 @@ export type Database = {
           },
         ]
       }
-      project_documents: {
-        Row: {
-          created_at: string | null
-          file_size: number | null
-          file_type: string | null
-          file_url: string
-          id: string
-          name: string
-          project_id: string
-          updated_at: string | null
-          uploaded_at: string | null
-          uploaded_by: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          file_size?: number | null
-          file_type?: string | null
-          file_url: string
-          id?: string
-          name: string
-          project_id: string
-          updated_at?: string | null
-          uploaded_at?: string | null
-          uploaded_by?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          file_size?: number | null
-          file_type?: string | null
-          file_url?: string
-          id?: string
-          name?: string
-          project_id?: string
-          updated_at?: string | null
-          uploaded_at?: string | null
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       projects: {
         Row: {
           company_id: string
