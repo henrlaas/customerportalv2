@@ -54,7 +54,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const { profile } = useAuth();
-  const { createMilestone } = useCreateMilestone();
+  const { mutateAsync: createMilestone } = useCreateMilestone();
   const { companies = [], isLoading: companiesLoading } = useCompanyList(true); // Always show subsidiaries
   
   const totalSteps = 2;
@@ -131,14 +131,12 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
       await createMilestone({
         projectId: projectData.id,
         name: "Started",
-        status: "created",
       });
       
       // Create final milestone (Finished)
       await createMilestone({
         projectId: projectData.id,
         name: "Finished",
-        status: "created",
       });
       
       // Add assignees if selected

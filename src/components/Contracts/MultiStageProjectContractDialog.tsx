@@ -21,6 +21,24 @@ interface MultiStageProjectContractDialogProps {
   projectName: string;
 }
 
+interface ContactProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+}
+
+interface ContactWithProfile {
+  id: string;
+  company_id: string;
+  user_id: string;
+  position: string | null;
+  is_primary: boolean;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+  profile: ContactProfile | null;
+}
+
 export const MultiStageProjectContractDialog: React.FC<MultiStageProjectContractDialogProps> = ({
   isOpen,
   onClose,
@@ -52,11 +70,11 @@ export const MultiStageProjectContractDialog: React.FC<MultiStageProjectContract
     }
   });
 
-  // Fetch company contacts - Fix the query to properly join with profiles
+  // Fetch company contacts with profiles
   const { data: contacts = [] } = useQuery({
     queryKey: ['company-contacts', companyId],
-    queryFn: async () => {
-      const { data, error } = await supabase
+    queryFn: async (): Promise<ContactWithProfile[]> => {
+      const { data: contactsData, error } = await supabase
         .from('company_contacts')
         .select(`
           id,
@@ -73,8 +91,8 @@ export const MultiStageProjectContractDialog: React.FC<MultiStageProjectContract
       if (error) throw error;
       
       // Fetch profiles separately to avoid relation issues
-      if (data && data.length > 0) {
-        const userIds = data.map(contact => contact.user_id);
+      if (contactsData && contactsData.length > 0) {
+        const userIds = contactsData.map(contact => contact.user_id);
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, first_name, last_name')
@@ -83,13 +101,13 @@ export const MultiStageProjectContractDialog: React.FC<MultiStageProjectContract
         if (profilesError) throw profilesError;
         
         // Combine the data
-        return data.map(contact => ({
+        return contactsData.map(contact => ({
           ...contact,
           profile: profiles?.find(p => p.id === contact.user_id) || null
-        }));
+        })) as ContactWithProfile[];
       }
       
-      return data || [];
+      return [];
     },
     enabled: !!companyId
   });
