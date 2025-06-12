@@ -78,13 +78,13 @@ const ProjectDetailsPage = () => {
         
         // For each task, fetch its assignees and creator info separately
         const tasksWithDetails = await Promise.all((tasksData || []).map(async (task) => {
-          // Fetch assignees for this task with profile information
-          const { data: assigneesData } = await supabase
+          // Fetch assignees for this task with profile information using correct join
+          const { data: assigneesData, error: assigneesError } = await supabase
             .from('task_assignees')
             .select(`
               id, 
               user_id,
-              profiles:user_id (
+              profiles!task_assignees_user_id_fkey (
                 id,
                 first_name,
                 last_name,
@@ -92,6 +92,10 @@ const ProjectDetailsPage = () => {
               )
             `)
             .eq('task_id', task.id);
+            
+          if (assigneesError) {
+            console.error(`Error fetching assignees for task ${task.id}:`, assigneesError);
+          }
             
           console.log(`Raw assignees data for task ${task.id}:`, assigneesData);
             

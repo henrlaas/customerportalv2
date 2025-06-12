@@ -99,7 +99,7 @@ export const RecentTasksList: React.FC<RecentTasksListProps> = ({
                     <UserAvatarGroup
                       users={task.assignees}
                       size="sm"
-                      maxDisplay={3}
+                      max={3}
                     />
                   ) : (
                     <div className="text-xs text-gray-400">No assignees</div>
