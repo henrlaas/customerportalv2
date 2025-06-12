@@ -1,367 +1,301 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Input } from '@/components/ui/input';
-import { Milestone } from '@/hooks/useProjectMilestones';
-import { Calendar, ChevronRight, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
+import { Plus, Calendar, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCreateMilestone } from '@/hooks/useCreateMilestone';
+import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
 import { useDeleteMilestone } from '@/hooks/useDeleteMilestone';
-import { useToast } from '@/hooks/use-toast';
-import '@/components/Campaigns/animations.css';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Trash2, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ProjectMilestonesPanelProps {
   projectId: string | null;
-  milestones: Milestone[];
+  milestones?: any[];
   compact?: boolean;
 }
 
-export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({ 
-  projectId, 
-  milestones,
-  compact = false 
+export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
+  projectId,
+  milestones = [],
+  compact = false
 }) => {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
-  const [selectedMilestoneName, setSelectedMilestoneName] = useState<string>('');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newMilestoneName, setNewMilestoneName] = useState('');
-  const { completeMilestone, isLoading: isCompleting } = useCompleteMilestone();
-  const { createMilestone, isLoading: isCreating } = useCreateMilestone();
-  const { deleteMilestone, isLoading: isDeleting } = useDeleteMilestone();
-  const [orderedMilestones, setOrderedMilestones] = useState<Milestone[]>([]);
-  const { toast } = useToast();
-  const [lastCompletedMilestoneId, setLastCompletedMilestoneId] = useState<string | null>(null);
+  const [newMilestoneDueDate, setNewMilestoneDueDate] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  // Order milestones to ensure "Started" is first and "Finished" is last
-  useEffect(() => {
-    if (!milestones || milestones.length === 0) return;
-    
-    const startMilestone = milestones.find(m => m.name === "Started") || milestones.find(m => m.name === "Created");
-    const finishMilestone = milestones.find(m => m.name === "Finished");
-    
-    const middleMilestones = milestones.filter(
-      m => m.name !== "Started" && m.name !== "Created" && m.name !== "Finished"
-    ).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    
-    const ordered: Milestone[] = [];
-    
-    if (startMilestone) ordered.push(startMilestone);
-    ordered.push(...middleMilestones);
-    if (finishMilestone) ordered.push(finishMilestone);
-    
-    setOrderedMilestones(ordered);
+  const createMilestone = useCreateMilestone();
+  const completeMilestone = useCompleteMilestone();
+  const deleteMilestone = useDeleteMilestone();
 
-    // Find the last completed milestone
-    const completedMilestones = ordered.filter(m => m.status === 'completed');
-    if (completedMilestones.length > 0) {
-      // Get the most recently completed milestone (based on updated_at if available, or created_at)
-      const lastCompleted = completedMilestones.reduce((latest, current) => {
-        const latestDate = new Date(latest.updated_at || latest.created_at);
-        const currentDate = new Date(current.updated_at || current.created_at);
-        return currentDate > latestDate ? current : latest;
-      }, completedMilestones[0]);
-      
-      setLastCompletedMilestoneId(lastCompleted.id);
-    } else {
-      setLastCompletedMilestoneId(null);
+  // Sort milestones with proper ordering: Started first, Finished last, others by due date
+  const sortedMilestones = [...milestones].sort((a, b) => {
+    // "Started" milestone should always be first
+    if (a.name.toLowerCase().includes('started') || a.name.toLowerCase().includes('start')) return -1;
+    if (b.name.toLowerCase().includes('started') || b.name.toLowerCase().includes('start')) return 1;
+    
+    // "Finished" milestone should always be last
+    if (a.name.toLowerCase().includes('finished') || a.name.toLowerCase().includes('finish')) return 1;
+    if (b.name.toLowerCase().includes('finished') || b.name.toLowerCase().includes('finish')) return -1;
+    
+    // Sort others by due date (earliest first)
+    if (a.due_date && b.due_date) {
+      return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
     }
-  }, [milestones]);
-
-  const handleCompleteMilestone = async (milestoneId: string, status: 'completed' | 'created') => {
-    if (!projectId) return;
+    if (a.due_date && !b.due_date) return -1;
+    if (!a.due_date && b.due_date) return 1;
     
-    try {
-      if (status === 'created') {
-        // Find the index of the current milestone in the ordered list
-        const currentIndex = orderedMilestones.findIndex(m => m.id === milestoneId);
-        
-        // Get all milestones that come after this one in the sequence
-        const milestonesToUpdate = orderedMilestones
-          .filter((_, index) => index >= currentIndex)
-          .filter(m => m.status === 'completed')
-          .map(m => m.id);
-        
-        // Update each milestone status sequentially
-        for (const mId of milestonesToUpdate) {
-          await completeMilestone({
-            milestoneId: mId,
-            status: 'created'
-          });
-        }
-        
-        toast({
-          title: "Milestones updated",
-          description: "The selected milestone and all subsequent milestones have been marked as not completed.",
-          duration: 3000
-        });
-      } else {
-        // For marking as completed, just update this single milestone
-        await completeMilestone({
-          milestoneId: milestoneId,
-          status: status
-        });
-        
-        toast({
-          title: "Milestone completed",
-          description: "The milestone has been marked as completed.",
-          duration: 3000
-        });
-      }
-    } catch (error) {
-      console.error("Error updating milestone status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update milestone status",
-        variant: "destructive",
-        duration: 3000
-      });
-    }
-  };
+    return 0;
+  });
 
-  const handleAddMilestone = async () => {
+  const handleCreateMilestone = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!projectId || !newMilestoneName.trim()) return;
-    
-    await createMilestone({
-      projectId,
-      name: newMilestoneName.trim(),
-      status: 'created'
-    });
-    
-    setNewMilestoneName('');
-    setIsAddDialogOpen(false);
-  };
 
-  const openDeleteDialog = (milestone: Milestone) => {
-    setSelectedMilestoneId(milestone.id);
-    setSelectedMilestoneName(milestone.name);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleDeleteMilestone = async () => {
-    if (!selectedMilestoneId) return;
-    
     try {
-      await deleteMilestone({
-        milestoneId: selectedMilestoneId
+      await createMilestone.mutateAsync({
+        projectId,
+        name: newMilestoneName,
+        dueDate: newMilestoneDueDate || null
       });
       
-      toast({
-        title: "Milestone deleted",
-        description: `The milestone "${selectedMilestoneName}" has been deleted.`,
-        duration: 3000
-      });
-      
-      setIsDeleteDialogOpen(false);
+      setNewMilestoneName('');
+      setNewMilestoneDueDate('');
+      setIsCreateDialogOpen(false);
+      toast.success('Milestone created successfully');
     } catch (error) {
-      console.error("Error deleting milestone:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete the milestone",
-        variant: "destructive",
-        duration: 3000
-      });
+      console.error('Error creating milestone:', error);
+      toast.error('Failed to create milestone');
     }
   };
+
+  const handleCompleteMilestone = async (milestoneId: string) => {
+    try {
+      await completeMilestone.mutateAsync(milestoneId);
+      toast.success('Milestone completed');
+    } catch (error) {
+      console.error('Error completing milestone:', error);
+      toast.error('Failed to complete milestone');
+    }
+  };
+
+  const handleDeleteMilestone = async (milestoneId: string) => {
+    try {
+      await deleteMilestone.mutateAsync(milestoneId);
+      toast.success('Milestone deleted');
+    } catch (error) {
+      console.error('Error deleting milestone:', error);
+      toast.error('Failed to delete milestone');
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Completed</Badge>;
+      case 'created':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">In Progress</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'No due date';
+    return new Date(dateString).toLocaleDateString(undefined, { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  // For compact view, show first 3 milestones by default
+  const displayedMilestones = compact 
+    ? (isExpanded ? sortedMilestones : sortedMilestones.slice(0, 3))
+    : sortedMilestones;
 
   if (compact) {
     return (
       <div className="space-y-3">
-        {milestones.length === 0 ? (
-          <div className="text-center py-4">
-            <p className="text-gray-500 text-sm">No milestones created yet.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {milestones.slice(0, 3).map((milestone) => (
+        {displayedMilestones.length > 0 ? (
+          <>
+            {displayedMilestones.map((milestone) => (
               <div
                 key={milestone.id}
-                className="flex items-center justify-between p-2 border rounded-lg"
+                className="p-3 border rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    milestone.status === 'completed' ? 'bg-green-500' : 'bg-gray-300'
-                  }`} />
-                  <div>
-                    <p className="font-medium text-sm">{milestone.name}</p>
-                    {milestone.due_date && (
-                      <p className="text-xs text-gray-500">
-                        Due: {new Date(milestone.due_date).toLocaleDateString()}
-                      </p>
-                    )}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium text-sm truncate">{milestone.name}</h4>
+                      {getStatusBadge(milestone.status)}
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Calendar className="h-3 w-3" />
+                      <span>{formatDate(milestone.due_date)}</span>
+                    </div>
                   </div>
+                  
+                  {milestone.status !== 'completed' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleCompleteMilestone(milestone.id)}
+                      className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                    >
+                      <Check className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
-                <Badge variant={milestone.status === 'completed' ? 'default' : 'outline'}>
-                  {milestone.status === 'completed' ? 'Completed' : 'In Progress'}
-                </Badge>
               </div>
             ))}
-            {milestones.length > 3 && (
-              <p className="text-xs text-gray-500 text-center">
-                +{milestones.length - 3} more milestones
-              </p>
+            
+            {sortedMilestones.length > 3 && (
+              <div className="flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-xs"
+                >
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp className="h-3 w-3 mr-1" />
+                      Show Less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3 w-3 mr-1" />
+                      View {sortedMilestones.length - 3} More
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
+          </>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-gray-500 text-sm mb-2">No milestones created yet</p>
           </div>
         )}
       </div>
     );
   }
 
-  if (!projectId) return null;
-
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Milestones</h3>
-        <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
-          Add Milestone
-        </Button>
-      </div>
-
-      {orderedMilestones.length === 0 ? (
-        <Card className="bg-muted/50">
-          <CardContent className="flex justify-center items-center h-32">
-            <p className="text-muted-foreground">No milestones found for this project.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex flex-wrap items-start gap-2 mt-6">
-          {orderedMilestones.map((milestone, index) => (
-            <React.Fragment key={milestone.id}>
-              <Card 
-                className={`${milestone.status === 'completed' ? 'bg-muted/50' : ''} w-72 h-[140px] ${
-                  milestone.id === lastCompletedMilestoneId ? 'milestone-shine relative overflow-hidden' : ''
-                }`}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-base">{milestone.name}</CardTitle>
-                    <Badge variant={milestone.status === 'completed' ? 'default' : 'secondary'}>
-                      {milestone.status === 'completed' ? 'Completed' : 'Not completed'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-col h-[calc(100%-64px)]">
-                  {milestone.due_date && (
-                    <div className="flex items-center text-sm text-muted-foreground mb-4">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>Due: {format(new Date(milestone.due_date), 'MMM dd, yyyy')}</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center justify-between mt-auto gap-2">
-                    {milestone.status === 'completed' ? (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => handleCompleteMilestone(milestone.id, 'created')}
-                        disabled={isCompleting}
-                      >
-                        Unmark as Completed
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => handleCompleteMilestone(milestone.id, 'completed')}
-                        disabled={isCompleting}
-                      >
-                        Mark as Completed
-                      </Button>
-                    )}
-                    
-                    {/* Only allow deletion of custom milestones, not system ones like "Started" and "Finished" */}
-                    {milestone.name !== "Started" && milestone.name !== "Created" && milestone.name !== "Finished" && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0"
-                        onClick={() => openDeleteDialog(milestone)}
-                        disabled={isDeleting}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Add arrow between milestones except after the last one */}
-              {index < orderedMilestones.length - 1 && (
-                <div className="flex items-center justify-center self-center">
-                  <ChevronRight className="h-6 w-6 text-gray-400" />
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            Project Milestones
+          </CardTitle>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Milestone
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Milestone</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreateMilestone} className="space-y-4">
+                <div>
+                  <Label htmlFor="milestone-name">Milestone Name</Label>
+                  <Input
+                    id="milestone-name"
+                    value={newMilestoneName}
+                    onChange={(e) => setNewMilestoneName(e.target.value)}
+                    placeholder="Enter milestone name"
+                    required
+                  />
                 </div>
-              )}
-            </React.Fragment>
-          ))}
+                <div>
+                  <Label htmlFor="milestone-due-date">Due Date (Optional)</Label>
+                  <Input
+                    id="milestone-due-date"
+                    type="datetime-local"
+                    value={newMilestoneDueDate}
+                    onChange={(e) => setNewMilestoneDueDate(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={createMilestone.isPending}>
+                    {createMilestone.isPending ? 'Creating...' : 'Create Milestone'}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
-      )}
-
-      {/* Add Milestone Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Milestone</DialogTitle>
-            <DialogDescription>
-              Create a new milestone for this project. It will appear between the "Started" and "Finished" milestones.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">
-                Milestone Name
-              </label>
-              <Input
-                id="name"
-                placeholder="Enter milestone name"
-                value={newMilestoneName}
-                onChange={(e) => setNewMilestoneName(e.target.value)}
-              />
-            </div>
+      </CardHeader>
+      <CardContent>
+        {sortedMilestones.length > 0 ? (
+          <div className="space-y-4">
+            {sortedMilestones.map((milestone) => (
+              <div
+                key={milestone.id}
+                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-medium">{milestone.name}</h3>
+                      {getStatusBadge(milestone.status)}
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatDate(milestone.due_date)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {milestone.status !== 'completed' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCompleteMilestone(milestone.id)}
+                        disabled={completeMilestone.isPending}
+                        className="text-green-600 hover:text-green-700"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Complete
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteMilestone(milestone.id)}
+                      disabled={deleteMilestone.isPending}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAddMilestone} 
-              disabled={!newMilestoneName.trim() || isCreating}
-            >
-              Add Milestone
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Milestone Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Milestone</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete the milestone "{selectedMilestoneName}"? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteMilestone}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isDeleting}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        ) : (
+          <div className="text-center py-8">
+            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 mb-4">No milestones created yet</p>
+            <p className="text-gray-400 text-sm mb-4">
+              Break down your project into manageable milestones to track progress.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

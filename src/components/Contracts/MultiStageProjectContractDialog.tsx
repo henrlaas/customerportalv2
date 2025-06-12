@@ -1,32 +1,17 @@
-import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { ProgressStepper } from '@/components/ui/progress-stepper';
-import { Form } from '@/components/ui/form';
-import { ContractTitleContactStage } from './MultiStageProjectContractDialog/ContractTitleContactStage';
-import { ProjectContractConfirmationStage } from './MultiStageProjectContractDialog/ProjectContractConfirmationStage';
-import { createContract, replacePlaceholders } from '@/utils/contractUtils';
-
-const projectContractSchema = z.object({
-  title: z.string().min(1, { message: 'Contract title is required' }),
-  contact_id: z.string().min(1, { message: 'Company contact is required' }),
-});
-
-type ProjectContractFormValues = z.infer<typeof projectContractSchema>;
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, FileText, Building, User, CheckCircle } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface MultiStageProjectContractDialogProps {
   isOpen: boolean;
@@ -36,316 +21,348 @@ interface MultiStageProjectContractDialogProps {
   projectName: string;
 }
 
-export function MultiStageProjectContractDialog({ 
-  isOpen, 
-  onClose, 
-  projectId, 
-  companyId, 
-  projectName 
-}: MultiStageProjectContractDialogProps) {
+export const MultiStageProjectContractDialog: React.FC<MultiStageProjectContractDialogProps> = ({
+  isOpen,
+  onClose,
+  projectId,
+  companyId,
+  projectName
+}) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 2;
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  
-  const form = useForm<ProjectContractFormValues>({
-    resolver: zodResolver(projectContractSchema),
-    defaultValues: {
-      title: `${projectName} - Project Agreement`,
-      contact_id: '',
-    },
+  const [formData, setFormData] = useState({
+    title: '',
+    templateType: '',
+    contactId: '',
+    customContent: ''
   });
 
-  // Fetch project template - Fixed to use "Project" instead of "project"
-  const { data: projectTemplate, isLoading: isLoadingTemplate } = useQuery({
-    queryKey: ['contract-template', 'Project'],
+  const queryClient = useQueryClient();
+
+  // Fetch contract templates
+  const { data: templates = [] } = useQuery({
+    queryKey: ['contract-templates'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contract_templates')
         .select('*')
-        .eq('type', 'Project')
-        .maybeSingle();
+        .order('name');
       
-      if (error) {
-        console.error('Error fetching project template:', error);
-        throw error;
-      }
-      
-      return data;
-    },
+      if (error) throw error;
+      return data || [];
+    }
   });
 
-  // Fetch company contacts using the proven two-step approach
-  const { data: companyContacts = [], isLoading: isLoadingContacts } = useQuery({
+  // Fetch company contacts
+  const { data: contacts = [] } = useQuery({
     queryKey: ['company-contacts', companyId],
     queryFn: async () => {
-      if (!companyId) return [];
-      
-      try {
-        // Step 1: Get company contacts
-        const { data: companyContactsData, error: contactsError } = await supabase
-          .from('company_contacts')
-          .select('id, user_id, position')
-          .eq('company_id', companyId);
-        
-        if (contactsError) {
-          console.error('Error fetching company contacts:', contactsError);
-          throw contactsError;
-        }
-        
-        if (!companyContactsData || companyContactsData.length === 0) {
-          console.log('No company contacts found for company:', companyId);
-          return [];
-        }
-        
-        // Step 2: Get profile information for each contact
-        const userIds = companyContactsData.map(contact => contact.user_id);
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, avatar_url')
-          .in('id', userIds);
-        
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
-          throw profilesError;
-        }
-        
-        // Step 3: Combine the data
-        const combinedData = companyContactsData.map(contact => {
-          const profile = profiles?.find(p => p.id === contact.user_id);
-          return {
-            id: contact.id,
-            user_id: contact.user_id,
-            position: contact.position,
-            profiles: {
-              first_name: profile?.first_name || null,
-              last_name: profile?.last_name || null,
-              avatar_url: profile?.avatar_url || null,
-            }
-          };
-        });
-        
-        console.log('Successfully fetched company contacts:', combinedData);
-        return combinedData;
-      } catch (error) {
-        console.error('Error in company contacts query:', error);
-        throw error;
-      }
-    },
-    enabled: !!companyId,
-  });
-
-  // Fetch company data for contract placeholders
-  const { data: companyData } = useQuery({
-    queryKey: ['company-data', companyId],
-    queryFn: async () => {
       const { data, error } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', companyId)
-        .single();
+        .from('company_contacts')
+        .select(`
+          *,
+          profiles (
+            id,
+            first_name,
+            last_name
+          )
+        `)
+        .eq('company_id', companyId);
       
-      if (error) {
-        console.error('Error fetching company data:', error);
-        throw error;
-      }
-      
-      return data;
+      if (error) throw error;
+      return data || [];
     },
-  });
-
-  // Fetch project data for contract placeholders
-  const { data: projectData } = useQuery({
-    queryKey: ['project-data', projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', projectId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching project data:', error);
-        throw error;
-      }
-      
-      return data;
-    },
+    enabled: !!companyId
   });
 
   // Create contract mutation
-  const createContractMutation = useMutation({
-    mutationFn: async (values: ProjectContractFormValues) => {
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
+  const createContract = useMutation({
+    mutationFn: async (contractData: any) => {
+      const { data, error } = await supabase
+        .from('contracts')
+        .insert(contractData)
+        .select()
+        .single();
       
-      if (!projectTemplate) {
-        throw new Error("No project template found. Please create a project template first.");
-      }
-
-      // Prepare placeholder data for replacement
-      const placeholderData = {
-        company: companyData,
-        contact: {
-          first_name: selectedContact?.profiles?.first_name,
-          last_name: selectedContact?.profiles?.last_name,
-          position: selectedContact?.position,
-        },
-        project: projectData,
-      };
-
-      // Process the template content with placeholders replaced
-      const processedContent = replacePlaceholders(projectTemplate.content, placeholderData);
-      
-      const contractData = {
-        title: values.title,
-        company_id: companyId,
-        contact_id: values.contact_id,
-        project_id: projectId,
-        template_type: 'Project',
-        content: processedContent, // Use processed content instead of raw template
-        created_by: user.id,
-      };
-      
-      return await createContract(contractData);
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      toast.success('Project contract created successfully');
-      queryClient.invalidateQueries({ queryKey: ['project-contracts'] });
-      queryClient.invalidateQueries({ queryKey: ['contracts'] });
-      form.reset();
-      setCurrentStep(1);
+      toast.success('Contract created successfully');
+      // Invalidate both project contracts and project contract queries
+      queryClient.invalidateQueries({ queryKey: ['project-contracts', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-contract', projectId] });
       onClose();
+      setCurrentStep(1);
+      setFormData({
+        title: '',
+        templateType: '',
+        contactId: '',
+        customContent: ''
+      });
     },
-    onError: (error: Error) => {
-      console.error('Error creating contract:', error);
+    onError: (error: any) => {
       toast.error(`Failed to create contract: ${error.message}`);
-    },
+    }
   });
 
-  // Handle step navigation
-  const goToNextStep = async () => {
-    if (currentStep === 1) {
-      const isValid = await form.trigger(['title', 'contact_id']);
-      if (isValid) {
-        setCurrentStep(2);
-      }
+  const handleNext = () => {
+    setCurrentStep(prev => prev + 1);
+  };
+
+  const handleBack = () => {
+    setCurrentStep(prev => prev - 1);
+  };
+
+  const handleSubmit = () => {
+    if (!formData.title || !formData.templateType || !formData.contactId) {
+      toast.error('Please fill in all required fields');
+      return;
     }
+
+    const selectedTemplate = templates.find(t => t.id === formData.templateType);
+    const content = formData.customContent || selectedTemplate?.content || '';
+
+    createContract.mutate({
+      title: formData.title,
+      template_type: selectedTemplate?.type || 'custom',
+      content: content,
+      company_id: companyId,
+      contact_id: formData.contactId,
+      project_id: projectId,
+      status: 'unsigned'
+    });
   };
 
-  const goToPreviousStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="contract-title">Contract Title</Label>
+              <Input
+                id="contract-title"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder={`${projectName} Contract`}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="template-select">Contract Template</Label>
+              <Select value={formData.templateType} onValueChange={(value) => setFormData(prev => ({ ...prev, templateType: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-  // Submit handler
-  const onSubmit = (values: ProjectContractFormValues) => {
-    if (currentStep < totalSteps) {
-      goToNextStep();
-    } else {
-      createContractMutation.mutate(values);
-    }
-  };
-
-  // Get selected contact data
-  const selectedContact = companyContacts.find(
-    contact => contact.id === form.watch('contact_id')
-  );
-
-  // Handle dialog close
-  const handleDialogClose = () => {
-    setCurrentStep(1);
-    form.reset();
-    onClose();
-  };
-
-  // Show error if no template exists
-  if (!isLoadingTemplate && !projectTemplate) {
-    return (
-      <Dialog open={isOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Cannot Create Contract</DialogTitle>
-          </DialogHeader>
-          <div className="py-6 text-center">
-            <p className="text-muted-foreground mb-4">
-              No project contract template found. Please create a project template first.
-            </p>
-            <Button onClick={handleDialogClose}>Close</Button>
+            <div>
+              <Label htmlFor="contact-select">Primary Contact</Label>
+              <Select value={formData.contactId} onValueChange={(value) => setFormData(prev => ({ ...prev, contactId: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a contact" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contacts.map((contact) => (
+                    <SelectItem key={contact.id} value={contact.id}>
+                      {contact.profiles?.first_name} {contact.profiles?.last_name} - {contact.position}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+        );
+
+      case 2:
+        const selectedTemplate = templates.find(t => t.id === formData.templateType);
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="custom-content">Contract Content</Label>
+              <Textarea
+                id="custom-content"
+                value={formData.customContent || selectedTemplate?.content || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, customContent: e.target.value }))}
+                placeholder="Enter custom contract content or modify the template..."
+                rows={10}
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                You can customize the template content above or use it as-is.
+              </p>
+            </div>
+          </div>
+        );
+
+      case 3:
+        const selectedContact = contacts.find(c => c.id === formData.contactId);
+        const selectedTemplateForReview = templates.find(t => t.id === formData.templateType);
+        
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Contract Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <p className="text-xs text-gray-500">Title</p>
+                    <p className="font-medium">{formData.title}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Template</p>
+                    <p className="font-medium">{selectedTemplateForReview?.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Status</p>
+                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                      Unsigned
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <p className="text-xs text-gray-500">Primary Contact</p>
+                    <p className="font-medium">
+                      {selectedContact?.profiles?.first_name} {selectedContact?.profiles?.last_name}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Position</p>
+                    <p className="font-medium">{selectedContact?.position}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Contract Preview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-50 p-4 rounded border max-h-40 overflow-y-auto">
+                  <pre className="text-xs whitespace-pre-wrap font-mono">
+                    {formData.customContent || selectedTemplateForReview?.content || 'No content available'}
+                  </pre>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 1: return 'Contract & Contact Details';
+      case 2: return 'Contract Content';
+      case 3: return 'Review & Confirm';
+      default: return '';
+    }
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleDialogClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Project Contract</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Create Project Contract - {getStepTitle()}
+          </DialogTitle>
         </DialogHeader>
 
-        <ProgressStepper currentStep={currentStep} totalSteps={totalSteps} />
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {currentStep === 1 && (
-              <ContractTitleContactStage 
-                form={form}
-                companyContacts={companyContacts}
-                isLoadingContacts={isLoadingContacts}
-              />
-            )}
-            
-            {currentStep === 2 && (
-              <ProjectContractConfirmationStage 
-                form={form}
-                selectedContact={selectedContact}
-                projectTemplate={projectTemplate}
-                companyData={companyData}
-                projectData={projectData}
-                isLoadingTemplate={isLoadingTemplate}
-              />
-            )}
-            
-            <DialogFooter className="flex justify-between pt-4 sm:justify-between">
-              <div>
-                {currentStep > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={goToPreviousStep}
-                    className="flex items-center gap-1"
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Back
-                  </Button>
+        <div className="mt-6">
+          {/* Progress Indicator */}
+          <div className="flex items-center justify-between mb-6">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex items-center">
+                <div className={`
+                  w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                  ${currentStep >= step 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-gray-200 text-gray-600'
+                  }
+                `}>
+                  {currentStep > step ? <CheckCircle className="h-4 w-4" /> : step}
+                </div>
+                {step < 3 && (
+                  <div className={`
+                    w-16 h-1 mx-2
+                    ${currentStep > step ? 'bg-primary' : 'bg-gray-200'}
+                  `} />
                 )}
               </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={handleDialogClose}>
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit"
-                  className="flex items-center gap-1"
-                  disabled={createContractMutation.isPending}
-                >
-                  {createContractMutation.isPending 
-                    ? 'Creating...' 
-                    : currentStep === totalSteps 
-                      ? 'Create Contract' 
-                      : (
-                        <>
-                          Next <ChevronRight className="h-4 w-4" />
-                        </>
-                      )
-                  }
-                </Button>
-              </div>
-            </DialogFooter>
-          </form>
-        </Form>
+            ))}
+          </div>
+
+          {/* Step Content */}
+          <div className="min-h-[400px]">
+            {renderStep()}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-6 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={currentStep === 1 ? onClose : handleBack}
+              disabled={createContract.isPending}
+            >
+              {currentStep === 1 ? (
+                'Cancel'
+              ) : (
+                <>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </>
+              )}
+            </Button>
+
+            {currentStep < 3 ? (
+              <Button 
+                onClick={handleNext}
+                disabled={
+                  (currentStep === 1 && (!formData.title || !formData.templateType || !formData.contactId)) ||
+                  createContract.isPending
+                }
+              >
+                Next
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleSubmit}
+                disabled={createContract.isPending}
+              >
+                {createContract.isPending ? 'Creating...' : 'Create Contract'}
+              </Button>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
-}
+};
