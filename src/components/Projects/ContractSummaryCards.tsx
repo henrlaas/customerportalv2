@@ -80,6 +80,20 @@ export const ContractSummaryCards: React.FC<ContractSummaryCardsProps> = ({ cont
     return 'Unknown User';
   };
 
+  // Helper function to safely get contact profiles
+  const getContactProfiles = (contact: Contract['contact']) => {
+    if (!contact || !contact.profiles || typeof contact.profiles !== 'object') {
+      return null;
+    }
+    
+    // Check if profiles is an error object
+    if ('error' in contact.profiles) {
+      return null;
+    }
+    
+    return contact.profiles;
+  };
+
   if (totalContracts === 0) {
     return null;
   }
@@ -138,69 +152,73 @@ export const ContractSummaryCards: React.FC<ContractSummaryCardsProps> = ({ cont
         {/* Individual Contract Information */}
         <div className="space-y-3">
           <h4 className="text-sm font-medium text-muted-foreground">Contract Details</h4>
-          {contracts.map((contract) => (
-            <div key={contract.id} className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <FileText className="h-4 w-4 text-blue-600" />
-                <div>
-                  <p className="font-medium text-sm">{contract.title}</p>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>Created: {formatDate(contract.created_at)}</span>
-                    {contract.company && (
-                      <span>Company: {contract.company.name}</span>
-                    )}
+          {contracts.map((contract) => {
+            const contactProfiles = getContactProfiles(contract.contact);
+            
+            return (
+              <div key={contract.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  <div>
+                    <p className="font-medium text-sm">{contract.title}</p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>Created: {formatDate(contract.created_at)}</span>
+                      {contract.company && (
+                        <span>Company: {contract.company.name}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                {/* Contact Information */}
-                {contract.contact?.profiles && (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      {contract.contact.profiles.avatar_url ? (
-                        <AvatarImage src={contract.contact.profiles.avatar_url} />
-                      ) : (
-                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                          {getInitials(contract.contact.profiles.first_name, contract.contact.profiles.last_name)}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className="text-xs">
-                      <p className="font-medium">
-                        {getDisplayName(contract.contact.profiles.first_name, contract.contact.profiles.last_name)}
-                      </p>
-                      <p className="text-muted-foreground">Contact</p>
-                    </div>
-                  </div>
-                )}
                 
-                {/* Creator Information */}
-                {contract.creator && (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      {contract.creator.avatar_url ? (
-                        <AvatarImage src={contract.creator.avatar_url} />
-                      ) : (
-                        <AvatarFallback className="text-xs bg-secondary/50 text-secondary-foreground">
-                          {getInitials(contract.creator.first_name, contract.creator.last_name)}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className="text-xs">
-                      <p className="font-medium">
-                        {getDisplayName(contract.creator.first_name, contract.creator.last_name)}
-                      </p>
-                      <p className="text-muted-foreground">Creator</p>
+                <div className="flex items-center gap-3">
+                  {/* Contact Information */}
+                  {contactProfiles && (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        {contactProfiles.avatar_url ? (
+                          <AvatarImage src={contactProfiles.avatar_url} />
+                        ) : (
+                          <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                            {getInitials(contactProfiles.first_name, contactProfiles.last_name)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div className="text-xs">
+                        <p className="font-medium">
+                          {getDisplayName(contactProfiles.first_name, contactProfiles.last_name)}
+                        </p>
+                        <p className="text-muted-foreground">Contact</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-                
-                {/* Status Badge */}
-                {getContractStatusBadge(contract.status)}
+                  )}
+                  
+                  {/* Creator Information */}
+                  {contract.creator && (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        {contract.creator.avatar_url ? (
+                          <AvatarImage src={contract.creator.avatar_url} />
+                        ) : (
+                          <AvatarFallback className="text-xs bg-secondary/50 text-secondary-foreground">
+                            {getInitials(contract.creator.first_name, contract.creator.last_name)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div className="text-xs">
+                        <p className="font-medium">
+                          {getDisplayName(contract.creator.first_name, contract.creator.last_name)}
+                        </p>
+                        <p className="text-muted-foreground">Creator</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Status Badge */}
+                  {getContractStatusBadge(contract.status)}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>
