@@ -52,23 +52,43 @@ export const MultiStageProjectContractDialog: React.FC<MultiStageProjectContract
     }
   });
 
-  // Fetch company contacts
+  // Fetch company contacts - Fix the query to properly join with profiles
   const { data: contacts = [] } = useQuery({
     queryKey: ['company-contacts', companyId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('company_contacts')
         .select(`
-          *,
-          profiles (
-            id,
-            first_name,
-            last_name
-          )
+          id,
+          company_id,
+          user_id,
+          position,
+          is_primary,
+          is_admin,
+          created_at,
+          updated_at
         `)
         .eq('company_id', companyId);
       
       if (error) throw error;
+      
+      // Fetch profiles separately to avoid relation issues
+      if (data && data.length > 0) {
+        const userIds = data.map(contact => contact.user_id);
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .in('id', userIds);
+        
+        if (profilesError) throw profilesError;
+        
+        // Combine the data
+        return data.map(contact => ({
+          ...contact,
+          profile: profiles?.find(p => p.id === contact.user_id) || null
+        }));
+      }
+      
       return data || [];
     },
     enabled: !!companyId
@@ -173,7 +193,7 @@ export const MultiStageProjectContractDialog: React.FC<MultiStageProjectContract
                 <SelectContent>
                   {contacts.map((contact) => (
                     <SelectItem key={contact.id} value={contact.id}>
-                      {contact.profiles?.first_name} {contact.profiles?.last_name} - {contact.position}
+                      {contact.profile?.first_name || 'Unknown'} {contact.profile?.last_name || 'User'} - {contact.position || 'No Position'}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -246,12 +266,12 @@ export const MultiStageProjectContractDialog: React.FC<MultiStageProjectContract
                   <div>
                     <p className="text-xs text-gray-500">Primary Contact</p>
                     <p className="font-medium">
-                      {selectedContact?.profiles?.first_name} {selectedContact?.profiles?.last_name}
+                      {selectedContact?.profile?.first_name || 'Unknown'} {selectedContact?.profile?.last_name || 'User'}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Position</p>
-                    <p className="font-medium">{selectedContact?.position}</p>
+                    <p className="font-medium">{selectedContact?.position || 'No Position'}</p>
                   </div>
                 </CardContent>
               </Card>

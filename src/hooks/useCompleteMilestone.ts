@@ -1,21 +1,15 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { MilestoneStatus } from './useProjectMilestones';
-
-interface CompleteMilestoneParams {
-  milestoneId: string;
-  status: MilestoneStatus;
-}
 
 export const useCompleteMilestone = () => {
   const queryClient = useQueryClient();
   
-  const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: async ({ milestoneId, status }: CompleteMilestoneParams) => {
+  const mutation = useMutation({
+    mutationFn: async (milestoneId: string) => {
       const { data, error } = await supabase
         .from('milestones')
-        .update({ status: status })
+        .update({ status: 'completed' })
         .eq('id', milestoneId)
         .select()
         .single();
@@ -34,8 +28,8 @@ export const useCompleteMilestone = () => {
   });
   
   return {
-    completeMilestone: mutateAsync,
-    isLoading: isPending,
-    error
+    mutateAsync: mutation.mutateAsync,
+    isPending: mutation.isPending,
+    error: mutation.error
   };
 };

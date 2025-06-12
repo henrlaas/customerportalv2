@@ -246,7 +246,10 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
           </DialogHeader>
           <div className="mt-4">
             <FileUploader
-              onUpload={(file) => uploadDocument.mutateAsync(file)}
+              onUpload={async (file) => {
+                await uploadDocument.mutateAsync(file);
+                return file.name; // Return the file name as a string
+              }}
               accept={{
                 'application/pdf': ['.pdf'],
                 'application/msword': ['.doc'],
