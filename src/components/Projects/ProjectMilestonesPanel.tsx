@@ -265,11 +265,8 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="mb-4">
         <h3 className="text-lg font-semibold">Milestones</h3>
-        <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
-          Add Milestone
-        </Button>
       </div>
 
       {/* Milestone Overview Card */}
@@ -324,6 +321,13 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
           </CardContent>
         </Card>
       )}
+
+      {/* Add Milestone Button - positioned below overview card */}
+      <div className="mb-6">
+        <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+          Add Milestone
+        </Button>
+      </div>
 
       {orderedMilestones.length === 0 ? (
         <Card className="bg-muted/50">
