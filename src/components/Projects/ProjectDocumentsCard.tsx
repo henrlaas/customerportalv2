@@ -51,13 +51,15 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
         throw new Error("User not authenticated");
       }
 
-      // Upload file to storage with proper path structure
+      // Generate a clean file name with timestamp
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${Date.now()}-${cleanFileName}`;
       const filePath = `${projectId}/${fileName}`;
 
       console.log('Uploading to path:', filePath);
 
+      // Upload file to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('project-documents')
         .upload(filePath, file, {
@@ -76,6 +78,15 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
       const { data: urlData } = supabase.storage
         .from('project-documents')
         .getPublicUrl(filePath);
+
+      if (!urlData?.publicUrl) {
+        console.error('Failed to generate public URL');
+        // Clean up uploaded file if URL generation fails
+        await supabase.storage
+          .from('project-documents')
+          .remove([filePath]);
+        throw new Error('Failed to generate file URL');
+      }
 
       console.log('Generated public URL:', urlData.publicUrl);
 
@@ -103,7 +114,7 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
       }
 
       console.log('Document record created:', docData);
-      return urlData.publicUrl;
+      return docData;
     },
     onSuccess: () => {
       console.log('Upload completed successfully');
@@ -122,21 +133,24 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
       console.log('Deleting document:', document);
       
       // Extract file path from URL for deletion
-      const urlParts = document.file_url.split('/');
-      const bucketIndex = urlParts.findIndex(part => part === 'project-documents');
-      const pathParts = urlParts.slice(bucketIndex + 1);
-      const filePath = pathParts.join('/');
-      
-      console.log('Deleting file at path:', filePath);
-      
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('project-documents')
-        .remove([filePath]);
+      const url = new URL(document.file_url);
+      const pathSegments = url.pathname.split('/');
+      // Find the segment after 'project-documents' and take everything after it
+      const bucketIndex = pathSegments.findIndex(segment => segment === 'project-documents');
+      if (bucketIndex !== -1 && bucketIndex < pathSegments.length - 1) {
+        const filePath = pathSegments.slice(bucketIndex + 1).join('/');
+        
+        console.log('Deleting file at path:', filePath);
+        
+        // Delete from storage
+        const { error: storageError } = await supabase.storage
+          .from('project-documents')
+          .remove([filePath]);
 
-      if (storageError) {
-        console.error('Error deleting file from storage:', storageError);
-        // Continue with database deletion even if storage deletion fails
+        if (storageError) {
+          console.error('Error deleting file from storage:', storageError);
+          // Continue with database deletion even if storage deletion fails
+        }
       }
 
       // Delete record from database
