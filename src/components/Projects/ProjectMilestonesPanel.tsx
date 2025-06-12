@@ -322,8 +322,8 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
         </Card>
       )}
 
-      {/* Add Milestone Button - positioned below overview card */}
-      <div className="mb-6">
+      {/* Add Milestone Button - positioned below overview card and to the right */}
+      <div className="mb-6 flex justify-end">
         <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
           Add Milestone
         </Button>
