@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Plus, Eye } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { MultiStageProjectContractDialog } from '@/components/Contracts/MultiStageProjectContractDialog';
@@ -20,7 +20,6 @@ export const ProjectContractCard: React.FC<ProjectContractCardProps> = ({
 }) => {
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: contract, isLoading } = useQuery({
     queryKey: ['project-contract', projectId],
@@ -71,11 +70,6 @@ export const ProjectContractCard: React.FC<ProjectContractCardProps> = ({
     if (contract) {
       navigate(`/contracts/${contract.id}`);
     }
-  };
-
-  const handleContractCreated = () => {
-    // Invalidate the contract query to refresh the card immediately
-    queryClient.invalidateQueries({ queryKey: ['project-contract', projectId] });
   };
 
   return (
@@ -144,7 +138,6 @@ export const ProjectContractCard: React.FC<ProjectContractCardProps> = ({
           projectId={projectId}
           companyId={companyId}
           projectName="Project Contract"
-          onSuccess={handleContractCreated}
         />
       )}
     </Card>
