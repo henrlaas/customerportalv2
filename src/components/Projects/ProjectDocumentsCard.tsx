@@ -43,6 +43,12 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
 
   const uploadDocument = useMutation({
     mutationFn: async (file: File) => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       // Upload file to storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
@@ -70,7 +76,8 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
           name: file.name,
           file_url: urlData.publicUrl,
           file_size: file.size,
-          file_type: file.type
+          file_type: file.type,
+          uploaded_by: user.id
         })
         .select()
         .single();
@@ -80,6 +87,7 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
         throw error;
       }
 
+      // Return the URL string that FileUploader expects
       return urlData.publicUrl;
     },
     onSuccess: () => {
@@ -95,15 +103,19 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
 
   const deleteDocument = useMutation({
     mutationFn: async (document: any) => {
+      // Extract file path from URL for deletion
+      const urlParts = document.file_url.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      const filePath = `${projectId}/${fileName}`;
+      
       // Delete from storage
-      const filePath = `${projectId}/${document.name}`;
       const { error: storageError } = await supabase.storage
         .from('project-documents')
         .remove([filePath]);
 
       if (storageError) {
         console.error('Error deleting file from storage:', storageError);
-        throw storageError;
+        // Don't throw error here as the record might still need to be deleted
       }
 
       // Delete record
