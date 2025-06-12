@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Milestone } from '@/hooks/useProjectMilestones';
-import { Calendar, ChevronRight, Trash2, ChevronDown, ChevronUp, Target, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, ChevronRight, Trash2, ChevronDown, ChevronUp, Target, CheckCircle, Clock, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
 import { useCreateMilestone } from '@/hooks/useCreateMilestone';
@@ -305,6 +306,7 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
       {/* Add Milestone Button - positioned below overview card and to the right */}
       <div className="mb-6 flex justify-end">
         <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
           Add Milestone
         </Button>
       </div>
