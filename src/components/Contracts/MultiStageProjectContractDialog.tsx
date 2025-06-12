@@ -34,6 +34,7 @@ interface MultiStageProjectContractDialogProps {
   projectId: string;
   companyId: string;
   projectName: string;
+  onSuccess?: () => void;
 }
 
 export function MultiStageProjectContractDialog({ 
@@ -41,7 +42,8 @@ export function MultiStageProjectContractDialog({
   onClose, 
   projectId, 
   companyId, 
-  projectName 
+  projectName,
+  onSuccess
 }: MultiStageProjectContractDialogProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 2;
@@ -212,8 +214,15 @@ export function MultiStageProjectContractDialog({
     },
     onSuccess: () => {
       toast.success('Project contract created successfully');
+      queryClient.invalidateQueries({ queryKey: ['project-contract', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-contracts'] });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      
+      // Call the onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+      
       form.reset();
       setCurrentStep(1);
       onClose();
