@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { Milestone } from '@/hooks/useProjectMilestones';
-import { Calendar, ChevronRight, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, ChevronRight, Trash2, ChevronDown, ChevronUp, Target, CheckCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
 import { useCreateMilestone } from '@/hooks/useCreateMilestone';
@@ -170,6 +170,12 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
     }
   };
 
+  // Calculate milestone statistics
+  const totalMilestones = orderedMilestones.length;
+  const completedMilestones = orderedMilestones.filter(m => m.status === 'completed').length;
+  const notCompletedMilestones = totalMilestones - completedMilestones;
+  const progressPercentage = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+
   if (compact) {
     // Custom sort for compact view: Finished first, Started last, others by completion status
     const sortedMilestones = [...orderedMilestones].sort((a, b) => {
@@ -265,6 +271,59 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
           Add Milestone
         </Button>
       </div>
+
+      {/* Milestone Overview Card */}
+      {orderedMilestones.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Target className="h-5 w-5 text-primary" />
+              Milestone Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <Target className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-xl font-semibold">{totalMilestones}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="p-2 bg-green-100 rounded-full">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Completed</p>
+                  <p className="text-xl font-semibold text-green-600">{completedMilestones}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="p-2 bg-orange-100 rounded-full">
+                  <Clock className="h-4 w-4 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Not Completed</p>
+                  <p className="text-xl font-semibold text-orange-600">{notCompletedMilestones}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Progress</span>
+                <span className="text-sm text-muted-foreground">{progressPercentage}%</span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {orderedMilestones.length === 0 ? (
         <Card className="bg-muted/50">
