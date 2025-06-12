@@ -27,6 +27,7 @@ import { DeleteProjectDialog } from '@/components/Projects/DeleteProjectDialog';
 import { useProjectOperations } from '@/hooks/useProjectOperations';
 import { Edit, Trash2 } from 'lucide-react';
 import { MultiStageProjectContractDialog } from '@/components/Contracts/MultiStageProjectContractDialog';
+import { ProjectOverviewTab } from '@/components/Projects/ProjectOverviewTab';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -617,13 +618,26 @@ const ProjectDetailsPage = () => {
       </Card>
 
       {/* Updated Tabs */}
-      <Tabs defaultValue="milestones">
-        <TabsList>
+      <Tabs defaultValue="overview">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="milestones">Milestones</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="time">Time Entries</TabsTrigger>
+          <TabsTrigger value="time">Time Tracking</TabsTrigger>
           <TabsTrigger value="contracts">Contracts</TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="overview">
+          <ProjectOverviewTab
+            project={selectedProject}
+            assignees={assignees || []}
+            milestones={milestones}
+            tasks={projectTasks || []}
+            projectId={projectId || ''}
+            onCreateTask={() => setIsTaskDialogOpen(true)}
+            onTaskClick={handleTaskClick}
+          />
+        </TabsContent>
         
         <TabsContent value="milestones">
           <ProjectMilestonesPanel 

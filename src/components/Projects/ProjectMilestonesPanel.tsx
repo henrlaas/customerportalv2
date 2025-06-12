@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,9 +17,14 @@ import '@/components/Campaigns/animations.css';
 interface ProjectMilestonesPanelProps {
   projectId: string | null;
   milestones: Milestone[];
+  compact?: boolean;
 }
 
-export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilestonesPanelProps) => {
+export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({ 
+  projectId, 
+  milestones,
+  compact = false 
+}) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
@@ -163,6 +167,49 @@ export const ProjectMilestonesPanel = ({ projectId, milestones }: ProjectMilesto
       });
     }
   };
+
+  if (compact) {
+    return (
+      <div className="space-y-3">
+        {milestones.length === 0 ? (
+          <div className="text-center py-4">
+            <p className="text-gray-500 text-sm">No milestones created yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {milestones.slice(0, 3).map((milestone) => (
+              <div
+                key={milestone.id}
+                className="flex items-center justify-between p-2 border rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${
+                    milestone.status === 'completed' ? 'bg-green-500' : 'bg-gray-300'
+                  }`} />
+                  <div>
+                    <p className="font-medium text-sm">{milestone.name}</p>
+                    {milestone.due_date && (
+                      <p className="text-xs text-gray-500">
+                        Due: {new Date(milestone.due_date).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Badge variant={milestone.status === 'completed' ? 'default' : 'outline'}>
+                  {milestone.status === 'completed' ? 'Completed' : 'In Progress'}
+                </Badge>
+              </div>
+            ))}
+            {milestones.length > 3 && (
+              <p className="text-xs text-gray-500 text-center">
+                +{milestones.length - 3} more milestones
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (!projectId) return null;
 
