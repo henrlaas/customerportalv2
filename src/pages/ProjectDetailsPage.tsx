@@ -26,6 +26,7 @@ import { useProjectOperations } from '@/hooks/useProjectOperations';
 import { Edit, Trash2 } from 'lucide-react';
 import { MultiStageProjectContractDialog } from '@/components/Contracts/MultiStageProjectContractDialog';
 import { ProjectOverviewTab } from '@/components/Projects/ProjectOverviewTab';
+import { TaskSummaryCards } from '@/components/Projects/TaskSummaryCards';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -403,6 +404,11 @@ const ProjectDetailsPage = () => {
             <CenteredSpinner />
           ) : projectTasks && projectTasks.length > 0 ? (
             <>
+              {/* Task Overview Card */}
+              <div className="mb-6">
+                <TaskSummaryCards tasks={projectTasks} />
+              </div>
+              
               <div className="mb-4 flex justify-between items-center">
                 <h3 className="text-lg font-medium">Project Tasks ({projectTasks.length})</h3>
                 <Button onClick={() => setIsTaskDialogOpen(true)}>
