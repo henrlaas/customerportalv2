@@ -27,6 +27,7 @@ import { Edit, Trash2 } from 'lucide-react';
 import { MultiStageProjectContractDialog } from '@/components/Contracts/MultiStageProjectContractDialog';
 import { ProjectOverviewTab } from '@/components/Projects/ProjectOverviewTab';
 import { TaskSummaryCards } from '@/components/Projects/TaskSummaryCards';
+import { ContractSummaryCards } from '@/components/Projects/ContractSummaryCards';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -163,7 +164,12 @@ const ProjectDetailsPage = () => {
           .select(`
             *,
             company:company_id (name, organization_number),
-            contact:contact_id (id, user_id, position)
+            contact:contact_id (id, user_id, position),
+            creator:created_by (first_name, last_name),
+            contact_profile:contact_id!inner (
+              user_id,
+              profiles!inner (first_name, last_name)
+            )
           `)
           .eq('project_id', projectId)
           .order('created_at', { ascending: false });
@@ -174,7 +180,13 @@ const ProjectDetailsPage = () => {
           throw error;
         }
         
-        return data || [];
+        // Transform the data to flatten the contact profile information
+        const transformedData = (data || []).map(contract => ({
+          ...contract,
+          contact_profile: contract.contact_profile?.profiles || null
+        }));
+        
+        return transformedData;
       } catch (error) {
         console.error('Error in project contracts query:', error);
         return [];
@@ -461,6 +473,11 @@ const ProjectDetailsPage = () => {
             <CenteredSpinner />
           ) : projectContracts && projectContracts.length > 0 ? (
             <>
+              {/* Contract Overview Card */}
+              <div className="mb-6">
+                <ContractSummaryCards contracts={projectContracts} />
+              </div>
+
               <div className="mb-4 flex justify-between items-center">
                 <h3 className="text-lg font-medium">Project Contracts ({projectContracts.length})</h3>
                 {projectContracts.length < 1 && (
