@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -177,8 +178,9 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
   const progressPercentage = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
 
   if (compact) {
-    // Use the same ordering as the main view: "Started" first, "Finished" last
-    const displayedMilestones = isExpanded ? orderedMilestones : orderedMilestones.slice(0, 3);
+    // Reverse the order for compact view: "Finished" first, "Started" last (showing not completed first)
+    const reversedMilestones = [...orderedMilestones].reverse();
+    const displayedMilestones = isExpanded ? reversedMilestones : reversedMilestones.slice(0, 3);
 
     return (
       <div className="space-y-3">
