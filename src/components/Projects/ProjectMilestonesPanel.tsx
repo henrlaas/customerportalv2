@@ -177,30 +177,8 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
   const progressPercentage = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
 
   if (compact) {
-    // Custom sort for compact view: Finished first, Started last, others by completion status
-    const sortedMilestones = [...orderedMilestones].sort((a, b) => {
-      // "Finished" always comes first
-      if (a.name === "Finished" && b.name !== "Finished") return -1;
-      if (b.name === "Finished" && a.name !== "Finished") return 1;
-      
-      // "Started" or "Created" always comes last
-      if ((a.name === "Started" || a.name === "Created") && (b.name !== "Started" && b.name !== "Created")) return 1;
-      if ((b.name === "Started" || b.name === "Created") && (a.name !== "Started" && a.name !== "Created")) return -1;
-      
-      // For other milestones, sort by completion status (not completed first)
-      if (a.name !== "Finished" && a.name !== "Started" && a.name !== "Created" && 
-          b.name !== "Finished" && b.name !== "Started" && b.name !== "Created") {
-        if (a.status === 'created' && b.status === 'completed') return -1;
-        if (a.status === 'completed' && b.status === 'created') return 1;
-      }
-      
-      // If same status or special milestones, maintain original order
-      const aIndex = orderedMilestones.findIndex(m => m.id === a.id);
-      const bIndex = orderedMilestones.findIndex(m => m.id === b.id);
-      return aIndex - bIndex;
-    });
-
-    const displayedMilestones = isExpanded ? sortedMilestones : sortedMilestones.slice(0, 3);
+    // Use the same ordering as the main view: "Started" first, "Finished" last
+    const displayedMilestones = isExpanded ? orderedMilestones : orderedMilestones.slice(0, 3);
 
     return (
       <div className="space-y-3">
@@ -233,7 +211,7 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
                 </Badge>
               </div>
             ))}
-            {sortedMilestones.length > 3 && (
+            {orderedMilestones.length > 3 && (
               <div className="text-center pt-2">
                 <Button 
                   variant="ghost" 
@@ -249,7 +227,7 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
                   ) : (
                     <>
                       <ChevronDown className="h-3 w-3 mr-1" />
-                      Show {sortedMilestones.length - 3} More
+                      Show {orderedMilestones.length - 3} More
                     </>
                   )}
                 </Button>
