@@ -129,7 +129,7 @@ export const RecentTasksList: React.FC<RecentTasksListProps> = ({
                       last_name: assignee.profiles?.last_name,
                       avatar_url: assignee.profiles?.avatar_url
                     }))}
-                    size="xs"
+                    size="sm"
                   />
                 )}
               </div>

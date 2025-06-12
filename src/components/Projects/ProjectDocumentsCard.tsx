@@ -67,8 +67,7 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
         .from('project_documents')
         .insert({
           project_id: projectId,
-          file_name: file.name,
-          file_path: filePath,
+          name: file.name,
           file_url: urlData.publicUrl,
           file_size: file.size,
           file_type: file.type
@@ -97,9 +96,10 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
   const deleteDocument = useMutation({
     mutationFn: async (document: any) => {
       // Delete from storage
+      const filePath = `${projectId}/${document.name}`;
       const { error: storageError } = await supabase.storage
         .from('project-documents')
-        .remove([document.file_path]);
+        .remove([filePath]);
 
       if (storageError) {
         console.error('Error deleting file from storage:', storageError);
@@ -171,8 +171,8 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-lg">{getFileIcon(document.file_type)}</span>
-                      <p className="font-medium text-sm truncate" title={document.file_name}>
-                        {document.file_name}
+                      <p className="font-medium text-sm truncate" title={document.name}>
+                        {document.name}
                       </p>
                     </div>
                     <p className="text-xs text-gray-500">
