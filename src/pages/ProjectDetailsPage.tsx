@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -94,6 +93,8 @@ const ProjectDetailsPage = () => {
             `)
             .eq('task_id', task.id);
             
+          console.log(`Assignees for task ${task.id}:`, assigneesData);
+            
           // Fetch creator info if creator_id exists
           let creatorData = null;
           if (task.creator_id) {
@@ -106,13 +107,26 @@ const ProjectDetailsPage = () => {
             creatorData = creator;
           }
           
+          // Transform assignees to match the expected structure for UserAvatarGroup
+          const transformedAssignees = (assigneesData || []).map(assignee => ({
+            id: assignee.user_id,
+            first_name: assignee.profiles?.first_name || null,
+            last_name: assignee.profiles?.last_name || null,
+            avatar_url: assignee.profiles?.avatar_url || null,
+            user_id: assignee.user_id,
+            profiles: assignee.profiles
+          }));
+          
+          console.log(`Transformed assignees for task ${task.id}:`, transformedAssignees);
+          
           return {
             ...task,
-            assignees: assigneesData || [],
+            assignees: transformedAssignees,
             creator: creatorData
           };
         }));
         
+        console.log('Final tasks with details:', tasksWithDetails);
         return tasksWithDetails || [];
       } catch (error) {
         console.error('Error in project tasks query:', error);
