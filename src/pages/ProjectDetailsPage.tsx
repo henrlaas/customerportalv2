@@ -79,10 +79,19 @@ const ProjectDetailsPage = () => {
         
         // For each task, fetch its assignees and creator info separately
         const tasksWithDetails = await Promise.all((tasksData || []).map(async (task) => {
-          // Fetch assignees for this task
+          // Fetch assignees for this task with profile information
           const { data: assigneesData } = await supabase
             .from('task_assignees')
-            .select('id, user_id')
+            .select(`
+              id, 
+              user_id,
+              profiles:user_id (
+                id,
+                first_name,
+                last_name,
+                avatar_url
+              )
+            `)
             .eq('task_id', task.id);
             
           // Fetch creator info if creator_id exists
