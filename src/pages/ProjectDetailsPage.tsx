@@ -93,7 +93,7 @@ const ProjectDetailsPage = () => {
             `)
             .eq('task_id', task.id);
             
-          console.log(`Assignees for task ${task.id}:`, assigneesData);
+          console.log(`Raw assignees data for task ${task.id}:`, assigneesData);
             
           // Fetch creator info if creator_id exists
           let creatorData = null;
@@ -108,14 +108,17 @@ const ProjectDetailsPage = () => {
           }
           
           // Transform assignees to match the expected structure for UserAvatarGroup
-          const transformedAssignees = (assigneesData || []).map(assignee => ({
-            id: assignee.user_id,
-            first_name: assignee.profiles?.first_name || null,
-            last_name: assignee.profiles?.last_name || null,
-            avatar_url: assignee.profiles?.avatar_url || null,
-            user_id: assignee.user_id,
-            profiles: assignee.profiles
-          }));
+          const transformedAssignees = (assigneesData || []).map(assignee => {
+            console.log(`Processing assignee:`, assignee);
+            return {
+              id: assignee.user_id,
+              first_name: assignee.profiles?.first_name || null,
+              last_name: assignee.profiles?.last_name || null,
+              avatar_url: assignee.profiles?.avatar_url || null,
+              user_id: assignee.user_id,
+              profiles: assignee.profiles
+            };
+          });
           
           console.log(`Transformed assignees for task ${task.id}:`, transformedAssignees);
           
@@ -126,7 +129,7 @@ const ProjectDetailsPage = () => {
           };
         }));
         
-        console.log('Final tasks with details:', tasksWithDetails);
+        console.log('Final tasks with details for Overview tab:', tasksWithDetails);
         return tasksWithDetails || [];
       } catch (error) {
         console.error('Error in project tasks query:', error);
@@ -218,13 +221,26 @@ const ProjectDetailsPage = () => {
     }
   };
 
+  // Updated getTaskAssignees to use the transformed assignees data directly
   const getTaskAssignees = (task: any) => {
-    if (!task.assignees) return [];
+    console.log('getTaskAssignees called with task:', task);
+    console.log('Task assignees:', task.assignees);
     
-    return task.assignees.map((assignee: any) => {
-      const profile = profiles.find((p: any) => p.id === assignee.user_id);
-      return profile || { id: assignee.user_id };
-    });
+    if (!task.assignees || task.assignees.length === 0) {
+      console.log('No assignees found for task');
+      return [];
+    }
+    
+    // The assignees are already transformed with profile data, so return them directly
+    const taskAssignees = task.assignees.map((assignee: any) => ({
+      id: assignee.id || assignee.user_id,
+      first_name: assignee.first_name,
+      last_name: assignee.last_name,
+      avatar_url: assignee.avatar_url
+    }));
+    
+    console.log('Processed task assignees:', taskAssignees);
+    return taskAssignees;
   };
 
   const getCampaignName = (campaignId: string | null) => {
