@@ -47,11 +47,11 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
     mutationFn: async (file: File) => {
       console.log('Starting file upload for:', file.name);
       
-      // Get current user first
+      // Get current user and ensure they're authenticated
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
         console.error('User authentication error:', userError);
-        throw new Error("User not authenticated");
+        throw new Error("User not authenticated. Please log in and try again.");
       }
 
       console.log('User authenticated:', user.id);
@@ -95,14 +95,14 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
 
       console.log('Generated public URL:', urlData.publicUrl);
 
-      // Save document record to database with explicit user ID
+      // Prepare document data with explicit user ID
       const documentData = {
         project_id: projectId,
         name: file.name,
         file_url: urlData.publicUrl,
         file_size: file.size,
         file_type: file.type,
-        uploaded_by: user.id // Explicitly set the user ID
+        uploaded_by: user.id // This is now properly handled by our RLS policies
       };
 
       console.log('Inserting document record with:', documentData);
@@ -122,7 +122,7 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
         throw new Error(`Database error: ${dbError.message}`);
       }
 
-      console.log('Document record created:', docData);
+      console.log('Document record created successfully:', docData);
       return urlData.publicUrl;
     },
     onSuccess: () => {
