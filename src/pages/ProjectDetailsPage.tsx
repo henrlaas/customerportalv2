@@ -393,53 +393,59 @@ const ProjectDetailsPage = () => {
         </TabsContent>
         
         <TabsContent value="tasks">
-          {tasksError ? (
-            <div className="bg-white rounded-lg shadow p-6 text-center">
-              <p className="text-red-500 mb-4">Error loading tasks. Please try again.</p>
-              <Button variant="outline" onClick={() => refetchTasks()}>
-                Refresh
-              </Button>
+          <div>
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Tasks</h3>
             </div>
-          ) : isLoadingTasks ? (
-            <CenteredSpinner />
-          ) : projectTasks && projectTasks.length > 0 ? (
-            <>
-              {/* Task Overview Card */}
-              <div className="mb-6">
-                <TaskSummaryCards tasks={projectTasks} />
+
+            {tasksError ? (
+              <div className="bg-white rounded-lg shadow p-6 text-center">
+                <p className="text-red-500 mb-4">Error loading tasks. Please try again.</p>
+                <Button variant="outline" onClick={() => refetchTasks()}>
+                  Refresh
+                </Button>
               </div>
-              
-              <div className="mb-4 flex justify-between items-center">
-                <h3 className="text-lg font-medium">Project Tasks ({projectTasks.length})</h3>
+            ) : isLoadingTasks ? (
+              <CenteredSpinner />
+            ) : projectTasks && projectTasks.length > 0 ? (
+              <>
+                {/* Task Overview Card */}
+                <div className="mb-6">
+                  <TaskSummaryCards tasks={projectTasks} />
+                </div>
+                
+                <div className="mb-4 flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Project Tasks ({projectTasks.length})</h3>
+                  <Button onClick={() => setIsTaskDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Create Task
+                  </Button>
+                </div>
+                <TaskListView 
+                  tasks={projectTasks}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  getTaskAssignees={getTaskAssignees}
+                  getCampaignName={getCampaignName}
+                  profiles={profiles}
+                  companies={[]}
+                  onTaskClick={handleTaskClick}
+                  getProjectName={getProjectName}
+                  hideCompanyColumn={true}
+                  hideCampaignProjectColumn={true}
+                />
+              </>
+            ) : (
+              <div className="bg-white rounded-lg shadow p-6 text-center">
+                <div className="mb-4 flex flex-col items-center">
+                  <ClipboardList className="h-12 w-12 text-gray-400 mb-2" />
+                  <p className="text-gray-500 mb-4">No tasks associated with this project yet.</p>
+                </div>
                 <Button onClick={() => setIsTaskDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" /> Create Task
                 </Button>
               </div>
-              <TaskListView 
-                tasks={projectTasks}
-                getStatusBadge={getStatusBadge}
-                getPriorityBadge={getPriorityBadge}
-                getTaskAssignees={getTaskAssignees}
-                getCampaignName={getCampaignName}
-                profiles={profiles}
-                companies={[]}
-                onTaskClick={handleTaskClick}
-                getProjectName={getProjectName}
-                hideCompanyColumn={true}
-                hideCampaignProjectColumn={true}
-              />
-            </>
-          ) : (
-            <div className="bg-white rounded-lg shadow p-6 text-center">
-              <div className="mb-4 flex flex-col items-center">
-                <ClipboardList className="h-12 w-12 text-gray-400 mb-2" />
-                <p className="text-gray-500 mb-4">No tasks associated with this project yet.</p>
-              </div>
-              <Button onClick={() => setIsTaskDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Create Task
-              </Button>
-            </div>
-          )}
+            )}
+          </div>
         </TabsContent>
         
         <TabsContent value="time">
