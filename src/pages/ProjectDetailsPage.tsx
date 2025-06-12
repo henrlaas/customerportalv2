@@ -27,7 +27,6 @@ import { Edit, Trash2 } from 'lucide-react';
 import { MultiStageProjectContractDialog } from '@/components/Contracts/MultiStageProjectContractDialog';
 import { ProjectOverviewTab } from '@/components/Projects/ProjectOverviewTab';
 import { TaskSummaryCards } from '@/components/Projects/TaskSummaryCards';
-import { ContractSummaryCards } from '@/components/Projects/ContractSummaryCards';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
