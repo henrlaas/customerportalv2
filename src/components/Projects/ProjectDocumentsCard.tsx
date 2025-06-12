@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,10 +47,10 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
     mutationFn: async (file: File) => {
       console.log('Starting file upload for:', file.name);
       
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('User not authenticated');
+      // Get current user first
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('User authentication error:', userError);
         throw new Error("User not authenticated");
       }
 
@@ -97,25 +96,20 @@ export const ProjectDocumentsCard: React.FC<ProjectDocumentsCardProps> = ({
       console.log('Generated public URL:', urlData.publicUrl);
 
       // Save document record to database with explicit user ID
-      console.log('Inserting document record with:', {
+      const documentData = {
         project_id: projectId,
         name: file.name,
         file_url: urlData.publicUrl,
         file_size: file.size,
         file_type: file.type,
-        uploaded_by: user.id
-      });
+        uploaded_by: user.id // Explicitly set the user ID
+      };
+
+      console.log('Inserting document record with:', documentData);
 
       const { data: docData, error: dbError } = await supabase
         .from('project_documents')
-        .insert({
-          project_id: projectId,
-          name: file.name,
-          file_url: urlData.publicUrl,
-          file_size: file.size,
-          file_type: file.type,
-          uploaded_by: user.id
-        })
+        .insert(documentData)
         .select()
         .single();
 
