@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Milestone } from '@/hooks/useProjectMilestones';
-import { Calendar, ChevronRight, Trash2 } from 'lucide-react';
+import { Calendar, ChevronRight, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
 import { useCreateMilestone } from '@/hooks/useCreateMilestone';
@@ -36,6 +37,7 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
   const [orderedMilestones, setOrderedMilestones] = useState<Milestone[]>([]);
   const { toast } = useToast();
   const [lastCompletedMilestoneId, setLastCompletedMilestoneId] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Order milestones to ensure "Started" is first and "Finished" is last
   useEffect(() => {
@@ -169,15 +171,29 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
   };
 
   if (compact) {
+    // Sort milestones to show "Not completed" first, then "Completed", while maintaining order
+    const sortedMilestones = [...orderedMilestones].sort((a, b) => {
+      // First sort by completion status (not completed first)
+      if (a.status === 'created' && b.status === 'completed') return -1;
+      if (a.status === 'completed' && b.status === 'created') return 1;
+      
+      // If same status, maintain original order (findIndex from orderedMilestones)
+      const aIndex = orderedMilestones.findIndex(m => m.id === a.id);
+      const bIndex = orderedMilestones.findIndex(m => m.id === b.id);
+      return aIndex - bIndex;
+    });
+
+    const displayedMilestones = isExpanded ? sortedMilestones : sortedMilestones.slice(0, 3);
+
     return (
       <div className="space-y-3">
-        {milestones.length === 0 ? (
+        {orderedMilestones.length === 0 ? (
           <div className="text-center py-4">
             <p className="text-gray-500 text-sm">No milestones created yet.</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {milestones.slice(0, 3).map((milestone) => (
+            {displayedMilestones.map((milestone) => (
               <div
                 key={milestone.id}
                 className="flex items-center justify-between p-2 border rounded-lg"
@@ -196,14 +212,31 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
                   </div>
                 </div>
                 <Badge variant={milestone.status === 'completed' ? 'default' : 'outline'}>
-                  {milestone.status === 'completed' ? 'Completed' : 'In Progress'}
+                  {milestone.status === 'completed' ? 'Completed' : 'Not completed'}
                 </Badge>
               </div>
             ))}
-            {milestones.length > 3 && (
-              <p className="text-xs text-gray-500 text-center">
-                +{milestones.length - 3} more milestones
-              </p>
+            {sortedMilestones.length > 3 && (
+              <div className="text-center pt-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-xs"
+                >
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp className="h-3 w-3 mr-1" />
+                      Show Less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3 w-3 mr-1" />
+                      Show {sortedMilestones.length - 3} More
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
           </div>
         )}
