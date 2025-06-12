@@ -1081,7 +1081,7 @@ export type Database = {
           project_id: string
           updated_at: string | null
           uploaded_at: string | null
-          uploaded_by: string | null
+          uploaded_by: string
         }
         Insert: {
           created_at?: string | null
@@ -1093,7 +1093,7 @@ export type Database = {
           project_id: string
           updated_at?: string | null
           uploaded_at?: string | null
-          uploaded_by?: string | null
+          uploaded_by?: string
         }
         Update: {
           created_at?: string | null
@@ -1105,7 +1105,7 @@ export type Database = {
           project_id?: string
           updated_at?: string | null
           uploaded_at?: string | null
-          uploaded_by?: string | null
+          uploaded_by?: string
         }
         Relationships: [
           {
