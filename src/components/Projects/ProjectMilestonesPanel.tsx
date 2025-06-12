@@ -171,13 +171,24 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
   };
 
   if (compact) {
-    // Sort milestones to show "Not completed" first, then "Completed", while maintaining order
+    // Custom sort for compact view: Finished first, Started last, others by completion status
     const sortedMilestones = [...orderedMilestones].sort((a, b) => {
-      // First sort by completion status (not completed first)
-      if (a.status === 'created' && b.status === 'completed') return -1;
-      if (a.status === 'completed' && b.status === 'created') return 1;
+      // "Finished" always comes first
+      if (a.name === "Finished" && b.name !== "Finished") return -1;
+      if (b.name === "Finished" && a.name !== "Finished") return 1;
       
-      // If same status, maintain original order (findIndex from orderedMilestones)
+      // "Started" or "Created" always comes last
+      if ((a.name === "Started" || a.name === "Created") && (b.name !== "Started" && b.name !== "Created")) return 1;
+      if ((b.name === "Started" || b.name === "Created") && (a.name !== "Started" && a.name !== "Created")) return -1;
+      
+      // For other milestones, sort by completion status (not completed first)
+      if (a.name !== "Finished" && a.name !== "Started" && a.name !== "Created" && 
+          b.name !== "Finished" && b.name !== "Started" && b.name !== "Created") {
+        if (a.status === 'created' && b.status === 'completed') return -1;
+        if (a.status === 'completed' && b.status === 'created') return 1;
+      }
+      
+      // If same status or special milestones, maintain original order
       const aIndex = orderedMilestones.findIndex(m => m.id === a.id);
       const bIndex = orderedMilestones.findIndex(m => m.id === b.id);
       return aIndex - bIndex;
