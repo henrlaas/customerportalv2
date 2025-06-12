@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -74,33 +73,39 @@ const ProjectDetailsPage = () => {
           throw tasksError;
         }
         
-        // Debug the returned tasks
         console.log('Found tasks:', tasksData?.length, tasksData);
         
-        // For each task, fetch its assignees and creator info separately
+        // For each task, fetch its assignees and creator info separately using two-step approach
         const tasksWithDetails = await Promise.all((tasksData || []).map(async (task) => {
-          // Fetch assignees for this task with profile information using the correct join syntax
+          // Step 1: Fetch assignees for this task
           const { data: assigneesData, error: assigneesError } = await supabase
             .from('task_assignees')
-            .select(`
-              id, 
-              user_id,
-              profiles (
-                id,
-                first_name,
-                last_name,
-                avatar_url
-              )
-            `)
+            .select('id, user_id')
             .eq('task_id', task.id);
             
           if (assigneesError) {
             console.error(`Error fetching assignees for task ${task.id}:`, assigneesError);
           }
             
-          console.log(`Raw assignees data for task ${task.id}:`, assigneesData);
+          console.log(`Task assignees data for task ${task.id}:`, assigneesData);
+          
+          // Step 2: Fetch profiles for the assignees
+          let profilesData = [];
+          if (assigneesData && assigneesData.length > 0) {
+            const userIds = assigneesData.map(assignee => assignee.user_id);
+            const { data: profiles, error: profilesError } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name, avatar_url')
+              .in('id', userIds);
+              
+            if (profilesError) {
+              console.error(`Error fetching profiles for task ${task.id}:`, profilesError);
+            } else {
+              profilesData = profiles || [];
+            }
+          }
             
-          // Fetch creator info if creator_id exists
+          // Step 3: Fetch creator info if creator_id exists
           let creatorData = null;
           if (task.creator_id) {
             const { data: creator } = await supabase
@@ -112,16 +117,17 @@ const ProjectDetailsPage = () => {
             creatorData = creator;
           }
           
-          // Transform assignees to match the expected structure for UserAvatarGroup
+          // Step 4: Combine assignees with their profile data
           const transformedAssignees = (assigneesData || []).map(assignee => {
-            console.log(`Processing assignee:`, assignee);
+            const profile = profilesData.find(p => p.id === assignee.user_id);
+            console.log(`Processing assignee:`, assignee, 'with profile:', profile);
             return {
               id: assignee.user_id,
-              first_name: assignee.profiles?.first_name || null,
-              last_name: assignee.profiles?.last_name || null,
-              avatar_url: assignee.profiles?.avatar_url || null,
+              first_name: profile?.first_name || null,
+              last_name: profile?.last_name || null,
+              avatar_url: profile?.avatar_url || null,
               user_id: assignee.user_id,
-              profiles: assignee.profiles
+              profiles: profile
             };
           });
           
