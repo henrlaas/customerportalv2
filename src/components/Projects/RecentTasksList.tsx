@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Plus, AlertTriangle, Calendar } from 'lucide-react';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RecentTasksListProps {
   tasks: any[];
@@ -16,6 +18,23 @@ export const RecentTasksList: React.FC<RecentTasksListProps> = ({
   onTaskClick,
   onCreateTask
 }) => {
+  // Fetch all profiles for assignees
+  const { data: profiles = [] } = useQuery({
+    queryKey: ['profiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url');
+      
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        return [];
+      }
+      
+      return data || [];
+    }
+  });
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'todo':
@@ -53,6 +72,20 @@ export const RecentTasksList: React.FC<RecentTasksListProps> = ({
       month: 'short', 
       day: 'numeric' 
     });
+  };
+
+  const getTaskAssignees = (task: any) => {
+    if (!task.assignees || !Array.isArray(task.assignees)) return [];
+    
+    return task.assignees.map((assignee: any) => {
+      const profile = profiles.find((p: any) => p.id === assignee.user_id);
+      return {
+        id: assignee.user_id,
+        first_name: profile?.first_name || null,
+        last_name: profile?.last_name || null,
+        avatar_url: profile?.avatar_url || null
+      };
+    }).filter(assignee => assignee.id); // Filter out any invalid assignees
   };
 
   // Get the 3 most urgent tasks (prioritizing overdue, then due soon, then by priority)
@@ -93,50 +126,49 @@ export const RecentTasksList: React.FC<RecentTasksListProps> = ({
 
   return (
     <div className="space-y-3">
-      {urgentTasks.map(task => (
-        <div
-          key={task.id}
-          className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-          onClick={() => onTaskClick(task.id)}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h4 className="font-medium text-sm truncate">{task.title}</h4>
-                {isOverdue(task.due_date) && (
-                  <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2 mb-2">
-                {getStatusBadge(task.status)}
-                {getPriorityBadge(task.priority)}
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <Calendar className="h-3 w-3" />
-                  <span className={isOverdue(task.due_date) ? 'text-red-600 font-medium' : ''}>
-                    {formatDate(task.due_date)}
-                  </span>
+      {urgentTasks.map(task => {
+        const taskAssignees = getTaskAssignees(task);
+        
+        return (
+          <div
+            key={task.id}
+            className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+            onClick={() => onTaskClick(task.id)}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-sm truncate">{task.title}</h4>
+                  {isOverdue(task.due_date) && (
+                    <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
+                  )}
                 </div>
                 
-                {task.assignees && task.assignees.length > 0 && (
-                  <UserAvatarGroup
-                    users={task.assignees.map((assignee: any) => ({
-                      id: assignee.user_id,
-                      first_name: assignee.profiles?.first_name,
-                      last_name: assignee.profiles?.last_name,
-                      avatar_url: assignee.profiles?.avatar_url
-                    }))}
-                    size="sm"
-                  />
-                )}
+                <div className="flex items-center gap-2 mb-2">
+                  {getStatusBadge(task.status)}
+                  {getPriorityBadge(task.priority)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Calendar className="h-3 w-3" />
+                    <span className={isOverdue(task.due_date) ? 'text-red-600 font-medium' : ''}>
+                      {formatDate(task.due_date)}
+                    </span>
+                  </div>
+                  
+                  {taskAssignees.length > 0 && (
+                    <UserAvatarGroup
+                      users={taskAssignees}
+                      size="sm"
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       
       <div className="pt-2 border-t">
         <Button variant="outline" size="sm" onClick={onCreateTask} className="w-full">

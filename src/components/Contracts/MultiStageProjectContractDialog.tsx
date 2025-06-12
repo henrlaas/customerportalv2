@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -214,6 +215,8 @@ export function MultiStageProjectContractDialog({
       toast.success('Project contract created successfully');
       queryClient.invalidateQueries({ queryKey: ['project-contracts'] });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      // Invalidate the specific project contract query to update the card immediately
+      queryClient.invalidateQueries({ queryKey: ['project-contract', projectId] });
       form.reset();
       setCurrentStep(1);
       onClose();

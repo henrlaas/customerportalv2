@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Milestone } from '@/hooks/useProjectMilestones';
-import { Calendar, ChevronRight, Trash2 } from 'lucide-react';
+import { Calendar, ChevronRight, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { useCompleteMilestone } from '@/hooks/useCompleteMilestone';
 import { useCreateMilestone } from '@/hooks/useCreateMilestone';
@@ -30,6 +31,7 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [selectedMilestoneName, setSelectedMilestoneName] = useState<string>('');
   const [newMilestoneName, setNewMilestoneName] = useState('');
+  const [showAllMilestones, setShowAllMilestones] = useState(false);
   const { completeMilestone, isLoading: isCompleting } = useCompleteMilestone();
   const { createMilestone, isLoading: isCreating } = useCreateMilestone();
   const { deleteMilestone, isLoading: isDeleting } = useDeleteMilestone();
@@ -59,7 +61,6 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
     // Find the last completed milestone
     const completedMilestones = ordered.filter(m => m.status === 'completed');
     if (completedMilestones.length > 0) {
-      // Get the most recently completed milestone (based on updated_at if available, or created_at)
       const lastCompleted = completedMilestones.reduce((latest, current) => {
         const latestDate = new Date(latest.updated_at || latest.created_at);
         const currentDate = new Date(current.updated_at || current.created_at);
@@ -169,15 +170,17 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
   };
 
   if (compact) {
+    const milestonesToShow = showAllMilestones ? orderedMilestones : orderedMilestones.slice(0, 3);
+    
     return (
       <div className="space-y-3">
-        {milestones.length === 0 ? (
+        {orderedMilestones.length === 0 ? (
           <div className="text-center py-4">
             <p className="text-gray-500 text-sm">No milestones created yet.</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {milestones.slice(0, 3).map((milestone) => (
+            {milestonesToShow.map((milestone) => (
               <div
                 key={milestone.id}
                 className="flex items-center justify-between p-2 border rounded-lg"
@@ -200,10 +203,28 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
                 </Badge>
               </div>
             ))}
-            {milestones.length > 3 && (
-              <p className="text-xs text-gray-500 text-center">
-                +{milestones.length - 3} more milestones
-              </p>
+            
+            {orderedMilestones.length > 3 && (
+              <div className="flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAllMilestones(!showAllMilestones)}
+                  className="text-xs flex items-center gap-1"
+                >
+                  {showAllMilestones ? (
+                    <>
+                      <ChevronUp className="h-3 w-3" />
+                      Show Less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3 w-3" />
+                      View {orderedMilestones.length - 3} More
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
           </div>
         )}

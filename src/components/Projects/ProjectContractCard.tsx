@@ -12,11 +12,13 @@ import { MultiStageProjectContractDialog } from '@/components/Contracts/MultiSta
 interface ProjectContractCardProps {
   projectId: string;
   companyId?: string;
+  projectName?: string;
 }
 
 export const ProjectContractCard: React.FC<ProjectContractCardProps> = ({
   projectId,
-  companyId
+  companyId,
+  projectName
 }) => {
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const navigate = useNavigate();
@@ -131,13 +133,13 @@ export const ProjectContractCard: React.FC<ProjectContractCardProps> = ({
       </CardContent>
 
       {/* Contract creation dialog */}
-      {isContractDialogOpen && companyId && (
+      {isContractDialogOpen && companyId && projectName && (
         <MultiStageProjectContractDialog
           isOpen={isContractDialogOpen}
           onClose={() => setIsContractDialogOpen(false)}
           projectId={projectId}
           companyId={companyId}
-          projectName="Project Contract"
+          projectName={projectName}
         />
       )}
     </Card>
