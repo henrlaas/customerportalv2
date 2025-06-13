@@ -22,7 +22,7 @@ import { ProgressStepper } from "@/components/ui/progress-stepper";
 import { useCompanyList } from "@/hooks/useCompanyList";
 import { CompanyFavicon } from "@/components/CompanyFavicon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Define the form schema with updated validation
 const projectSchema = z.object({
@@ -56,6 +56,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
   const { profile } = useAuth();
   const { createMilestone } = useCreateMilestone();
   const { companies = [], isLoading: companiesLoading } = useCompanyList(true); // Always show subsidiaries
+  const queryClient = useQueryClient();
   
   const totalSteps = 2;
   
@@ -158,10 +159,11 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
       }
       
       toast.success("Project created successfully");
-      onClose();
       
-      // Reload page to show new project
-      window.location.reload();
+      // Invalidate projects query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      
+      onClose();
     } catch (error) {
       console.error('Error in project creation:', error);
       toast.error("An error occurred while creating the project");
