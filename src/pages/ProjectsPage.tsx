@@ -36,37 +36,50 @@ const ProjectsPage = () => {
 
   console.log('ProjectsPage render - projects:', projects?.length || 0, 'loading:', projectsLoading);
 
-  // Fetch user's assigned projects
+  // Fetch user's assigned projects with better error handling
   const { data: userProjectIds = [], isLoading: userProjectsLoading, error: userProjectsError } = useQuery({
     queryKey: ['user-project-assignments', profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return [];
-      
-      console.log('Fetching user project assignments for:', profile.id);
-      
-      const { data: assignmentsData, error } = await supabase
-        .from('project_assignees')
-        .select('project_id')
-        .eq('user_id', profile.id);
-      
-      if (error) {
-        console.error('Error fetching user project assignments:', error);
+      if (!profile?.id) {
+        console.log('No profile ID available for user project assignments');
         return [];
       }
       
-      console.log('User project assignments:', assignmentsData?.map(a => a.project_id) || []);
-      return assignmentsData.map(assignment => assignment.project_id);
+      console.log('Fetching user project assignments for:', profile.id);
+      
+      try {
+        const { data: assignmentsData, error } = await supabase
+          .from('project_assignees')
+          .select('project_id')
+          .eq('user_id', profile.id);
+        
+        if (error) {
+          console.error('Error fetching user project assignments:', error);
+          throw error;
+        }
+        
+        const projectIds = assignmentsData?.map(a => a.project_id) || [];
+        console.log('User project assignments:', projectIds);
+        return projectIds;
+      } catch (error) {
+        console.error('Failed to fetch user project assignments:', error);
+        return [];
+      }
     },
     enabled: !!profile?.id && showMyProjects,
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches
   });
 
   // Fetch milestones for all projects to enable status filtering
   const { data: projectMilestones = {}, isLoading: milestonesLoading, error: milestonesError } = useQuery({
     queryKey: ['all-project-milestones', projects?.map(p => p.id)],
     queryFn: async () => {
-      if (!projects?.length) return {};
+      if (!projects?.length) {
+        console.log('No projects available for milestone fetching');
+        return {};
+      }
       
       const projectIds = projects.map(project => project.id);
       console.log('Fetching milestones for projects:', projectIds);
@@ -79,7 +92,7 @@ const ProjectsPage = () => {
         
         if (milestonesError) {
           console.error('Error fetching project milestones:', milestonesError);
-          return {};
+          throw milestonesError;
         }
         
         // Group milestones by project_id
@@ -100,7 +113,8 @@ const ProjectsPage = () => {
     },
     enabled: !!projects?.length,
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 
   // Log any errors for debugging
@@ -153,9 +167,9 @@ const ProjectsPage = () => {
       const beforeSearchFilter = result.length;
       const query = searchQuery.toLowerCase();
       result = result.filter(project => {
-        const matches = project.name.toLowerCase().includes(query) || 
+        const matches = project.name?.toLowerCase().includes(query) || 
                        project.description?.toLowerCase().includes(query) ||
-                       project.company?.name.toLowerCase().includes(query);
+                       project.company?.name?.toLowerCase().includes(query);
         return matches;
       });
       console.log('After search filter (' + searchQuery + '):', result.length, 'projects (was', beforeSearchFilter + ')');
@@ -269,6 +283,11 @@ const ProjectsPage = () => {
   // Check if we're still loading critical data
   const isLoading = projectsLoading || (showMyProjects && userProjectsLoading);
 
+  // Add error boundary for projects data
+  if (!isLoading && projects && projects.length > 0 && filteredProjects.length === 0 && !searchQuery && filter === 'all') {
+    console.error('Potential data filtering issue - projects exist but filtered list is empty');
+  }
+
   return (
     <div className="container p-6 mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -280,7 +299,7 @@ const ProjectsPage = () => {
       
       {/* Summary Cards */}
       <ProjectsSummaryCards 
-        projects={projects} 
+        projects={projects || []} 
         isLoading={projectsLoading}
         projectMilestones={projectMilestones}
       />

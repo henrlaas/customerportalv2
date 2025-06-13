@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -7,7 +6,7 @@ export interface ProjectWithRelations {
   name: string;
   description: string | null;
   company_id: string;
-  value: number;
+  value: number | null;
   price_type: string | null;
   deadline: string | null;
   created_at: string;
@@ -58,9 +57,18 @@ export const useProjects = () => {
           return [];
         }
 
+        // Validate and clean project data
+        const validatedProjects = projectsData.map(project => ({
+          ...project,
+          value: project.value || 0, // Ensure value is never null
+          price_type: project.price_type || 'estimated', // Default price type
+          deadline: project.deadline,
+          company: project.company || null,
+        }));
+
         // Get all unique creator IDs from projects
         const creatorIds = Array.from(new Set(
-          projectsData
+          validatedProjects
             .map(project => project.created_by)
             .filter(Boolean)
         )) as string[];
@@ -91,7 +99,7 @@ export const useProjects = () => {
         }
 
         // Combine project data with creator data
-        const projectsWithCreators = projectsData.map(project => ({
+        const projectsWithCreators = validatedProjects.map(project => ({
           ...project,
           creator: project.created_by ? creatorsMap[project.created_by] || null : null
         })) as ProjectWithRelations[];
@@ -105,7 +113,9 @@ export const useProjects = () => {
     },
     staleTime: 30000, // 30 seconds
     retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnWindowFocus: true, // Refetch when returning to tab
+    refetchOnMount: true, // Always refetch on component mount
   });
 
   // Function to create a new project

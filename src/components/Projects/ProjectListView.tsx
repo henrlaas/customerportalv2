@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format, isValid, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -154,6 +153,19 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
     }
   };
 
+  // Safe currency formatting function
+  const safeFormatCurrency = (value: number | null | undefined): string => {
+    if (value == null || value === undefined) return 'N/A';
+    if (typeof value !== 'number' || isNaN(value)) return 'N/A';
+    
+    try {
+      return value.toLocaleString();
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return 'N/A';
+    }
+  };
+
   const handleProjectClick = (projectId: string) => {
     try {
       console.log('Navigating to project:', projectId);
@@ -224,8 +236,14 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
             </TableHeader>
             <TableBody>
               {projects.map(project => {
+                // Safely get project data with fallbacks
+                const projectName = project.name || 'Unnamed Project';
+                const projectValue = safeFormatCurrency(project.value);
+                const priceType = project.price_type || 'estimated';
+                const companyName = project.company?.name || 'No Company';
                 const assignees = projectAssignees[project.id] || [];
-                console.log('Rendering project:', project.id, project.name, 'assignees:', assignees.length);
+                
+                console.log('Rendering project:', project.id, projectName, 'assignees:', assignees.length);
                 
                 return (
                   <TableRow 
@@ -233,10 +251,10 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                     className={`cursor-pointer hover:bg-gray-100 ${project.id === selectedProjectId ? 'bg-muted' : ''}`}
                     onClick={() => handleProjectClick(project.id)}
                   >
-                    <TableCell className="font-medium">{project.name}</TableCell>
+                    <TableCell className="font-medium">{projectName}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {project.company && (
+                        {project.company ? (
                           <>
                             <CompanyFavicon 
                               companyName={project.company.name} 
@@ -245,21 +263,22 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                             />
                             <span>{project.company.name}</span>
                           </>
+                        ) : (
+                          <span className="text-gray-500">{companyName}</span>
                         )}
-                        {!project.company && 'No Company'}
                       </div>
                     </TableCell>
-                    <TableCell>{project.value?.toLocaleString() || 'N/A'} NOK</TableCell>
+                    <TableCell>{projectValue} NOK</TableCell>
                     <TableCell>
                       <Badge 
-                        variant={project.price_type === 'fixed' ? 'default' : 'secondary'} 
+                        variant={priceType === 'fixed' ? 'default' : 'secondary'} 
                         className={`capitalize ${
-                          project.price_type === 'fixed'
+                          priceType === 'fixed'
                             ? "bg-blue-50 text-blue-700 border-blue-100"
                             : "bg-amber-50 text-amber-700 border-amber-100"
                         }`}
                       >
-                        {project.price_type === 'fixed' ? 'Fixed Price' : 'Estimated'}
+                        {priceType === 'fixed' ? 'Fixed Price' : 'Estimated'}
                       </Badge>
                     </TableCell>
                     <TableCell>
