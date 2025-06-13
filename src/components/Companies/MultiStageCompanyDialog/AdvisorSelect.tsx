@@ -90,15 +90,34 @@ export function AdvisorSelect({ value, onChange }: AdvisorSelectProps) {
       isSearchable
       placeholder="Search and select an advisor..."
       styles={{
-        control: (base) => ({
+        control: (base, state) => ({
           ...base,
+          height: '40px',
           minHeight: '40px',
           border: '1px solid hsl(var(--border))',
           borderRadius: '6px',
           backgroundColor: 'hsl(var(--background))',
+          boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
           '&:hover': {
             borderColor: 'hsl(var(--border))'
           }
+        }),
+        valueContainer: (base) => ({
+          ...base,
+          height: '38px',
+          padding: '0 12px',
+          display: 'flex',
+          alignItems: 'center'
+        }),
+        input: (base) => ({
+          ...base,
+          margin: 0,
+          padding: 0,
+          color: 'hsl(var(--foreground))'
+        }),
+        indicatorsContainer: (base) => ({
+          ...base,
+          height: '38px'
         }),
         menu: (base) => ({
           ...base,
@@ -117,10 +136,6 @@ export function AdvisorSelect({ value, onChange }: AdvisorSelectProps) {
           }
         }),
         singleValue: (base) => ({
-          ...base,
-          color: 'hsl(var(--foreground))'
-        }),
-        input: (base) => ({
           ...base,
           color: 'hsl(var(--foreground))'
         }),
