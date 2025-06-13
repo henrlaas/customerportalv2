@@ -19,9 +19,11 @@ import {
   Trash2,
   Pencil,
   MoreHorizontal,
+  Share,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
+import { useToast } from '@/hooks/use-toast';
 
 interface MediaTableRowProps {
   item: MediaFile;
@@ -44,11 +46,30 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
   getUploaderDisplayName,
   getUserProfile,
 }) => {
+  const { toast } = useToast();
+  
   const filePath = currentPath 
     ? `${currentPath}/${item.name}`
     : item.name;
     
   const isCompanyRootFolder = item.isCompanyFolder && !currentPath;
+
+  const handleShareLink = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(item.url);
+      toast({
+        title: 'Link copied',
+        description: 'File link has been copied to clipboard',
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to copy link',
+        description: 'Could not copy the file link to clipboard',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const getFileIcon = (file: MediaFile) => {
     if (file.isFolder) {
@@ -193,6 +214,10 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
                   >
                     <HeartIcon className="h-4 w-4 mr-2" />
                     {item.favorited ? 'Remove from favorites' : 'Add to favorites'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleShareLink}>
+                    <Share className="h-4 w-4 mr-2" />
+                    Get share link
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <a 
