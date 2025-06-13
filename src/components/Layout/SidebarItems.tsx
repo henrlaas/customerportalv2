@@ -1,4 +1,3 @@
-
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -15,6 +14,7 @@ import {
   FileClock,
   Building,
   Home,
+  Calendar,
 } from "lucide-react";
 
 export function getSidebarItems() {
@@ -27,6 +27,16 @@ export function getSidebarItems() {
       title: t('Dashboard'),
       href: isClient ? '/client' : '/dashboard',
       icon: isClient ? Home : LayoutDashboard,
+      roles: ['admin', 'employee', 'client'],
+      category: 'MENU',
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
+    },
+    {
+      title: t('Calendar'),
+      href: '/calendar',
+      icon: Calendar,
       roles: ['admin', 'employee', 'client'],
       category: 'MENU',
       hasDropdown: false,
@@ -83,7 +93,6 @@ export function getSidebarItems() {
       disabled: false,
       tooltip: null
     },
-    // Removed duplicate Companies entry here
     {
       title: t('Contracts'),
       href: isClient ? '/client/contracts' : '/contracts',

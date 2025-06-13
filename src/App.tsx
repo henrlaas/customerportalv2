@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Auth from './pages/Auth';
 import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
+import CalendarPage from './pages/CalendarPage';
 import CompaniesPage from './pages/CompaniesPage';
 import CompanyDetailsPage from './pages/CompanyDetailsPage';
 import CampaignsPage from './pages/CampaignsPage';
@@ -106,6 +107,7 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/calendar" element={<CalendarPage />} />
                   <Route path="/companies" element={<CompaniesPage />} />
                   <Route path="/companies/:companyId" element={<CompanyDetailsPage />} />
                   <Route path="/campaigns" element={<CampaignsPage />} />
