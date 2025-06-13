@@ -13,8 +13,8 @@ export const MediaBreadcrumb: React.FC<MediaBreadcrumbProps> = ({
   onNavigate,
 }) => {
   const breadcrumbs = currentPath 
-    ? ['Root', ...currentPath.split('/')] 
-    : ['Root'];
+    ? ['Home', ...currentPath.split('/')] 
+    : ['Home'];
 
   return (
     <nav className="flex items-center space-x-1 text-sm text-gray-500 mb-4">
