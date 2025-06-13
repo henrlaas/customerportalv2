@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useAuth } from '@/contexts/AuthContext';
@@ -269,8 +270,10 @@ const MediaPage: React.FC = () => {
   // Determine if we can add rename functionality
   // Allow renaming folders for internal tab or inside company folders
   const canRename = activeTab === 'internal' || (activeTab === 'company' && currentPath);
-  const showFolderButton = activeTab === 'internal' || (activeTab === 'company' && currentPath);
-  const showUploadButton = activeTab === 'internal' || (activeTab === 'company' && currentPath);
+  
+  // Fix: Ensure these are proper booleans
+  const showFolderButton: boolean = activeTab === 'internal' || (activeTab === 'company' && !!currentPath);
+  const showUploadButton: boolean = activeTab === 'internal' || (activeTab === 'company' && !!currentPath);
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -289,16 +292,6 @@ const MediaPage: React.FC = () => {
               currentPath={currentPath}
               showFolderButton={showFolderButton}
               showUploadButton={showUploadButton}
-              viewMode={viewMode}
-              filters={filters}
-              onSearchChange={setSearchQuery}
-              onSortChange={setSortOption}
-              onFiltersChange={setFilters}
-              onViewModeChange={setViewMode}
-              onSort={handleSort}
-              getUploaderDisplayName={getUploaderDisplayName}
-              activeDragItem={activeDragItem}
-              onNavigateToBreadcrumb={navigateToBreadcrumb}
             />
             
             <MediaTabs
@@ -310,6 +303,8 @@ const MediaPage: React.FC = () => {
               filters={filters}
               filteredMedia={filteredMedia}
               recentItems={recentItems}
+              sortBy={sortBy}
+              sortDirection={sortDirection}
               onNavigate={navigateToFolder}
               onFavorite={handleFavoriteToggle}
               onDelete={handleDelete}
@@ -319,8 +314,12 @@ const MediaPage: React.FC = () => {
               } : undefined}
               onUpload={() => setIsUploadDialogOpen(true)}
               onNewFolder={() => setIsFolderDialogOpen(true)}
+              onSearchChange={setSearchQuery}
+              onSortChange={setSortOption}
+              onFiltersChange={setFilters}
+              onViewModeChange={setViewMode}
+              onSort={handleSort}
               getUploaderDisplayName={getUploaderDisplayName}
-              activeDragItem={activeDragItem}
               onNavigateToBreadcrumb={navigateToBreadcrumb}
             />
           </div>
