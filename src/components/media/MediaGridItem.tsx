@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
 import { useDraggable } from '@dnd-kit/core';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 interface MediaGridItemProps {
   item: MediaFile;
@@ -64,6 +65,17 @@ export const MediaGridItem: React.FC<MediaGridItemProps> = ({
 
   const getFileIcon = (file: MediaFile) => {
     if (file.isFolder) {
+      // Show company favicon for company folders
+      if (file.isCompanyFolder && file.companyName) {
+        return (
+          <CompanyFavicon 
+            companyName={file.companyName}
+            website={file.companyWebsite}
+            logoUrl={file.companyLogoUrl}
+            size="lg"
+          />
+        );
+      }
       return <FolderIcon className="h-10 w-10 text-blue-400" />;
     } else if (file.fileType.startsWith('image/')) {
       return <FileImageIcon className="h-12 w-12 mb-2 text-green-500" />;

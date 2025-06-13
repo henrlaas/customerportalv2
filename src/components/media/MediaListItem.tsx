@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MediaFile } from '@/types/media';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 interface MediaListItemProps {
   item: MediaFile;
@@ -59,6 +59,17 @@ export const MediaListItem: React.FC<MediaListItemProps> = ({
 
   const getFileIcon = (file: MediaFile) => {
     if (file.isFolder) {
+      // Show company favicon for company folders
+      if (file.isCompanyFolder && file.companyName) {
+        return (
+          <CompanyFavicon 
+            companyName={file.companyName}
+            website={file.companyWebsite}
+            logoUrl={file.companyLogoUrl}
+            size="sm"
+          />
+        );
+      }
       return <FolderIcon className="h-5 w-5 text-blue-400" />;
     } else if (file.fileType.startsWith('image/')) {
       return <FileImageIcon className="h-5 w-5 text-green-500" />;

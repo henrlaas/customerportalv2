@@ -17,6 +17,8 @@ export interface MediaFile {
   bucketId: string;
   isCompanyFolder?: boolean;
   companyName?: string;
+  companyWebsite?: string;
+  companyLogoUrl?: string;
 }
 
 export interface MediaData {

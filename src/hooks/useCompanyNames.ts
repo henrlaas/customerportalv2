@@ -8,7 +8,7 @@ export const useCompanyNames = () => {
     queryFn: async () => {
       const { data: companies, error } = await supabase
         .from('companies')
-        .select('id, name')
+        .select('id, name, website, logo_url')
         .order('name');
         
       if (error) throw error;

@@ -46,7 +46,9 @@ export const useMediaData = (
               fileCount: 0,
               bucketId: 'companymedia',
               isCompanyFolder: true,
-              companyName: company.name
+              companyName: company.name,
+              companyWebsite: company.website,
+              companyLogoUrl: company.logo_url
             }));
 
             // Get file counts for each company folder
