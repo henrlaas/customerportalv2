@@ -76,19 +76,19 @@ export const CalendarView = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar column - Fixed height */}
         <Card className="lg:col-span-1 h-[500px] flex flex-col">
-          <CardHeader className="flex-shrink-0 pb-4">
+          <CardHeader className="flex-shrink-0 pb-2">
             <CardTitle className="text-lg font-medium text-center">
               Calendar
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-grow flex items-center justify-center p-2">
+          <CardContent className="flex-grow flex flex-col p-3">
             <Calendar
               mode="single"
               month={currentMonth}
               onMonthChange={handleMonthChange}
               selected={selectedDate}
               onSelect={setSelectedDate}
-              className="w-full max-w-none [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_.rdp-table]:w-full [&_.rdp-head_cell]:text-center [&_.rdp-cell]:text-center"
+              className="w-full flex-1 [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_.rdp-table]:w-full [&_.rdp-head_cell]:w-full [&_.rdp-cell]:w-full [&_.rdp-head_cell]:text-center [&_.rdp-cell]:text-center [&_.rdp-day]:w-full [&_.rdp-day]:aspect-square [&_.rdp-day]:text-xs [&_.rdp-head_cell]:text-xs [&_.rdp-caption]:mb-2"
               modifiers={{
                 hasEntry: (date) => {
                   const dateString = format(date, 'yyyy-MM-dd');
