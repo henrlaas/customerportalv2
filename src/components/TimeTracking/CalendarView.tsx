@@ -1,10 +1,8 @@
 
 import { useState } from 'react';
-import { format, isWithinInterval, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, addMonths, subMonths } from 'date-fns';
+import { format, isWithinInterval, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TimeEntry, Task, Campaign, Project } from '@/types/timeTracking';
 import { Company } from '@/types/company';
 import { TimeEntryCard } from './TimeEntryCard';
@@ -37,39 +35,16 @@ export const CalendarView = ({
     currentMonth.getMonth() + 1,
     true // Always enabled since we want to fetch data for the viewed month
   );
-  
-  const handlePrevMonth = () => {
-    setCurrentMonth(prev => subMonths(prev, 1));
-    // Clear selected date if it's not in the new month
-    setSelectedDate(prev => {
-      if (prev && !isSameDay(prev, subMonths(currentMonth, 1))) {
-        const newMonth = subMonths(currentMonth, 1);
-        if (prev.getMonth() !== newMonth.getMonth() || prev.getFullYear() !== newMonth.getFullYear()) {
-          return undefined;
-        }
-      }
-      return prev;
-    });
-  };
-  
-  const handleNextMonth = () => {
-    setCurrentMonth(prev => addMonths(prev, 1));
-    // Clear selected date if it's not in the new month
-    setSelectedDate(prev => {
-      if (prev && !isSameDay(prev, addMonths(currentMonth, 1))) {
-        const newMonth = addMonths(currentMonth, 1);
-        if (prev.getMonth() !== newMonth.getMonth() || prev.getFullYear() !== newMonth.getFullYear()) {
-          return undefined;
-        }
-      }
-      return prev;
-    });
-  };
 
-  const handleTodayClick = () => {
-    const today = new Date();
-    setCurrentMonth(today);
-    setSelectedDate(today);
+  const handleMonthChange = (newMonth: Date) => {
+    setCurrentMonth(newMonth);
+    // Clear selected date if it's not in the new month
+    setSelectedDate(prev => {
+      if (prev && (prev.getMonth() !== newMonth.getMonth() || prev.getFullYear() !== newMonth.getFullYear())) {
+        return undefined;
+      }
+      return prev;
+    });
   };
 
   if (isLoading) {
@@ -101,33 +76,19 @@ export const CalendarView = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar column - Fixed height */}
         <Card className="lg:col-span-1 h-[500px] flex flex-col">
-          <CardHeader className="flex flex-row items-center justify-between flex-shrink-0 pb-4">
-            <CardTitle className="text-lg font-medium">
-              {format(currentMonth, 'MMMM yyyy')}
+          <CardHeader className="flex-shrink-0 pb-4">
+            <CardTitle className="text-lg font-medium text-center">
+              Calendar
             </CardTitle>
-            <div className="flex items-center space-x-1">
-              <Button variant="outline" size="icon" onClick={handlePrevMonth}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleTodayClick}
-              >
-                Today
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleNextMonth}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
           </CardHeader>
           <CardContent className="flex-grow flex items-center justify-center p-2">
             <Calendar
               mode="single"
               month={currentMonth}
+              onMonthChange={handleMonthChange}
               selected={selectedDate}
               onSelect={setSelectedDate}
-              className="w-full max-w-none"
+              className="w-full max-w-none [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_.rdp-table]:w-full [&_.rdp-head_cell]:text-center [&_.rdp-cell]:text-center"
               modifiers={{
                 hasEntry: (date) => {
                   const dateString = format(date, 'yyyy-MM-dd');
