@@ -16,9 +16,11 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     queryFn: async () => {
       if (!user?.id) return [];
       
+      console.log('Fetching calendar tasks for user:', user.id);
+      
       const { data, error } = await supabase
         .from('tasks')
-        .select('id, title, priority, status, due_date')
+        .select('id, title, priority, status, due_date, assigned_to')
         .not('due_date', 'is', null)
         .neq('status', 'completed')
         .eq('assigned_to', user.id)
@@ -29,6 +31,7 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
         throw error;
       }
 
+      console.log('Calendar tasks found:', data);
       return data || [];
     },
     enabled: !!user?.id,
@@ -41,6 +44,8 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     queryKey: ['calendar-projects', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
+      
+      console.log('Fetching calendar projects for user:', user.id);
       
       const { data, error } = await supabase
         .from('projects')
@@ -60,6 +65,7 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
         throw error;
       }
 
+      console.log('Calendar projects found:', data);
       return data || [];
     },
     enabled: !!user?.id,
@@ -152,6 +158,13 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
       return isBefore(deadline, today);
     }).length;
   }
+
+  console.log('Calendar data summary:', {
+    userId: user?.id,
+    tasksCount: tasks.length,
+    projectsCount: projects.length,
+    monthlyStats
+  });
 
   return {
     tasks,
