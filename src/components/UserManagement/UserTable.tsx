@@ -133,15 +133,17 @@ export function UserTable({
                     <Edit className="h-4 w-4" />
                   </Button>
                   
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8" 
-                    title="Change Role"
-                    onClick={() => onChangeRole(user)}
-                  >
-                    <UserCog className="h-4 w-4" />
-                  </Button>
+                  {user.user_metadata?.role !== 'client' && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8" 
+                      title="Change Role"
+                      onClick={() => onChangeRole(user)}
+                    >
+                      <UserCog className="h-4 w-4" />
+                    </Button>
+                  )}
                   
                   <Button 
                     variant="ghost" 
