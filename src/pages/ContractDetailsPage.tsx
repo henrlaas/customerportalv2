@@ -630,18 +630,6 @@ const ContractDetailsPage = () => {
           Back to Contracts
         </Button>
         <div className="flex gap-2">
-          {contract.status === 'unsigned' && (profile?.role === 'admin' || profile?.role === 'employee') && (
-            <Button 
-              variant="outline" 
-              onClick={() => sendReminderMutation.mutate()}
-              disabled={sendReminderMutation.isPending}
-              className="flex items-center gap-2"
-            >
-              <Mail className="h-4 w-4" />
-              {sendReminderMutation.isPending ? 'Sending...' : 'Send Reminder'}
-            </Button>
-          )}
-          
           <Button 
             variant="outline" 
             onClick={downloadContract}
@@ -743,7 +731,21 @@ const ContractDetailsPage = () => {
           
           <div className="md:w-1/3">
             <Card className="p-6">
-              <h2 className="text-lg font-medium mb-4">Contract Details</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-medium">Contract Details</h2>
+                {contract.status === 'unsigned' && (profile?.role === 'admin' || profile?.role === 'employee') && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => sendReminderMutation.mutate()}
+                    disabled={sendReminderMutation.isPending}
+                    className="flex items-center gap-1"
+                  >
+                    <Mail className="h-3 w-3" />
+                    {sendReminderMutation.isPending ? 'Sending...' : 'Send Reminder'}
+                  </Button>
+                )}
+              </div>
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Status</p>
