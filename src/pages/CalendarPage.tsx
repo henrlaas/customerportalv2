@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
 import { useNavigate } from 'react-router-dom';
 import { CalendarEvents } from '@/components/Calendar/CalendarEvents';
+import { MonthlyOverviewCards } from '@/components/Calendar/MonthlyOverviewCards';
 import { useCalendarData } from '@/hooks/useCalendarData';
 
 const CalendarPage = () => {
@@ -17,7 +18,7 @@ const CalendarPage = () => {
   const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
   const navigate = useNavigate();
 
-  const { tasks, projects, isLoading } = useCalendarData();
+  const { tasks, projects, monthlyStats, isLoading } = useCalendarData(currentDate);
 
   // Generate calendar days
   const monthStart = startOfMonth(currentDate);
@@ -92,6 +93,9 @@ const CalendarPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Monthly Overview Cards */}
+      <MonthlyOverviewCards monthlyStats={monthlyStats} />
 
       <Card className="p-6">
         {/* Calendar Header */}
