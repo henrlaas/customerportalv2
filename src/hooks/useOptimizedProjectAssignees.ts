@@ -18,13 +18,13 @@ export const useOptimizedProjectAssignees = (projectIds: string[]) => {
       console.log('Fetching optimized assignees for projects:', projectIds);
       
       try {
-        // Get all assignees for all projects in a single query
+        // Get all assignees for all projects in a single query with proper join
         const { data: assigneesData, error: assigneesError } = await supabase
           .from('project_assignees')
           .select(`
             project_id,
             user_id,
-            profiles!inner(
+            profiles(
               id,
               first_name,
               last_name,
@@ -46,12 +46,14 @@ export const useOptimizedProjectAssignees = (projectIds: string[]) => {
             assigneesByProject[assignee.project_id] = [];
           }
           
-          if (assignee.profiles) {
+          // Check if profiles data exists and has the expected structure
+          if (assignee.profiles && typeof assignee.profiles === 'object') {
+            const profile = assignee.profiles as any;
             assigneesByProject[assignee.project_id].push({
               id: assignee.user_id,
-              first_name: assignee.profiles.first_name,
-              last_name: assignee.profiles.last_name,
-              avatar_url: assignee.profiles.avatar_url
+              first_name: profile.first_name,
+              last_name: profile.last_name,
+              avatar_url: profile.avatar_url
             });
           }
         }
