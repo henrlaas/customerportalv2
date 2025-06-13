@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
@@ -23,6 +24,15 @@ import { useEmployeeFilters } from '@/hooks/useEmployeeFilters';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { userService } from '@/services/userService';
 import { EmployeeSummaryCards } from './EmployeeSummaryCards';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export function EmployeeManagementTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -32,6 +42,9 @@ export function EmployeeManagementTab() {
   const { toast } = useToast();
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [isPendingReset, setIsPendingReset] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const EMPLOYEES_PER_PAGE = 15;
 
   const { data: employees = [], isLoading, refetch } = useQuery({
     queryKey: ['employees'],
@@ -47,6 +60,21 @@ export function EmployeeManagementTab() {
     employeeTypes,
     filteredEmployees
   } = useEmployeeFilters(employees);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredEmployees.length / EMPLOYEES_PER_PAGE);
+  const startIndex = (currentPage - 1) * EMPLOYEES_PER_PAGE;
+  const endIndex = startIndex + EMPLOYEES_PER_PAGE;
+  const paginatedEmployees = filteredEmployees.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  const handleFilterChange = () => {
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // Debug the employee data when it changes
   useEffect(() => {
@@ -146,14 +174,20 @@ export function EmployeeManagementTab() {
             placeholder="Search by name, email or phone"
             className="pl-8"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              handleFilterChange();
+            }}
           />
         </div>
         <div className="w-full sm:w-[200px] flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <Select
             value={typeFilter}
-            onValueChange={setTypeFilter}
+            onValueChange={(type) => {
+              setTypeFilter(type);
+              handleFilterChange();
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Filter by type" />
@@ -183,14 +217,14 @@ export function EmployeeManagementTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredEmployees.length === 0 ? (
+            {paginatedEmployees.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                   No employees found matching your search criteria
                 </TableCell>
               </TableRow>
             ) : (
-              filteredEmployees.map((employee) => (
+              paginatedEmployees.map((employee) => (
                 <TableRow 
                   key={employee.id}
                   className="cursor-pointer hover:bg-gray-50"
@@ -250,6 +284,63 @@ export function EmployeeManagementTab() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 0 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              {currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className="cursor-pointer"
+                  />
+                </PaginationItem>
+              )}
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(page)}
+                        isActive={currentPage === page}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                } else if (
+                  page === currentPage - 2 ||
+                  page === currentPage + 2
+                ) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  );
+                }
+                return null;
+              })}
+              
+              {currentPage < totalPages && (
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className="cursor-pointer"
+                  />
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <AddEmployeeDialog 
         open={showAddDialog} 
