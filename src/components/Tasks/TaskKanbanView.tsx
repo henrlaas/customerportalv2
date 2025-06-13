@@ -282,7 +282,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
               getPriorityBadge={getPriorityBadge}
               getTaskAssignees={getTaskAssignees}
               onClick={() => {}}
-              isDragging={true}
+              isDragging={false}
               getCreatorInfo={getCreatorInfo}
               getCompanyName={getCompanyName}
               getCampaignName={getCampaignName}
