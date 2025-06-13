@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,7 @@ interface ProjectOverviewTabProps {
   projectId: string;
   onCreateTask: () => void;
   onTaskClick: (taskId: string) => void;
+  isAdmin: boolean;
 }
 
 export const ProjectOverviewTab: React.FC<ProjectOverviewTabProps> = ({
@@ -32,7 +32,8 @@ export const ProjectOverviewTab: React.FC<ProjectOverviewTabProps> = ({
   tasks,
   projectId,
   onCreateTask,
-  onTaskClick
+  onTaskClick,
+  isAdmin
 }) => {
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
 
@@ -108,8 +109,10 @@ export const ProjectOverviewTab: React.FC<ProjectOverviewTabProps> = ({
           </CardContent>
         </Card>
 
-        {/* Finance Overview */}
-        <ProjectFinanceCard projectId={projectId} projectValue={project?.value} />
+        {/* Finance Overview - Only show for admin users */}
+        {isAdmin && (
+          <ProjectFinanceCard projectId={projectId} projectValue={project?.value} />
+        )}
       </div>
 
       {/* Right side - Info cards (1/3 width) */}

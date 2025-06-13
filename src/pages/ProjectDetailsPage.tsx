@@ -423,6 +423,7 @@ const ProjectDetailsPage = () => {
             projectId={projectId || ''}
             onCreateTask={() => setIsTaskDialogOpen(true)}
             onTaskClick={handleTaskClick}
+            isAdmin={isAdmin}
           />
         </TabsContent>
         
