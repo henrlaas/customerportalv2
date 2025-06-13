@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { PlusIcon, SearchIcon } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
-import { useProjectAssignees } from '@/hooks/useProjectAssignees';
 import { ProjectCreateDialog } from '@/components/Projects/ProjectCreateDialog';
 import { ProjectListView } from '@/components/Projects/ProjectListView';
 import { ProjectListViewSkeleton } from '@/components/Projects/ProjectListViewSkeleton';
@@ -35,11 +34,15 @@ const ProjectsPage = () => {
   const itemsPerPage = 10;
   const { projects, isLoading: projectsLoading, refetch, deleteProject } = useProjects();
 
+  console.log('ProjectsPage render - projects:', projects?.length || 0, 'loading:', projectsLoading);
+
   // Fetch user's assigned projects
-  const { data: userProjectIds = [] } = useQuery({
+  const { data: userProjectIds = [], isLoading: userProjectsLoading, error: userProjectsError } = useQuery({
     queryKey: ['user-project-assignments', profile?.id],
     queryFn: async () => {
       if (!profile?.id) return [];
+      
+      console.log('Fetching user project assignments for:', profile.id);
       
       const { data: assignmentsData, error } = await supabase
         .from('project_assignees')
@@ -51,6 +54,7 @@ const ProjectsPage = () => {
         return [];
       }
       
+      console.log('User project assignments:', assignmentsData?.map(a => a.project_id) || []);
       return assignmentsData.map(assignment => assignment.project_id);
     },
     enabled: !!profile?.id && showMyProjects,
@@ -59,12 +63,13 @@ const ProjectsPage = () => {
   });
 
   // Fetch milestones for all projects to enable status filtering
-  const { data: projectMilestones = {} } = useQuery({
+  const { data: projectMilestones = {}, isLoading: milestonesLoading, error: milestonesError } = useQuery({
     queryKey: ['all-project-milestones', projects?.map(p => p.id)],
     queryFn: async () => {
       if (!projects?.length) return {};
       
       const projectIds = projects.map(project => project.id);
+      console.log('Fetching milestones for projects:', projectIds);
       
       try {
         const { data: milestonesData, error: milestonesError } = await supabase
@@ -86,6 +91,7 @@ const ProjectsPage = () => {
           milestonesByProject[milestone.project_id].push(milestone);
         }
         
+        console.log('Milestones grouped by project:', Object.keys(milestonesByProject).length, 'projects');
         return milestonesByProject;
       } catch (error) {
         console.error('Error in project milestones query:', error);
@@ -97,45 +103,84 @@ const ProjectsPage = () => {
     retry: 2
   });
 
+  // Log any errors for debugging
+  useEffect(() => {
+    if (userProjectsError) {
+      console.error('User projects query error:', userProjectsError);
+    }
+    if (milestonesError) {
+      console.error('Milestones query error:', milestonesError);
+    }
+  }, [userProjectsError, milestonesError]);
+
   // Filter projects based on user assignment, milestone status and search query
-  const filteredProjects = projects ? projects.filter(project => {
+  const filteredProjects = React.useMemo(() => {
+    console.log('Filtering projects - total:', projects?.length || 0);
+    
+    if (!projects) {
+      console.log('No projects available');
+      return [];
+    }
+
+    let result = [...projects];
+    console.log('Starting with', result.length, 'projects');
+    
     // First apply "my projects" filter
-    if (showMyProjects && !userProjectIds.includes(project.id)) {
-      return false;
+    if (showMyProjects && userProjectIds.length > 0) {
+      result = result.filter(project => userProjectIds.includes(project.id));
+      console.log('After my projects filter:', result.length, 'projects');
+    } else if (showMyProjects && !userProjectsLoading && userProjectIds.length === 0) {
+      console.log('No assigned projects found, showing empty list');
+      return [];
     }
     
     // Then apply status filter
     if (filter !== 'all') {
-      const milestones = projectMilestones[project.id] || [];
-      const projectStatus = getProjectStatus(milestones);
-      
-      if (filter === 'completed' && projectStatus !== 'completed') return false;
-      if (filter === 'in_progress' && projectStatus !== 'in_progress') return false;
+      const beforeStatusFilter = result.length;
+      result = result.filter(project => {
+        const milestones = projectMilestones[project.id] || [];
+        const projectStatus = getProjectStatus(milestones);
+        
+        if (filter === 'completed' && projectStatus !== 'completed') return false;
+        if (filter === 'in_progress' && projectStatus !== 'in_progress') return false;
+        return true;
+      });
+      console.log('After status filter (' + filter + '):', result.length, 'projects (was', beforeStatusFilter + ')');
     }
     
     // Finally apply search filter if there's a search query
-    if (searchQuery) {
+    if (searchQuery.trim()) {
+      const beforeSearchFilter = result.length;
       const query = searchQuery.toLowerCase();
-      return project.name.toLowerCase().includes(query) || 
-             project.description?.toLowerCase().includes(query) ||
-             project.company?.name.toLowerCase().includes(query);
+      result = result.filter(project => {
+        const matches = project.name.toLowerCase().includes(query) || 
+                       project.description?.toLowerCase().includes(query) ||
+                       project.company?.name.toLowerCase().includes(query);
+        return matches;
+      });
+      console.log('After search filter (' + searchQuery + '):', result.length, 'projects (was', beforeSearchFilter + ')');
     }
     
-    return true;
-  }) : [];
+    console.log('Final filtered projects:', result.length);
+    return result;
+  }, [projects, userProjectIds, userProjectsLoading, projectMilestones, filter, searchQuery, showMyProjects]);
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedProjects = filteredProjects.slice(startIndex, endIndex);
 
+  console.log('Pagination - current page:', currentPage, 'total pages:', totalPages, 'showing:', paginatedProjects.length, 'projects');
+
   // Reset to page 1 when filters change
   useEffect(() => {
+    console.log('Filters changed, resetting to page 1');
     setCurrentPage(1);
   }, [filter, searchQuery, showMyProjects]);
 
   const handlePageChange = (page: number) => {
+    console.log('Changing to page:', page);
     setCurrentPage(page);
     // Scroll to top of the list
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -196,11 +241,11 @@ const ProjectsPage = () => {
   };
 
   const getEmptyStateMessage = () => {
-    if (showMyProjects && userProjectIds.length === 0) {
+    if (showMyProjects && userProjectIds.length === 0 && !userProjectsLoading) {
       return 'You are not assigned to any projects yet.';
     }
     
-    if (searchQuery) {
+    if (searchQuery.trim()) {
       return 'No matching projects found. Try a different search term.';
     }
     
@@ -220,6 +265,9 @@ const ProjectsPage = () => {
       ? 'No assigned projects in progress found.' 
       : 'No projects in progress found.';
   };
+
+  // Check if we're still loading critical data
+  const isLoading = projectsLoading || (showMyProjects && userProjectsLoading);
 
   return (
     <div className="container p-6 mx-auto">
@@ -302,7 +350,7 @@ const ProjectsPage = () => {
       </div>
       
       {/* Projects List */}
-      {projectsLoading ? (
+      {isLoading ? (
         <ProjectListViewSkeleton />
       ) : paginatedProjects && paginatedProjects.length > 0 ? (
         <>
@@ -310,67 +358,99 @@ const ProjectsPage = () => {
             projects={paginatedProjects} 
             selectedProjectId={null}
             onDeleteProject={handleDeleteProject}
+            projectMilestones={projectMilestones}
           />
           
-          {/* Pagination - only show if we have more than itemsPerPage projects */}
-          {filteredProjects.length > itemsPerPage && (
-            <Pagination className="mt-6">
-              <PaginationContent>
-                {/* Previous page button */}
-                <PaginationItem>
-                  <PaginationPrevious 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage > 1) handlePageChange(currentPage - 1);
-                    }}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
+          {/* Pagination - always visible */}
+          <Pagination className="mt-6">
+            <PaginationContent>
+              {/* Previous page button */}
+              <PaginationItem>
+                <PaginationPrevious 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) handlePageChange(currentPage - 1);
+                  }}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              
+              {/* Page numbers */}
+              {getPageNumbers().map((page, index) => (
+                <PaginationItem key={`page-${index}`}>
+                  {page < 0 ? (
+                    <span className="flex h-9 w-9 items-center justify-center">...</span>
+                  ) : (
+                    <PaginationLink
+                      href="#"
+                      isActive={page === currentPage}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(page);
+                      }}
+                    >
+                      {page}
+                    </PaginationLink>
+                  )}
                 </PaginationItem>
-                
-                {/* Page numbers */}
-                {getPageNumbers().map((page, index) => (
-                  <PaginationItem key={`page-${index}`}>
-                    {page < 0 ? (
-                      <span className="flex h-9 w-9 items-center justify-center">...</span>
-                    ) : (
-                      <PaginationLink
-                        href="#"
-                        isActive={page === currentPage}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handlePageChange(page);
-                        }}
-                      >
-                        {page}
-                      </PaginationLink>
-                    )}
-                  </PaginationItem>
-                ))}
-                
-                {/* Next page button */}
-                <PaginationItem>
-                  <PaginationNext 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < totalPages) handlePageChange(currentPage + 1);
-                    }}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
+              ))}
+              
+              {/* Next page button */}
+              <PaginationItem>
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                  }}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </>
       ) : (
-        <Card className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-center items-center h-40">
-            <p className="text-gray-500">
-              {getEmptyStateMessage()}
-            </p>
-          </div>
-        </Card>
+        <>
+          <Card className="bg-white rounded-lg shadow p-6">
+            <div className="flex justify-center items-center h-40">
+              <p className="text-gray-500">
+                {getEmptyStateMessage()}
+              </p>
+            </div>
+          </Card>
+          
+          {/* Pagination - always visible even when no projects */}
+          <Pagination className="mt-6">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href="#" 
+                  onClick={(e) => e.preventDefault()}
+                  className="pointer-events-none opacity-50"
+                />
+              </PaginationItem>
+              
+              <PaginationItem>
+                <PaginationLink
+                  href="#"
+                  isActive={true}
+                  onClick={(e) => e.preventDefault()}
+                >
+                  1
+                </PaginationLink>
+              </PaginationItem>
+              
+              <PaginationItem>
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => e.preventDefault()}
+                  className="pointer-events-none opacity-50"
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </>
       )}
 
       {/* Create Project Dialog */}

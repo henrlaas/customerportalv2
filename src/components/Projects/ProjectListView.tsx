@@ -35,6 +35,7 @@ interface ProjectListViewProps {
   projects: ProjectWithRelations[];
   selectedProjectId: string | null;
   onDeleteProject?: (projectId: string) => Promise<void>;
+  projectMilestones?: Record<string, any[]>;
 }
 
 interface ProjectAssignee {
@@ -44,32 +45,26 @@ interface ProjectAssignee {
   avatar_url: string | null;
 }
 
-interface ProjectMilestone {
-  id: string;
-  project_id: string;
-  status: 'created' | 'completed';
-  name: string;
-  due_date: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 export const ProjectListView: React.FC<ProjectListViewProps> = ({
   projects,
   selectedProjectId,
   onDeleteProject,
+  projectMilestones = {},
 }) => {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [projectToDelete, setProjectToDelete] = React.useState<string | null>(null);
 
+  console.log('ProjectListView render - projects:', projects.length, 'milestones keys:', Object.keys(projectMilestones).length);
+
   // Fetch project assignees for all projects in a single optimized query
-  const { data: projectAssignees = {} } = useQuery({
+  const { data: projectAssignees = {}, isLoading: assigneesLoading, error: assigneesError } = useQuery({
     queryKey: ['project-assignees-optimized', projects.map(p => p.id)],
     queryFn: async () => {
       if (!projects.length) return {};
       
       const projectIds = projects.map(project => project.id);
+      console.log('Fetching assignees for projects:', projectIds);
       
       try {
         // Get all assignees for all projects
@@ -84,11 +79,13 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
         }
 
         if (!assigneesData || assigneesData.length === 0) {
+          console.log('No assignees found for projects');
           return {};
         }
 
         // Get all unique user IDs
         const userIds = Array.from(new Set(assigneesData.map(a => a.user_id)));
+        console.log('Fetching profiles for users:', userIds);
         
         // Fetch profiles for these users
         const { data: profilesData, error: profilesError } = await supabase
@@ -125,6 +122,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
           }
         }
         
+        console.log('Assignees grouped by project:', Object.keys(assigneesByProject).length, 'projects have assignees');
         return assigneesByProject;
       } catch (error) {
         console.error('Error in project assignees query:', error);
@@ -132,56 +130,16 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
       }
     },
     enabled: projects.length > 0,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
     retry: 2
   });
 
-  // Fetch milestones for all projects in a single query
-  const { data: projectMilestones = {} } = useQuery({
-    queryKey: ['project-milestones-optimized', projects.map(p => p.id)],
-    queryFn: async () => {
-      if (!projects.length) return {};
-      
-      const projectIds = projects.map(project => project.id);
-      
-      try {
-        const { data: milestonesData, error: milestonesError } = await supabase
-          .from('milestones')
-          .select('id, project_id, status, name, due_date, created_at, updated_at')
-          .in('project_id', projectIds);
-        
-        if (milestonesError) {
-          console.error('Error fetching project milestones:', milestonesError);
-          return {};
-        }
-        
-        // Group milestones by project_id
-        const milestonesByProject: Record<string, ProjectMilestone[]> = {};
-        for (const milestone of milestonesData || []) {
-          if (!milestonesByProject[milestone.project_id]) {
-            milestonesByProject[milestone.project_id] = [];
-          }
-          milestonesByProject[milestone.project_id].push({
-            id: milestone.id,
-            project_id: milestone.project_id,
-            status: milestone.status,
-            name: milestone.name,
-            due_date: milestone.due_date,
-            created_at: milestone.created_at,
-            updated_at: milestone.updated_at
-          });
-        }
-        
-        return milestonesByProject;
-      } catch (error) {
-        console.error('Error in project milestones query:', error);
-        return {};
-      }
-    },
-    enabled: projects.length > 0,
-    staleTime: 30000, // 30 seconds
-    retry: 2
-  });
+  // Log errors for debugging
+  React.useEffect(() => {
+    if (assigneesError) {
+      console.error('Assignees query error:', assigneesError);
+    }
+  }, [assigneesError]);
   
   // Helper function to safely format dates
   const safeFormatDate = (dateString: string | null) => {
@@ -198,6 +156,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
 
   const handleProjectClick = (projectId: string) => {
     try {
+      console.log('Navigating to project:', projectId);
       navigate(`/projects/${projectId}`);
     } catch (error) {
       console.error('Navigation error:', error);
@@ -207,6 +166,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
 
   const handleDeleteClick = (e: React.MouseEvent, projectId: string) => {
     e.stopPropagation(); // Prevent row click from triggering
+    console.log('Delete clicked for project:', projectId);
     setProjectToDelete(projectId);
     setDeleteDialogOpen(true);
   };
@@ -214,6 +174,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
   const confirmDelete = async () => {
     if (projectToDelete && onDeleteProject) {
       try {
+        console.log('Confirming delete for project:', projectToDelete);
         await onDeleteProject(projectToDelete);
         toast.success("Project deleted successfully");
       } catch (error) {
@@ -231,12 +192,18 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
     const status = getProjectStatus(milestones);
     const statusBadge = getProjectStatusBadge(status);
     
+    console.log('Project', projectId, 'status:', status, 'milestones:', milestones.length);
+    
     return (
       <Badge variant="outline" className={statusBadge.className}>
         {statusBadge.label}
       </Badge>
     );
   };
+
+  if (assigneesLoading) {
+    console.log('Still loading assignees...');
+  }
 
   return (
     <>
@@ -258,6 +225,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
             <TableBody>
               {projects.map(project => {
                 const assignees = projectAssignees[project.id] || [];
+                console.log('Rendering project:', project.id, project.name, 'assignees:', assignees.length);
                 
                 return (
                   <TableRow 
@@ -301,7 +269,9 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                           size="sm"
                         />
                       ) : (
-                        <span className="text-gray-500 text-sm">Not assigned</span>
+                        <span className="text-gray-500 text-sm">
+                          {assigneesLoading ? 'Loading...' : 'Not assigned'}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>{getProjectStatusForDisplay(project.id)}</TableCell>
@@ -346,7 +316,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
-          </AlertDialogFooter>
+            </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
