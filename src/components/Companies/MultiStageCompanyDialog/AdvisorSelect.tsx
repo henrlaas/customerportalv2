@@ -78,15 +78,24 @@ export function AdvisorSelect({ value, onChange }: AdvisorSelectProps) {
     onChange(selectedOption?.value || '');
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if ((event.key === 'Delete' || event.key === 'Backspace') && value && !event.target.value) {
+      event.preventDefault();
+      onChange('');
+    }
+  };
+
   return (
     <Select
       value={selectedOption}
       onChange={handleChange}
+      onKeyDown={handleKeyDown}
       options={options}
       components={{
         Option,
         SingleValue: SingleValueComponent
       }}
+      isClearable
       isSearchable
       placeholder="Search and select an advisor..."
       styles={{
