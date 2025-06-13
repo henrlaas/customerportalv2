@@ -5,13 +5,11 @@ import { MediaBreadcrumb } from './MediaBreadcrumb';
 import { MediaToolbar } from './MediaToolbar';
 import { MediaRecentlyUsed } from './MediaRecentlyUsed';
 import { MediaTableView } from './MediaTableView';
-import { MediaContent } from './MediaContent';
-import { MediaFile, ViewMode, SortOption, FilterOptions } from '@/types/media';
+import { MediaFile, FilterOptions } from '@/types/media';
 
 interface MediaTabsProps {
   activeTab: string;
   isLoading: boolean;
-  viewMode: ViewMode;
   currentPath: string;
   searchQuery: string;
   filters: FilterOptions;
@@ -29,9 +27,7 @@ interface MediaTabsProps {
   onUpload: () => void;
   onNewFolder: () => void;
   onSearchChange: (value: string) => void;
-  onSortChange: (value: SortOption) => void;
   onFiltersChange: (filters: FilterOptions) => void;
-  onViewModeChange: (mode: ViewMode) => void;
   onSort?: (column: string) => void;
   getUploaderDisplayName: (userId: string) => string;
   onNavigateToBreadcrumb: (index: number) => void;
@@ -42,7 +38,6 @@ interface MediaTabsProps {
 export const MediaTabs: React.FC<MediaTabsProps> = ({
   activeTab,
   isLoading,
-  viewMode,
   currentPath,
   searchQuery,
   filters,
@@ -57,9 +52,7 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
   onUpload,
   onNewFolder,
   onSearchChange,
-  onSortChange,
   onFiltersChange,
-  onViewModeChange,
   onSort,
   getUploaderDisplayName,
   onNavigateToBreadcrumb,
@@ -77,12 +70,9 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
 
       <MediaToolbar
         searchQuery={searchQuery}
-        viewMode={viewMode}
         filters={filters}
         onSearchChange={onSearchChange}
-        onSortChange={onSortChange}
         onFiltersChange={onFiltersChange}
-        onViewModeChange={onViewModeChange}
         onNewFolder={onNewFolder}
         onUpload={onUpload}
         showFolderButton={showFolderButton}
@@ -98,36 +88,19 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
               onFileOpen={(file) => window.open(file.url, '_blank')}
             />
             
-            {viewMode === 'table' ? (
-              <MediaTableView
-                items={allItems}
-                sortBy={sortBy}
-                sortDirection={sortDirection}
-                onSort={onSort}
-                onNavigate={onNavigate}
-                onFavorite={onFavorite}
-                onDelete={onDelete}
-                onRename={onRename}
-                currentPath={currentPath}
-                getUploaderDisplayName={getUploaderDisplayName}
-                isLoading={isLoading}
-              />
-            ) : (
-              <MediaContent
-                isLoading={isLoading}
-                viewMode={viewMode}
-                currentPath={currentPath}
-                filteredMedia={filteredMedia}
-                activeTab="internal"
-                onNavigate={onNavigate}
-                onFavorite={onFavorite}
-                onDelete={onDelete}
-                onRename={onRename}
-                onUpload={onUpload}
-                onNewFolder={onNewFolder}
-                getUploaderDisplayName={getUploaderDisplayName}
-              />
-            )}
+            <MediaTableView
+              items={allItems}
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              onSort={onSort}
+              onNavigate={onNavigate}
+              onFavorite={onFavorite}
+              onDelete={onDelete}
+              onRename={onRename}
+              currentPath={currentPath}
+              getUploaderDisplayName={getUploaderDisplayName}
+              isLoading={isLoading}
+            />
           </div>
         </TabsContent>
         
@@ -139,36 +112,19 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
               onFileOpen={(file) => window.open(file.url, '_blank')}
             />
             
-            {viewMode === 'table' ? (
-              <MediaTableView
-                items={allItems}
-                sortBy={sortBy}
-                sortDirection={sortDirection}
-                onSort={onSort}
-                onNavigate={onNavigate}
-                onFavorite={onFavorite}
-                onDelete={onDelete}
-                onRename={onRename}
-                currentPath={currentPath}
-                getUploaderDisplayName={getUploaderDisplayName}
-                isLoading={isLoading}
-              />
-            ) : (
-              <MediaContent
-                isLoading={isLoading}
-                viewMode={viewMode}
-                currentPath={currentPath}
-                filteredMedia={filteredMedia}
-                activeTab="company"
-                onNavigate={onNavigate}
-                onFavorite={onFavorite}
-                onDelete={onDelete}
-                onRename={onRename}
-                onUpload={onUpload}
-                onNewFolder={onNewFolder}
-                getUploaderDisplayName={getUploaderDisplayName}
-              />
-            )}
+            <MediaTableView
+              items={allItems}
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              onSort={onSort}
+              onNavigate={onNavigate}
+              onFavorite={onFavorite}
+              onDelete={onDelete}
+              onRename={onRename}
+              currentPath={currentPath}
+              getUploaderDisplayName={getUploaderDisplayName}
+              isLoading={isLoading}
+            />
           </div>
         </TabsContent>
       </Tabs>

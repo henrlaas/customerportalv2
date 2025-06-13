@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useMediaOperations } from '@/hooks/useMediaOperations';
 import { useMediaData } from '@/hooks/useMediaData';
-import { ViewMode, SortOption, FilterOptions } from '@/types/media';
+import { FilterOptions } from '@/types/media';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -42,8 +42,6 @@ const MediaPage: React.FC = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [currentPath, setCurrentPath] = useState('');
   const [isUploading, setIsUploading] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('table'); // Default to table view
-  const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [activeTab, setActiveTab] = useState('internal');
@@ -291,7 +289,6 @@ const MediaPage: React.FC = () => {
             <MediaTabs
               activeTab={activeTab}
               isLoading={isLoadingMedia}
-              viewMode={viewMode}
               currentPath={currentPath}
               searchQuery={searchQuery}
               filters={filters}
@@ -309,9 +306,7 @@ const MediaPage: React.FC = () => {
               onUpload={() => setIsUploadDialogOpen(true)}
               onNewFolder={() => setIsFolderDialogOpen(true)}
               onSearchChange={setSearchQuery}
-              onSortChange={setSortOption}
               onFiltersChange={setFilters}
-              onViewModeChange={setViewMode}
               onSort={handleSort}
               getUploaderDisplayName={getUploaderDisplayName}
               onNavigateToBreadcrumb={navigateToBreadcrumb}
