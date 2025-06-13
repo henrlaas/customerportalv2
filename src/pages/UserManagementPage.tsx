@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,10 +53,7 @@ const UserManagementPage = () => {
     setSearchTerm,
     roleFilter,
     setRoleFilter,
-    teamFilter,
-    setTeamFilter,
     roles,
-    teams,
     filteredUsers
   } = useUserFilters(users);
 
@@ -150,10 +146,7 @@ const UserManagementPage = () => {
           setSearchTerm={setSearchTerm}
           roleFilter={roleFilter}
           setRoleFilter={setRoleFilter}
-          teamFilter={teamFilter}
-          setTeamFilter={setTeamFilter}
           roles={roles}
-          teams={teams}
         />
 
         <div className="w-full overflow-x-auto">
