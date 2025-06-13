@@ -54,31 +54,29 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({
             <Heart className={`h-4 w-4 ${filters.favorites ? 'fill-current' : ''}`} />
             Favorites
           </Button>
-        </div>
-      </div>
 
-      <div className="flex items-center gap-3">
-        {showFolderButton && (
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={onNewFolder}
-            className="flex items-center gap-2"
-          >
-            <FolderIcon className="h-4 w-4" />
-            New Folder
-          </Button>
-        )}
-        {showUploadButton && (
-          <Button 
-            size="sm"
-            onClick={onUpload}
-            className="flex items-center gap-2"
-          >
-            <UploadIcon className="h-4 w-4" />
-            Upload Files
-          </Button>
-        )}
+          {showFolderButton && (
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={onNewFolder}
+              className="flex items-center gap-2"
+            >
+              <FolderIcon className="h-4 w-4" />
+              New Folder
+            </Button>
+          )}
+          {showUploadButton && (
+            <Button 
+              size="sm"
+              onClick={onUpload}
+              className="flex items-center gap-2"
+            >
+              <UploadIcon className="h-4 w-4" />
+              Upload Files
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
