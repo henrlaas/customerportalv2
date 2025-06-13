@@ -18,19 +18,10 @@ export const useOptimizedProjectAssignees = (projectIds: string[]) => {
       console.log('Fetching optimized assignees for projects:', projectIds);
       
       try {
-        // Get all assignees for all projects in a single query with proper join
+        // Step 1: Get all project assignees for all projects
         const { data: assigneesData, error: assigneesError } = await supabase
           .from('project_assignees')
-          .select(`
-            project_id,
-            user_id,
-            profiles(
-              id,
-              first_name,
-              last_name,
-              avatar_url
-            )
-          `)
+          .select('project_id, user_id')
           .in('project_id', projectIds);
         
         if (assigneesError) {
@@ -38,22 +29,55 @@ export const useOptimizedProjectAssignees = (projectIds: string[]) => {
           throw assigneesError;
         }
 
-        // Group assignees by project_id
+        if (!assigneesData || assigneesData.length === 0) {
+          console.log('No assignees found for projects');
+          return {};
+        }
+
+        // Step 2: Get unique user IDs and fetch their profiles
+        const userIds = Array.from(new Set(assigneesData.map(assignee => assignee.user_id)));
+        console.log('Fetching profiles for user IDs:', userIds);
+        
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .in('id', userIds);
+        
+        if (profilesError) {
+          console.error('Error fetching user profiles:', profilesError);
+          throw profilesError;
+        }
+
+        // Step 3: Create a map of user profiles for quick lookup
+        const profilesMap = new Map();
+        (profilesData || []).forEach(profile => {
+          profilesMap.set(profile.id, profile);
+        });
+
+        // Step 4: Group assignees by project_id and enrich with profile data
         const assigneesByProject: Record<string, ProjectAssigneeData[]> = {};
         
-        for (const assignee of assigneesData || []) {
+        for (const assignee of assigneesData) {
           if (!assigneesByProject[assignee.project_id]) {
             assigneesByProject[assignee.project_id] = [];
           }
           
-          // Check if profiles data exists and has the expected structure
-          if (assignee.profiles && typeof assignee.profiles === 'object') {
-            const profile = assignee.profiles as any;
+          const profile = profilesMap.get(assignee.user_id);
+          if (profile) {
             assigneesByProject[assignee.project_id].push({
               id: assignee.user_id,
               first_name: profile.first_name,
               last_name: profile.last_name,
               avatar_url: profile.avatar_url
+            });
+          } else {
+            console.warn('Profile not found for user:', assignee.user_id);
+            // Still add the assignee with minimal data
+            assigneesByProject[assignee.project_id].push({
+              id: assignee.user_id,
+              first_name: null,
+              last_name: null,
+              avatar_url: null
             });
           }
         }
