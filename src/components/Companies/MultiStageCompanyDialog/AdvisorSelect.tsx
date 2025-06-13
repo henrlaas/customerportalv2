@@ -79,9 +79,14 @@ export function AdvisorSelect({ value, onChange }: AdvisorSelectProps) {
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if ((event.key === 'Delete' || event.key === 'Backspace') && value && !event.target.value) {
-      event.preventDefault();
-      onChange('');
+    // Allow clearing the selection with Delete or Backspace when there's a selected value
+    // and no text is being typed (the input is focused but empty)
+    if ((event.key === 'Delete' || event.key === 'Backspace') && value) {
+      const target = event.target as HTMLInputElement;
+      if (!target.value || target.value.length === 0) {
+        event.preventDefault();
+        onChange('');
+      }
     }
   };
 
