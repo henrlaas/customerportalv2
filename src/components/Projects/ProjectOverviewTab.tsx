@@ -13,6 +13,7 @@ import { RecentTasksList } from './RecentTasksList';
 import { ProjectMilestonesPanel } from './ProjectMilestonesPanel';
 import { ProjectContractCard } from './ProjectContractCard';
 import { ProjectDocumentsCard } from './ProjectDocumentsCard';
+import { getProjectStatus, getProjectStatusBadge } from '@/utils/projectStatus';
 
 interface ProjectOverviewTabProps {
   project: any;
@@ -61,6 +62,10 @@ export const ProjectOverviewTab: React.FC<ProjectOverviewTabProps> = ({
       day: 'numeric' 
     });
   };
+
+  // Get project status based on milestones
+  const projectStatus = getProjectStatus(milestones);
+  const statusBadge = getProjectStatusBadge(projectStatus);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -112,9 +117,16 @@ export const ProjectOverviewTab: React.FC<ProjectOverviewTabProps> = ({
         {/* Project Information Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5 text-primary" />
-              Project Information
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building className="h-5 w-5 text-primary" />
+                Project Information
+              </div>
+              {projectStatus === 'completed' && (
+                <Badge variant="outline" className={statusBadge.className}>
+                  {statusBadge.label}
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

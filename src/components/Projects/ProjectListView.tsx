@@ -29,6 +29,7 @@ import { toast } from 'sonner';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { getProjectStatus, getProjectStatusBadge } from '@/utils/projectStatus';
 
 interface ProjectListViewProps {
   projects: ProjectWithRelations[];
@@ -98,6 +99,39 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
     },
     enabled: projects.length > 0
   });
+
+  // Fetch milestones for all projects to determine status
+  const { data: projectMilestones } = useQuery({
+    queryKey: ['project-milestones-all'],
+    queryFn: async () => {
+      if (!projects.length) return {};
+      
+      const projectIds = projects.map(project => project.id);
+      
+      const { data: milestonesData, error: milestonesError } = await supabase
+        .from('milestones')
+        .select('*')
+        .in('project_id', projectIds)
+        .order('created_at', { ascending: true });
+      
+      if (milestonesError) {
+        console.error('Error fetching project milestones:', milestonesError);
+        return {};
+      }
+      
+      // Group milestones by project_id
+      const milestonesByProject = {};
+      for (const milestone of milestonesData) {
+        if (!milestonesByProject[milestone.project_id]) {
+          milestonesByProject[milestone.project_id] = [];
+        }
+        milestonesByProject[milestone.project_id].push(milestone);
+      }
+      
+      return milestonesByProject;
+    },
+    enabled: projects.length > 0
+  });
   
   // Helper function to safely format dates
   const safeFormatDate = (dateString: string | null) => {
@@ -136,6 +170,19 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
     setProjectToDelete(null);
   };
 
+  // Helper function to get project status badge
+  const getProjectStatusForDisplay = (projectId: string) => {
+    const milestones = projectMilestones?.[projectId] || [];
+    const status = getProjectStatus(milestones);
+    const statusBadge = getProjectStatusBadge(status);
+    
+    return (
+      <Badge variant="outline" className={statusBadge.className}>
+        {statusBadge.label}
+      </Badge>
+    );
+  };
+
   return (
     <>
       <div className="border border-gray-200 rounded-xl overflow-hidden w-full">
@@ -148,7 +195,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                 <TableHead>Value</TableHead>
                 <TableHead>Price Type</TableHead>
                 <TableHead>Assigned</TableHead>
-                <TableHead>Created At</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Deadline</TableHead>
                 <TableHead className="w-10">Actions</TableHead>
               </TableRow>
@@ -199,7 +246,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                       <span className="text-gray-500 text-sm">Not assigned</span>
                     )}
                   </TableCell>
-                  <TableCell>{safeFormatDate(project.created_at)}</TableCell>
+                  <TableCell>{getProjectStatusForDisplay(project.id)}</TableCell>
                   <TableCell>{safeFormatDate(project.deadline)}</TableCell>
                   <TableCell>
                     <Button 
