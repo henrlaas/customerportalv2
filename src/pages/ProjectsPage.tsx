@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -162,9 +161,22 @@ const ProjectsPage = () => {
       {/* Summary Cards */}
       <ProjectsSummaryCards projects={projects} isLoading={projectsLoading} />
       
-      {/* Toggle, Search and Filters row */}
+      {/* Search and Filters row */}
       <div className="flex justify-between items-center my-6">
         <div className="flex items-center gap-6">
+          {/* Search Input */}
+          <div className="relative w-full max-w-sm">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Search projects..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-4">
           {/* Show My Projects Toggle */}
           <div className="flex items-center gap-3">
             <Switch
@@ -180,19 +192,6 @@ const ProjectsPage = () => {
             </label>
           </div>
           
-          {/* Search Input */}
-          <div className="relative w-full max-w-sm">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="Search projects..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-4">
           {/* Filter tabs with green underline styling */}
           <div className="border-b border-border">
             <nav className="flex space-x-6" aria-label="Filter">
