@@ -45,7 +45,7 @@ export const CompanyHeroCard: React.FC<CompanyHeroCardProps> = ({ company }) => 
                 </div>
               )}
               {company.is_partner && (
-                <div className="absolute -bottom-2 -right-2">
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
                   <Badge variant="partner" className="text-xs flex items-center gap-1 bg-blue-600 text-white">
                     <BadgeCheck className="h-3 w-3" />
                     Partner
