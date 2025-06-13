@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MediaFile } from '@/types/media';
 import { TableCell, TableRow } from '@/components/ui/table';
@@ -45,9 +44,9 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
   getUploaderDisplayName,
   getUserProfile,
 }) => {
-  const filePath = item.fullPath || (currentPath 
+  const filePath = currentPath 
     ? `${currentPath}/${item.name}`
-    : item.name);
+    : item.name;
     
   const isCompanyRootFolder = item.isCompanyFolder && !currentPath;
 
