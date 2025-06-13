@@ -18,7 +18,6 @@ type CalendarViewProps = {
   companies: Company[];
   campaigns: Campaign[];
   projects: Project[];
-  isLoading?: boolean;
 };
 
 export const CalendarView = ({ 
@@ -36,15 +35,35 @@ export const CalendarView = ({
   const { data: timeEntries = [], isLoading } = useMonthlyTimeEntries(
     currentMonth.getFullYear(),
     currentMonth.getMonth() + 1,
-    true
+    true // Always enabled since we want to fetch data for the viewed month
   );
   
   const handlePrevMonth = () => {
     setCurrentMonth(prev => subMonths(prev, 1));
+    // Clear selected date if it's not in the new month
+    setSelectedDate(prev => {
+      if (prev && !isSameDay(prev, subMonths(currentMonth, 1))) {
+        const newMonth = subMonths(currentMonth, 1);
+        if (prev.getMonth() !== newMonth.getMonth() || prev.getFullYear() !== newMonth.getFullYear()) {
+          return undefined;
+        }
+      }
+      return prev;
+    });
   };
   
   const handleNextMonth = () => {
     setCurrentMonth(prev => addMonths(prev, 1));
+    // Clear selected date if it's not in the new month
+    setSelectedDate(prev => {
+      if (prev && !isSameDay(prev, addMonths(currentMonth, 1))) {
+        const newMonth = addMonths(currentMonth, 1);
+        if (prev.getMonth() !== newMonth.getMonth() || prev.getFullYear() !== newMonth.getFullYear()) {
+          return undefined;
+        }
+      }
+      return prev;
+    });
   };
 
   const handleTodayClick = () => {
@@ -65,7 +84,7 @@ export const CalendarView = ({
       })
     : [];
   
-  // Find days that have entries
+  // Find days that have entries for the current month being viewed
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const daysWithEntries = timeEntries.reduce<Record<string, boolean>>((acc, entry) => {
@@ -130,11 +149,7 @@ export const CalendarView = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8 text-gray-500">
-                Loading entries...
-              </div>
-            ) : selectedDateEntries.length > 0 ? (
+            {selectedDateEntries.length > 0 ? (
               <div className="space-y-3">
                 {selectedDateEntries.map((entry) => (
                   <TimeEntryCard
