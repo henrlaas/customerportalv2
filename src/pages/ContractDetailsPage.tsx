@@ -630,16 +630,6 @@ const ContractDetailsPage = () => {
           Back to Contracts
         </Button>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={downloadContract}
-            disabled={isDownloading}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            {isDownloading ? 'Downloading...' : 'Download PDF'}
-          </Button>
-          
           {(profile?.role === 'admin' || profile?.role === 'employee') && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -669,11 +659,23 @@ const ContractDetailsPage = () => {
         <div className="flex flex-col md:flex-row gap-6">
           <div className="md:w-2/3 space-y-6">
             <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="h-5 w-5 text-primary" />
-                <h1 className="text-2xl font-bold">
-                  {contract.template_type} Contract
-                </h1>
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <h1 className="text-2xl font-bold">
+                    {contract.template_type} Contract
+                  </h1>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={downloadContract}
+                  disabled={isDownloading}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {isDownloading ? 'Downloading...' : 'Download PDF'}
+                </Button>
               </div>
               
               {/* Contract content */}
