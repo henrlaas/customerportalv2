@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
@@ -8,6 +7,7 @@ import { UserManagementTab } from "@/components/WorkspaceManagement/UserManageme
 import { EmailToolsTab } from "@/components/WorkspaceManagement/EmailToolsTab";
 import { SmsToolsTab } from "@/components/WorkspaceManagement/SmsToolsTab";
 import { AppearanceTab } from "@/components/WorkspaceManagement/AppearanceTab";
+import { AnalyticsTab } from "@/components/WorkspaceManagement/AnalyticsTab";
 import { ContractTemplateEditor } from "@/components/ContractTemplateEditor";
 import {
   Settings,
@@ -17,7 +17,8 @@ import {
   Cog,
   MessageSquare,
   Palette,
-  FileText
+  FileText,
+  BarChart3
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -134,6 +135,10 @@ const WorkspaceManagementPage = () => {
 
       <Tabs defaultValue="all-settings" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="analytics">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Analytics
+          </TabsTrigger>
           <TabsTrigger value="all-settings">
             <Cog className="h-4 w-4 mr-2" />
             Pricing
@@ -163,6 +168,10 @@ const WorkspaceManagementPage = () => {
             Contracts
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="analytics">
+          <AnalyticsTab />
+        </TabsContent>
 
         <TabsContent value="all-settings" className="space-y-4">
           <div className="grid gap-4">
