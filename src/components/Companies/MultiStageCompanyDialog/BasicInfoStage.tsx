@@ -1,8 +1,10 @@
+
 import { Building } from 'lucide-react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CLIENT_TYPES } from './ClientTypes';
+
 export function BasicInfoStage({
   form,
   logo
@@ -11,7 +13,9 @@ export function BasicInfoStage({
   logo: string | null;
 }) {
   const clientTypes = form.watch('client_types');
-  return <>
+  
+  return (
+    <>
       <div className="flex items-start gap-4">
         <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
           {logo ? <img src={logo} alt="Company Logo" className="h-12 w-12 object-contain" /> : <Building className="h-8 w-8 text-gray-400" />}
@@ -28,6 +32,7 @@ export function BasicInfoStage({
               </FormItem>} />
         </div>
       </div>
+      
       <FormField control={form.control} name="organization_number" render={({
       field
     }: any) => <FormItem>
@@ -40,6 +45,7 @@ export function BasicInfoStage({
             </FormDescription>
             <FormMessage />
           </FormItem>} />
+      
       <FormField control={form.control} name="client_types" render={() => <FormItem>
             <div className="mb-2">
               <FormLabel>Client Type*</FormLabel>
@@ -75,5 +81,6 @@ export function BasicInfoStage({
             </div>
             <FormMessage />
           </FormItem>} />
-    </>;
+    </>
+  );
 }
