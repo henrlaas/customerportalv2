@@ -267,10 +267,16 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
         />
       </div>
       
-      {/* Add a DragOverlay component to show the task being dragged */}
+      {/* Enhanced DragOverlay with smooth animations */}
       <DragOverlay>
         {activeTask ? (
-          <div className="opacity-80 w-full max-w-[220px]">
+          <div 
+            className="opacity-95 w-full max-w-[220px] transform rotate-3 shadow-2xl transition-all duration-200"
+            style={{
+              transform: 'rotate(3deg) scale(1.05)',
+              filter: 'drop-shadow(0 10px 15px rgba(0, 0, 0, 0.25))',
+            }}
+          >
             <TaskCard 
               task={activeTask}
               getPriorityBadge={getPriorityBadge}

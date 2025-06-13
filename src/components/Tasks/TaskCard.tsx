@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { useDraggable } from '@dnd-kit/core';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, AlertCircle, Eye, EyeOff, Building, Link } from 'lucide-react';
@@ -59,14 +58,14 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     listeners,
     setNodeRef,
     transform,
-    transition,
-  } = useSortable({ id: task.id });
+  } = useDraggable({ id: task.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1000 : 1,
+  // Use hardware-accelerated transform with translate3d
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    opacity: isDragging ? 0 : 1,
+  } : {
+    opacity: isDragging ? 0 : 1,
   };
 
   // Check if the task is overdue
@@ -103,7 +102,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "cursor-pointer hover:shadow-md transition-shadow",
+        "cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02]",
         task.status === 'completed' ? "bg-green-50" : 
         isOverdue ? "bg-red-50" : "bg-background"
       )}
