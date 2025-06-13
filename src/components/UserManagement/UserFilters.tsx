@@ -14,10 +14,7 @@ interface UserFiltersProps {
   setSearchTerm: (term: string) => void;
   roleFilter: string;
   setRoleFilter: (role: string) => void;
-  teamFilter: string;
-  setTeamFilter: (team: string) => void;
   roles: string[];
-  teams: string[];
 }
 
 export function UserFilters({ 
@@ -25,14 +22,11 @@ export function UserFilters({
   setSearchTerm, 
   roleFilter, 
   setRoleFilter, 
-  teamFilter, 
-  setTeamFilter, 
-  roles, 
-  teams 
+  roles
 }: UserFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
-      <div className="relative flex-1">
+      <div className="relative flex-grow">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search by name, email or role"

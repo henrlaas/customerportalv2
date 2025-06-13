@@ -60,10 +60,7 @@ export function UserManagementTab() {
     setSearchTerm,
     roleFilter,
     setRoleFilter,
-    teamFilter,
-    setTeamFilter,
     roles,
-    teams,
     filteredUsers
   } = useUserFilters(users);
 
@@ -177,13 +174,7 @@ export function UserManagementTab() {
             setRoleFilter(role);
             handleFilterChange();
           }}
-          teamFilter={teamFilter}
-          setTeamFilter={(team) => {
-            setTeamFilter(team);
-            handleFilterChange();
-          }}
           roles={roles}
-          teams={teams}
         />
       </div>
 
