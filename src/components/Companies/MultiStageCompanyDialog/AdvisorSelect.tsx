@@ -102,7 +102,7 @@ export function AdvisorSelect({ value, onChange }: AdvisorSelectProps) {
       }}
       isClearable
       isSearchable
-      placeholder="Search and select an advisor..."
+      placeholder="Select an advisor"
       styles={{
         control: (base, state) => ({
           ...base,

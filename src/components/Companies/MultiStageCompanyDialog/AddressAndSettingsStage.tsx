@@ -120,30 +120,34 @@ export function AddressAndSettingsStage({ form, users, hasMarketingType }: { for
             </FormItem>
           )}
         />
-        {hasMarketingType && (
-          <FormField
-            control={form.control}
-            name="mrr"
-            render={({ field }: any) => (
-              <FormItem>
-                <FormLabel>Monthly Recurring Revenue</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="1000"
-                    min="0"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Monthly price charged to the client
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        <div className="relative">
+          {hasMarketingType ? (
+            <FormField
+              control={form.control}
+              name="mrr"
+              render={({ field }: any) => (
+                <FormItem>
+                  <FormLabel>Monthly Recurring Revenue</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="1000"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Monthly price charged to the client
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <div className="h-[72px]" />
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
