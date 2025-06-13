@@ -1,11 +1,9 @@
 
 import { useMemo } from 'react';
-import { format, startOfWeek, parseISO, isThisWeek, differenceInWeeks } from 'date-fns';
-import { TimeEntryCard } from './TimeEntryCard';
+import { MonthlyTimeEntrySection } from './MonthlyTimeEntrySection';
 import { TimeEntryListSkeleton } from './TimeEntryListSkeleton';
 import { TimeEntry, Task, Campaign, Project } from '@/types/timeTracking';
 import { Company } from '@/types/company';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 type TimeEntryListProps = {
   timeEntries: TimeEntry[];
@@ -16,6 +14,7 @@ type TimeEntryListProps = {
   projects: Project[];
   onEdit: (entry: TimeEntry) => void;
   onDelete: (entry: TimeEntry) => void;
+  searchQuery?: string;
 };
 
 export const TimeEntryList = ({ 
@@ -26,91 +25,48 @@ export const TimeEntryList = ({
   campaigns,
   projects,
   onEdit,
-  onDelete
+  onDelete,
+  searchQuery = ''
 }: TimeEntryListProps) => {
-  // Group entries by week
-  const entriesByWeek = useMemo(() => {
+  // Generate list of months to show (current month + last 11 months)
+  const monthsToShow = useMemo(() => {
+    const months = [];
     const now = new Date();
-    const grouped: Record<string, { 
-      entries: TimeEntry[], 
-      startDate: Date,
-      isCurrentWeek: boolean,
-      weekNumber: number
-    }> = {};
     
-    timeEntries.forEach(entry => {
-      const entryDate = parseISO(entry.start_time);
-      const weekStart = startOfWeek(entryDate, { weekStartsOn: 1 });
-      const weekKey = format(weekStart, 'yyyy-MM-dd');
-      const weekDiff = differenceInWeeks(now, weekStart);
-      
-      if (!grouped[weekKey]) {
-        grouped[weekKey] = {
-          entries: [],
-          startDate: weekStart,
-          isCurrentWeek: isThisWeek(entryDate, { weekStartsOn: 1 }),
-          weekNumber: weekDiff
-        };
-      }
-      
-      grouped[weekKey].entries.push(entry);
-    });
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        year: date.getFullYear(),
+        month: date.getMonth() + 1,
+        isCurrentMonth: i === 0
+      });
+    }
     
-    // Sort the weeks
-    return Object.values(grouped).sort((a, b) => a.startDate > b.startDate ? -1 : 1);
-  }, [timeEntries]);
+    return months;
+  }, []);
 
   if (isLoading) {
     return <TimeEntryListSkeleton />;
   }
 
-  if (timeEntries.length === 0) {
-    return (
-      <div className="text-center p-8 text-gray-500 rounded-xl bg-muted/50 shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px]">
-        No time entries found. Start tracking your time or add a manual entry.
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {entriesByWeek.map((weekGroup, index) => {
-        const weekNumber = weekGroup.weekNumber;
-        let weekTitle;
-        
-        if (weekGroup.isCurrentWeek) {
-          weekTitle = "This week";
-        } else if (weekNumber === 1) {
-          weekTitle = "Last week";
-        } else {
-          weekTitle = `${format(weekGroup.startDate, 'MMMM d')} - ${format(
-            new Date(weekGroup.startDate.getTime() + 6 * 24 * 60 * 60 * 1000),
-            'MMMM d'
-          )}`;
-        }
-        
-        return (
-          <Card key={index} className="shadow-sm">
-            <CardHeader className="py-2 px-6 bg-muted/30">
-              <h3 className="text-sm font-medium">{weekTitle}</h3>
-            </CardHeader>
-            <CardContent className="p-3 space-y-2">
-              {weekGroup.entries.map(entry => (
-                <TimeEntryCard 
-                  key={entry.id} 
-                  entry={entry} 
-                  tasks={tasks}
-                  companies={companies}
-                  campaigns={campaigns}
-                  projects={projects}
-                  onEdit={onEdit} 
-                  onDelete={onDelete}
-                />
-              ))}
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className="space-y-4">
+      {monthsToShow.map(({ year, month, isCurrentMonth }) => (
+        <MonthlyTimeEntrySection
+          key={`${year}-${month}`}
+          year={year}
+          month={month}
+          isCurrentMonth={isCurrentMonth}
+          tasks={tasks}
+          companies={companies}
+          campaigns={campaigns}
+          projects={projects}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          searchQuery={searchQuery}
+          currentMonthEntries={isCurrentMonth ? timeEntries : []}
+        />
+      ))}
     </div>
   );
 };

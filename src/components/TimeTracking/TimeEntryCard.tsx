@@ -1,5 +1,5 @@
 
-import { format, formatDistance, isSameMonth } from 'date-fns';
+import { format, formatDistance, isSameMonth, isSameYear } from 'date-fns';
 import { Calendar, Clock, Pencil, Building, Tag, Briefcase, DollarSign, Trash2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,7 +16,7 @@ type TimeEntryCardProps = {
   onEdit: (entry: TimeEntry) => void;
   onDelete: (entry: TimeEntry) => void;
   highlighted?: boolean;
-  className?: string;  // Add className prop for external styling
+  className?: string;
 };
 
 export const TimeEntryCard = ({ 
@@ -28,7 +28,7 @@ export const TimeEntryCard = ({
   onEdit,
   onDelete,
   highlighted = false,
-  className = ''  // Initialize with empty string as default
+  className = ''
 }: TimeEntryCardProps) => {
   // Find related data
   const task = entry.task_id ? tasks.find(t => t.id === entry.task_id) : null;
@@ -41,8 +41,8 @@ export const TimeEntryCard = ({
   const endTime = entry.end_time ? new Date(entry.end_time) : null;
   const currentDate = new Date();
   
-  // Check if entry is from current month
-  const isCurrentMonth = isSameMonth(startTime, currentDate);
+  // Check if entry is from current month AND current year (more strict)
+  const isCurrentMonth = isSameMonth(startTime, currentDate) && isSameYear(startTime, currentDate);
   
   let duration = '-- : --';
   if (endTime) {
@@ -51,7 +51,6 @@ export const TimeEntryCard = ({
     const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
     duration = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   } else {
-    // For ongoing time tracking, show continuous updating
     duration = 'In progress';
   }
   
@@ -128,7 +127,7 @@ export const TimeEntryCard = ({
             </div>
           </div>
           
-          {/* Right side - Actions */}
+          {/* Right side - Actions - Only edit allowed for current month */}
           <div className="flex items-center gap-1">
             {isCurrentMonth && (
               <Button variant="ghost" size="icon" onClick={(e) => {

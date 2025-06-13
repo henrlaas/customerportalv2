@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -12,6 +11,7 @@ import { TimeEntryForm } from '@/components/TimeTracking/TimeEntryForm';
 import { MonthlyHoursSummary } from '@/components/TimeTracking/MonthlyHoursSummary';
 import { CalendarView } from '@/components/TimeTracking/CalendarView';
 import { DeleteTimeEntryDialog } from '@/components/TimeTracking/DeleteTimeEntryDialog';
+import { useCurrentMonthTimeEntries } from '@/hooks/useMonthlyTimeEntries';
 
 const TimeTrackingPage = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -28,38 +28,19 @@ const TimeTrackingPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
-  // Fetch time entries
-  const { data: timeEntries = [], isLoading } = useQuery({
-    queryKey: ['timeEntries'],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('time_entries')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('start_time', { ascending: false });
-      
-      if (error) {
-        toast({
-          title: 'Error fetching time entries',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return [];
-      }
-      
-      // Check if there's any active time entry (without end_time)
-      const active = data.find(entry => !entry.end_time);
+  // Fetch current month time entries only
+  const { data: timeEntries = [], isLoading } = useCurrentMonthTimeEntries();
+  
+  // Check for active tracking on mount
+  useEffect(() => {
+    if (timeEntries.length > 0) {
+      const active = timeEntries.find(entry => !entry.end_time);
       if (active) {
         setIsTracking(true);
         setActiveEntry(active);
       }
-      
-      return data as TimeEntry[];
-    },
-    enabled: !!user,
-  });
+    }
+  }, [timeEntries]);
   
   // Delete time entry mutation
   const deleteTimeEntryMutation = useMutation({
@@ -270,6 +251,7 @@ const TimeTrackingPage = () => {
             projects={projects}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            searchQuery={searchQuery}
           />
         </>
       )}
