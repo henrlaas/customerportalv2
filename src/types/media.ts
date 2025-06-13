@@ -1,3 +1,4 @@
+
 export interface MediaFile {
   id: string;
   name: string;
@@ -19,6 +20,11 @@ export interface MediaFile {
   companyName?: string;
   companyWebsite?: string;
   companyLogoUrl?: string;
+  lastAccessed?: string;
+  isRecentlyUsed?: boolean;
+  accessCount?: number;
+  fileExtension?: string;
+  category?: 'image' | 'document' | 'video' | 'other';
 }
 
 export interface MediaData {
@@ -26,7 +32,7 @@ export interface MediaData {
   files: MediaFile[];
 }
 
-export type ViewMode = 'grid' | 'list';
+export type ViewMode = 'grid' | 'list' | 'table';
 export type SortOption = 'newest' | 'oldest' | 'name' | 'size';
 
 export interface FilterOptions {
