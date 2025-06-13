@@ -28,44 +28,34 @@ export function ProjectListViewSkeleton() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Array(8).fill(0).map((_, i) => (
+            {Array(6).fill(0).map((_, i) => (
               <TableRow key={`project-skeleton-${i}`}>
                 <TableCell>
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-36" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
+                  <Skeleton className="h-4 w-32" />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Skeleton className="h-6 w-6 rounded" />
-                    <div className="space-y-1">
-                      <Skeleton className="h-4 w-28" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
+                    <Skeleton className="h-4 w-24" />
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-20" />
                 </TableCell>
                 <TableCell>
-                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-6 w-16 rounded-full" />
                 </TableCell>
                 <TableCell>
                   <div className="flex -space-x-2">
                     <Skeleton className="h-8 w-8 rounded-full" />
                     <Skeleton className="h-8 w-8 rounded-full" />
-                    <Skeleton className="h-8 w-8 rounded-full" />
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-20" />
                 </TableCell>
                 <TableCell>
-                  <div className="space-y-1">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-3 w-16" />
-                  </div>
+                  <Skeleton className="h-4 w-20" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-8 w-8" />
@@ -74,14 +64,6 @@ export function ProjectListViewSkeleton() {
             ))}
           </TableBody>
         </Table>
-      </div>
-      
-      {/* Loading indicator */}
-      <div className="p-4 text-center border-t">
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-          Loading projects...
-        </div>
       </div>
     </div>
   );

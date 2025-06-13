@@ -12,7 +12,7 @@ import { ProjectListViewSkeleton } from '@/components/Projects/ProjectListViewSk
 import { ProjectsSummaryCards } from '@/components/Projects/ProjectsSummaryCards';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getProjectStatus } from '@/utils/projectStatus';
 import { 
@@ -26,7 +26,6 @@ import {
 
 const ProjectsPage = () => {
   const { profile } = useAuth();
-  const queryClient = useQueryClient();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filter, setFilter] = useState<'all' | 'in_progress' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,18 +35,6 @@ const ProjectsPage = () => {
   const { projects, isLoading: projectsLoading, refetch, deleteProject } = useProjects();
 
   console.log('ProjectsPage render - projects:', projects?.length || 0, 'loading:', projectsLoading);
-
-  // Force refresh on page load to avoid cache issues
-  useEffect(() => {
-    console.log('ProjectsPage mounted - forcing data refresh');
-    // Invalidate all projects-related queries
-    queryClient.invalidateQueries({ queryKey: ['projects'] });
-    queryClient.invalidateQueries({ queryKey: ['user-project-assignments'] });
-    queryClient.invalidateQueries({ queryKey: ['all-project-milestones'] });
-    
-    // Force refetch
-    refetch();
-  }, [queryClient, refetch]);
 
   // Fetch user's assigned projects with better error handling
   const { data: userProjectIds = [], isLoading: userProjectsLoading, error: userProjectsError } = useQuery({
@@ -80,10 +67,9 @@ const ProjectsPage = () => {
       }
     },
     enabled: !!profile?.id && showMyProjects,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 30000,
     retry: 2,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches
   });
 
   // Fetch milestones for all projects to enable status filtering
@@ -126,10 +112,9 @@ const ProjectsPage = () => {
       }
     },
     enabled: !!projects?.length,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 30000,
     retry: 2,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
   // Log any errors for debugging
@@ -295,20 +280,12 @@ const ProjectsPage = () => {
       : 'No projects in progress found.';
   };
 
-  // Check if we're still loading critical data or if there's missing data that should be there
+  // Check if we're still loading critical data
   const isLoading = projectsLoading || (showMyProjects && userProjectsLoading);
-  const hasDataIssues = !isLoading && projects && projects.length > 0 && 
-    filteredProjects.length === 0 && !searchQuery && filter === 'all' && 
-    projects.some(p => !p.company); // Missing company data indicates cache issues
 
-  // Show enhanced loading state for data issues
-  if (hasDataIssues) {
-    console.error('Data integrity issue detected - missing company data, forcing reload');
-    // Force a complete page reload to fix data issues
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
-    return <ProjectListViewSkeleton />;
+  // Add error boundary for projects data
+  if (!isLoading && projects && projects.length > 0 && filteredProjects.length === 0 && !searchQuery && filter === 'all') {
+    console.error('Potential data filtering issue - projects exist but filtered list is empty');
   }
 
   return (

@@ -35,12 +35,6 @@ export const Sidebar: React.FC = () => {
   // Group sidebar items by category
   const menuItems = sidebarItems.filter(item => !item.category || item.category === 'MENU');
 
-  const handleProjectsClick = (e: React.MouseEvent) => {
-    // Force page reload for Projects to avoid cache issues
-    e.preventDefault();
-    window.location.href = '/projects';
-  };
-
   return (
     <ShadcnSidebar 
       className="border-r" 
@@ -99,58 +93,30 @@ export const Sidebar: React.FC = () => {
                     isActive={location.pathname === item.href}
                     tooltip={isCollapsed ? item.title : undefined}
                   >
-                    {item.href === '/projects' ? (
-                      <a 
-                        href={item.href}
-                        onClick={handleProjectsClick}
-                        className={`sidebar-menu-link group flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium rounded-lg ${
+                    <Link 
+                      to={item.href} 
+                      className={`sidebar-menu-link group flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium rounded-lg ${
+                        location.pathname === item.href 
+                          ? 'bg-[#F2FCE2] text-[#004743]' 
+                          : 'text-white hover:bg-gray-500/20 hover:text-[#F2FCE2]'
+                      }`}
+                    >
+                      <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : ''}`}>
+                        <item.icon className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-3'} ${
                           location.pathname === item.href 
-                            ? 'bg-[#F2FCE2] text-[#004743]' 
-                            : 'text-white hover:bg-gray-500/20 hover:text-[#F2FCE2]'
-                        }`}
-                      >
-                        <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : ''}`}>
-                          <item.icon className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-3'} ${
-                            location.pathname === item.href 
-                              ? 'text-[#004743]' 
-                              : 'text-white group-hover:text-[#F2FCE2] transition-colors'
-                          }`} />
-                          {!isCollapsed && <span>{item.title}</span>}
-                        </div>
-                        {item.hasDropdown && !isCollapsed && (
-                          <ChevronDown className={`h-4 w-4 ${
-                            location.pathname === item.href 
-                              ? 'text-[#004743]' 
-                              : 'text-gray-200 group-hover:text-[#F2FCE2] transition-colors'
-                          }`} />
-                        )}
-                      </a>
-                    ) : (
-                      <Link 
-                        to={item.href} 
-                        className={`sidebar-menu-link group flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium rounded-lg ${
+                            ? 'text-[#004743]' 
+                            : 'text-white group-hover:text-[#F2FCE2] transition-colors'
+                        }`} />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </div>
+                      {item.hasDropdown && !isCollapsed && (
+                        <ChevronDown className={`h-4 w-4 ${
                           location.pathname === item.href 
-                            ? 'bg-[#F2FCE2] text-[#004743]' 
-                            : 'text-white hover:bg-gray-500/20 hover:text-[#F2FCE2]'
-                        }`}
-                      >
-                        <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : ''}`}>
-                          <item.icon className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-3'} ${
-                            location.pathname === item.href 
-                              ? 'text-[#004743]' 
-                              : 'text-white group-hover:text-[#F2FCE2] transition-colors'
-                          }`} />
-                          {!isCollapsed && <span>{item.title}</span>}
-                        </div>
-                        {item.hasDropdown && !isCollapsed && (
-                          <ChevronDown className={`h-4 w-4 ${
-                            location.pathname === item.href 
-                              ? 'text-[#004743]' 
-                              : 'text-gray-200 group-hover:text-[#F2FCE2] transition-colors'
-                          }`} />
-                        )}
-                      </Link>
-                    )}
+                            ? 'text-[#004743]' 
+                            : 'text-gray-200 group-hover:text-[#F2FCE2] transition-colors'
+                        }`} />
+                      )}
+                    </Link>
                   </SidebarMenuButton>
                 )}
               </SidebarMenuItem>
