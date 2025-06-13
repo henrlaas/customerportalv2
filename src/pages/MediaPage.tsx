@@ -106,6 +106,12 @@ const MediaPage: React.FC = () => {
     }
   };
 
+  // Handle tab changes and reset path
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setCurrentPath(''); // Reset path when changing tabs
+  };
+
   // Helper for rendering uploader display name with cache
   const getUploaderDisplayName = useCallback((userId: string): string => {
     if (!userId) return "Unknown";
@@ -239,6 +245,7 @@ const MediaPage: React.FC = () => {
           onNewFolder={() => setIsFolderDialogOpen(true)}
           onUpload={() => setIsUploadDialogOpen(true)}
           activeTab={activeTab}
+          onTabChange={handleTabChange}
           currentPath={currentPath}
           searchQuery={searchQuery}
           viewMode={viewMode}
@@ -251,10 +258,6 @@ const MediaPage: React.FC = () => {
         
         <MediaTabs
           activeTab={activeTab}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            setCurrentPath(''); // Reset path when changing tabs
-          }}
           isLoading={isLoadingMedia}
           viewMode={viewMode}
           currentPath={currentPath}

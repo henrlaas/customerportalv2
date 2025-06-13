@@ -1,14 +1,13 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MediaContent } from './MediaContent';
 import { MediaFile } from '@/types/media';
-import { ChevronRight, FolderIcon, Building } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MediaTabsProps {
   activeTab: string;
-  onTabChange: (value: string) => void;
   isLoading: boolean;
   viewMode: 'grid' | 'list';
   currentPath: string;
@@ -29,7 +28,6 @@ interface MediaTabsProps {
 
 export const MediaTabs: React.FC<MediaTabsProps> = ({
   activeTab,
-  onTabChange,
   isLoading,
   viewMode,
   currentPath,
@@ -50,33 +48,24 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
 
   return (
     <div className="space-y-4">
-      <Tabs value={activeTab} onValueChange={onTabChange}>
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
-          <TabsTrigger value="internal">
-            <FolderIcon className="h-4 w-4 mr-2" />
-            Internal Media
-          </TabsTrigger>
-          <TabsTrigger value="company">
-            <Building className="h-4 w-4 mr-2" />
-            Company Media
-          </TabsTrigger>
-        </TabsList>
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2">
+        {breadcrumbs.map((crumb, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+            <Button
+              variant="link"
+              onClick={() => onNavigateToBreadcrumb(index - 1)}
+              className="p-0 h-auto text-sm hover:text-primary transition-colors"
+            >
+              {crumb}
+            </Button>
+          </React.Fragment>
+        ))}
+      </div>
 
-        <div className="flex items-center gap-2 mt-4 mb-2">
-          {breadcrumbs.map((crumb, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-              <Button
-                variant="link"
-                onClick={() => onNavigateToBreadcrumb(index - 1)}
-                className="p-0 h-auto text-sm hover:text-primary transition-colors"
-              >
-                {crumb}
-              </Button>
-            </React.Fragment>
-          ))}
-        </div>
-        
+      {/* Tab Content */}
+      <Tabs value={activeTab}>
         <TabsContent value="internal" className="mt-2">
           <MediaContent
             isLoading={isLoading}
