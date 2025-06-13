@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -57,14 +58,27 @@ export const useProjects = () => {
           return [];
         }
 
-        // Validate and clean project data
-        const validatedProjects = projectsData.map(project => ({
-          ...project,
-          value: project.value || 0, // Ensure value is never null
-          price_type: project.price_type || 'estimated', // Default price type
-          deadline: project.deadline,
-          company: project.company || null,
-        }));
+        // Validate project data and detect missing company information
+        const validatedProjects = projectsData.map(project => {
+          if (!project.company) {
+            console.warn(`Project ${project.id} (${project.name}) is missing company data`);
+          }
+          
+          return {
+            ...project,
+            value: project.value || 0, // Ensure value is never null
+            price_type: project.price_type || 'estimated', // Default price type
+            deadline: project.deadline,
+            company: project.company || null,
+          };
+        });
+
+        // Check for data integrity issues
+        const projectsWithMissingCompanies = validatedProjects.filter(p => !p.company);
+        if (projectsWithMissingCompanies.length > 0) {
+          console.error('Data integrity issue: Projects with missing company data:', 
+            projectsWithMissingCompanies.map(p => ({ id: p.id, name: p.name })));
+        }
 
         // Get all unique creator IDs from projects
         const creatorIds = Array.from(new Set(
@@ -111,11 +125,12 @@ export const useProjects = () => {
         throw error;
       }
     },
-    staleTime: 30000, // 30 seconds
-    retry: 2,
+    staleTime: 0, // Always fetch fresh data to avoid cache issues
+    retry: 3, // Increased retry count
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     refetchOnWindowFocus: true, // Refetch when returning to tab
     refetchOnMount: true, // Always refetch on component mount
+    refetchInterval: false, // Don't auto-refetch
   });
 
   // Function to create a new project
