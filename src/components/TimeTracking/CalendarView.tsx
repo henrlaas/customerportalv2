@@ -9,9 +9,9 @@ import { TimeEntry, Task, Campaign, Project } from '@/types/timeTracking';
 import { Company } from '@/types/company';
 import { TimeEntryCard } from './TimeEntryCard';
 import { CalendarViewSkeleton } from './CalendarViewSkeleton';
+import { useMonthlyTimeEntries } from '@/hooks/useMonthlyTimeEntries';
 
 type CalendarViewProps = {
-  timeEntries: TimeEntry[];
   onEditEntry: (entry: TimeEntry) => void;
   onDeleteEntry: (entry: TimeEntry) => void;
   tasks: Task[];
@@ -22,17 +22,22 @@ type CalendarViewProps = {
 };
 
 export const CalendarView = ({ 
-  timeEntries, 
   onEditEntry, 
   onDeleteEntry,
   tasks,
   companies,
   campaigns,
-  projects,
-  isLoading = false
+  projects
 }: CalendarViewProps) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  
+  // Fetch time entries for the current month being viewed
+  const { data: timeEntries = [], isLoading } = useMonthlyTimeEntries(
+    currentMonth.getFullYear(),
+    currentMonth.getMonth() + 1,
+    true
+  );
   
   const handlePrevMonth = () => {
     setCurrentMonth(prev => subMonths(prev, 1));
@@ -40,6 +45,12 @@ export const CalendarView = ({
   
   const handleNextMonth = () => {
     setCurrentMonth(prev => addMonths(prev, 1));
+  };
+
+  const handleTodayClick = () => {
+    const today = new Date();
+    setCurrentMonth(today);
+    setSelectedDate(today);
   };
 
   if (isLoading) {
@@ -82,7 +93,7 @@ export const CalendarView = ({
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => setCurrentMonth(new Date())}
+                onClick={handleTodayClick}
               >
                 Today
               </Button>
@@ -119,7 +130,11 @@ export const CalendarView = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {selectedDateEntries.length > 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8 text-gray-500">
+                Loading entries...
+              </div>
+            ) : selectedDateEntries.length > 0 ? (
               <div className="space-y-3">
                 {selectedDateEntries.map((entry) => (
                   <TimeEntryCard
