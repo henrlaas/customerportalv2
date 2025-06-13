@@ -48,6 +48,10 @@ interface ProjectMilestone {
   id: string;
   project_id: string;
   status: 'created' | 'completed';
+  name: string;
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export const ProjectListView: React.FC<ProjectListViewProps> = ({
@@ -68,40 +72,55 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
       const projectIds = projects.map(project => project.id);
       
       try {
-        // Single query to get all assignees for all projects
+        // Get all assignees for all projects
         const { data: assigneesData, error: assigneesError } = await supabase
           .from('project_assignees')
-          .select(`
-            project_id,
-            user_id,
-            profiles!inner(
-              id,
-              first_name,
-              last_name,
-              avatar_url
-            )
-          `)
+          .select('project_id, user_id')
           .in('project_id', projectIds);
         
         if (assigneesError) {
           console.error('Error fetching project assignees:', assigneesError);
           return {};
         }
+
+        if (!assigneesData || assigneesData.length === 0) {
+          return {};
+        }
+
+        // Get all unique user IDs
+        const userIds = Array.from(new Set(assigneesData.map(a => a.user_id)));
         
-        // Group assignees by project_id
+        // Fetch profiles for these users
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .in('id', userIds);
+        
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          return {};
+        }
+
+        // Create a map of profiles for quick lookup
+        const profilesMap = Object.fromEntries(
+          (profilesData || []).map(profile => [profile.id, profile])
+        );
+        
+        // Group assignees by project_id with profile data
         const assigneesByProject: Record<string, ProjectAssignee[]> = {};
         
-        for (const assignee of assigneesData || []) {
+        for (const assignee of assigneesData) {
           if (!assigneesByProject[assignee.project_id]) {
             assigneesByProject[assignee.project_id] = [];
           }
           
-          if (assignee.profiles) {
+          const profile = profilesMap[assignee.user_id];
+          if (profile) {
             assigneesByProject[assignee.project_id].push({
               id: assignee.user_id,
-              first_name: assignee.profiles.first_name,
-              last_name: assignee.profiles.last_name,
-              avatar_url: assignee.profiles.avatar_url
+              first_name: profile.first_name,
+              last_name: profile.last_name,
+              avatar_url: profile.avatar_url
             });
           }
         }
@@ -128,7 +147,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
       try {
         const { data: milestonesData, error: milestonesError } = await supabase
           .from('milestones')
-          .select('id, project_id, status')
+          .select('id, project_id, status, name, due_date, created_at, updated_at')
           .in('project_id', projectIds);
         
         if (milestonesError) {
@@ -142,7 +161,15 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
           if (!milestonesByProject[milestone.project_id]) {
             milestonesByProject[milestone.project_id] = [];
           }
-          milestonesByProject[milestone.project_id].push(milestone);
+          milestonesByProject[milestone.project_id].push({
+            id: milestone.id,
+            project_id: milestone.project_id,
+            status: milestone.status,
+            name: milestone.name,
+            due_date: milestone.due_date,
+            created_at: milestone.created_at,
+            updated_at: milestone.updated_at
+          });
         }
         
         return milestonesByProject;
