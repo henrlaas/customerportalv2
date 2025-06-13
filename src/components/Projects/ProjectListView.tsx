@@ -37,6 +37,19 @@ interface ProjectListViewProps {
   onDeleteProject?: (projectId: string) => Promise<void>;
 }
 
+interface ProjectAssignee {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+}
+
+interface ProjectMilestone {
+  id: string;
+  project_id: string;
+  status: 'created' | 'completed';
+}
+
 export const ProjectListView: React.FC<ProjectListViewProps> = ({
   projects,
   selectedProjectId,
@@ -46,91 +59,101 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [projectToDelete, setProjectToDelete] = React.useState<string | null>(null);
 
-  // Fetch project assignees for all projects
-  const { data: projectAssignees } = useQuery({
-    queryKey: ['project-assignees-all'],
+  // Fetch project assignees for all projects in a single optimized query
+  const { data: projectAssignees = {} } = useQuery({
+    queryKey: ['project-assignees-optimized', projects.map(p => p.id)],
     queryFn: async () => {
       if (!projects.length) return {};
       
       const projectIds = projects.map(project => project.id);
       
-      // First, fetch the project assignees
-      const { data: assigneesData, error: assigneesError } = await supabase
-        .from('project_assignees')
-        .select('project_id, user_id')
-        .in('project_id', projectIds);
-      
-      if (assigneesError) {
-        console.error('Error fetching project assignees:', assigneesError);
+      try {
+        // Single query to get all assignees for all projects
+        const { data: assigneesData, error: assigneesError } = await supabase
+          .from('project_assignees')
+          .select(`
+            project_id,
+            user_id,
+            profiles!inner(
+              id,
+              first_name,
+              last_name,
+              avatar_url
+            )
+          `)
+          .in('project_id', projectIds);
+        
+        if (assigneesError) {
+          console.error('Error fetching project assignees:', assigneesError);
+          return {};
+        }
+        
+        // Group assignees by project_id
+        const assigneesByProject: Record<string, ProjectAssignee[]> = {};
+        
+        for (const assignee of assigneesData || []) {
+          if (!assigneesByProject[assignee.project_id]) {
+            assigneesByProject[assignee.project_id] = [];
+          }
+          
+          if (assignee.profiles) {
+            assigneesByProject[assignee.project_id].push({
+              id: assignee.user_id,
+              first_name: assignee.profiles.first_name,
+              last_name: assignee.profiles.last_name,
+              avatar_url: assignee.profiles.avatar_url
+            });
+          }
+        }
+        
+        return assigneesByProject;
+      } catch (error) {
+        console.error('Error in project assignees query:', error);
         return {};
       }
-      
-      // Then, fetch the profile information for each user
-      const assigneesByProject = {};
-      
-      // Group assignees by project_id first
-      for (const assignee of assigneesData) {
-        if (!assigneesByProject[assignee.project_id]) {
-          assigneesByProject[assignee.project_id] = [];
-        }
-        
-        // Fetch profile data for this user
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, avatar_url')
-          .eq('id', assignee.user_id)
-          .single();
-        
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Error fetching profile:', profileError);
-        }
-        
-        if (profileData) {
-          assigneesByProject[assignee.project_id].push({
-            id: assignee.user_id,
-            first_name: profileData.first_name,
-            last_name: profileData.last_name,
-            avatar_url: profileData.avatar_url
-          });
-        }
-      }
-      
-      return assigneesByProject;
     },
-    enabled: projects.length > 0
+    enabled: projects.length > 0,
+    staleTime: 30000, // 30 seconds
+    retry: 2
   });
 
-  // Fetch milestones for all projects to determine status
-  const { data: projectMilestones } = useQuery({
-    queryKey: ['project-milestones-all'],
+  // Fetch milestones for all projects in a single query
+  const { data: projectMilestones = {} } = useQuery({
+    queryKey: ['project-milestones-optimized', projects.map(p => p.id)],
     queryFn: async () => {
       if (!projects.length) return {};
       
       const projectIds = projects.map(project => project.id);
       
-      const { data: milestonesData, error: milestonesError } = await supabase
-        .from('milestones')
-        .select('*')
-        .in('project_id', projectIds)
-        .order('created_at', { ascending: true });
-      
-      if (milestonesError) {
-        console.error('Error fetching project milestones:', milestonesError);
+      try {
+        const { data: milestonesData, error: milestonesError } = await supabase
+          .from('milestones')
+          .select('id, project_id, status')
+          .in('project_id', projectIds);
+        
+        if (milestonesError) {
+          console.error('Error fetching project milestones:', milestonesError);
+          return {};
+        }
+        
+        // Group milestones by project_id
+        const milestonesByProject: Record<string, ProjectMilestone[]> = {};
+        for (const milestone of milestonesData || []) {
+          if (!milestonesByProject[milestone.project_id]) {
+            milestonesByProject[milestone.project_id] = [];
+          }
+          milestonesByProject[milestone.project_id].push(milestone);
+        }
+        
+        return milestonesByProject;
+      } catch (error) {
+        console.error('Error in project milestones query:', error);
         return {};
       }
-      
-      // Group milestones by project_id
-      const milestonesByProject = {};
-      for (const milestone of milestonesData) {
-        if (!milestonesByProject[milestone.project_id]) {
-          milestonesByProject[milestone.project_id] = [];
-        }
-        milestonesByProject[milestone.project_id].push(milestone);
-      }
-      
-      return milestonesByProject;
     },
-    enabled: projects.length > 0
+    enabled: projects.length > 0,
+    staleTime: 30000, // 30 seconds
+    retry: 2
   });
   
   // Helper function to safely format dates
@@ -147,7 +170,12 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
   };
 
   const handleProjectClick = (projectId: string) => {
-    navigate(`/projects/${projectId}`);
+    try {
+      navigate(`/projects/${projectId}`);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      toast.error('Failed to navigate to project');
+    }
   };
 
   const handleDeleteClick = (e: React.MouseEvent, projectId: string) => {
@@ -172,7 +200,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
 
   // Helper function to get project status badge
   const getProjectStatusForDisplay = (projectId: string) => {
-    const milestones = projectMilestones?.[projectId] || [];
+    const milestones = projectMilestones[projectId] || [];
     const status = getProjectStatus(milestones);
     const statusBadge = getProjectStatusBadge(status);
     
@@ -201,66 +229,70 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {projects.map(project => (
-                <TableRow 
-                  key={project.id}
-                  className={`cursor-pointer hover:bg-gray-100 ${project.id === selectedProjectId ? 'bg-muted' : ''}`}
-                  onClick={() => handleProjectClick(project.id)}
-                >
-                  <TableCell className="font-medium">{project.name}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {project.company && (
-                        <>
-                          <CompanyFavicon 
-                            companyName={project.company.name} 
-                            website={project.company.website} 
-                            size="sm" 
-                          />
-                          <span>{project.company.name}</span>
-                        </>
+              {projects.map(project => {
+                const assignees = projectAssignees[project.id] || [];
+                
+                return (
+                  <TableRow 
+                    key={project.id}
+                    className={`cursor-pointer hover:bg-gray-100 ${project.id === selectedProjectId ? 'bg-muted' : ''}`}
+                    onClick={() => handleProjectClick(project.id)}
+                  >
+                    <TableCell className="font-medium">{project.name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {project.company && (
+                          <>
+                            <CompanyFavicon 
+                              companyName={project.company.name} 
+                              website={project.company.website} 
+                              size="sm" 
+                            />
+                            <span>{project.company.name}</span>
+                          </>
+                        )}
+                        {!project.company && 'No Company'}
+                      </div>
+                    </TableCell>
+                    <TableCell>{project.value?.toLocaleString() || 'N/A'} NOK</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={project.price_type === 'fixed' ? 'default' : 'secondary'} 
+                        className={`capitalize ${
+                          project.price_type === 'fixed'
+                            ? "bg-blue-50 text-blue-700 border-blue-100"
+                            : "bg-amber-50 text-amber-700 border-amber-100"
+                        }`}
+                      >
+                        {project.price_type === 'fixed' ? 'Fixed Price' : 'Estimated'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {assignees && assignees.length > 0 ? (
+                        <UserAvatarGroup 
+                          users={assignees} 
+                          size="sm"
+                        />
+                      ) : (
+                        <span className="text-gray-500 text-sm">Not assigned</span>
                       )}
-                      {!project.company && 'No Company'}
-                    </div>
-                  </TableCell>
-                  <TableCell>{project.value?.toLocaleString() || 'N/A'} NOK</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={project.price_type === 'fixed' ? 'default' : 'secondary'} 
-                      className={`capitalize ${
-                        project.price_type === 'fixed'
-                          ? "bg-blue-50 text-blue-700 border-blue-100"
-                          : "bg-amber-50 text-amber-700 border-amber-100"
-                      }`}
-                    >
-                      {project.price_type === 'fixed' ? 'Fixed Price' : 'Estimated'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {projectAssignees && projectAssignees[project.id] && projectAssignees[project.id].length > 0 ? (
-                      <UserAvatarGroup 
-                        users={projectAssignees[project.id]} 
-                        size="sm"
-                      />
-                    ) : (
-                      <span className="text-gray-500 text-sm">Not assigned</span>
-                    )}
-                  </TableCell>
-                  <TableCell>{getProjectStatusForDisplay(project.id)}</TableCell>
-                  <TableCell>{safeFormatDate(project.deadline)}</TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={(e) => handleDeleteClick(e, project.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell>{getProjectStatusForDisplay(project.id)}</TableCell>
+                    <TableCell>{safeFormatDate(project.deadline)}</TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={(e) => handleDeleteClick(e, project.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {projects.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8">
@@ -288,7 +320,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
+        </AlertDialogFooter>
       </AlertDialog>
     </>
   );
