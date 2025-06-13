@@ -282,7 +282,7 @@ const MediaPage: React.FC = () => {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
+          <div className="bg-white p-6 space-y-6">
             <MediaHeader 
               onNewFolder={() => setIsFolderDialogOpen(true)}
               onUpload={() => setIsUploadDialogOpen(true)}
