@@ -23,10 +23,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { EditProjectDialog } from '@/components/Projects/EditProjectDialog/EditProjectDialog';
 import { DeleteProjectDialog } from '@/components/Projects/DeleteProjectDialog';
 import { useProjectOperations } from '@/hooks/useProjectOperations';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Share, MoreHorizontal } from 'lucide-react';
 import { MultiStageProjectContractDialog } from '@/components/Contracts/MultiStageProjectContractDialog';
 import { ProjectOverviewTab } from '@/components/Projects/ProjectOverviewTab';
 import { TaskSummaryCards } from '@/components/Projects/TaskSummaryCards';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -37,6 +44,7 @@ const ProjectDetailsPage = () => {
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const { isAdmin } = useAuth();
+  const { toast: toastHook } = useToast();
   
   // Add state for edit and delete dialogs
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -51,6 +59,25 @@ const ProjectDetailsPage = () => {
 
   // Find the selected project from the projects array
   const selectedProject = projects?.find(project => project.id === projectId);
+
+  // Handle share project
+  const handleShareProject = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const projectUrl = `${window.location.origin}/projects/${projectId}`;
+      await navigator.clipboard.writeText(projectUrl);
+      toastHook({
+        title: 'Link copied',
+        description: 'Project link has been copied to clipboard',
+      });
+    } catch (error) {
+      toastHook({
+        title: 'Failed to copy link',
+        description: 'Could not copy the project link to clipboard',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Fetch tasks related to this project
   const { data: projectTasks, isLoading: isLoadingTasks, error: tasksError, refetch: refetchTasks } = useQuery({
@@ -350,17 +377,31 @@ const ProjectDetailsPage = () => {
           </Button>
           <h1 className="text-2xl font-bold">{selectedProject?.name}</h1>
         </div>
-        {/* Add edit and delete buttons */}
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-          <Button variant="outline" onClick={() => setIsDeleteDialogOpen(true)} className="text-red-600 hover:text-red-700">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
-        </div>
+        {/* Replace edit and delete buttons with action dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleShareProject}>
+              <Share className="h-4 w-4 mr-2" />
+              Share project
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit project
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600"
+              onClick={() => setIsDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete project
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Updated Tabs */}
