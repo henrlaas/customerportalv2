@@ -320,7 +320,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </>
   );
