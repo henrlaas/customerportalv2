@@ -1,4 +1,3 @@
-
 import { Globe, Phone, Mail } from 'lucide-react';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -17,7 +16,7 @@ export function ContactDetailsStage({ form }: { form: any }) {
               <Globe className="h-4 w-4" /> Website
             </FormLabel>
             <FormControl>
-              <Input placeholder="https://example.no" {...field} />
+              <Input placeholder="https://example.no" {...field} value={field.value || 'https://'} />
             </FormControl>
             <FormDescription>
               Company website
