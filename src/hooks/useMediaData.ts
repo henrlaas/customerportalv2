@@ -92,7 +92,7 @@ export const useMediaData = (
                 
                 return {
                   id: file.id || '',
-                  name: file.folderPath ? `${file.folderPath}/${file.name}` : file.name,
+                  name: file.name, // Show only the actual filename, not the full path
                   fileType,
                   url,
                   size: file.metadata?.size || 0,
@@ -103,7 +103,8 @@ export const useMediaData = (
                   isImage: fileType.startsWith('image/'),
                   isVideo: fileType.startsWith('video/'),
                   isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
-                  bucketId: 'companymedia'
+                  bucketId: 'companymedia',
+                  fullPath: file.fullPath // Keep full path for operations but don't show it
                 };
               });
 
@@ -158,7 +159,6 @@ export const useMediaData = (
           
           if (error) throw error;
 
-          // Process items to separate folders and files
           const folders = items
             ?.filter(item => item.id === null && !item.name.endsWith('.folder'))
             .map(folder => ({
@@ -269,7 +269,7 @@ export const useMediaData = (
               
               return {
                 id: file.id || '',
-                name: file.folderPath ? `${file.folderPath}/${file.name}` : file.name,
+                name: file.name, // Show only the actual filename, not the full path
                 fileType,
                 url,
                 size: file.metadata?.size || 0,
@@ -280,7 +280,8 @@ export const useMediaData = (
                 isImage: fileType.startsWith('image/'),
                 isVideo: fileType.startsWith('video/'),
                 isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
-                bucketId: 'media'
+                bucketId: 'media',
+                fullPath: file.fullPath // Keep full path for operations but don't show it
               };
             });
 

@@ -49,10 +49,13 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({
               ...filters,
               favorites: !filters.favorites
             })}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 ${
+              filters.favorites 
+                ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' 
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
           >
-            <Heart className={`h-4 w-4 ${filters.favorites ? 'fill-current' : ''}`} />
-            Favorites
+            <Heart className={`h-4 w-4 ${filters.favorites ? 'fill-white text-white' : 'text-gray-700'}`} />
           </Button>
 
           {showFolderButton && (

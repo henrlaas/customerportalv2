@@ -1,22 +1,18 @@
 
 import React from 'react';
-import { MediaFile } from '@/types/media';
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { MediaTableRow } from './MediaTableRow';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { MediaFile } from '@/types/media';
+import { useUserProfiles } from '@/hooks/useUserProfiles';
 
 interface MediaTableViewProps {
   items: MediaFile[];
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
   onSort?: (column: string) => void;
-  onNavigate?: (folderName: string) => void;
+  onNavigate: (folderName: string) => void;
   onFavorite: (filePath: string, isFavorited: boolean, event?: React.MouseEvent) => void;
   onDelete: (name: string, isFolder: boolean, bucketId?: string) => void;
   onRename?: (name: string) => void;
@@ -38,80 +34,94 @@ export const MediaTableView: React.FC<MediaTableViewProps> = ({
   getUploaderDisplayName,
   isLoading,
 }) => {
-  const handleSort = (column: string) => {
-    if (onSort) {
-      onSort(column);
-    }
+  // Get unique uploader IDs for fetching profiles
+  const uploaderIds = React.useMemo(() => {
+    const ids = items
+      .filter(item => !item.isFolder && item.uploadedBy)
+      .map(item => item.uploadedBy!)
+      .filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
+    return ids;
+  }, [items]);
+
+  const { data: userProfiles = {} } = useUserProfiles(uploaderIds);
+
+  const getUserProfile = (userId: string) => {
+    return userProfiles[userId] || null;
   };
 
-  const SortIcon = ({ column }: { column: string }) => {
-    if (sortBy !== column) return null;
-    return sortDirection === 'asc' ? 
-      <ChevronUp className="h-4 w-4" /> : 
-      <ChevronDown className="h-4 w-4" />;
+  const getSortIcon = (column: string) => {
+    if (sortBy !== column) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-12 bg-gray-100 rounded animate-pulse" />
-        ))}
+      <div className="rounded-lg border border-gray-200 bg-white">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
+        </div>
       </div>
     );
   }
 
-  if (!items.length) {
+  if (items.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">No files or folders found</p>
+      <div className="rounded-lg border border-gray-200 bg-white">
+        <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+          <p className="text-lg font-medium">No files found</p>
+          <p className="text-sm">Upload files or change your search criteria</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg bg-white">
+    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-transparent border-b border-gray-200">
-            <TableHead 
-              className="cursor-pointer hover:bg-gray-50 font-semibold text-gray-900"
-              onClick={() => handleSort('name')}
-            >
-              <div className="flex items-center gap-2">
+          <TableRow className="border-b border-gray-200 bg-gray-50">
+            <TableHead className="font-semibold text-gray-900">
+              <Button
+                variant="ghost"
+                onClick={() => onSort?.('name')}
+                className="h-auto p-0 font-semibold text-gray-900 hover:text-primary"
+              >
                 Name
-                <SortIcon column="name" />
-              </div>
+                {getSortIcon('name')}
+              </Button>
             </TableHead>
-            <TableHead 
-              className="cursor-pointer hover:bg-gray-50 font-semibold text-gray-900"
-              onClick={() => handleSort('type')}
-            >
-              <div className="flex items-center gap-2">
+            <TableHead className="font-semibold text-gray-900">
+              <Button
+                variant="ghost"
+                onClick={() => onSort?.('type')}
+                className="h-auto p-0 font-semibold text-gray-900 hover:text-primary"
+              >
                 Type
-                <SortIcon column="type" />
-              </div>
+                {getSortIcon('type')}
+              </Button>
             </TableHead>
-            <TableHead 
-              className="cursor-pointer hover:bg-gray-50 font-semibold text-gray-900"
-              onClick={() => handleSort('size')}
-            >
-              <div className="flex items-center gap-2">
+            <TableHead className="font-semibold text-gray-900">
+              <Button
+                variant="ghost"
+                onClick={() => onSort?.('size')}
+                className="h-auto p-0 font-semibold text-gray-900 hover:text-primary"
+              >
                 Size
-                <SortIcon column="size" />
-              </div>
+                {getSortIcon('size')}
+              </Button>
             </TableHead>
-            <TableHead 
-              className="cursor-pointer hover:bg-gray-50 font-semibold text-gray-900"
-              onClick={() => handleSort('modified')}
-            >
-              <div className="flex items-center gap-2">
+            <TableHead className="font-semibold text-gray-900">
+              <Button
+                variant="ghost"
+                onClick={() => onSort?.('modified')}
+                className="h-auto p-0 font-semibold text-gray-900 hover:text-primary"
+              >
                 Modified
-                <SortIcon column="modified" />
-              </div>
+                {getSortIcon('modified')}
+              </Button>
             </TableHead>
-            <TableHead className="font-semibold text-gray-900">Uploader</TableHead>
-            <TableHead className="w-24 font-semibold text-gray-900">Actions</TableHead>
+            <TableHead className="font-semibold text-gray-900">Uploaded by</TableHead>
+            <TableHead className="font-semibold text-gray-900 w-16">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -125,6 +135,7 @@ export const MediaTableView: React.FC<MediaTableViewProps> = ({
               onRename={onRename}
               currentPath={currentPath}
               getUploaderDisplayName={getUploaderDisplayName}
+              getUserProfile={getUserProfile}
             />
           ))}
         </TableBody>

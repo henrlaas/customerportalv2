@@ -32,6 +32,7 @@ interface MediaTableRowProps {
   onRename?: (name: string) => void;
   currentPath: string;
   getUploaderDisplayName: (userId: string) => string;
+  getUserProfile: (userId: string) => { first_name?: string; avatar_url?: string } | null;
 }
 
 export const MediaTableRow: React.FC<MediaTableRowProps> = ({
@@ -42,10 +43,11 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
   onRename,
   currentPath,
   getUploaderDisplayName,
+  getUserProfile,
 }) => {
-  const filePath = currentPath 
+  const filePath = item.fullPath || (currentPath 
     ? `${currentPath}/${item.name}`
-    : item.name;
+    : item.name);
     
   const isCompanyRootFolder = item.isCompanyFolder && !currentPath;
 
@@ -90,12 +92,32 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
     });
   };
 
-  const getUserInitials = (displayName: string) => {
-    return displayName
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase();
+  const getUserInitials = (firstName: string) => {
+    return firstName.charAt(0).toUpperCase();
+  };
+
+  const renderUploader = () => {
+    if (!item.uploadedBy) {
+      return <span className="text-gray-400">—</span>;
+    }
+
+    const userProfile = getUserProfile(item.uploadedBy);
+    const firstName = userProfile?.first_name || getUploaderDisplayName(item.uploadedBy).split(' ')[0] || 'User';
+    const avatarUrl = userProfile?.avatar_url;
+
+    return (
+      <div className="flex items-center gap-2">
+        <Avatar className="h-6 w-6">
+          <AvatarImage src={avatarUrl || undefined} />
+          <AvatarFallback className="text-xs">
+            {getUserInitials(firstName)}
+          </AvatarFallback>
+        </Avatar>
+        <span className="text-sm text-gray-600 truncate max-w-24">
+          {firstName}
+        </span>
+      </div>
+    );
   };
 
   return (
@@ -145,21 +167,7 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
       </TableCell>
       
       <TableCell>
-        {!item.isFolder && item.uploadedBy ? (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={item.uploaderAvatarUrl} />
-              <AvatarFallback className="text-xs">
-                {getUserInitials(getUploaderDisplayName(item.uploadedBy))}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm text-gray-600 truncate max-w-24">
-              {getUploaderDisplayName(item.uploadedBy)}
-            </span>
-          </div>
-        ) : (
-          <span className="text-gray-400">—</span>
-        )}
+        {!item.isFolder ? renderUploader() : <span className="text-gray-400">—</span>}
       </TableCell>
       
       <TableCell>
