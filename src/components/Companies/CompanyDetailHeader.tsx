@@ -1,13 +1,14 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   Edit,
   Trash,
-  MoreVertical
+  MoreVertical,
+  Share
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +31,7 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { isAdmin, isEmployee } = useAuth();
   const queryClient = useQueryClient();
@@ -58,6 +60,24 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
   const handleDeleteConfirm = () => {
     deleteCompanyMutation.mutate(company.id);
   };
+
+  // Handle share company
+  const handleShare = async () => {
+    try {
+      const currentUrl = window.location.href;
+      await navigator.clipboard.writeText(currentUrl);
+      toast({
+        title: 'Link copied',
+        description: 'Company details link has been copied to clipboard',
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to copy link',
+        description: 'Could not copy the link to clipboard',
+        variant: 'destructive',
+      });
+    }
+  };
   
   // Check if user can modify companies (admin or employee)
   const canModify = isAdmin || isEmployee;
@@ -73,6 +93,10 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={handleShare}>
+            <Share className="mr-2 h-4 w-4" />
+            Share
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setIsEditing(true)}>
             <Edit className="mr-2 h-4 w-4" />
             Edit Company
