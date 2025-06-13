@@ -11,21 +11,65 @@ import { ProjectListViewSkeleton } from '@/components/Projects/ProjectListViewSk
 import { ProjectsSummaryCards } from '@/components/Projects/ProjectsSummaryCards';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { getProjectStatus } from '@/utils/projectStatus';
 
 const ProjectsPage = () => {
   const { profile } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'signed' | 'unsigned'>('all');
+  const [filter, setFilter] = useState<'all' | 'in_progress' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const { projects, isLoading: projectsLoading, refetch, deleteProject } = useProjects();
 
-  // Filter projects based on contract status and search query
+  // Fetch milestones for all projects to enable status filtering
+  const { data: projectMilestones = {} } = useQuery({
+    queryKey: ['all-project-milestones', projects?.map(p => p.id)],
+    queryFn: async () => {
+      if (!projects?.length) return {};
+      
+      const projectIds = projects.map(project => project.id);
+      
+      try {
+        const { data: milestonesData, error: milestonesError } = await supabase
+          .from('milestones')
+          .select('id, project_id, status, name, due_date, created_at, updated_at')
+          .in('project_id', projectIds);
+        
+        if (milestonesError) {
+          console.error('Error fetching project milestones:', milestonesError);
+          return {};
+        }
+        
+        // Group milestones by project_id
+        const milestonesByProject: Record<string, any[]> = {};
+        for (const milestone of milestonesData || []) {
+          if (!milestonesByProject[milestone.project_id]) {
+            milestonesByProject[milestone.project_id] = [];
+          }
+          milestonesByProject[milestone.project_id].push(milestone);
+        }
+        
+        return milestonesByProject;
+      } catch (error) {
+        console.error('Error in project milestones query:', error);
+        return {};
+      }
+    },
+    enabled: !!projects?.length,
+    staleTime: 30000, // 30 seconds
+    retry: 2
+  });
+
+  // Filter projects based on milestone status and search query
   const filteredProjects = projects ? projects.filter(project => {
     // First apply status filter
     if (filter !== 'all') {
-      // Note: This is a placeholder - we would need to implement contract status tracking in projects
-      // For now, we're treating all projects as unsigned
-      if (filter === 'signed') return false;
+      const milestones = projectMilestones[project.id] || [];
+      const projectStatus = getProjectStatus(milestones);
+      
+      if (filter === 'completed' && projectStatus !== 'completed') return false;
+      if (filter === 'in_progress' && projectStatus !== 'in_progress') return false;
     }
     
     // Then apply search filter if there's a search query
@@ -61,7 +105,7 @@ const ProjectsPage = () => {
       {/* Summary Cards */}
       <ProjectsSummaryCards projects={projects} isLoading={projectsLoading} />
       
-      {/* Search and Filters row - styled like the Contracts page */}
+      {/* Search and Filters row */}
       <div className="flex justify-between items-center my-6">
         <div className="relative w-full max-w-sm">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -84,16 +128,16 @@ const ProjectsPage = () => {
                 All
               </button>
               <button
-                onClick={() => setFilter('unsigned')}
-                className={`pb-2 px-1 text-sm font-medium ${filter === 'unsigned' ? 'text-evergreen border-b-2 border-evergreen' : 'text-muted-foreground'}`}
+                onClick={() => setFilter('in_progress')}
+                className={`pb-2 px-1 text-sm font-medium ${filter === 'in_progress' ? 'text-evergreen border-b-2 border-evergreen' : 'text-muted-foreground'}`}
               >
-                Unsigned
+                In Progress
               </button>
               <button
-                onClick={() => setFilter('signed')}
-                className={`pb-2 px-1 text-sm font-medium ${filter === 'signed' ? 'text-evergreen border-b-2 border-evergreen' : 'text-muted-foreground'}`}
+                onClick={() => setFilter('completed')}
+                className={`pb-2 px-1 text-sm font-medium ${filter === 'completed' ? 'text-evergreen border-b-2 border-evergreen' : 'text-muted-foreground'}`}
               >
-                Signed
+                Completed
               </button>
             </nav>
           </div>
@@ -124,9 +168,9 @@ const ProjectsPage = () => {
                 ? 'No matching projects found. Try a different search term.'
                 : filter === 'all' 
                   ? 'No projects created yet. Projects will appear here once created.' 
-                  : filter === 'signed' 
-                    ? 'No signed projects found.' 
-                    : 'No unsigned projects found.'}
+                  : filter === 'completed' 
+                    ? 'No completed projects found.' 
+                    : 'No projects in progress found.'}
             </p>
           </div>
         </Card>
