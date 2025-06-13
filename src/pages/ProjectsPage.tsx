@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { PlusIcon, SearchIcon } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
+import { useProjectAssignees } from '@/hooks/useProjectAssignees';
 import { ProjectCreateDialog } from '@/components/Projects/ProjectCreateDialog';
 import { ProjectListView } from '@/components/Projects/ProjectListView';
 import { ProjectListViewSkeleton } from '@/components/Projects/ProjectListViewSkeleton';
@@ -20,7 +22,31 @@ const ProjectsPage = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filter, setFilter] = useState<'all' | 'in_progress' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showMyProjects, setShowMyProjects] = useState(true);
   const { projects, isLoading: projectsLoading, refetch, deleteProject } = useProjects();
+
+  // Fetch user's assigned projects
+  const { data: userProjectIds = [] } = useQuery({
+    queryKey: ['user-project-assignments', profile?.id],
+    queryFn: async () => {
+      if (!profile?.id) return [];
+      
+      const { data: assignmentsData, error } = await supabase
+        .from('project_assignees')
+        .select('project_id')
+        .eq('user_id', profile.id);
+      
+      if (error) {
+        console.error('Error fetching user project assignments:', error);
+        return [];
+      }
+      
+      return assignmentsData.map(assignment => assignment.project_id);
+    },
+    enabled: !!profile?.id && showMyProjects,
+    staleTime: 30000,
+    retry: 2
+  });
 
   // Fetch milestones for all projects to enable status filtering
   const { data: projectMilestones = {} } = useQuery({
@@ -57,13 +83,18 @@ const ProjectsPage = () => {
       }
     },
     enabled: !!projects?.length,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
     retry: 2
   });
 
-  // Filter projects based on milestone status and search query
+  // Filter projects based on user assignment, milestone status and search query
   const filteredProjects = projects ? projects.filter(project => {
-    // First apply status filter
+    // First apply "my projects" filter
+    if (showMyProjects && !userProjectIds.includes(project.id)) {
+      return false;
+    }
+    
+    // Then apply status filter
     if (filter !== 'all') {
       const milestones = projectMilestones[project.id] || [];
       const projectStatus = getProjectStatus(milestones);
@@ -72,7 +103,7 @@ const ProjectsPage = () => {
       if (filter === 'in_progress' && projectStatus !== 'in_progress') return false;
     }
     
-    // Then apply search filter if there's a search query
+    // Finally apply search filter if there's a search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return project.name.toLowerCase().includes(query) || 
@@ -96,6 +127,32 @@ const ProjectsPage = () => {
     }
   };
 
+  const getEmptyStateMessage = () => {
+    if (showMyProjects && userProjectIds.length === 0) {
+      return 'You are not assigned to any projects yet.';
+    }
+    
+    if (searchQuery) {
+      return 'No matching projects found. Try a different search term.';
+    }
+    
+    if (filter === 'all') {
+      return showMyProjects 
+        ? 'No assigned projects found.' 
+        : 'No projects created yet. Projects will appear here once created.';
+    }
+    
+    if (filter === 'completed') {
+      return showMyProjects 
+        ? 'No assigned completed projects found.' 
+        : 'No completed projects found.';
+    }
+    
+    return showMyProjects 
+      ? 'No assigned projects in progress found.' 
+      : 'No projects in progress found.';
+  };
+
   return (
     <div className="container p-6 mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -105,16 +162,34 @@ const ProjectsPage = () => {
       {/* Summary Cards */}
       <ProjectsSummaryCards projects={projects} isLoading={projectsLoading} />
       
-      {/* Search and Filters row */}
+      {/* Toggle, Search and Filters row */}
       <div className="flex justify-between items-center my-6">
-        <div className="relative w-full max-w-sm">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="Search projects..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex items-center gap-6">
+          {/* Show My Projects Toggle */}
+          <div className="flex items-center gap-3">
+            <Switch
+              id="show-my-projects"
+              checked={showMyProjects}
+              onCheckedChange={setShowMyProjects}
+            />
+            <label 
+              htmlFor="show-my-projects" 
+              className="text-sm font-medium text-foreground cursor-pointer"
+            >
+              Show my projects
+            </label>
+          </div>
+          
+          {/* Search Input */}
+          <div className="relative w-full max-w-sm">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Search projects..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
         
         <div className="flex items-center gap-4">
@@ -164,13 +239,7 @@ const ProjectsPage = () => {
         <Card className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-center items-center h-40">
             <p className="text-gray-500">
-              {searchQuery 
-                ? 'No matching projects found. Try a different search term.'
-                : filter === 'all' 
-                  ? 'No projects created yet. Projects will appear here once created.' 
-                  : filter === 'completed' 
-                    ? 'No completed projects found.' 
-                    : 'No projects in progress found.'}
+              {getEmptyStateMessage()}
             </p>
           </div>
         </Card>
