@@ -258,14 +258,12 @@ const TimeTrackingPage = () => {
 
       {view === "calendar" && (
         <CalendarView 
-          timeEntries={timeEntries}
           onEditEntry={handleEdit}
           onDeleteEntry={handleDelete}
           tasks={tasks}
           companies={companies}
           campaigns={campaigns}
           projects={projects}
-          isLoading={isLoading}
         />
       )}
       
