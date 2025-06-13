@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +10,7 @@ import { UserTable } from "@/components/UserManagement/UserTable";
 import { DeleteUserDialog } from "@/components/UserManagement/DeleteUserDialog";
 import { InviteUserDialog } from "@/components/UserManagement/InviteUserDialog";
 import { EditUserDialog } from "@/components/UserManagement/EditUserDialog";
+import { ChangeUserRoleDialog } from "@/components/UserManagement/ChangeUserRoleDialog";
 import { useUserFilters } from "@/hooks/useUserFilters";
 import { userService, User } from "@/services/userService";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -19,6 +21,7 @@ export function UserManagementTab() {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showChangeRoleDialog, setShowChangeRoleDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -110,6 +113,11 @@ export function UserManagementTab() {
     setShowEditDialog(true);
   };
 
+  const handleChangeRole = (user: User) => {
+    setSelectedUser(user);
+    setShowChangeRoleDialog(true);
+  };
+
   const handleResetPassword = (email: string) => {
     resetPasswordMutation.mutate(email);
   };
@@ -157,6 +165,7 @@ export function UserManagementTab() {
           error={error}
           onDeleteUser={handleDeleteUser}
           onEditUser={handleEditUser}
+          onChangeRole={handleChangeRole}
           onResetPassword={handleResetPassword}
           isPendingDelete={deleteUserMutation.isPending}
           isPendingReset={resetPasswordMutation.isPending}
@@ -179,6 +188,15 @@ export function UserManagementTab() {
               setShowEditDialog(false);
               setSelectedUser(null);
               queryClient.invalidateQueries({ queryKey: ['users'] });
+            }}
+            user={selectedUser}
+          />
+          
+          <ChangeUserRoleDialog
+            isOpen={showChangeRoleDialog}
+            onClose={() => {
+              setShowChangeRoleDialog(false);
+              setSelectedUser(null);
             }}
             user={selectedUser}
           />

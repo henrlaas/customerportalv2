@@ -37,7 +37,7 @@ export const userService = {
     }
   },
 
-  updateUser: async (userId: string, userData: EditUserFormValues): Promise<any> => {
+  updateUser: async (userId: string, userData: EditUserFormValues & { role?: string }): Promise<any> => {
     try {
       const response = await supabase.functions.invoke('user-management', {
         body: {
@@ -48,7 +48,8 @@ export const userService = {
             user_metadata: {
               first_name: userData.firstName,
               last_name: userData.lastName,
-              phone_number: userData.phone
+              phone_number: userData.phone,
+              role: userData.role
             }
           }
         },

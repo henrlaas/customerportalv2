@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, KeyRound, Trash2 } from "lucide-react";
+import { Edit, KeyRound, Trash2, UserCog } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface UserTableProps {
@@ -20,6 +20,7 @@ interface UserTableProps {
   onDeleteUser: (user: User) => void;
   onEditUser: (user: User) => void;
   onResetPassword: (email: string) => void;
+  onChangeRole: (user: User) => void;
   isPendingDelete: boolean;
   isPendingReset: boolean;
 }
@@ -32,6 +33,7 @@ export function UserTable({
   onDeleteUser,
   onEditUser,
   onResetPassword,
+  onChangeRole,
   isPendingDelete,
   isPendingReset
 }: UserTableProps) {
@@ -132,6 +134,16 @@ export function UserTable({
                     onClick={() => onEditUser(user)}
                   >
                     <Edit className="h-4 w-4" />
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    title="Change Role"
+                    onClick={() => onChangeRole(user)}
+                  >
+                    <UserCog className="h-4 w-4" />
                   </Button>
                   
                   <Button 
