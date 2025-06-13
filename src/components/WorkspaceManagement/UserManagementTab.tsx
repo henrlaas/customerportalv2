@@ -1,9 +1,7 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserPlus, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { UserFilters } from "@/components/UserManagement/UserFilters";
 import { UserTable } from "@/components/UserManagement/UserTable";
@@ -126,10 +124,6 @@ export function UserManagementTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">User Management</h2>
-        <Button onClick={() => setShowInviteDialog(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add User
-        </Button>
       </div>
 
       <Alert className="bg-[#FEF7CD] border-yellow-300 text-[#1A1F2C]">

@@ -1,4 +1,3 @@
-
 import { User } from "@/services/userService";
 import {
   Table,
@@ -92,7 +91,6 @@ export function UserTable({
           <TableHead>Name</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Role</TableHead>
-          <TableHead>Team</TableHead>
           <TableHead>Joined</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -122,7 +120,6 @@ export function UserTable({
                   </span>
                 )}
               </TableCell>
-              <TableCell>{user.user_metadata?.team || '-'}</TableCell>
               <TableCell>{formatDate(user.created_at)}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
@@ -173,7 +170,7 @@ export function UserTable({
           ))
         ) : (
           <TableRow>
-            <TableCell colSpan={6} className="h-24 text-center">
+            <TableCell colSpan={5} className="h-24 text-center">
               No users found matching your search criteria
             </TableCell>
           </TableRow>
