@@ -50,7 +50,7 @@ export function UserTable({
   const getRoleBadgeColor = (role: string) => {
     switch(role) {
       case "admin":
-        return "bg-purple-100 text-purple-800";
+        return "bg-red-100 text-red-800";
       case "employee":
         return "bg-blue-100 text-blue-800";
       case "client":
