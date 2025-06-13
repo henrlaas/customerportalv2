@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useAuth } from '@/contexts/AuthContext';
@@ -276,7 +275,7 @@ const MediaPage: React.FC = () => {
   const showUploadButton: boolean = activeTab === 'internal' || (activeTab === 'company' && !!currentPath);
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <DndContext 
           sensors={sensors}
