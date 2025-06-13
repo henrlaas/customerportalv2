@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -170,7 +171,7 @@ const ProjectsPage = () => {
       
       {/* Search and Filters row */}
       <div className="flex justify-between items-center my-6">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 flex-1 max-w-2xl min-w-0">
           {/* Search Input */}
           <div className="relative w-full max-w-lg">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
