@@ -99,9 +99,9 @@ export const CalendarView = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar column */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="flex flex-row items-center justify-between">
+        {/* Calendar column - Fixed height */}
+        <Card className="lg:col-span-1 h-[500px] flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between flex-shrink-0 pb-4">
             <CardTitle className="text-lg font-medium">
               {format(currentMonth, 'MMMM yyyy')}
             </CardTitle>
@@ -121,13 +121,13 @@ export const CalendarView = ({
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-grow flex items-center justify-center p-2">
             <Calendar
               mode="single"
               month={currentMonth}
               selected={selectedDate}
               onSelect={setSelectedDate}
-              className="rounded-md border"
+              className="w-full max-w-none"
               modifiers={{
                 hasEntry: (date) => {
                   const dateString = format(date, 'yyyy-MM-dd');
