@@ -2,21 +2,26 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, isBefore } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useCalendarData = (currentDate: Date = new Date()) => {
+  const { user } = useAuth();
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const today = new Date();
 
-  // Fetch tasks with due dates - exclude completed tasks
+  // Fetch tasks with due dates assigned to the current user - exclude completed tasks
   const { data: allTasks, isLoading: tasksLoading } = useQuery({
-    queryKey: ['calendar-tasks'],
+    queryKey: ['calendar-tasks', user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
       const { data, error } = await supabase
         .from('tasks')
         .select('id, title, priority, status, due_date')
         .not('due_date', 'is', null)
         .neq('status', 'completed')
+        .eq('assigned_to', user.id)
         .order('due_date', { ascending: true });
 
       if (error) {
@@ -26,18 +31,28 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
 
       return data || [];
     },
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Fetch projects with deadlines
+  // Fetch projects with deadlines where user is assigned
   const { data: allProjects, isLoading: projectsLoading } = useQuery({
-    queryKey: ['calendar-projects'],
+    queryKey: ['calendar-projects', user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, deadline, value')
+        .select(`
+          id, 
+          name, 
+          deadline, 
+          value,
+          project_assignees!inner(user_id)
+        `)
         .not('deadline', 'is', null)
+        .eq('project_assignees.user_id', user.id)
         .order('deadline', { ascending: true });
 
       if (error) {
@@ -47,17 +62,23 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
 
       return data || [];
     },
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Fetch project milestones to determine project completion status
+  // Fetch project milestones for the user's assigned projects to determine completion status
   const { data: milestones, isLoading: milestonesLoading } = useQuery({
-    queryKey: ['project-milestones-all'],
+    queryKey: ['project-milestones-user', user?.id],
     queryFn: async () => {
+      if (!user?.id || !allProjects?.length) return [];
+      
+      const projectIds = allProjects.map(p => p.id);
+      
       const { data, error } = await supabase
         .from('milestones')
-        .select('project_id, status');
+        .select('project_id, status')
+        .in('project_id', projectIds);
 
       if (error) {
         console.error('Error fetching milestones:', error);
@@ -66,6 +87,7 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
 
       return data || [];
     },
+    enabled: !!user?.id && !!allProjects?.length,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -135,6 +157,6 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     tasks,
     projects,
     monthlyStats,
-    isLoading: tasksLoading || projectsLoading || milestonesLoading,
+    isLoading: tasksLoading || projectsLoading || milestonesLoading || !user,
   };
 };
