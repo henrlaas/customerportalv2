@@ -10,7 +10,7 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
   const monthEnd = endOfMonth(currentDate);
   const today = new Date();
 
-  // Fetch tasks with due dates assigned to the current user - exclude completed tasks
+  // Fetch tasks assigned to the current user through task_assignees table - exclude completed tasks
   const { data: allTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ['calendar-tasks', user?.id],
     queryFn: async () => {
@@ -20,10 +20,17 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
       
       const { data, error } = await supabase
         .from('tasks')
-        .select('id, title, priority, status, due_date, assigned_to')
+        .select(`
+          id, 
+          title, 
+          priority, 
+          status, 
+          due_date,
+          task_assignees!inner(user_id)
+        `)
         .not('due_date', 'is', null)
         .neq('status', 'completed')
-        .eq('assigned_to', user.id)
+        .eq('task_assignees.user_id', user.id)
         .order('due_date', { ascending: true });
 
       if (error) {
