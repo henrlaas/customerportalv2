@@ -18,7 +18,9 @@ import {
   FileText, 
   ArrowLeft, 
   Trash2,
-  Mail 
+  Mail,
+  Share,
+  MoreHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +29,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { Card } from '@/components/ui/card';
 import { DeleteContractDialog } from '@/components/DeleteContractDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const ContractDetailsPage = () => {
   const { contractId } = useParams<{ contractId: string }>();
@@ -44,6 +52,25 @@ const ContractDetailsPage = () => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const queryClient = useQueryClient();
   const emailSender = useEmailSender();
+  
+  // Handle share contract
+  const handleShareContract = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const contractUrl = `${window.location.origin}/contracts/${contractId}`;
+      await navigator.clipboard.writeText(contractUrl);
+      toast({
+        title: 'Link copied',
+        description: 'Contract link has been copied to clipboard',
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to copy link',
+        description: 'Could not copy the contract link to clipboard',
+        variant: 'destructive',
+      });
+    }
+  };
   
   // Fetch project details if contract has project_id
   const { data: projectData } = useQuery({
@@ -626,14 +653,26 @@ const ContractDetailsPage = () => {
           </Button>
           
           {(profile?.role === 'admin' || profile?.role === 'employee') && (
-            <Button 
-              variant="destructive" 
-              onClick={handleContractDelete}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete Contract
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-white z-50">
+                <DropdownMenuItem onClick={handleShareContract}>
+                  <Share className="h-4 w-4 mr-2" />
+                  Share contract
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-red-600 focus:text-red-600"
+                  onClick={handleContractDelete}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete contract
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>
