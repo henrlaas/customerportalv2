@@ -22,6 +22,7 @@ import { ViewEmployeeDialog } from './EmployeeDetails/ViewEmployeeDialog';
 import { useEmployeeFilters } from '@/hooks/useEmployeeFilters';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { userService } from '@/services/userService';
+import { EmployeeSummaryCards } from './EmployeeSummaryCards';
 
 export function EmployeeManagementTab() {
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -133,6 +134,9 @@ export function EmployeeManagementTab() {
           Add Employee
         </Button>
       </div>
+
+      {/* Employee Summary Cards */}
+      <EmployeeSummaryCards employees={employees} />
 
       {/* Search and filters */}
       <div className="flex flex-col sm:flex-row gap-4">
