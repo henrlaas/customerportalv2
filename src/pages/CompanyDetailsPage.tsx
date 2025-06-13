@@ -81,13 +81,18 @@ const CompanyDetailsPage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      {/* Simple Header */}
-      <div className="flex items-center mb-6">
-        <Button variant="ghost" onClick={() => navigate('/companies')} className="mr-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Companies
-        </Button>
-        <h1 className="text-2xl font-bold">Company Details</h1>
+      {/* Header with Back Button, Title, and Actions */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Button variant="ghost" onClick={() => navigate('/companies')} className="mr-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Companies
+          </Button>
+          <h1 className="text-2xl font-bold">Company Details</h1>
+        </div>
+        
+        {/* Action Button */}
+        <CompanyDetailHeader company={company} isLoading={isLoading} />
       </div>
 
       {/* Hero Card */}
@@ -95,9 +100,6 @@ const CompanyDetailsPage = () => {
       
       {/* Summary Cards */}
       <CompanySummaryCards company={company} />
-      
-      {/* Action Header with Edit/Delete */}
-      <CompanyDetailHeader company={company} isLoading={isLoading} />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6">

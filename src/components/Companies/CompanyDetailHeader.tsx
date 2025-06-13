@@ -7,8 +7,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   Edit,
   Trash,
+  MoreVertical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { EditCompanyDialog } from '@/components/Companies/EditCompanyDialog';
 import { DeleteCompanyDialog } from '@/components/Companies/DeleteCompanyDialog';
 import { companyService } from '@/services/companyService';
@@ -59,24 +66,26 @@ export const CompanyDetailHeader = ({ company, isLoading }: CompanyDetailHeaderP
 
   return (
     <>
-      <div className="flex justify-end items-center mb-6 gap-3">
-        <Button 
-          variant="outline" 
-          onClick={() => setIsEditing(true)}
-          className="bg-white hover:bg-gray-50"
-        >
-          <Edit className="mr-2 h-4 w-4" />
-          Edit Company
-        </Button>
-        <Button 
-          variant="outline" 
-          onClick={() => setIsDeleting(true)}
-          className="border-red-300 text-red-600 hover:bg-red-50 bg-white"
-        >
-          <Trash className="mr-2 h-4 w-4" />
-          Delete Company
-        </Button>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={() => setIsEditing(true)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Company
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => setIsDeleting(true)}
+            className="text-red-600 focus:text-red-600"
+          >
+            <Trash className="mr-2 h-4 w-4" />
+            Delete Company
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Edit Company Dialog */}
       <EditCompanyDialog
