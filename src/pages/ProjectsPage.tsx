@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,6 +16,14 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getProjectStatus } from '@/utils/projectStatus';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from '@/components/ui/pagination';
 
 const ProjectsPage = () => {
   const { profile } = useAuth();
@@ -23,6 +31,8 @@ const ProjectsPage = () => {
   const [filter, setFilter] = useState<'all' | 'in_progress' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showMyProjects, setShowMyProjects] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { projects, isLoading: projectsLoading, refetch, deleteProject } = useProjects();
 
   // Fetch user's assigned projects
@@ -113,6 +123,64 @@ const ProjectsPage = () => {
     
     return true;
   }) : [];
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProjects = filteredProjects.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchQuery, showMyProjects]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of the list
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if less than max visible
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      if (currentPage > 3) {
+        // Add ellipsis if currentPage is far from start
+        pages.push(-1); // -1 indicates ellipsis
+      }
+      
+      // Show pages around current page
+      const startPage = Math.max(2, currentPage - 1);
+      const endPage = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      if (currentPage < totalPages - 2) {
+        // Add ellipsis if currentPage is far from end
+        pages.push(-2); // -2 indicates ellipsis (with different key)
+      }
+      
+      // Always show last page
+      if (totalPages > 1) {
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
 
   const handleDeleteProject = async (projectId: string) => {
     try {
@@ -236,12 +304,65 @@ const ProjectsPage = () => {
       {/* Projects List */}
       {projectsLoading ? (
         <ProjectListViewSkeleton />
-      ) : filteredProjects && filteredProjects.length > 0 ? (
-        <ProjectListView 
-          projects={filteredProjects} 
-          selectedProjectId={null}
-          onDeleteProject={handleDeleteProject}
-        />
+      ) : paginatedProjects && paginatedProjects.length > 0 ? (
+        <>
+          <ProjectListView 
+            projects={paginatedProjects} 
+            selectedProjectId={null}
+            onDeleteProject={handleDeleteProject}
+          />
+          
+          {/* Pagination - only show if we have more than itemsPerPage projects */}
+          {filteredProjects.length > itemsPerPage && (
+            <Pagination className="mt-6">
+              <PaginationContent>
+                {/* Previous page button */}
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage > 1) handlePageChange(currentPage - 1);
+                    }}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                
+                {/* Page numbers */}
+                {getPageNumbers().map((page, index) => (
+                  <PaginationItem key={`page-${index}`}>
+                    {page < 0 ? (
+                      <span className="flex h-9 w-9 items-center justify-center">...</span>
+                    ) : (
+                      <PaginationLink
+                        href="#"
+                        isActive={page === currentPage}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(page);
+                        }}
+                      >
+                        {page}
+                      </PaginationLink>
+                    )}
+                  </PaginationItem>
+                ))}
+                
+                {/* Next page button */}
+                <PaginationItem>
+                  <PaginationNext 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                    }}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </>
       ) : (
         <Card className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-center items-center h-40">
