@@ -3,25 +3,38 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { FileText, CheckSquare, Clock, DollarSign } from 'lucide-react';
 import { ProjectWithRelations } from '@/hooks/useProjects';
+import { getProjectStatus } from '@/utils/projectStatus';
 
 interface ProjectsSummaryCardsProps {
   projects: ProjectWithRelations[] | undefined;
   isLoading: boolean;
+  projectMilestones?: Record<string, any[]>;
 }
 
 export const ProjectsSummaryCards: React.FC<ProjectsSummaryCardsProps> = ({
   projects = [],
-  isLoading
+  isLoading,
+  projectMilestones = {}
 }) => {
   // Calculate summary data
   const totalProjects = projects.length;
   
-  // Currently there's no "signed" state in the project type, so we'll calculate based on contracts later
-  const totalSignedProjects = 0;
-  const totalUnsignedProjects = totalProjects - totalSignedProjects;
+  // Calculate in progress and completed projects based on milestones
+  let inProgressProjects = 0;
+  let completedProjects = 0;
+  let totalCompletedValue = 0;
   
-  // Calculate total value of all projects
-  const totalProjectsValue = projects.reduce((sum, project) => sum + (project.value || 0), 0);
+  projects.forEach(project => {
+    const milestones = projectMilestones[project.id] || [];
+    const status = getProjectStatus(milestones);
+    
+    if (status === 'completed') {
+      completedProjects += 1;
+      totalCompletedValue += project.value || 0;
+    } else {
+      inProgressProjects += 1;
+    }
+  });
   
   if (isLoading) {
     return (
@@ -52,12 +65,12 @@ export const ProjectsSummaryCards: React.FC<ProjectsSummaryCardsProps> = ({
       
       <Card className="p-6">
         <div className="flex items-start">
-          <div className="rounded-full bg-yellow-100 p-3 mr-4">
-            <Clock className="h-6 w-6 text-yellow-700" />
+          <div className="rounded-full bg-orange-100 p-3 mr-4">
+            <Clock className="h-6 w-6 text-orange-700" />
           </div>
           <div>
-            <div className="text-2xl font-bold">{totalUnsignedProjects}</div>
-            <div className="text-muted-foreground">Unsigned Projects</div>
+            <div className="text-2xl font-bold">{inProgressProjects}</div>
+            <div className="text-muted-foreground">In Progress Projects</div>
           </div>
         </div>
       </Card>
@@ -68,8 +81,8 @@ export const ProjectsSummaryCards: React.FC<ProjectsSummaryCardsProps> = ({
             <CheckSquare className="h-6 w-6 text-green-700" />
           </div>
           <div>
-            <div className="text-2xl font-bold">{totalSignedProjects}</div>
-            <div className="text-muted-foreground">Signed Projects</div>
+            <div className="text-2xl font-bold">{completedProjects}</div>
+            <div className="text-muted-foreground">Completed Projects</div>
           </div>
         </div>
       </Card>
@@ -80,8 +93,8 @@ export const ProjectsSummaryCards: React.FC<ProjectsSummaryCardsProps> = ({
             <DollarSign className="h-6 w-6 text-purple-700" />
           </div>
           <div>
-            <div className="text-2xl font-bold">{totalProjectsValue.toLocaleString()} NOK</div>
-            <div className="text-muted-foreground">Total Value</div>
+            <div className="text-2xl font-bold">{totalCompletedValue.toLocaleString()} NOK</div>
+            <div className="text-muted-foreground">Total Completed Value</div>
           </div>
         </div>
       </Card>

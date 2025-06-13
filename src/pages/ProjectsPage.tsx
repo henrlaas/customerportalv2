@@ -155,17 +155,24 @@ const ProjectsPage = () => {
   return (
     <div className="container p-6 mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Projects</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Projects</h1>
+          <p className="text-muted-foreground mt-1">Manage projects with clients and partners</p>
+        </div>
       </div>
       
       {/* Summary Cards */}
-      <ProjectsSummaryCards projects={projects} isLoading={projectsLoading} />
+      <ProjectsSummaryCards 
+        projects={projects} 
+        isLoading={projectsLoading}
+        projectMilestones={projectMilestones}
+      />
       
       {/* Search and Filters row */}
       <div className="flex justify-between items-center my-6">
         <div className="flex items-center gap-6">
           {/* Search Input */}
-          <div className="relative w-full max-w-sm">
+          <div className="relative w-full max-w-md">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
             <Input
               placeholder="Search projects..."
