@@ -127,22 +127,29 @@ export const TimeEntryCard = ({
             </div>
           </div>
           
-          {/* Right side - Actions - Only edit allowed for current month */}
+          {/* Right side - Actions - Only edit and delete allowed for current month */}
           <div className="flex items-center gap-1">
             {isCurrentMonth && (
-              <Button variant="ghost" size="icon" onClick={(e) => {
-                e.stopPropagation();
-                onEdit(entry);
-              }}>
-                <Pencil className="h-4 w-4" />
-              </Button>
+              <>
+                <Button variant="ghost" size="icon" onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(entry);
+                }}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(entry);
+                }} className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
             )}
-            <Button variant="ghost" size="icon" onClick={(e) => {
-              e.stopPropagation();
-              onDelete(entry);
-            }} className="text-destructive hover:text-destructive">
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {!isCurrentMonth && (
+              <div className="text-xs text-gray-400 px-2">
+                Historical entry
+              </div>
+            )}
           </div>
         </div>
       </div>
