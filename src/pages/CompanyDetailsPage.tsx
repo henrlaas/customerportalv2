@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
-import { Users, Layers } from 'lucide-react';
+import { Users, Layers, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building } from 'lucide-react';
@@ -11,8 +11,9 @@ import { CompanyContactsList } from '@/components/Companies/CompanyContactsList'
 import { CompanyHierarchy } from '@/components/Companies/CompanyHierarchy';
 import { companyService } from '@/services/companyService';
 import { CompanyDetailHeader } from '@/components/Companies/CompanyDetailHeader';
-import { CompanyInfoCards } from '@/components/Companies/CompanyInfoCards';
 import { CompanyOverviewTab } from '@/components/Companies/CompanyOverviewTab';
+import { CompanyHeroCard } from '@/components/Companies/CompanyHeroCard';
+import { CompanySummaryCards } from '@/components/Companies/CompanySummaryCards';
 
 const CompanyDetailsPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -80,9 +81,23 @@ const CompanyDetailsPage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <CompanyDetailHeader company={company} isLoading={isLoading} />
+      {/* Simple Header */}
+      <div className="flex items-center mb-6">
+        <Button variant="ghost" onClick={() => navigate('/companies')} className="mr-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Companies
+        </Button>
+        <h1 className="text-2xl font-bold">Company Details</h1>
+      </div>
+
+      {/* Hero Card */}
+      <CompanyHeroCard company={company} />
       
-      <CompanyInfoCards company={company} />
+      {/* Summary Cards */}
+      <CompanySummaryCards company={company} />
+      
+      {/* Action Header with Edit/Delete */}
+      <CompanyDetailHeader company={company} isLoading={isLoading} />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6">
