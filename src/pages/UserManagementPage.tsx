@@ -11,6 +11,7 @@ import { UserTable } from "@/components/UserManagement/UserTable";
 import { DeleteUserDialog } from "@/components/UserManagement/DeleteUserDialog";
 import { InviteUserDialog } from "@/components/UserManagement/InviteUserDialog";
 import { EditUserDialog } from "@/components/UserManagement/EditUserDialog";
+import { ChangeUserRoleDialog } from "@/components/UserManagement/ChangeUserRoleDialog";
 import { useUserFilters } from "@/hooks/useUserFilters";
 import { userService, User } from "@/services/userService";
 
@@ -19,6 +20,7 @@ const UserManagementPage = () => {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showChangeRoleDialog, setShowChangeRoleDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -118,6 +120,12 @@ const UserManagementPage = () => {
     setShowEditDialog(true);
   };
 
+  // Handle change role
+  const handleChangeRole = (user: User) => {
+    setSelectedUser(user);
+    setShowChangeRoleDialog(true);
+  };
+
   // Handle password reset
   const handleResetPassword = (email: string) => {
     resetPasswordMutation.mutate(email);
@@ -156,6 +164,7 @@ const UserManagementPage = () => {
             error={error}
             onDeleteUser={handleDeleteUser}
             onEditUser={handleEditUser}
+            onChangeRole={handleChangeRole}
             onResetPassword={handleResetPassword}
             isPendingDelete={deleteUserMutation.isPending}
             isPendingReset={resetPasswordMutation.isPending}
@@ -173,6 +182,16 @@ const UserManagementPage = () => {
       <EditUserDialog 
         isOpen={showEditDialog} 
         onClose={() => setShowEditDialog(false)}
+        user={selectedUser}
+      />
+
+      {/* Change User Role Dialog */}
+      <ChangeUserRoleDialog
+        isOpen={showChangeRoleDialog}
+        onClose={() => {
+          setShowChangeRoleDialog(false);
+          setSelectedUser(null);
+        }}
         user={selectedUser}
       />
 

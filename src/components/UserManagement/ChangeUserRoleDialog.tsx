@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
@@ -62,7 +62,7 @@ export function ChangeUserRoleDialog({ isOpen, onClose, user }: ChangeUserRoleDi
   };
 
   // Reset selected role when user changes
-  useState(() => {
+  useEffect(() => {
     if (user?.user_metadata?.role) {
       setSelectedRole(user.user_metadata.role);
     }
