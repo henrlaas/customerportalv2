@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { format, isValid, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -26,22 +27,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useOptimizedProjectAssignees } from '@/hooks/useOptimizedProjectAssignees';
 import { getProjectStatus, getProjectStatusBadge } from '@/utils/projectStatus';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProjectListViewProps {
   projects: ProjectWithRelations[];
   selectedProjectId: string | null;
   onDeleteProject?: (projectId: string) => Promise<void>;
   projectMilestones?: Record<string, any[]>;
-}
-
-interface ProjectAssignee {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  avatar_url: string | null;
 }
 
 export const ProjectListView: React.FC<ProjectListViewProps> = ({
@@ -56,82 +50,11 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
 
   console.log('ProjectListView render - projects:', projects.length, 'milestones keys:', Object.keys(projectMilestones).length);
 
-  // Fetch project assignees for all projects in a single optimized query
-  const { data: projectAssignees = {}, isLoading: assigneesLoading, error: assigneesError } = useQuery({
-    queryKey: ['project-assignees-optimized', projects.map(p => p.id)],
-    queryFn: async () => {
-      if (!projects.length) return {};
-      
-      const projectIds = projects.map(project => project.id);
-      console.log('Fetching assignees for projects:', projectIds);
-      
-      try {
-        // Get all assignees for all projects
-        const { data: assigneesData, error: assigneesError } = await supabase
-          .from('project_assignees')
-          .select('project_id, user_id')
-          .in('project_id', projectIds);
-        
-        if (assigneesError) {
-          console.error('Error fetching project assignees:', assigneesError);
-          return {};
-        }
-
-        if (!assigneesData || assigneesData.length === 0) {
-          console.log('No assignees found for projects');
-          return {};
-        }
-
-        // Get all unique user IDs
-        const userIds = Array.from(new Set(assigneesData.map(a => a.user_id)));
-        console.log('Fetching profiles for users:', userIds);
-        
-        // Fetch profiles for these users
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, avatar_url')
-          .in('id', userIds);
-        
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
-          return {};
-        }
-
-        // Create a map of profiles for quick lookup
-        const profilesMap = Object.fromEntries(
-          (profilesData || []).map(profile => [profile.id, profile])
-        );
-        
-        // Group assignees by project_id with profile data
-        const assigneesByProject: Record<string, ProjectAssignee[]> = {};
-        
-        for (const assignee of assigneesData) {
-          if (!assigneesByProject[assignee.project_id]) {
-            assigneesByProject[assignee.project_id] = [];
-          }
-          
-          const profile = profilesMap[assignee.user_id];
-          if (profile) {
-            assigneesByProject[assignee.project_id].push({
-              id: assignee.user_id,
-              first_name: profile.first_name,
-              last_name: profile.last_name,
-              avatar_url: profile.avatar_url
-            });
-          }
-        }
-        
-        console.log('Assignees grouped by project:', Object.keys(assigneesByProject).length, 'projects have assignees');
-        return assigneesByProject;
-      } catch (error) {
-        console.error('Error in project assignees query:', error);
-        return {};
-      }
-    },
-    enabled: projects.length > 0,
-    staleTime: 30000,
-    retry: 2
-  });
+  // Get project IDs for assignee fetching
+  const projectIds = projects.map(p => p.id);
+  
+  // Fetch assignees using the optimized hook
+  const { data: projectAssignees = {}, isLoading: assigneesLoading, error: assigneesError } = useOptimizedProjectAssignees(projectIds);
 
   // Log errors for debugging
   React.useEffect(() => {
@@ -177,7 +100,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
   };
 
   const handleDeleteClick = (e: React.MouseEvent, projectId: string) => {
-    e.stopPropagation(); // Prevent row click from triggering
+    e.stopPropagation();
     console.log('Delete clicked for project:', projectId);
     setProjectToDelete(projectId);
     setDeleteDialogOpen(true);
@@ -212,10 +135,6 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
       </Badge>
     );
   };
-
-  if (assigneesLoading) {
-    console.log('Still loading assignees...');
-  }
 
   return (
     <>
@@ -282,15 +201,18 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {assignees && assignees.length > 0 ? (
+                      {assigneesLoading ? (
+                        <div className="flex -space-x-2">
+                          <Skeleton className="h-8 w-8 rounded-full" />
+                          <Skeleton className="h-8 w-8 rounded-full" />
+                        </div>
+                      ) : assignees && assignees.length > 0 ? (
                         <UserAvatarGroup 
                           users={assignees} 
                           size="sm"
                         />
                       ) : (
-                        <span className="text-gray-500 text-sm">
-                          {assigneesLoading ? 'Loading...' : 'Not assigned'}
-                        </span>
+                        <span className="text-gray-500 text-sm">Not assigned</span>
                       )}
                     </TableCell>
                     <TableCell>{getProjectStatusForDisplay(project.id)}</TableCell>

@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -26,14 +27,14 @@ export interface ProjectWithRelations {
 }
 
 export const useProjects = () => {
-  // Fetch all projects with related data in an optimized way
+  // Single optimized query for all project data
   const { data: projects, isLoading, error, refetch } = useQuery({
-    queryKey: ['projects'],
+    queryKey: ['projects-complete'],
     queryFn: async () => {
       try {
-        console.log('Fetching projects...');
+        console.log('Fetching complete projects data...');
         
-        // Single optimized query to get projects with company details
+        // Single comprehensive query with all necessary joins
         const { data: projectsData, error: projectsError } = await supabase
           .from('projects')
           .select(`
@@ -60,13 +61,13 @@ export const useProjects = () => {
         // Validate and clean project data
         const validatedProjects = projectsData.map(project => ({
           ...project,
-          value: project.value || 0, // Ensure value is never null
-          price_type: project.price_type || 'estimated', // Default price type
+          value: project.value || 0,
+          price_type: project.price_type || 'estimated',
           deadline: project.deadline,
           company: project.company || null,
         }));
 
-        // Get all unique creator IDs from projects
+        // Get all unique creator IDs
         const creatorIds = Array.from(new Set(
           validatedProjects
             .map(project => project.created_by)
@@ -85,16 +86,13 @@ export const useProjects = () => {
 
             if (creatorsError) {
               console.error('Error fetching creator profiles:', creatorsError);
-              // Don't throw here, just continue without creator data
             } else {
-              // Create a map for quick lookup
               creatorsMap = Object.fromEntries(
                 (creatorsData || []).map(creator => [creator.id, creator])
               );
             }
           } catch (error) {
             console.error('Error in creator profiles query:', error);
-            // Continue without creator data
           }
         }
 
@@ -104,18 +102,19 @@ export const useProjects = () => {
           creator: project.created_by ? creatorsMap[project.created_by] || null : null
         })) as ProjectWithRelations[];
 
-        console.log('Projects with creators processed successfully');
+        console.log('Complete projects data processed successfully');
         return projectsWithCreators;
       } catch (error) {
         console.error('Error in useProjects query:', error);
         throw error;
       }
     },
-    staleTime: 30000, // 30 seconds
+    staleTime: 5 * 60 * 1000, // 5 minutes - conservative like contracts
+    gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    refetchOnWindowFocus: true, // Refetch when returning to tab
-    refetchOnMount: true, // Always refetch on component mount
+    refetchOnWindowFocus: false, // Prevent aggressive refetching
+    refetchOnMount: false, // Only refetch when explicitly needed
   });
 
   // Function to create a new project
@@ -149,7 +148,7 @@ export const useProjects = () => {
         throw error;
       }
 
-      // Refetch projects to update the list
+      // Force refetch to update the list
       refetch();
       return data;
     } catch (error) {
@@ -187,7 +186,7 @@ export const useProjects = () => {
 
       console.log(`Successfully deleted project ID: ${projectId}`);
       
-      // Refetch projects to update the list
+      // Force refetch to update the list
       refetch();
       return true;
     } catch (error) {
@@ -233,7 +232,6 @@ export const useProjects = () => {
           }
         } catch (error) {
           console.error('Error in creator query:', error);
-          // Continue without creator data
         }
       }
 

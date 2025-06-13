@@ -22,13 +22,13 @@ export function ProjectListViewSkeleton() {
               <TableHead>Value</TableHead>
               <TableHead>Price Type</TableHead>
               <TableHead>Assigned</TableHead>
-              <TableHead>Created At</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Deadline</TableHead>
               <TableHead className="w-10">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Array(6).fill(0).map((_, i) => (
+            {Array(8).fill(0).map((_, i) => (
               <TableRow key={`project-skeleton-${i}`}>
                 <TableCell>
                   <Skeleton className="h-4 w-32" />
@@ -49,10 +49,11 @@ export function ProjectListViewSkeleton() {
                   <div className="flex -space-x-2">
                     <Skeleton className="h-8 w-8 rounded-full" />
                     <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-6 w-20 rounded-full" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-4 w-20" />

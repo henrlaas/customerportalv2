@@ -12,7 +12,7 @@ import { ProjectListViewSkeleton } from '@/components/Projects/ProjectListViewSk
 import { ProjectsSummaryCards } from '@/components/Projects/ProjectsSummaryCards';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getProjectStatus } from '@/utils/projectStatus';
 import { 
@@ -26,6 +26,7 @@ import {
 
 const ProjectsPage = () => {
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filter, setFilter] = useState<'all' | 'in_progress' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,6 +36,12 @@ const ProjectsPage = () => {
   const { projects, isLoading: projectsLoading, refetch, deleteProject } = useProjects();
 
   console.log('ProjectsPage render - projects:', projects?.length || 0, 'loading:', projectsLoading);
+
+  // Force refetch when returning to this page
+  useEffect(() => {
+    console.log('ProjectsPage mounted, refreshing data...');
+    refetch();
+  }, [refetch]);
 
   // Fetch user's assigned projects with better error handling
   const { data: userProjectIds = [], isLoading: userProjectsLoading, error: userProjectsError } = useQuery({
@@ -67,9 +74,10 @@ const ProjectsPage = () => {
       }
     },
     enabled: !!profile?.id && showMyProjects,
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
-    refetchOnWindowFocus: false, // Prevent unnecessary refetches
+    refetchOnWindowFocus: false,
   });
 
   // Fetch milestones for all projects to enable status filtering
@@ -112,7 +120,8 @@ const ProjectsPage = () => {
       }
     },
     enabled: !!projects?.length,
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -196,7 +205,6 @@ const ProjectsPage = () => {
   const handlePageChange = (page: number) => {
     console.log('Changing to page:', page);
     setCurrentPage(page);
-    // Scroll to top of the list
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -206,20 +214,16 @@ const ProjectsPage = () => {
     const maxVisiblePages = 5;
     
     if (totalPages <= maxVisiblePages) {
-      // Show all pages if less than max visible
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      // Always show first page
       pages.push(1);
       
       if (currentPage > 3) {
-        // Add ellipsis if currentPage is far from start
-        pages.push(-1); // -1 indicates ellipsis
+        pages.push(-1);
       }
       
-      // Show pages around current page
       const startPage = Math.max(2, currentPage - 1);
       const endPage = Math.min(totalPages - 1, currentPage + 1);
       
@@ -228,11 +232,9 @@ const ProjectsPage = () => {
       }
       
       if (currentPage < totalPages - 2) {
-        // Add ellipsis if currentPage is far from end
-        pages.push(-2); // -2 indicates ellipsis (with different key)
+        pages.push(-2);
       }
       
-      // Always show last page
       if (totalPages > 1) {
         pages.push(totalPages);
       }
@@ -245,13 +247,26 @@ const ProjectsPage = () => {
     try {
       await deleteProject(projectId);
       toast.success('Project and associated contracts successfully deleted');
-      refetch(); // Refresh the projects list after deletion
+      // Invalidate related caches to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['projects-complete'] });
+      queryClient.invalidateQueries({ queryKey: ['user-project-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['all-project-milestones'] });
       return Promise.resolve();
     } catch (error) {
       console.error('Error deleting project:', error);
       toast.error('Failed to delete project');
       return Promise.reject(error);
     }
+  };
+
+  const handleCreateDialogClose = () => {
+    setShowCreateDialog(false);
+    // Force refresh data after dialog closes
+    setTimeout(() => {
+      console.log('Refreshing data after dialog close...');
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['projects-complete'] });
+    }, 100);
   };
 
   const getEmptyStateMessage = () => {
@@ -283,11 +298,6 @@ const ProjectsPage = () => {
   // Check if we're still loading critical data
   const isLoading = projectsLoading || (showMyProjects && userProjectsLoading);
 
-  // Add error boundary for projects data
-  if (!isLoading && projects && projects.length > 0 && filteredProjects.length === 0 && !searchQuery && filter === 'all') {
-    console.error('Potential data filtering issue - projects exist but filtered list is empty');
-  }
-
   return (
     <div className="container p-6 mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -307,7 +317,6 @@ const ProjectsPage = () => {
       {/* Search and Filters row */}
       <div className="flex justify-between items-center my-6">
         <div className="flex items-center gap-6 flex-1 max-w-2xl min-w-0">
-          {/* Search Input */}
           <div className="relative w-full max-w-lg">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
             <Input
@@ -335,7 +344,7 @@ const ProjectsPage = () => {
             </label>
           </div>
           
-          {/* Filter tabs with green underline styling */}
+          {/* Filter tabs */}
           <div className="border-b border-border">
             <nav className="flex space-x-6" aria-label="Filter">
               <button
@@ -380,10 +389,9 @@ const ProjectsPage = () => {
             projectMilestones={projectMilestones}
           />
           
-          {/* Pagination - always visible */}
+          {/* Pagination */}
           <Pagination className="mt-6">
             <PaginationContent>
-              {/* Previous page button */}
               <PaginationItem>
                 <PaginationPrevious 
                   href="#" 
@@ -395,7 +403,6 @@ const ProjectsPage = () => {
                 />
               </PaginationItem>
               
-              {/* Page numbers */}
               {getPageNumbers().map((page, index) => (
                 <PaginationItem key={`page-${index}`}>
                   {page < 0 ? (
@@ -415,7 +422,6 @@ const ProjectsPage = () => {
                 </PaginationItem>
               ))}
               
-              {/* Next page button */}
               <PaginationItem>
                 <PaginationNext 
                   href="#" 
@@ -439,7 +445,6 @@ const ProjectsPage = () => {
             </div>
           </Card>
           
-          {/* Pagination - always visible even when no projects */}
           <Pagination className="mt-6">
             <PaginationContent>
               <PaginationItem>
@@ -475,7 +480,7 @@ const ProjectsPage = () => {
       {/* Create Project Dialog */}
       <ProjectCreateDialog 
         isOpen={showCreateDialog} 
-        onClose={() => setShowCreateDialog(false)} 
+        onClose={handleCreateDialogClose} 
       />
     </div>
   );
