@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -236,6 +236,35 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     },
   });
 
+  // Mark as completed mutation
+  const markAsCompletedMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: 'completed' })
+        .eq('id', taskId);
+      
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast({
+        title: 'Task completed',
+        description: 'The task has been marked as completed',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error updating task',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
   // Delete task mutation
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
@@ -299,6 +328,13 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     if (taskId) {
       deleteTaskMutation.mutate(taskId);
       setIsDeleteDialogOpen(false);
+    }
+  };
+
+  // Handle mark as completed
+  const handleMarkAsCompleted = () => {
+    if (taskId) {
+      markAsCompletedMutation.mutate(taskId);
     }
   };
 
@@ -400,6 +436,19 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   )}
                 </div>
                 <div className="flex space-x-2 mt-8">
+                  {/* Mark as Completed Button - only show if not completed */}
+                  {!isLoading && task && task.status !== 'completed' && (
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={handleMarkAsCompleted}
+                      disabled={markAsCompletedMutation.isPending}
+                      title="Mark as completed"
+                      className="text-green-600 hover:bg-green-50 border-green-200"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button 
                     variant="outline" 
                     size="icon"
