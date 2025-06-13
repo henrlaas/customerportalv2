@@ -1,6 +1,6 @@
 
 import { format, formatDistance, isSameMonth, isSameYear } from 'date-fns';
-import { Calendar, Clock, Pencil, Building, Tag, Briefcase, DollarSign, Trash2, FolderOpen } from 'lucide-react';
+import { Calendar, Clock, Pencil, Building, Tag, Briefcase, DollarSign, Trash2, FolderOpen, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -146,9 +146,10 @@ export const TimeEntryCard = ({
               </>
             )}
             {!isCurrentMonth && (
-              <div className="text-xs text-gray-400 px-2">
-                Historical entry
-              </div>
+              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                <Lock className="h-3 w-3 mr-1" />
+                Locked
+              </Badge>
             )}
           </div>
         </div>
