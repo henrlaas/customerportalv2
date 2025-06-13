@@ -1,4 +1,3 @@
-
 import { 
   Card,
   CardContent,
@@ -23,12 +22,16 @@ import {
   FileText,
   TrendingUp
 } from 'lucide-react';
+import { useCompanyActivities } from '@/hooks/useCompanyActivities';
+import { CompanyActivityItem } from './CompanyActivityItem';
 
 interface CompanyOverviewTabProps {
   company: Company;
 }
 
 export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
+  const { data: activities, isLoading: activitiesLoading } = useCompanyActivities(company.id);
+
   // Format address into a single line
   const formatAddress = () => {
     const parts = [];
@@ -136,7 +139,7 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
           </CardContent>
         </Card>
 
-        {/* Company Activities / Notes Section */}
+        {/* Recent Activities Section - Updated */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -145,11 +148,26 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8">
-              <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No recent activities</p>
-              <p className="text-sm text-gray-400 mt-1">Activities and notes will appear here</p>
-            </div>
+            {activitiesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+              </div>
+            ) : activities && activities.length > 0 ? (
+              <div className="space-y-2">
+                {activities.map((activity) => (
+                  <CompanyActivityItem 
+                    key={`${activity.type}-${activity.id}`} 
+                    activity={activity} 
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No recent activities</p>
+                <p className="text-sm text-gray-400 mt-1">Activities and notes will appear here</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
