@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import { ChartLine } from 'lucide-react';
+import { ChartLine, Clock, CheckSquare } from 'lucide-react';
 
 interface ProjectFinancialChartProps {
   projectId: string;
@@ -27,91 +27,142 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
     outcome: { label: 'Expenses', theme: { light: '#ef4444', dark: '#f87171' } }
   });
 
-  // Fetch project time entries along with employee hourly rates
+  // Fetch enhanced project time entries including task-related entries
   const { data, isLoading, error } = useQuery({
-    queryKey: ['project-financial-data', projectId],
+    queryKey: ['project-financial-chart-enhanced', projectId],
     queryFn: async () => {
-      if (!projectId) return { timeEntries: [], totalHours: 0, totalCost: 0 };
+      if (!projectId) return { pieData: [], totalHours: 0, totalCost: 0, directHours: 0, taskHours: 0 };
 
-      // Get time entries for this project
-      const { data: timeEntries, error: timeError } = await supabase
-        .from('time_entries')
-        .select(`
-          id,
-          start_time,
-          end_time,
-          user_id,
-          is_billable
-        `)
-        .eq('project_id', projectId);
+      console.log('Fetching enhanced financial chart data for project:', projectId);
 
-      if (timeError) {
-        console.error('Error fetching time entries:', timeError);
-        throw timeError;
-      }
+      try {
+        // Get direct project time entries
+        const { data: directTimeEntries, error: directTimeError } = await supabase
+          .from('time_entries')
+          .select(`
+            id,
+            start_time,
+            end_time,
+            user_id,
+            is_billable
+          `)
+          .eq('project_id', projectId);
 
-      // Calculate time spent and cost
-      let totalCost = 0;
-      let totalHours = 0;
-
-      if (timeEntries && timeEntries.length > 0) {
-        // Get all unique user IDs
-        const userIds = [...new Set(timeEntries.map(entry => entry.user_id))];
-
-        // Fetch employee data for these users to get hourly rates
-        const { data: employees, error: empError } = await supabase
-          .from('employees')
-          .select('id, hourly_salary')
-          .in('id', userIds);
-
-        if (empError) {
-          console.error('Error fetching employee data:', empError);
-          throw empError;
+        if (directTimeError) {
+          console.error('Error fetching direct time entries:', directTimeError);
+          throw directTimeError;
         }
 
-        // Create map of user_id to hourly_salary
-        const hourlyRates: Record<string, number> = {};
-        employees?.forEach(emp => {
-          hourlyRates[emp.id] = emp.hourly_salary;
-        });
+        // Get task-related time entries for this project
+        const { data: taskTimeEntries, error: taskTimeError } = await supabase
+          .from('time_entries')
+          .select(`
+            id,
+            start_time,
+            end_time,
+            user_id,
+            is_billable,
+            tasks!inner(
+              id,
+              title,
+              project_id
+            )
+          `)
+          .eq('tasks.project_id', projectId)
+          .not('task_id', 'is', null);
 
-        // Calculate total costs
-        timeEntries.forEach(entry => {
-          const startTime = new Date(entry.start_time);
-          const endTime = entry.end_time ? new Date(entry.end_time) : new Date();
-          const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-          const hourlyRate = hourlyRates[entry.user_id] || 0;
-          const cost = hours * hourlyRate;
+        if (taskTimeError) {
+          console.error('Error fetching task time entries:', taskTimeError);
+          throw taskTimeError;
+        }
 
-          totalHours += hours;
-          totalCost += cost;
-        });
-      }
+        // Combine all time entries
+        const allTimeEntries = [
+          ...(directTimeEntries || []),
+          ...(taskTimeEntries || [])
+        ];
 
-      // Prepare pie chart data
-      const pieData = [];
-      
-      // Only add income if we have a project value
-      if (projectValue) {
+        console.log('Chart - Direct entries:', directTimeEntries?.length || 0);
+        console.log('Chart - Task entries:', taskTimeEntries?.length || 0);
+
+        // Calculate time spent and cost
+        let totalCost = 0;
+        let totalHours = 0;
+        let directHours = 0;
+        let taskHours = 0;
+
+        if (allTimeEntries.length > 0) {
+          // Get all unique user IDs
+          const userIds = [...new Set(allTimeEntries.map(entry => entry.user_id))];
+
+          // Fetch employee data for these users to get hourly rates
+          const { data: employees, error: empError } = await supabase
+            .from('employees')
+            .select('id, hourly_salary')
+            .in('id', userIds);
+
+          if (empError) {
+            console.error('Error fetching employee data:', empError);
+            throw empError;
+          }
+
+          // Create map of user_id to hourly_salary
+          const hourlyRates: Record<string, number> = {};
+          employees?.forEach(emp => {
+            hourlyRates[emp.id] = emp.hourly_salary;
+          });
+
+          // Calculate total costs and hours
+          allTimeEntries.forEach(entry => {
+            const startTime = new Date(entry.start_time);
+            const endTime = entry.end_time ? new Date(entry.end_time) : new Date();
+            const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+            const hourlyRate = hourlyRates[entry.user_id] || 0;
+            const cost = hours * hourlyRate;
+
+            totalHours += hours;
+            totalCost += cost;
+
+            // Track direct vs task hours
+            const isDirectEntry = directTimeEntries?.some(direct => direct.id === entry.id);
+            if (isDirectEntry) {
+              directHours += hours;
+            } else {
+              taskHours += hours;
+            }
+          });
+        }
+
+        // Prepare pie chart data
+        const pieData = [];
+        
+        // Only add income if we have a project value
+        if (projectValue) {
+          pieData.push({
+            name: "Income",
+            value: projectValue,
+            fill: "#22c55e"
+          });
+        }
+        
+        // Always add expenses
         pieData.push({
-          name: "Income",
-          value: projectValue,
-          fill: "#22c55e"
+          name: "Expenses",
+          value: totalCost,
+          fill: "#ef4444"
         });
-      }
-      
-      // Always add expenses
-      pieData.push({
-        name: "Expenses",
-        value: totalCost,
-        fill: "#ef4444"
-      });
 
-      return {
-        pieData,
-        totalHours,
-        totalCost
-      };
+        return {
+          pieData,
+          totalHours,
+          totalCost,
+          directHours,
+          taskHours
+        };
+      } catch (error) {
+        console.error('Error in enhanced financial chart data fetch:', error);
+        throw error;
+      }
     },
     enabled: !!projectId,
   });
@@ -184,6 +235,28 @@ export const ProjectFinancialChart = ({ projectId, projectValue = 0 }: ProjectFi
             <div className="text-xs text-muted-foreground">Projected Profit</div>
             <div className="text-xl font-semibold">
               {formatCurrency(profit)} ({profitPercentage.toFixed(0)}%)
+            </div>
+          </div>
+        </div>
+
+        {/* Time Breakdown */}
+        <div className="mb-4 grid grid-cols-2 gap-4">
+          <div className="bg-background rounded-md p-2 shadow-sm">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+              <Clock className="h-3 w-3" />
+              Direct Project Time
+            </div>
+            <div className="text-lg font-semibold text-green-600">
+              {data.directHours.toFixed(1)}h
+            </div>
+          </div>
+          <div className="bg-background rounded-md p-2 shadow-sm">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+              <CheckSquare className="h-3 w-3" />
+              Task Time
+            </div>
+            <div className="text-lg font-semibold text-purple-600">
+              {data.taskHours.toFixed(1)}h
             </div>
           </div>
         </div>

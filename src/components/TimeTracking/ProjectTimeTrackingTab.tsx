@@ -4,10 +4,11 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useProjectTimeData } from '@/hooks/useProjectTimeData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Plus, Clock } from 'lucide-react';
+import { Plus, Clock, CheckSquare, BarChart3 } from 'lucide-react';
 import { ProjectTimeEntryDialog } from './ProjectTimeEntryDialog';
 
 type ProjectTimeTrackingTabProps = {
@@ -44,26 +45,40 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
         </Button>
       </div>
 
-      {/* Summary Card */}
+      {/* Enhanced Summary Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Time Summary</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Time Summary
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <div className="text-sm text-muted-foreground">Total Hours</div>
-              <div className="text-2xl font-bold">{formatHours(timeStats.totalHours)}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="text-sm text-blue-600 font-medium">Total Hours</div>
+              <div className="text-2xl font-bold text-blue-600">{formatHours(timeStats.totalHours)}</div>
             </div>
             
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <div className="text-sm text-muted-foreground">Total Entries</div>
-              <div className="text-2xl font-bold">{timeStats.totalEntries}</div>
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="flex items-center gap-1 text-sm text-green-600 font-medium">
+                <Clock className="h-3 w-3" />
+                Direct Project Time
+              </div>
+              <div className="text-2xl font-bold text-green-600">{formatHours(timeStats.directHours)}</div>
             </div>
             
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <div className="text-sm text-muted-foreground">Team Members</div>
-              <div className="text-2xl font-bold">{Object.keys(timeStats.entriesByUser).length}</div>
+            <div className="p-4 bg-purple-50 rounded-lg">
+              <div className="flex items-center gap-1 text-sm text-purple-600 font-medium">
+                <CheckSquare className="h-3 w-3" />
+                Task Time
+              </div>
+              <div className="text-2xl font-bold text-purple-600">{formatHours(timeStats.taskHours)}</div>
+            </div>
+            
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="text-sm text-gray-600 font-medium">Total Entries</div>
+              <div className="text-2xl font-bold text-gray-600">{timeStats.totalEntries}</div>
             </div>
           </div>
         </CardContent>
@@ -77,7 +92,7 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
         </div>
       ) : (
         <>
-          {/* Team Members Breakdown */}
+          {/* Enhanced Team Members Breakdown */}
           <Card>
             <CardHeader>
               <CardTitle>Team Contributions</CardTitle>
@@ -87,7 +102,9 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
                 <TableHeader>
                   <TableRow>
                     <TableHead>Member</TableHead>
-                    <TableHead>Time Logged</TableHead>
+                    <TableHead>Total Time</TableHead>
+                    <TableHead>Direct Time</TableHead>
+                    <TableHead>Task Time</TableHead>
                     <TableHead>Entries</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -105,7 +122,13 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
                         </Avatar>
                         <span>{userData.user.name}</span>
                       </TableCell>
-                      <TableCell>{formatHours(userData.hours)}</TableCell>
+                      <TableCell className="font-medium">{formatHours(userData.hours)}</TableCell>
+                      <TableCell>
+                        <span className="text-green-600">{formatHours(userData.directHours)}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-purple-600">{formatHours(userData.taskHours)}</span>
+                      </TableCell>
                       <TableCell>{userData.entries}</TableCell>
                     </TableRow>
                   ))}
@@ -114,7 +137,7 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
             </CardContent>
           </Card>
 
-          {/* Recent Time Entries */}
+          {/* Enhanced Recent Time Entries */}
           <Card>
             <CardHeader>
               <CardTitle>Recent Time Entries</CardTitle>
@@ -124,6 +147,7 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
+                    <TableHead>Source</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Duration</TableHead>
@@ -144,7 +168,31 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
                     return (
                       <TableRow key={entry.id}>
                         <TableCell>{format(startTime, 'MMM d, yyyy')}</TableCell>
-                        <TableCell>{entry.description || 'No description'}</TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant="outline" 
+                            className={entry.entry_source === 'direct' 
+                              ? 'bg-green-50 text-green-700 border-green-200' 
+                              : 'bg-purple-50 text-purple-700 border-purple-200'
+                            }
+                          >
+                            {entry.entry_source === 'direct' ? (
+                              <><Clock className="h-3 w-3 mr-1" />Direct</>
+                            ) : (
+                              <><CheckSquare className="h-3 w-3 mr-1" />Task</>
+                            )}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div>{entry.description || 'No description'}</div>
+                            {entry.entry_source === 'task' && entry.task_name && (
+                              <div className="text-xs text-purple-600 mt-1">
+                                Task: {entry.task_name}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="flex items-center space-x-2">
                           <Avatar className="h-6 w-6">
                             {entry.employee?.avatar_url ? (

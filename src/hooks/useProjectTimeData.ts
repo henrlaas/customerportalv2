@@ -16,6 +16,8 @@ export interface TimeEntry {
   is_running: boolean | null;
   created_at: string;
   updated_at: string;
+  entry_source: 'direct' | 'task'; // New field to track entry source
+  task_name?: string | null; // Task name for task-related entries
   employee?: {
     id: string;
     first_name: string | null;
@@ -27,9 +29,13 @@ export interface TimeEntry {
 interface ProjectTimeStats {
   totalHours: number;
   totalEntries: number;
+  directHours: number;
+  taskHours: number;
   entriesByUser: Record<string, { 
     hours: number; 
     entries: number; 
+    directHours: number;
+    taskHours: number;
     user: { 
       id: string; 
       name: string; 
@@ -39,52 +45,102 @@ interface ProjectTimeStats {
 }
 
 export const useProjectTimeData = (projectId?: string) => {
-  // Fetch time entries for a specific project
+  // Fetch time entries for a specific project (both direct and task-related)
   const { data: timeEntries, isLoading, error } = useQuery({
-    queryKey: ['project-time-entries', projectId],
+    queryKey: ['project-time-entries-enhanced', projectId],
     queryFn: async () => {
       if (!projectId) return [];
 
-      // First get time entries
-      const { data: entriesData, error: entriesError } = await supabase
-        .from('time_entries')
-        .select('*')
-        .eq('project_id', projectId);
+      console.log('Fetching enhanced time entries for project:', projectId);
 
-      if (entriesError) {
-        console.error('Error fetching time entries:', entriesError);
-        throw entriesError;
-      }
+      try {
+        // First get direct project time entries
+        const { data: directEntries, error: directError } = await supabase
+          .from('time_entries')
+          .select('*')
+          .eq('project_id', projectId);
 
-      // Then get profile data for each user
-      const entriesWithEmployeeData = await Promise.all(
-        entriesData.map(async (entry) => {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('id, first_name, last_name, avatar_url')
-            .eq('id', entry.user_id)
-            .single();
+        if (directError) {
+          console.error('Error fetching direct time entries:', directError);
+          throw directError;
+        }
 
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error('Error fetching employee profile:', profileError);
-          }
+        // Then get task-related time entries for this project
+        const { data: taskEntries, error: taskError } = await supabase
+          .from('time_entries')
+          .select(`
+            *,
+            tasks!inner(
+              id,
+              title,
+              project_id
+            )
+          `)
+          .eq('tasks.project_id', projectId)
+          .not('task_id', 'is', null);
 
-          return {
+        if (taskError) {
+          console.error('Error fetching task time entries:', taskError);
+          throw taskError;
+        }
+
+        console.log('Direct entries:', directEntries?.length || 0);
+        console.log('Task entries:', taskEntries?.length || 0);
+
+        // Combine and format entries
+        const allEntries = [
+          ...(directEntries || []).map(entry => ({
             ...entry,
-            employee: profileData
-          } as TimeEntry;
-        })
-      );
+            entry_source: 'direct' as const,
+            task_name: null
+          })),
+          ...(taskEntries || []).map(entry => ({
+            ...entry,
+            entry_source: 'task' as const,
+            task_name: (entry as any).tasks?.title || 'Unknown Task'
+          }))
+        ];
 
-      return entriesWithEmployeeData;
+        // Get all unique user IDs for profile data
+        const userIds = Array.from(new Set(allEntries.map(entry => entry.user_id)));
+        
+        // Fetch employee profiles
+        const entriesWithEmployeeData = await Promise.all(
+          allEntries.map(async (entry) => {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name, avatar_url')
+              .eq('id', entry.user_id)
+              .single();
+
+            if (profileError && profileError.code !== 'PGRST116') {
+              console.error('Error fetching employee profile:', profileError);
+            }
+
+            return {
+              ...entry,
+              employee: profileData
+            } as TimeEntry;
+          })
+        );
+
+        console.log('Total enhanced entries processed:', entriesWithEmployeeData.length);
+        return entriesWithEmployeeData;
+      } catch (error) {
+        console.error('Error in enhanced project time data fetch:', error);
+        throw error;
+      }
     },
     enabled: !!projectId,
+    staleTime: 30000,
   });
 
-  // Calculate time statistics for the project
+  // Calculate enhanced time statistics
   const timeStats: ProjectTimeStats = {
     totalHours: 0,
     totalEntries: timeEntries?.length || 0,
+    directHours: 0,
+    taskHours: 0,
     entriesByUser: {},
   };
 
@@ -98,6 +154,13 @@ export const useProjectTimeData = (projectId?: string) => {
     hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
     timeStats.totalHours += hours;
 
+    // Track direct vs task hours
+    if (entry.entry_source === 'direct') {
+      timeStats.directHours += hours;
+    } else {
+      timeStats.taskHours += hours;
+    }
+
     // Add to user-specific stats
     const userId = entry.user_id;
     const userName = entry.employee ? 
@@ -108,6 +171,8 @@ export const useProjectTimeData = (projectId?: string) => {
       timeStats.entriesByUser[userId] = {
         hours: 0,
         entries: 0,
+        directHours: 0,
+        taskHours: 0,
         user: {
           id: userId,
           name: userName,
@@ -118,6 +183,12 @@ export const useProjectTimeData = (projectId?: string) => {
 
     timeStats.entriesByUser[userId].hours += hours;
     timeStats.entriesByUser[userId].entries += 1;
+    
+    if (entry.entry_source === 'direct') {
+      timeStats.entriesByUser[userId].directHours += hours;
+    } else {
+      timeStats.entriesByUser[userId].taskHours += hours;
+    }
   });
 
   return {
