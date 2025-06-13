@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { UserRoleSelect } from './UserRoleSelect';
+import { AdminEmployeeRoleSelect } from './AdminEmployeeRoleSelect';
 import { userService, User } from '@/services/userService';
 
 interface ChangeUserRoleDialogProps {
@@ -28,6 +28,11 @@ export function ChangeUserRoleDialog({ isOpen, onClose, user }: ChangeUserRoleDi
   const changeRoleMutation = useMutation({
     mutationFn: async (newRole: string) => {
       if (!user) throw new Error('No user selected');
+      
+      // Validate role is admin or employee only
+      if (!['admin', 'employee'].includes(newRole)) {
+        throw new Error('Invalid role selected. Only admin and employee roles are allowed.');
+      }
       
       return userService.updateUser(user.id, {
         email: user.email,
@@ -56,17 +61,24 @@ export function ChangeUserRoleDialog({ isOpen, onClose, user }: ChangeUserRoleDi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedRole && user) {
+    if (selectedRole && user && ['admin', 'employee'].includes(selectedRole)) {
       changeRoleMutation.mutate(selectedRole);
     }
   };
 
-  // Reset selected role when user changes
+  // Reset selected role when user changes, but only allow admin/employee
   useEffect(() => {
-    if (user?.user_metadata?.role) {
+    if (user?.user_metadata?.role && ['admin', 'employee'].includes(user.user_metadata.role)) {
       setSelectedRole(user.user_metadata.role);
+    } else {
+      setSelectedRole('employee'); // Default to employee for invalid roles
     }
   }, [user]);
+
+  // Don't show dialog for client users
+  if (user?.user_metadata?.role === 'client') {
+    return null;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -83,10 +95,13 @@ export function ChangeUserRoleDialog({ isOpen, onClose, user }: ChangeUserRoleDi
               <label htmlFor="role" className="text-sm font-medium">
                 New Role
               </label>
-              <UserRoleSelect
+              <AdminEmployeeRoleSelect
                 value={selectedRole}
                 onValueChange={setSelectedRole}
               />
+              <p className="text-xs text-muted-foreground">
+                Only admin and employee roles can be assigned through this dialog.
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -95,7 +110,12 @@ export function ChangeUserRoleDialog({ isOpen, onClose, user }: ChangeUserRoleDi
             </Button>
             <Button 
               type="submit" 
-              disabled={!selectedRole || selectedRole === user?.user_metadata?.role || changeRoleMutation.isPending}
+              disabled={
+                !selectedRole || 
+                selectedRole === user?.user_metadata?.role || 
+                !['admin', 'employee'].includes(selectedRole) ||
+                changeRoleMutation.isPending
+              }
             >
               {changeRoleMutation.isPending ? 'Updating...' : 'Update Role'}
             </Button>

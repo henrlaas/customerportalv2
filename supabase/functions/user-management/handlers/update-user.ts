@@ -52,6 +52,25 @@ export const handleUpdateUser = async (
       }
     }
 
+    // If user_metadata.role exists, update the role in profiles table as well
+    if (userData.user_metadata && userData.user_metadata.role) {
+      const { error: roleError } = await supabaseAdmin
+        .from('profiles')
+        .update({ role: userData.user_metadata.role })
+        .eq('id', userId);
+
+      if (roleError) {
+        console.error(`Error updating profile role: ${roleError.message}`);
+        return new Response(
+          JSON.stringify({ error: `Failed to update user role in profiles table: ${roleError.message}` }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
+    }
+
     return new Response(
       JSON.stringify({
         user: updateData.user,
