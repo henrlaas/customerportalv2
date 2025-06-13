@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +12,7 @@ import { EditUserDialog } from "@/components/UserManagement/EditUserDialog";
 import { useUserFilters } from "@/hooks/useUserFilters";
 import { userService, User } from "@/services/userService";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { UserSummaryCards } from './UserSummaryCards';
 
 export function UserManagementTab() {
   const { isAdmin, user: currentUser } = useAuth();
@@ -131,6 +131,9 @@ export function UserManagementTab() {
           This User Management section should only be used for special cases. By default, please use the Employee Management section for managing personnel.
         </AlertDescription>
       </Alert>
+
+      {/* User Summary Cards */}
+      <UserSummaryCards users={users} />
 
       {/* Search and filters */}
       <div className="flex flex-col sm:flex-row gap-4">
