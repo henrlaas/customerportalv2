@@ -1,27 +1,16 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FolderIcon, UploadIcon, Building } from 'lucide-react';
+import { FolderIcon, Building } from 'lucide-react';
 
 interface MediaHeaderProps {
-  onNewFolder: () => void;
-  onUpload: () => void;
   activeTab: string;
   onTabChange: (value: string) => void;
-  currentPath: string;
-  showFolderButton?: boolean;
-  showUploadButton?: boolean;
 }
 
 export const MediaHeader: React.FC<MediaHeaderProps> = ({
-  onNewFolder,
-  onUpload,
   activeTab,
   onTabChange,
-  currentPath,
-  showFolderButton = true,
-  showUploadButton = true,
 }) => {
   return (
     <div className="space-y-6">
@@ -29,28 +18,6 @@ export const MediaHeader: React.FC<MediaHeaderProps> = ({
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Media Library</h1>
           <p className="text-gray-600 mt-1">Manage and organize your files</p>
-        </div>
-        
-        <div className="flex gap-3">
-          {showFolderButton && (
-            <Button 
-              variant="outline"
-              onClick={onNewFolder}
-              className="flex items-center gap-2"
-            >
-              <FolderIcon className="h-4 w-4" />
-              New Folder
-            </Button>
-          )}
-          {showUploadButton && (
-            <Button 
-              onClick={onUpload}
-              className="flex items-center gap-2"
-            >
-              <UploadIcon className="h-4 w-4" />
-              Upload Files
-            </Button>
-          )}
         </div>
       </div>
 

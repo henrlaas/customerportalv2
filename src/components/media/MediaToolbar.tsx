@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Heart, Grid, List } from 'lucide-react';
+import { Search, Heart, Grid, List, FolderIcon, UploadIcon } from 'lucide-react';
 import { ViewMode, SortOption, FilterOptions } from '@/types/media';
 
 interface MediaToolbarProps {
@@ -20,6 +20,10 @@ interface MediaToolbarProps {
   onSortChange: (value: SortOption) => void;
   onFiltersChange: (filters: FilterOptions) => void;
   onViewModeChange: (mode: ViewMode) => void;
+  onNewFolder: () => void;
+  onUpload: () => void;
+  showFolderButton?: boolean;
+  showUploadButton?: boolean;
 }
 
 export const MediaToolbar: React.FC<MediaToolbarProps> = ({
@@ -30,6 +34,10 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({
   onSortChange,
   onFiltersChange,
   onViewModeChange,
+  onNewFolder,
+  onUpload,
+  showFolderButton = true,
+  showUploadButton = true,
 }) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between py-4 border-b border-gray-200">
@@ -92,6 +100,28 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({
             <Grid className="h-4 w-4" />
           </Button>
         </div>
+
+        {showFolderButton && (
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={onNewFolder}
+            className="flex items-center gap-2"
+          >
+            <FolderIcon className="h-4 w-4" />
+            New Folder
+          </Button>
+        )}
+        {showUploadButton && (
+          <Button 
+            size="sm"
+            onClick={onUpload}
+            className="flex items-center gap-2"
+          >
+            <UploadIcon className="h-4 w-4" />
+            Upload Files
+          </Button>
+        )}
       </div>
     </div>
   );

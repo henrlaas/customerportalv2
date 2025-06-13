@@ -35,6 +35,8 @@ interface MediaTabsProps {
   onSort?: (column: string) => void;
   getUploaderDisplayName: (userId: string) => string;
   onNavigateToBreadcrumb: (index: number) => void;
+  showFolderButton: boolean;
+  showUploadButton: boolean;
 }
 
 export const MediaTabs: React.FC<MediaTabsProps> = ({
@@ -61,6 +63,8 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
   onSort,
   getUploaderDisplayName,
   onNavigateToBreadcrumb,
+  showFolderButton,
+  showUploadButton,
 }) => {
   const allItems = [...filteredMedia.folders, ...filteredMedia.files];
 
@@ -79,6 +83,10 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
         onSortChange={onSortChange}
         onFiltersChange={onFiltersChange}
         onViewModeChange={onViewModeChange}
+        onNewFolder={onNewFolder}
+        onUpload={onUpload}
+        showFolderButton={showFolderButton}
+        showUploadButton={showUploadButton}
       />
 
       <Tabs value={activeTab}>

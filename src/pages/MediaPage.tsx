@@ -284,13 +284,8 @@ const MediaPage: React.FC = () => {
         >
           <div className="bg-white p-6 space-y-6">
             <MediaHeader 
-              onNewFolder={() => setIsFolderDialogOpen(true)}
-              onUpload={() => setIsUploadDialogOpen(true)}
               activeTab={activeTab}
               onTabChange={handleTabChange}
-              currentPath={currentPath}
-              showFolderButton={showFolderButton}
-              showUploadButton={showUploadButton}
             />
             
             <MediaTabs
@@ -320,6 +315,8 @@ const MediaPage: React.FC = () => {
               onSort={handleSort}
               getUploaderDisplayName={getUploaderDisplayName}
               onNavigateToBreadcrumb={navigateToBreadcrumb}
+              showFolderButton={showFolderButton}
+              showUploadButton={showUploadButton}
             />
           </div>
 
