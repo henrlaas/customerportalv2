@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
 import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
 import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
 import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
@@ -32,10 +34,16 @@ const filterSettingsByCategory = (settings: WorkspaceSetting[], category: string
 };
 
 const WorkspaceManagementPage = () => {
+  const { isAdmin } = useAuth();
   const [settings, setSettings] = useState<WorkspaceSetting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Only admins can access this page
+  if (!isAdmin) {
+    return <Navigate to="/unauthorized" replace />;
+  }
 
   useEffect(() => {
     const fetchSettings = async () => {
