@@ -13,6 +13,15 @@ import { useUserFilters } from "@/hooks/useUserFilters";
 import { userService, User } from "@/services/userService";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { UserSummaryCards } from './UserSummaryCards';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export function UserManagementTab() {
   const { isAdmin, user: currentUser } = useAuth();
@@ -21,8 +30,11 @@ export function UserManagementTab() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showChangeRoleDialog, setShowChangeRoleDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const USERS_PER_PAGE = 15;
 
   // Fetch users from edge function
   const { data: users = [], isLoading, error } = useQuery({
@@ -54,6 +66,21 @@ export function UserManagementTab() {
     teams,
     filteredUsers
   } = useUserFilters(users);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+  const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+  const endIndex = startIndex + USERS_PER_PAGE;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  const handleFilterChange = () => {
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // Delete user mutation
   const deleteUserMutation = useMutation({
@@ -141,11 +168,20 @@ export function UserManagementTab() {
       <div className="flex flex-col sm:flex-row gap-4">
         <UserFilters 
           searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
+          setSearchTerm={(term) => {
+            setSearchTerm(term);
+            handleFilterChange();
+          }}
           roleFilter={roleFilter}
-          setRoleFilter={setRoleFilter}
+          setRoleFilter={(role) => {
+            setRoleFilter(role);
+            handleFilterChange();
+          }}
           teamFilter={teamFilter}
-          setTeamFilter={setTeamFilter}
+          setTeamFilter={(team) => {
+            setTeamFilter(team);
+            handleFilterChange();
+          }}
           roles={roles}
           teams={teams}
         />
@@ -153,7 +189,7 @@ export function UserManagementTab() {
 
       <div className="rounded-md border">
         <UserTable 
-          filteredUsers={filteredUsers}
+          filteredUsers={paginatedUsers}
           currentUserId={currentUser?.id}
           isLoading={isLoading}
           error={error}
@@ -165,6 +201,63 @@ export function UserManagementTab() {
           isPendingReset={resetPasswordMutation.isPending}
         />
       </div>
+
+      {/* Pagination */}
+      {totalPages > 0 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              {currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className="cursor-pointer"
+                  />
+                </PaginationItem>
+              )}
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(page)}
+                        isActive={currentPage === page}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                } else if (
+                  page === currentPage - 2 ||
+                  page === currentPage + 2
+                ) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  );
+                }
+                return null;
+              })}
+              
+              {currentPage < totalPages && (
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className="cursor-pointer"
+                  />
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <InviteUserDialog 
         isOpen={showInviteDialog} 
