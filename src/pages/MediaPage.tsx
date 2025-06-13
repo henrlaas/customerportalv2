@@ -221,6 +221,11 @@ const MediaPage: React.FC = () => {
     let folders = mediaData?.folders || [];
     let files = mediaData?.files || [];
 
+    // When favorites filter is active, don't show any folders
+    if (filters.favorites) {
+      folders = [];
+    }
+
     // Apply search filter if provided
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -262,7 +267,7 @@ const MediaPage: React.FC = () => {
       folders: [...folders].sort(sortItems),
       files: [...files].sort(sortItems)
     };
-  }, [mediaData, searchQuery, sortBy, sortDirection]);
+  }, [mediaData, searchQuery, sortBy, sortDirection, filters.favorites]);
 
   // Determine if we can add rename functionality
   // Allow renaming folders for internal tab or inside company folders

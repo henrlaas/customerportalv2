@@ -1,9 +1,41 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MediaData, FilterOptions } from '@/types/media';
 import { getFileTypeFromName } from '@/utils/mediaUtils';
 import { useCompanyNames } from './useCompanyNames';
+
+// Helper function to recursively fetch all files from all folders
+const fetchAllFilesRecursively = async (bucketId: string, basePath: string = ''): Promise<any[]> => {
+  const allFiles: any[] = [];
+  
+  const { data: items, error } = await supabase
+    .storage
+    .from(bucketId)
+    .list(basePath);
+    
+  if (error) throw error;
+  
+  for (const item of items || []) {
+    if (item.id === null && !item.name.endsWith('.folder')) {
+      // This is a folder, recurse into it
+      const folderPath = basePath ? `${basePath}/${item.name}` : item.name;
+      const subFiles = await fetchAllFilesRecursively(bucketId, folderPath);
+      allFiles.push(...subFiles);
+    } else if (item.id !== null && !item.name.endsWith('.folder')) {
+      // This is a file
+      const filePath = basePath ? `${basePath}/${item.name}` : item.name;
+      allFiles.push({
+        ...item,
+        fullPath: filePath,
+        folderPath: basePath
+      });
+    }
+  }
+  
+  return allFiles;
+};
 
 export const useMediaData = (
   currentPath: string,
@@ -30,6 +62,54 @@ export const useMediaData = (
 
         // Handle company files tab
         if (activeTab === 'company') {
+          // If favorites filter is active, fetch all favorited files recursively
+          if (filters.favorites) {
+            const allFiles = await fetchAllFilesRecursively('companymedia');
+            
+            // Get metadata for all files
+            const { data: mediaMetadata } = await supabase
+              .from('media_metadata')
+              .select('*')
+              .eq('bucket_id', 'companymedia');
+
+            // Filter only favorited files
+            const favoritedFiles = allFiles
+              .filter(file => {
+                return favorites?.some(fav => 
+                  fav.file_path === file.fullPath && fav.bucket_id === 'companymedia'
+                );
+              })
+              .map(file => {
+                const metadata = mediaMetadata?.find(meta => 
+                  meta.file_path === file.fullPath && meta.bucket_id === 'companymedia'
+                );
+                
+                const url = supabase.storage
+                  .from('companymedia')
+                  .getPublicUrl(file.fullPath).data.publicUrl;
+                
+                const fileType = getFileTypeFromName(file.name);
+                
+                return {
+                  id: file.id || '',
+                  name: file.folderPath ? `${file.folderPath}/${file.name}` : file.name,
+                  fileType,
+                  url,
+                  size: file.metadata?.size || 0,
+                  created_at: file.created_at || new Date().toISOString(),
+                  uploadedBy: metadata?.uploaded_by || '',
+                  favorited: true,
+                  isFolder: false,
+                  isImage: fileType.startsWith('image/'),
+                  isVideo: fileType.startsWith('video/'),
+                  isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
+                  bucketId: 'companymedia'
+                };
+              });
+
+            return { folders: [], files: favoritedFiles };
+          }
+          
           // At root level, return company folders
           if (!currentPath) {
             if (!companies) return { folders: [], files: [] };
@@ -155,15 +235,59 @@ export const useMediaData = (
               };
             });
 
-          // Apply favorites filter if enabled
-          if (filters.favorites) {
-            files = files.filter(file => file.favorited);
-          }
-
           return { folders, files };
         }
 
         // Handle internal files tab (media bucket)
+        // If favorites filter is active, fetch all favorited files recursively
+        if (filters.favorites) {
+          const allFiles = await fetchAllFilesRecursively('media');
+          
+          // Get metadata for all files
+          const { data: mediaMetadata } = await supabase
+            .from('media_metadata')
+            .select('*')
+            .eq('bucket_id', 'media');
+
+          // Filter only favorited files
+          const favoritedFiles = allFiles
+            .filter(file => {
+              return favorites?.some(fav => 
+                fav.file_path === file.fullPath && fav.bucket_id === 'media'
+              );
+            })
+            .map(file => {
+              const metadata = mediaMetadata?.find(meta => 
+                meta.file_path === file.fullPath && meta.bucket_id === 'media'
+              );
+              
+              const url = supabase.storage
+                .from('media')
+                .getPublicUrl(file.fullPath).data.publicUrl;
+              
+              const fileType = getFileTypeFromName(file.name);
+              
+              return {
+                id: file.id || '',
+                name: file.folderPath ? `${file.folderPath}/${file.name}` : file.name,
+                fileType,
+                url,
+                size: file.metadata?.size || 0,
+                created_at: file.created_at || new Date().toISOString(),
+                uploadedBy: metadata?.uploaded_by || '',
+                favorited: true,
+                isFolder: false,
+                isImage: fileType.startsWith('image/'),
+                isVideo: fileType.startsWith('video/'),
+                isDocument: fileType.startsWith('application/') || fileType.startsWith('text/'),
+                bucketId: 'media'
+              };
+            });
+
+          return { folders: [], files: favoritedFiles };
+        }
+
+        // Normal internal media browsing (not favorites mode)
         const { data: items, error } = await supabase
           .storage
           .from('media')
@@ -249,11 +373,6 @@ export const useMediaData = (
               bucketId: 'media'
             };
           });
-
-        // Apply favorites filter if enabled
-        if (filters.favorites) {
-          files = files.filter(file => file.favorited);
-        }
 
         return { folders, files };
       } catch (error: any) {
