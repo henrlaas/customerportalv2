@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const SUPABASE_URL = "https://cdn.box.no";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqcWJnbmpldXV2dXh2dXJ1ZXd5YyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzQzOTUwOTAyLCJleHAiOjIwNTk1MjY5MDJ9.MvXDNmHq771t4TbZrrnaylqBoTcEONv0qv31sZYmAA8";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqcWJnbmpldXV2dXh2dXJ1ZXd5YyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzUwMDg0MzkzLCJleHAiOjIwNjU2NjAzOTN9.iIciI3DzHgUMNUuGZ0Bqvz11p4J21DI9bRcSXUGETmI";
 
 // Get current site URL dynamically
 const SITE_URL = typeof window !== 'undefined' ? window.location.origin : '';
