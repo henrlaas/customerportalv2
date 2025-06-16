@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -140,7 +141,7 @@ const SetPassword = () => {
             console.log("Trying alternative token processing method...");
             
             // For Supabase invites, we need to make a direct API call to the verify endpoint
-            const supabaseUrl = "https://cdn.box.no";
+            const supabaseUrl = "https://api.box.no";
             const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqcWJnbmpldXV2dXh2dXJ1ZXd5YyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzUwMDg0MzkzLCJleHAiOjIwNjU2NjAzOTN9.iIciI3DzHgUMNUuGZ0Bqvz11p4J21DI9bRcSXUGETmI";
             
             const authResponse = await fetch(`${supabaseUrl}/auth/v1/verify`, {
