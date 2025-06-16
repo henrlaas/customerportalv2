@@ -120,7 +120,7 @@ const MediaPage: React.FC = () => {
   // Handle tab changes and reset path
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    setCurrentPath(''); // Reset path when changing tabs
+    setCurrentPath('');
   };
 
   // Helper for rendering uploader display name with cache
@@ -278,219 +278,217 @@ const MediaPage: React.FC = () => {
   const showUploadButton: boolean = activeTab === 'internal' || (activeTab === 'company' && !!currentPath);
   
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DndContext 
-          sensors={sensors}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="bg-white p-6 space-y-6">
-            <MediaHeader 
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
+    <div className="container p-6 mx-auto">
+      <DndContext 
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="space-y-6">
+          <MediaHeader 
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+          
+          <MediaTabs
+            activeTab={activeTab}
+            isLoading={isLoadingMedia}
+            currentPath={currentPath}
+            searchQuery={searchQuery}
+            filters={filters}
+            filteredMedia={filteredMedia}
+            recentItems={recentItems}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            onNavigate={navigateToFolder}
+            onFavorite={handleFavoriteToggle}
+            onDelete={handleDelete}
+            onRename={canRename ? (name) => {
+              setFolderToRename(name);
+              setNewFolderNameForRename(name);
+            } : undefined}
+            onUpload={() => setIsUploadDialogOpen(true)}
+            onNewFolder={() => setIsFolderDialogOpen(true)}
+            onSearchChange={setSearchQuery}
+            onFiltersChange={setFilters}
+            onSort={handleSort}
+            getUploaderDisplayName={getUploaderDisplayName}
+            onNavigateToBreadcrumb={navigateToBreadcrumb}
+            showFolderButton={showFolderButton}
+            showUploadButton={showUploadButton}
+          />
+        </div>
+
+        <DragOverlay>
+          {isDragging && activeDragItem && !activeDragItem.isFolder && (
+            <div className="opacity-80 transform scale-95 w-48 pointer-events-none">
+              <MediaGridItem
+                item={activeDragItem}
+                onFavorite={() => {}}
+                onDelete={() => {}}
+                currentPath={currentPath}
+                getUploaderDisplayName={getUploaderDisplayName}
+              />
+            </div>
+          )}
+        </DragOverlay>
+        
+        {/* Create Folder Dialog */}
+        <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Folder</DialogTitle>
+              <DialogDescription>
+                Enter a name for your new folder.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Input
+              placeholder="Folder name"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              className="mt-2"
             />
             
-            <MediaTabs
-              activeTab={activeTab}
-              isLoading={isLoadingMedia}
-              currentPath={currentPath}
-              searchQuery={searchQuery}
-              filters={filters}
-              filteredMedia={filteredMedia}
-              recentItems={recentItems}
-              sortBy={sortBy}
-              sortDirection={sortDirection}
-              onNavigate={navigateToFolder}
-              onFavorite={handleFavoriteToggle}
-              onDelete={handleDelete}
-              onRename={canRename ? (name) => {
-                setFolderToRename(name);
-                setNewFolderNameForRename(name);
-              } : undefined}
-              onUpload={() => setIsUploadDialogOpen(true)}
-              onNewFolder={() => setIsFolderDialogOpen(true)}
-              onSearchChange={setSearchQuery}
-              onFiltersChange={setFilters}
-              onSort={handleSort}
-              getUploaderDisplayName={getUploaderDisplayName}
-              onNavigateToBreadcrumb={navigateToBreadcrumb}
-              showFolderButton={showFolderButton}
-              showUploadButton={showUploadButton}
-            />
-          </div>
-
-          <DragOverlay>
-            {isDragging && activeDragItem && !activeDragItem.isFolder && (
-              <div className="opacity-80 transform scale-95 w-48 pointer-events-none">
-                <MediaGridItem
-                  item={activeDragItem}
-                  onFavorite={() => {}}
-                  onDelete={() => {}}
-                  currentPath={currentPath}
-                  getUploaderDisplayName={getUploaderDisplayName}
-                />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsFolderDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
+                Create
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Upload Dialog */}
+        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Upload File</DialogTitle>
+              <DialogDescription>
+                {activeTab === 'company' && !currentPath 
+                  ? 'Please select a company folder first before uploading files'
+                  : 'Drag and drop a file or click to select one.'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {activeTab === 'company' && !currentPath ? (
+              <div className="text-center py-4">
+                <p className="text-amber-500">You must navigate into a company folder before uploading files.</p>
+                <Button 
+                  className="mt-4" 
+                  variant="outline" 
+                  onClick={() => setIsUploadDialogOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            ) : (
+              <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                <input {...getInputProps()} />
+                {isDragActive ? (
+                  <p className="text-primary font-medium">Drop the file here...</p>
+                ) : (
+                  <div>
+                    <UploadIcon className="h-10 w-10 mx-auto mb-4 text-gray-400" />
+                    <p>Drag and drop a file here, or click to select a file</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      All file types are supported
+                    </p>
+                  </div>
+                )}
+                {isUploading && (
+                  <div className="mt-4 flex justify-center">
+                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                  </div>
+                )}
               </div>
             )}
-          </DragOverlay>
-          
-          {/* Create Folder Dialog */}
-          <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Folder</DialogTitle>
-                <DialogDescription>
-                  Enter a name for your new folder.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <Input
-                placeholder="Folder name"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                className="mt-2"
-              />
-              
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsFolderDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
-                  Create
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          
-          {/* Upload Dialog */}
-          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Upload File</DialogTitle>
-                <DialogDescription>
-                  {activeTab === 'company' && !currentPath 
-                    ? 'Please select a company folder first before uploading files'
-                    : 'Drag and drop a file or click to select one.'}
-                </DialogDescription>
-              </DialogHeader>
-              
-              {activeTab === 'company' && !currentPath ? (
-                <div className="text-center py-4">
-                  <p className="text-amber-500">You must navigate into a company folder before uploading files.</p>
-                  <Button 
-                    className="mt-4" 
-                    variant="outline" 
-                    onClick={() => setIsUploadDialogOpen(false)}
-                  >
-                    Close
-                  </Button>
-                </div>
-              ) : (
-                <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input {...getInputProps()} />
-                  {isDragActive ? (
-                    <p className="text-primary font-medium">Drop the file here...</p>
-                  ) : (
-                    <div>
-                      <UploadIcon className="h-10 w-10 mx-auto mb-4 text-gray-400" />
-                      <p>Drag and drop a file here, or click to select a file</p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        All file types are supported
-                      </p>
-                    </div>
-                  )}
-                  {isUploading && (
-                    <div className="mt-4 flex justify-center">
-                      <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
-                  Cancel
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          
-          {/* Delete Dialog */}
-          <AlertDialog open={!!folderToDelete} onOpenChange={(open) => !open && setFolderToDelete(null)}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete {folderToDelete?.isFolder ? 'Folder' : 'File'}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {folderToDelete?.isFolder 
-                    ? 'Are you sure you want to delete this folder? This will permanently delete the folder and all files inside it.'
-                    : 'Are you sure you want to delete this file?'} 
-                  This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    if (folderToDelete) {
-                      deleteFileMutation.mutate({
-                        path: currentPath,
-                        isFolder: folderToDelete.isFolder,
-                        name: folderToDelete.name,
-                        bucketId: folderToDelete.bucketId
-                      });
-                      setFolderToDelete(null);
-                    }
-                  }}
-                  className="bg-red-500 hover:bg-red-600"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          
-          {/* Rename Folder Dialog */}
-          <Dialog open={!!folderToRename} onOpenChange={(open) => !open && setFolderToRename(null)}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Rename Folder</DialogTitle>
-                <DialogDescription>
-                  Enter a new name for the folder.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <Input
-                placeholder="New folder name"
-                value={newFolderNameForRename}
-                onChange={(e) => setNewFolderNameForRename(e.target.value)}
-                className="mt-2"
-              />
-              
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setFolderToRename(null)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (folderToRename && newFolderNameForRename) {
-                      const oldPath = currentPath 
-                        ? `${currentPath}/${folderToRename}`
-                        : folderToRename;
-                      renameFolderMutation.mutate({
-                        oldPath,
-                        newName: newFolderNameForRename
-                      });
-                      setFolderToRename(null);
-                    }
-                  }}
-                  disabled={!newFolderNameForRename.trim()}>
-                  Rename
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </DndContext>
-      </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Delete Dialog */}
+        <AlertDialog open={!!folderToDelete} onOpenChange={(open) => !open && setFolderToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {folderToDelete?.isFolder ? 'Folder' : 'File'}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {folderToDelete?.isFolder 
+                  ? 'Are you sure you want to delete this folder? This will permanently delete the folder and all files inside it.'
+                  : 'Are you sure you want to delete this file?'} 
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (folderToDelete) {
+                    deleteFileMutation.mutate({
+                      path: currentPath,
+                      isFolder: folderToDelete.isFolder,
+                      name: folderToDelete.name,
+                      bucketId: folderToDelete.bucketId
+                    });
+                    setFolderToDelete(null);
+                  }
+                }}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        {/* Rename Folder Dialog */}
+        <Dialog open={!!folderToRename} onOpenChange={(open) => !open && setFolderToRename(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rename Folder</DialogTitle>
+              <DialogDescription>
+                Enter a new name for the folder.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Input
+              placeholder="New folder name"
+              value={newFolderNameForRename}
+              onChange={(e) => setNewFolderNameForRename(e.target.value)}
+              className="mt-2"
+            />
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setFolderToRename(null)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (folderToRename && newFolderNameForRename) {
+                    const oldPath = currentPath 
+                      ? `${currentPath}/${folderToRename}`
+                      : folderToRename;
+                    renameFolderMutation.mutate({
+                      oldPath,
+                      newName: newFolderNameForRename
+                    });
+                    setFolderToRename(null);
+                  }
+                }}
+                disabled={!newFolderNameForRename.trim()}>
+                Rename
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </DndContext>
     </div>
   );
 };
