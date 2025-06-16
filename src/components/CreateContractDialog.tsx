@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import Select from 'react-select';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +26,7 @@ import {
 } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import {
-  Select,
+  Select as ShadcnSelect,
   SelectContent,
   SelectItem,
   SelectTrigger,
@@ -36,6 +38,7 @@ import { createContract, fetchContractTemplate, replacePlaceholders } from '@/ut
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { CompanyFavicon } from '@/components/CompanyFavicon';
 
 // Schema for the contract form
 const contractFormSchema = z.object({
@@ -61,6 +64,7 @@ export function CreateContractDialog({
 }: CreateContractDialogProps) {
   const [open, setOpen] = useState(isOpen || false);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(companyId || null);
+  const [searchInput, setSearchInput] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -100,21 +104,40 @@ export function CreateContractDialog({
     form.reset();
     setSelectedTemplateContent('');
     setPreviewContent('');
+    setSearchInput('');
   };
   
   // Fetch company list for standalone dialog
   const { data: companies = [] } = useQuery({
-    queryKey: ['companies'],
+    queryKey: ['companies-for-contracts', searchInput],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('companies')
-        .select('id, name')
+        .select('id, name, organization_number, street_address, postal_code, city, country, website, logo_url, mrr, parent_id')
         .order('name');
+      
+      // If there's a search input, filter by name, otherwise show first 10 companies
+      if (searchInput.trim()) {
+        query = query.ilike('name', `%${searchInput}%`);
+      }
+      
+      // Limit to 10 results to prevent overflow
+      query = query.limit(10);
+      
+      const { data, error } = await query;
+      
       if (error) throw error;
       return data;
     },
     enabled: !companyId && open,
   });
+
+  // Format companies for react-select
+  const companyOptions = companies.map(company => ({
+    value: company.id,
+    label: company.name,
+    company: company
+  }));
 
   // Fetch contract templates
   const { data: templates = [], isLoading: isLoadingTemplates } = useQuery({
@@ -176,6 +199,41 @@ export function CreateContractDialog({
     },
     enabled: !!selectedCompany && open,
   });
+
+  // Custom components for react-select
+  const CustomOption = ({ data, innerRef, innerProps }: any) => (
+    <div 
+      ref={innerRef} 
+      {...innerProps} 
+      className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
+    >
+      <CompanyFavicon 
+        companyName={data.company.name}
+        website={data.company.website}
+        logoUrl={data.company.logo_url}
+        size="sm"
+      />
+      <span>{data.label}</span>
+    </div>
+  );
+
+  const CustomSingleValue = ({ data }: any) => (
+    <div className="flex items-center gap-2">
+      <CompanyFavicon 
+        companyName={data.company.name}
+        website={data.company.website}
+        logoUrl={data.company.logo_url}
+        size="sm"
+      />
+      <span>{data.label}</span>
+    </div>
+  );
+
+  const CustomNoOptionsMessage = () => (
+    <div className="p-3 text-sm text-gray-500">
+      {searchInput.trim() ? 'No companies found. Try a different search term.' : 'Type to search for companies...'}
+    </div>
+  );
 
   // Handle template selection change
   const handleTemplateChange = async (templateId: string) => {
@@ -245,7 +303,8 @@ export function CreateContractDialog({
   };
 
   // Handle company selection change (for standalone dialog)
-  const handleCompanyChange = (companyId: string) => {
+  const handleCompanyChange = (selectedOption: any) => {
+    const companyId = selectedOption ? selectedOption.value : null;
     setSelectedCompany(companyId);
     form.setValue('contact_id', '');
   };
@@ -374,21 +433,67 @@ export function CreateContractDialog({
               {!companyId && (
                 <div className="form-item">
                   <FormLabel>Company</FormLabel>
-                  <Select 
-                    onValueChange={handleCompanyChange} 
-                    value={selectedCompany || undefined}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map((company) => (
-                        <SelectItem key={company.id} value={company.id}>
-                          {company.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Select
+                    options={companyOptions}
+                    value={companyOptions.find(opt => opt.value === selectedCompany) || null}
+                    onChange={handleCompanyChange}
+                    onInputChange={(inputValue) => {
+                      setSearchInput(inputValue);
+                    }}
+                    components={{
+                      Option: CustomOption,
+                      SingleValue: CustomSingleValue,
+                      NoOptionsMessage: CustomNoOptionsMessage
+                    }}
+                    placeholder="Search and select a company..."
+                    noOptionsMessage={CustomNoOptionsMessage}
+                    isSearchable
+                    isClearable
+                    menuPortalTarget={document.body}
+                    menuPosition="fixed"
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (baseStyles, state) => ({
+                        ...baseStyles,
+                        minHeight: '44px',
+                        height: '44px',
+                        borderColor: state.isFocused ? 'hsl(var(--ring))' : 'hsl(var(--border))',
+                        boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
+                        '&:hover': {
+                          borderColor: 'hsl(var(--border))'
+                        }
+                      }),
+                      valueContainer: (baseStyles) => ({
+                        ...baseStyles,
+                        height: '44px',
+                        padding: '0 12px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }),
+                      input: (baseStyles) => ({
+                        ...baseStyles,
+                        margin: 0,
+                        padding: 0
+                      }),
+                      indicatorsContainer: (baseStyles) => ({
+                        ...baseStyles,
+                        height: '44px'
+                      }),
+                      menu: (baseStyles) => ({
+                        ...baseStyles,
+                        zIndex: 9999
+                      }),
+                      menuPortal: (baseStyles) => ({
+                        ...baseStyles,
+                        zIndex: 9999
+                      }),
+                      menuList: (baseStyles) => ({
+                        ...baseStyles,
+                        maxHeight: '200px'
+                      })
+                    }}
+                  />
                 </div>
               )}
             
@@ -410,7 +515,7 @@ export function CreateContractDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Contract Template</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <ShadcnSelect onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a template" />
@@ -423,7 +528,7 @@ export function CreateContractDialog({
                           </SelectItem>
                         ))}
                       </SelectContent>
-                    </Select>
+                    </ShadcnSelect>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -435,7 +540,7 @@ export function CreateContractDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company Contact</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedCompany}>
+                    <ShadcnSelect onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedCompany}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={selectedCompany ? "Select a contact" : "Select a company first"} />
@@ -448,7 +553,7 @@ export function CreateContractDialog({
                           </SelectItem>
                         ))}
                       </SelectContent>
-                    </Select>
+                    </ShadcnSelect>
                     <FormMessage />
                   </FormItem>
                 )}
