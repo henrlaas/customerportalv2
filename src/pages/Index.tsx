@@ -17,7 +17,7 @@ const Index = () => {
         <h1 className="text-3xl font-bold mb-4">Box Workspace</h1>
         <div className="flex items-center justify-center gap-2 text-gray-600">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <p>Redirecting to login page...</p>
+          <p>Loading...</p>
         </div>
       </div>
     </div>
