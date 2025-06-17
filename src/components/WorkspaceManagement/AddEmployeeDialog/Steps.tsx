@@ -12,5 +12,5 @@ export function Steps({ currentStep }: StepsProps) {
     'Payment Information'
   ];
 
-  return <ProgressStepper currentStep={currentStep} totalSteps={steps.length} className="pb-6" />;
+  return <ProgressStepper currentStep={currentStep} totalSteps={steps.length} className="pb-4" />;
 }
