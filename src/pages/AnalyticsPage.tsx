@@ -2,7 +2,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { AnalyticsTabContent } from "@/components/Analytics/AnalyticsTabContent";
-import { BarChart3 } from "lucide-react";
 
 const AnalyticsPage = () => {
   const { isAdmin } = useAuth();
@@ -15,12 +14,9 @@ const AnalyticsPage = () => {
   return (
     <div className="container py-8">
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900">
-            Analytics
-          </h1>
-        </div>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Analytics
+        </h1>
       </div>
       
       <p className="text-muted-foreground mb-8">
