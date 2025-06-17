@@ -1,566 +1,380 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Contract, ContractWithDetails, fetchContracts, fetchClientContracts } from '@/utils/contractUtils';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { format } from 'date-fns';
+import { Navigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Trash2, ClipboardList, FilePlus, FileCheck, CheckCircle, XCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileText, Plus, Search, Download, Eye, Trash2, Edit, CheckCircle, AlertCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { CreateContractDialog } from './CreateContractDialog';
 import { DeleteContractDialog } from './DeleteContractDialog';
-import { createPDF } from '@/utils/pdfUtils';
-import { Skeleton } from '@/components/ui/skeleton';
-import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
-import { CompanyFavicon } from '@/components/CompanyFavicon';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { useNavigate } from 'react-router-dom';
-import { MultiStageContractDialog } from './Contracts/MultiStageContractDialog';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+import { ViewContractDialog } from './ViewContractDialog';
 
-const CONTRACTS_PER_PAGE = 10;
+type Contract = {
+  id: string;
+  title: string;
+  description: string | null;
+  contract_type: string;
+  status: 'draft' | 'sent' | 'signed' | 'expired';
+  created_at: string;
+  updated_at: string;
+  client_name: string | null;
+  client_email: string | null;
+  company_id: string | null;
+  contact_id: string | null;
+  file_path: string | null;
+  companies?: {
+    id: string;
+    name: string;
+  } | null;
+  contacts?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+  } | null;
+};
 
-export const ContractList = () => {
-  const { user, profile } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isDownloading, setIsDownloading] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'unsigned' | 'signed'>('all');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [contractToDelete, setContractToDelete] = useState<ContractWithDetails | null>(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  
-  const isClient = profile?.role === 'client';
-  
-  // Fetch contracts with optimized query configuration
-  const { data: contracts = [], isLoading } = useQuery({
-    queryKey: ['contracts', user?.id, isClient],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      console.time('fetchContractsTotal');
-      let result;
-      if (isClient) {
-        result = await fetchClientContracts(user.id);
-      } else {
-        result = await fetchContracts();
-      }
-      console.timeEnd('fetchContractsTotal');
-      console.log('Contracts fetched:', result); // Debug log to see if contracts are being fetched
-      return result;
-    },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes before refetching
-    gcTime: 10 * 60 * 1000, // 10 minutes in cache
-  });
-  
-  // Memoize filtered contracts 
-  const filteredContracts = useMemo(() => {
-    if (!contracts?.length) {
-      console.log('No contracts available to filter'); // Debug log
-      return [];
-    }
-    
-    let result = [...contracts];
-    
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      result = result.filter(contract => contract.status === statusFilter);
-    }
-    
-    // Apply search filter
-    const searchString = searchTerm.toLowerCase();
-    if (!searchString) return result;
-    
-    return result.filter(contract => {
-      const companyName = contract.company?.name?.toLowerCase() || '';
-      const contactName = `${contract.contact?.first_name || ''} ${contract.contact?.last_name || ''}`.toLowerCase();
-      const status = contract.status.toLowerCase();
-      const type = contract.template_type.toLowerCase();
-      
-      return (
-        companyName.includes(searchString) ||
-        contactName.includes(searchString) ||
-        status.includes(searchString) ||
-        type.includes(searchString)
-      );
-    });
-  }, [contracts, searchTerm, statusFilter]);
-  
-  // Memoize contract groups for better performance
-  const { unsignedContracts, signedContracts } = useMemo(() => {
-    if (!filteredContracts?.length) {
-      return { unsignedContracts: [], signedContracts: [] };
-    }
-    
-    return {
-      unsignedContracts: filteredContracts.filter(contract => contract.status === 'unsigned'),
-      signedContracts: filteredContracts.filter(contract => contract.status === 'signed')
-    };
-  }, [filteredContracts]);
+const StatsCards = React.memo(({ contracts, isLoading }: { contracts: Contract[]; isLoading: boolean }) => {
+  if (isLoading) {
+    return <StatCardsSkeleton />;
+  }
 
-  // Pagination logic
-  const paginatedContracts = useMemo(() => {
-    const startIndex = (currentPage - 1) * CONTRACTS_PER_PAGE;
-    const endIndex = startIndex + CONTRACTS_PER_PAGE;
-    return filteredContracts.slice(startIndex, endIndex);
-  }, [filteredContracts, currentPage]);
+  const totalContracts = contracts.length;
+  const unsignedContracts = contracts.filter(c => c.status !== 'signed').length;
+  const signedContracts = contracts.filter(c => c.status === 'signed').length;
 
-  const totalPages = Math.ceil(filteredContracts.length / CONTRACTS_PER_PAGE);
-  const showPagination = filteredContracts.length > CONTRACTS_PER_PAGE;
-
-  // Reset to first page when filters change
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
-
-  // Memoize action handlers to prevent unnecessary re-renders
-  const downloadPdf = useCallback(async (contract: ContractWithDetails, e?: React.MouseEvent) => {
-    if (isDownloading) return;
-    
-    // If called from a click event, stop propagation to prevent opening dialog
-    if (e) {
-      e.stopPropagation();
-    }
-    
-    try {
-      setIsDownloading(contract.id);
-      const companyName = contract.company?.name || 'Company';
-      // Sanitize filename to avoid special characters
-      const sanitizedCompanyName = companyName.replace(/[^a-z0-9_]/gi, '_').toLowerCase();
-      const filename = `${contract.template_type}_${sanitizedCompanyName}.pdf`;
-      
-      toast({
-        title: 'Preparing PDF',
-        description: 'Starting PDF generation...',
-      });
-      
-      await createPDF(contract.content, filename);
-      
-      toast({
-        title: 'PDF Generated',
-        description: 'Your contract PDF has been downloaded.',
-      });
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to download the contract PDF. Please check the console for details.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsDownloading(null);
-    }
-  }, [toast, isDownloading]);
-  
-  const viewContract = useCallback((contract: ContractWithDetails) => {
-    // Navigate to contract details page instead of opening a dialog
-    navigate(`/contracts/${contract.id}`);
-  }, [navigate]);
-  
-  const handleDeleteClick = useCallback((contract: ContractWithDetails, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent row click from opening view dialog
-    setContractToDelete(contract);
-    setDeleteDialogOpen(true);
-  }, []);
-
-  // Stats cards component that prevents re-renders
-  const StatsCards = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => {
-    const unsignedCount = contracts.filter(c => c.status === 'unsigned').length;
-    const signedCount = contracts.filter(c => c.status === 'signed').length;
-    const totalCount = contracts.length;
-    
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <ClipboardList className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{totalCount}</div>
-                <p className="text-muted-foreground">Total Contracts</p>
-              </div>
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <Card className="bg-blue-50 text-blue-700 border-blue-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Total Contracts</p>
+              <p className="text-2xl font-bold mt-1">{totalContracts}</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-amber-100 p-3 rounded-full">
-                <FilePlus className="h-6 w-6 text-amber-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{unsignedCount}</div>
-                <p className="text-muted-foreground">Unsigned Contracts</p>
-              </div>
+            <FileText className="h-8 w-8 text-blue-500" />
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card className="bg-orange-50 text-orange-700 border-orange-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Unsigned Contracts</p>
+              <p className="text-2xl font-bold mt-1">{unsignedContracts}</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-green-100 p-3 rounded-full">
-                <FileCheck className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{signedCount}</div>
-                <p className="text-muted-foreground">Signed Contracts</p>
-              </div>
+            <AlertCircle className="h-8 w-8 text-orange-500" />
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card className="bg-green-50 text-green-700 border-green-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Signed Contracts</p>
+              <p className="text-2xl font-bold mt-1">{signedContracts}</p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  });
-  
-  // Skeleton loader for the stats cards
-  const StatCardsSkeleton = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      {[1, 2, 3].map((item) => (
-        <Card key={item}>
-          <CardContent className="pt-6">
-            <Skeleton className="h-8 w-24 mb-2" />
-            <Skeleton className="h-4 w-32" />
+            <CheckCircle className="h-8 w-8 text-green-500" />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+});
+
+const StatCardsSkeleton = () => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="animate-pulse bg-gray-50 border">
+          <CardContent className="p-4">
+            <div className="h-5 bg-gray-200 rounded w-1/2 mb-2"></div>
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-1"></div>
           </CardContent>
         </Card>
       ))}
     </div>
   );
-  
-  // Skeleton loader for the contracts table
-  const TableSkeleton = () => (
-    <div className="border border-gray-200 rounded-xl overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Company</TableHead>
-            <TableHead>Contact</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Created Date</TableHead>
-            <TableHead>Created By</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array(5).fill(0).map((_, index) => (
-            <TableRow key={index}>
-              <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 w-32" /></div></TableCell>
-              <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 w-32" /></div></TableCell>
-              <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-              <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 w-24" /></div></TableCell>
-              <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-              <TableCell><div className="flex gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-8 w-8 rounded-full" /></div></TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-  
-  // Contract table component with memoization - updated with enhanced status badges
-  const ContractTable = React.memo(({ contracts }: { contracts: ContractWithDetails[] }) => (
-    <div className="space-y-4">
-      <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Company</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Created Date</TableHead>
-              <TableHead>Created By</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {contracts.length > 0 ? (
-              contracts.map((contract) => (
-                <TableRow 
-                  key={contract.id} 
-                  onClick={() => viewContract(contract)}
-                  className="cursor-pointer hover:bg-gray-100"
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <CompanyFavicon 
-                        companyName={contract.company?.name || 'Unknown'} 
-                        website={contract.company?.website || null}
-                        logoUrl={contract.company?.logo_url || null}
-                        size="sm"
-                      />
-                      <span>{contract.company?.name || 'N/A'}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {contract.contact && (
-                        <UserAvatarGroup 
-                          users={[{
-                            id: contract.contact.user_id,
-                            first_name: contract.contact.first_name || '',
-                            last_name: contract.contact.last_name || '',
-                            avatar_url: contract.contact.avatar_url
-                          }]}
-                          size="sm"
-                        />
-                      )}
-                      <span>
-                        {contract.contact ? 
-                          `${contract.contact.first_name || ''} ${contract.contact.last_name || ''}`.trim() || 'N/A'
-                          : 'N/A'
-                        }
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
-                      {contract.template_type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{format(new Date(contract.created_at), 'MMM d, yyyy')}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {contract.created_by ? (
-                        <>
-                          <UserAvatarGroup 
-                            users={[{
-                              id: contract.created_by,
-                              first_name: contract.creator?.first_name || '',
-                              last_name: contract.creator?.last_name || '',
-                              avatar_url: contract.creator?.avatar_url
-                            }]}
-                            size="sm"
-                          />
-                          <span>
-                            {contract.creator ? 
-                              `${contract.creator.first_name || ''} ${contract.creator.last_name || ''}`.trim() || 'N/A'
-                              : 'System'
-                            }
-                          </span>
-                        </>
-                      ) : (
-                        <span>System</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={contract.status === 'signed' ? "default" : "outline"} 
-                      className={`inline-flex items-center gap-1 w-fit ${
-                        contract.status === 'signed' 
-                          ? "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800"
-                          : "bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-800"
-                      }`}
-                    >
-                      {contract.status === 'signed' ? (
-                        <>
-                          <CheckCircle className="h-3 w-3" />
-                          <span>Signed</span>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="h-3 w-3" />
-                          <span>Unsigned</span>
-                        </>
-                      )}
-                    </Badge>
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={(e) => downloadPdf(contract, e)}
-                        disabled={isDownloading === contract.id}
-                        title="Download PDF"
-                      >
-                        {isDownloading === contract.id ? (
-                          <span className="w-4 h-4 block rounded-full border-2 border-b-transparent border-r-transparent border-gray-400 animate-spin" />
-                        ) : (
-                          <Download className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => handleDeleteClick(contract, e)}
-                        title="Delete Contract"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  No contracts found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      
-      {/* Always show pagination */}
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                if (currentPage > 1) setCurrentPage(currentPage - 1);
-              }}
-              className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-            />
-          </PaginationItem>
-          
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <PaginationItem key={page}>
-              <PaginationLink
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setCurrentPage(page);
-                }}
-                isActive={currentPage === page}
-              >
-                {page}
-              </PaginationLink>
-            </PaginationItem>
-          ))}
-          
-          <PaginationItem>
-            <PaginationNext 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-              }}
-              className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    </div>
-  ));
+};
 
-  const FilterToggle = () => (
-    <ToggleGroup 
-      type="single" 
-      value={statusFilter} 
-      onValueChange={(value) => {
-        if (value) setStatusFilter(value as 'all' | 'unsigned' | 'signed');
-      }}
-      className="border-0 bg-transparent p-0"
-    >
-      <ToggleGroupItem value="all" aria-label="View all contracts" variant="tab">All</ToggleGroupItem>
-      <ToggleGroupItem value="unsigned" aria-label="View unsigned contracts" variant="tab">Unsigned</ToggleGroupItem>
-      <ToggleGroupItem value="signed" aria-label="View signed contracts" variant="tab">Signed</ToggleGroupItem>
-    </ToggleGroup>
-  );
-  
-  // Debug output to inspect what's happening
-  console.log('User:', user);
-  console.log('Profile:', profile);
-  console.log('Contracts loading:', isLoading);
-  console.log('Contracts count:', contracts?.length || 0);
-  console.log('Filtered contracts:', filteredContracts?.length || 0);
-  
-  return (
-    <div className="space-y-6">
-      {/* Contract Dashboard for Admins/Employees */}
-      {!isClient && (
-        isLoading ? (
-          <StatCardsSkeleton />
-        ) : (
-          <StatsCards contracts={contracts} />
-        )
-      )}
+export default function ContractList() {
+  const { isAdmin } = useAuth();
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [contractToDelete, setContractToDelete] = useState<Contract | null>(null);
+  const [contractToView, setContractToView] = useState<Contract | null>(null);
+
+  if (!isAdmin) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  useEffect(() => {
+    fetchContracts();
+  }, []);
+
+  const fetchContracts = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('contracts')
+        .select(`
+          *,
+          companies (id, name),
+          contacts (id, first_name, last_name, email)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setContracts(data || []);
+    } catch (error: any) {
+      toast.error('Failed to fetch contracts: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredContracts = contracts.filter(contract => {
+    const matchesSearch = 
+      contract.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.companies?.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || contract.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      draft: 'secondary',
+      sent: 'outline',
+      signed: 'default',
+      expired: 'destructive'
+    } as const;
+    
+    return (
+      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
+  };
+
+  const handleDownload = async (contract: Contract) => {
+    if (!contract.file_path) {
+      toast.error('No file available for download');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('contracts')
+        .download(contract.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${contract.title}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div className="flex-grow max-w-md">
-          <Input
-            placeholder="Search contracts..."
-            className="w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      toast.success('Contract downloaded successfully');
+    } catch (error: any) {
+      toast.error('Failed to download contract: ' + error.message);
+    }
+  };
+
+  const handleDelete = async (contractId: string) => {
+    try {
+      const { error } = await supabase
+        .from('contracts')
+        .delete()
+        .eq('id', contractId);
+
+      if (error) throw error;
+      
+      setContracts(contracts.filter(c => c.id !== contractId));
+      toast.success('Contract deleted successfully');
+    } catch (error: any) {
+      toast.error('Failed to delete contract: ' + error.message);
+    }
+  };
+
+  return (
+    <div className="container py-8">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <FileText className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">Contracts</h1>
         </div>
         
-        <div className="flex items-center gap-4">
-          <FilterToggle />
-          {!isClient && (
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <FilePlus className="h-4 w-4 mr-2" />
-              Create Contract
-            </Button>
-          )}
-        </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Contract
+        </Button>
       </div>
-      
-      {isClient ? (
-        <Tabs defaultValue="unsigned">
-          <TabsList className="mb-4">
-            <TabsTrigger value="unsigned">Waiting for Signature</TabsTrigger>
-            <TabsTrigger value="signed">Signed Contracts</TabsTrigger>
-          </TabsList>
-          <TabsContent value="unsigned">
-            {isLoading ? <TableSkeleton /> : <ContractTable contracts={unsignedContracts} />}
-          </TabsContent>
-          <TabsContent value="signed">
-            {isLoading ? <TableSkeleton /> : <ContractTable contracts={signedContracts} />}
-          </TabsContent>
-        </Tabs>
-      ) : (
-        isLoading ? <TableSkeleton /> : <ContractTable contracts={paginatedContracts} />
-      )}
-      
-      {contractToDelete && (
-        <DeleteContractDialog
-          contractId={contractToDelete.id}
-          contractName={`${contractToDelete.template_type} for ${contractToDelete.company?.name || 'Unknown Company'}`}
-          isOpen={deleteDialogOpen}
-          onClose={() => {
-            setDeleteDialogOpen(false);
-            setContractToDelete(null);
-          }}
-          onDeleted={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })}
-        />
-      )}
 
-      <MultiStageContractDialog
-        isOpen={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+      <p className="text-muted-foreground mb-8">
+        Manage and track all your contracts in one place. Create, send, and monitor contract status.
+      </p>
+
+      <StatsCards contracts={contracts} isLoading={isLoading} />
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search contracts..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="signed">Signed</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Contract List</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-20 bg-gray-100 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredContracts.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No contracts found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchTerm || statusFilter !== 'all' 
+                    ? 'Try adjusting your filters' 
+                    : 'Get started by creating your first contract'
+                  }
+                </p>
+                {!searchTerm && statusFilter === 'all' && (
+                  <Button onClick={() => setIsCreateDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Contract
+                  </Button>
+                )}
+              </div>
+            ) : (
+              filteredContracts.map((contract) => (
+                <Card key={contract.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold">{contract.title}</h3>
+                          {getStatusBadge(contract.status)}
+                        </div>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>
+                            <span className="font-medium">Client:</span>{' '}
+                            {contract.companies?.name || contract.client_name || 'N/A'}
+                          </p>
+                          <p>
+                            <span className="font-medium">Type:</span> {contract.contract_type}
+                          </p>
+                          <p>
+                            <span className="font-medium">Created:</span>{' '}
+                            {format(new Date(contract.created_at), 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setContractToView(contract)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {contract.file_path && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(contract)}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setContractToDelete(contract)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <CreateContractDialog
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        onSuccess={fetchContracts}
+      />
+
+      <DeleteContractDialog
+        contract={contractToDelete}
+        onClose={() => setContractToDelete(null)}
+        onConfirm={(contractId) => {
+          handleDelete(contractId);
+          setContractToDelete(null);
+        }}
+      />
+
+      <ViewContractDialog
+        contract={contractToView}
+        onClose={() => setContractToView(null)}
       />
     </div>
   );
-};
+}
