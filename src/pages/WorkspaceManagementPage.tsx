@@ -39,6 +39,7 @@ const WorkspaceManagementPage = () => {
   const [settings, setSettings] = useState<WorkspaceSetting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("home");
   const { toast } = useToast();
 
   // Only admins can access this page
@@ -63,6 +64,10 @@ const WorkspaceManagementPage = () => {
 
     fetchSettings();
   }, []);
+
+  const handleTabChange = (tabValue: string) => {
+    setActiveTab(tabValue);
+  };
 
   const handleUpdateSetting = async (id: string, newValue: string) => {
     try {
@@ -142,7 +147,7 @@ const WorkspaceManagementPage = () => {
         Configure global settings for your workspace and manage users.
       </p>
 
-      <Tabs defaultValue="home" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList>
           <TabsTrigger value="home">
             <Home className="h-4 w-4 mr-2" />
@@ -179,7 +184,7 @@ const WorkspaceManagementPage = () => {
         </TabsList>
 
         <TabsContent value="home">
-          <HomeTab />
+          <HomeTab onNavigateToTab={handleTabChange} />
         </TabsContent>
 
         <TabsContent value="all-settings" className="space-y-4">

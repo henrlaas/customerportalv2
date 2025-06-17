@@ -9,14 +9,17 @@ import {
   Palette, 
   FileText,
   ArrowRight,
-  Building2,
   Target
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-export function HomeTab() {
+interface HomeTabProps {
+  onNavigateToTab: (tabValue: string) => void;
+}
+
+export function HomeTab({ onNavigateToTab }: HomeTabProps) {
   const navigationCards = [
     {
       title: "Pricing",
@@ -77,11 +80,7 @@ export function HomeTab() {
   ];
 
   const handleNavigateToTab = (tabValue: string) => {
-    // Get the tabs trigger element and click it
-    const tabTrigger = document.querySelector(`[value="${tabValue}"]`) as HTMLElement;
-    if (tabTrigger) {
-      tabTrigger.click();
-    }
+    onNavigateToTab(tabValue);
   };
 
   return (
