@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { newsService, NewsItem } from '@/services/newsService';
+import { useUserProfiles } from '@/hooks/useUserProfiles';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,10 +38,25 @@ export function NewsManagementTab() {
     queryFn: newsService.getAll,
   });
 
+  // Get unique user IDs for profile fetching
+  const creatorUserIds = [...new Set(news.map(item => item.created_by))];
+  const { data: userProfiles = {} } = useUserProfiles(creatorUserIds);
+
   const filteredNews = news.filter(item =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const getCreatorName = (userId: string) => {
+    const profile = userProfiles[userId];
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name} ${profile.last_name}`;
+    }
+    if (profile?.first_name) {
+      return profile.first_name;
+    }
+    return 'Unknown User';
+  };
 
   const handleEdit = (newsItem: NewsItem) => {
     setSelectedNews(newsItem);
@@ -115,63 +131,70 @@ export function NewsManagementTab() {
       ) : (
         <div className="grid gap-4">
           {filteredNews.map((newsItem) => (
-            <Card key={newsItem.id} className="overflow-hidden">
-              <div className="flex">
-                {newsItem.image_banner && (
-                  <div className="w-48 h-32 flex-shrink-0">
-                    <img
-                      src={newsItem.image_banner}
-                      alt={newsItem.title}
-                      className="w-full h-full object-cover"
-                    />
+            <Card 
+              key={newsItem.id} 
+              className="overflow-hidden relative min-h-[200px]"
+              style={{
+                backgroundImage: newsItem.image_banner ? `url(${newsItem.image_banner})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              {/* Black overlay */}
+              {newsItem.image_banner && (
+                <div className="absolute inset-0 bg-black bg-opacity-40" />
+              )}
+              
+              {/* Content */}
+              <div className="relative z-10">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 flex-1">
+                      <CardTitle className={`line-clamp-2 ${newsItem.image_banner ? 'text-white' : ''}`}>
+                        {newsItem.title}
+                      </CardTitle>
+                      <CardDescription className={`line-clamp-3 ${newsItem.image_banner ? 'text-gray-200' : ''}`}>
+                        {newsItem.description}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(newsItem)}
+                        className={newsItem.image_banner ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : ''}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(newsItem)}
+                        className={newsItem.image_banner ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : ''}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                )}
-                <div className="flex-1">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="line-clamp-1">{newsItem.title}</CardTitle>
-                        <CardDescription className="line-clamp-2">
-                          {newsItem.description}
-                        </CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(newsItem)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(newsItem)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className={`flex items-center gap-4 text-sm ${newsItem.image_banner ? 'text-gray-200' : 'text-muted-foreground'}`}>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(newsItem.created_at), 'MMM d, yyyy')}
                     </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(newsItem.created_at), 'MMM d, yyyy')}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        Created by admin
-                      </div>
-                      {newsItem.image_banner && (
-                        <Badge variant="secondary" className="flex items-center gap-1">
-                          <ImageIcon className="h-3 w-3" />
-                          Has banner
-                        </Badge>
-                      )}
+                    <div className="flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      Created by {getCreatorName(newsItem.created_by)}
                     </div>
-                  </CardContent>
-                </div>
+                    {newsItem.image_banner && (
+                      <Badge variant="secondary" className="flex items-center gap-1 bg-white/20 text-white border-white/20">
+                        <ImageIcon className="h-3 w-3" />
+                        Has banner
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
               </div>
             </Card>
           ))}
