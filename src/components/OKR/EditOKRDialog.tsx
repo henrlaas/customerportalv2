@@ -24,9 +24,9 @@ export function EditOKRDialog({ okr, isOpen, onClose, onSuccess }: EditOKRDialog
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    quarter: 'Q1' as const,
+    quarter: 'Q1' as 'Q1' | 'Q2' | 'Q3' | 'Q4',
     year: new Date().getFullYear(),
-    status: 'draft' as const,
+    status: 'draft' as 'draft' | 'active' | 'completed' | 'cancelled',
   });
 
   // Update form data when OKR changes
@@ -122,7 +122,7 @@ export function EditOKRDialog({ okr, isOpen, onClose, onSuccess }: EditOKRDialog
               <Label htmlFor="quarter">Quarter</Label>
               <Select
                 value={formData.quarter}
-                onValueChange={(value) => setFormData({ ...formData, quarter: value as any })}
+                onValueChange={(value) => setFormData({ ...formData, quarter: value as 'Q1' | 'Q2' | 'Q3' | 'Q4' })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -153,7 +153,7 @@ export function EditOKRDialog({ okr, isOpen, onClose, onSuccess }: EditOKRDialog
             <Label htmlFor="status">Status</Label>
             <Select
               value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value as any })}
+              onValueChange={(value) => setFormData({ ...formData, status: value as 'draft' | 'active' | 'completed' | 'cancelled' })}
             >
               <SelectTrigger>
                 <SelectValue />

@@ -98,7 +98,7 @@ const OKRPage = () => {
 
       // Apply filters
       if (filters.quarter !== 'all') {
-        query = query.eq('quarter', filters.quarter);
+        query = query.eq('quarter', filters.quarter as 'Q1' | 'Q2' | 'Q3' | 'Q4');
       }
       
       if (filters.year) {
@@ -106,7 +106,7 @@ const OKRPage = () => {
       }
       
       if (filters.status !== 'all') {
-        query = query.eq('status', filters.status);
+        query = query.eq('status', filters.status as 'draft' | 'active' | 'completed' | 'cancelled');
       }
       
       if (filters.owner !== 'all') {

@@ -36,10 +36,10 @@ export function CreateOKRDialog({
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    quarter: currentQuarter,
+    quarter: currentQuarter as 'Q1' | 'Q2' | 'Q3' | 'Q4',
     year: currentYear,
     owner_id: '',
-    status: 'draft' as const,
+    status: 'draft' as 'draft' | 'active' | 'completed' | 'cancelled',
   });
 
   const createOKRMutation = useMutation({
@@ -47,9 +47,13 @@ export function CreateOKRDialog({
       const { error } = await supabase
         .from('okrs')
         .insert({
-          ...data,
-          created_by: (await supabase.auth.getUser()).data.user?.id!,
+          title: data.title,
+          description: data.description,
+          quarter: data.quarter,
+          year: data.year,
+          status: data.status,
           owner_id: data.owner_id || null,
+          created_by: (await supabase.auth.getUser()).data.user?.id!,
         });
 
       if (error) throw error;
@@ -62,7 +66,7 @@ export function CreateOKRDialog({
       setFormData({
         title: '',
         description: '',
-        quarter: currentQuarter,
+        quarter: currentQuarter as 'Q1' | 'Q2' | 'Q3' | 'Q4',
         year: currentYear,
         owner_id: '',
         status: 'draft',
@@ -95,7 +99,7 @@ export function CreateOKRDialog({
     setFormData({
       title: '',
       description: '',
-      quarter: currentQuarter,
+      quarter: currentQuarter as 'Q1' | 'Q2' | 'Q3' | 'Q4',
       year: currentYear,
       owner_id: '',
       status: 'draft',
@@ -138,7 +142,7 @@ export function CreateOKRDialog({
               <Label htmlFor="quarter">Quarter</Label>
               <Select
                 value={formData.quarter}
-                onValueChange={(value) => setFormData({ ...formData, quarter: value as any })}
+                onValueChange={(value) => setFormData({ ...formData, quarter: value as 'Q1' | 'Q2' | 'Q3' | 'Q4' })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -191,7 +195,7 @@ export function CreateOKRDialog({
             <Label htmlFor="status">Status</Label>
             <Select
               value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value as any })}
+              onValueChange={(value) => setFormData({ ...formData, status: value as 'draft' | 'active' | 'completed' | 'cancelled' })}
             >
               <SelectTrigger>
                 <SelectValue />
