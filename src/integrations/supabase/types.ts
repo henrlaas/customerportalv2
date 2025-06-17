@@ -242,6 +242,35 @@ export type Database = {
           },
         ]
       }
+      campaign_assignees: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_assignees_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_media: {
         Row: {
           campaign_id: string | null
@@ -1971,6 +2000,22 @@ export type Database = {
         | "campaign_approved"
         | "campaign_rejected"
         | "news_posted"
+        | "project_completed"
+        | "task_completed"
+        | "company_advisor_assigned"
+        | "campaign_assigned"
+        | "campaign_status_changed"
+        | "deal_won"
+        | "role_changed"
+        | "monthly_time_reminder"
+        | "contract_signature_reminder"
+        | "milestone_created"
+        | "project_deadline_approaching"
+        | "task_overdue"
+        | "weekly_progress_report"
+        | "monthly_progress_report"
+        | "file_uploaded_to_project"
+        | "meeting_deadline_conflict"
       okr_status: "draft" | "active" | "completed" | "cancelled"
       quarter: "Q1" | "Q2" | "Q3" | "Q4"
       user_role: "admin" | "employee" | "client"
@@ -2116,6 +2161,22 @@ export const Constants = {
         "campaign_approved",
         "campaign_rejected",
         "news_posted",
+        "project_completed",
+        "task_completed",
+        "company_advisor_assigned",
+        "campaign_assigned",
+        "campaign_status_changed",
+        "deal_won",
+        "role_changed",
+        "monthly_time_reminder",
+        "contract_signature_reminder",
+        "milestone_created",
+        "project_deadline_approaching",
+        "task_overdue",
+        "weekly_progress_report",
+        "monthly_progress_report",
+        "file_uploaded_to_project",
+        "meeting_deadline_conflict",
       ],
       okr_status: ["draft", "active", "completed", "cancelled"],
       quarter: ["Q1", "Q2", "Q3", "Q4"],

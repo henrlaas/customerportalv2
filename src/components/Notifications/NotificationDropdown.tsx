@@ -1,7 +1,24 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Bell, Check, CheckCheck, Eye } from 'lucide-react';
+import { 
+  Bell, 
+  Check, 
+  CheckCheck, 
+  Eye, 
+  Trophy, 
+  Target, 
+  Users, 
+  Briefcase, 
+  Calendar, 
+  FileText, 
+  Settings, 
+  Clock, 
+  AlertTriangle,
+  BarChart3,
+  Upload,
+  UserCheck
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -52,6 +69,16 @@ export const NotificationDropdown: React.FC = () => {
         case 'campaign':
           navigate(`/campaigns/${notification.entity_id}`);
           break;
+        case 'company':
+          navigate(`/companies/${notification.entity_id}`);
+          break;
+        case 'milestone':
+          // Navigate to the project page since milestones are part of projects
+          navigate(`/projects`);
+          break;
+        case 'profile':
+          navigate(`/settings`);
+          break;
         case 'news':
           navigate(`/dashboard`);
           break;
@@ -64,25 +91,58 @@ export const NotificationDropdown: React.FC = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'project_assigned':
-        return '📋';
+      case 'project_completed':
+      case 'project_deadline_approaching':
+        return <Briefcase className="h-4 w-4 text-blue-500" />;
       case 'deal_assigned':
       case 'deal_stage_changed':
-        return '🤝';
+        return <Target className="h-4 w-4 text-green-500" />;
+      case 'deal_won':
+        return <Trophy className="h-4 w-4 text-yellow-500" />;
       case 'task_assigned':
-        return '✅';
+      case 'task_completed':
+      case 'task_overdue':
+        return <Check className="h-4 w-4 text-purple-500" />;
       case 'contract_signed':
-        return '📝';
+      case 'contract_signature_reminder':
+        return <FileText className="h-4 w-4 text-indigo-500" />;
       case 'due_date_approaching':
-        return '⏰';
+        return <Clock className="h-4 w-4 text-orange-500" />;
+      case 'campaign_assigned':
+      case 'campaign_status_changed':
       case 'campaign_comment_added':
       case 'campaign_approved':
       case 'campaign_rejected':
-        return '📢';
+        return <Users className="h-4 w-4 text-pink-500" />;
+      case 'company_advisor_assigned':
+        return <UserCheck className="h-4 w-4 text-teal-500" />;
+      case 'role_changed':
+        return <Settings className="h-4 w-4 text-gray-500" />;
+      case 'monthly_time_reminder':
+        return <Calendar className="h-4 w-4 text-blue-600" />;
+      case 'milestone_created':
+        return <Target className="h-4 w-4 text-emerald-500" />;
+      case 'weekly_progress_report':
+      case 'monthly_progress_report':
+        return <BarChart3 className="h-4 w-4 text-cyan-500" />;
+      case 'file_uploaded_to_project':
+        return <Upload className="h-4 w-4 text-green-600" />;
+      case 'meeting_deadline_conflict':
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
       case 'news_posted':
-        return '📰';
+        return <Bell className="h-4 w-4 text-blue-400" />;
       default:
-        return '🔔';
+        return <Bell className="h-4 w-4 text-gray-400" />;
     }
+  };
+
+  const getNotificationPriority = (type: string) => {
+    const highPriority = ['deal_won', 'task_overdue', 'contract_signature_reminder', 'meeting_deadline_conflict'];
+    const mediumPriority = ['project_deadline_approaching', 'due_date_approaching', 'role_changed'];
+    
+    if (highPriority.includes(type)) return 'high';
+    if (mediumPriority.includes(type)) return 'medium';
+    return 'low';
   };
 
   return (
@@ -128,39 +188,44 @@ export const NotificationDropdown: React.FC = () => {
           </div>
         ) : (
           <ScrollArea className="h-96">
-            {notifications.slice(0, 10).map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                className={`p-3 cursor-pointer hover:bg-gray-50 ${
-                  !notification.read ? 'bg-blue-50' : ''
-                }`}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <div className="flex items-start space-x-3 w-full">
-                  <div className="flex-shrink-0 text-lg">
-                    {getNotificationIcon(notification.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <p className={`text-sm font-medium ${
-                        !notification.read ? 'text-gray-900' : 'text-gray-700'
-                      }`}>
-                        {notification.title}
-                      </p>
-                      {!notification.read && (
-                        <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 ml-2 mt-1"></div>
-                      )}
+            {notifications.slice(0, 10).map((notification) => {
+              const priority = getNotificationPriority(notification.type);
+              return (
+                <DropdownMenuItem
+                  key={notification.id}
+                  className={`p-3 cursor-pointer hover:bg-gray-50 ${
+                    !notification.read ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''
+                  } ${
+                    priority === 'high' ? 'bg-red-50' : priority === 'medium' ? 'bg-yellow-50' : ''
+                  }`}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <div className="flex items-start space-x-3 w-full">
+                    <div className="flex-shrink-0 mt-1">
+                      {getNotificationIcon(notification.type)}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <p className={`text-sm font-medium ${
+                          !notification.read ? 'text-gray-900' : 'text-gray-700'
+                        }`}>
+                          {notification.title}
+                        </p>
+                        {!notification.read && (
+                          <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 ml-2 mt-1"></div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </DropdownMenuItem>
-            ))}
+                </DropdownMenuItem>
+              );
+            })}
           </ScrollArea>
         )}
         

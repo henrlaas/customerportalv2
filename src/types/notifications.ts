@@ -9,7 +9,23 @@ export type NotificationType =
   | 'campaign_comment_added'
   | 'campaign_approved'
   | 'campaign_rejected'
-  | 'news_posted';
+  | 'news_posted'
+  | 'project_completed'
+  | 'task_completed'
+  | 'company_advisor_assigned'
+  | 'campaign_assigned'
+  | 'campaign_status_changed'
+  | 'deal_won'
+  | 'role_changed'
+  | 'monthly_time_reminder'
+  | 'contract_signature_reminder'
+  | 'milestone_created'
+  | 'project_deadline_approaching'
+  | 'task_overdue'
+  | 'weekly_progress_report'
+  | 'monthly_progress_report'
+  | 'file_uploaded_to_project'
+  | 'meeting_deadline_conflict';
 
 export interface Notification {
   id: string;
