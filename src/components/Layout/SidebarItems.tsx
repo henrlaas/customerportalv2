@@ -1,3 +1,4 @@
+
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -127,7 +128,7 @@ export function getSidebarItems() {
       title: t('Finance'),
       href: '/finance',
       icon: DollarSign,
-      roles: ['admin', 'employee'],
+      roles: ['admin'],
       category: 'MENU',
       hasDropdown: false,
       disabled: true,
