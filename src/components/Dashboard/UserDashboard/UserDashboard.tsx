@@ -22,10 +22,10 @@ export const UserDashboard = () => {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-screen overflow-hidden">
       {/* Main Dashboard Content */}
-      <div className="flex-1 p-6 pr-0">
-        <div className="grid grid-cols-2 gap-6 h-full">
+      <div className="flex-1 p-6 pr-0 overflow-auto">
+        <div className="grid grid-cols-2 gap-6 min-h-full">
           {/* Row 1: Greeting - spans 2 columns */}
           <div className="col-span-2">
             <GreetingCard />
@@ -53,11 +53,13 @@ export const UserDashboard = () => {
       </div>
 
       {/* Vertical separator */}
-      <div className="w-px bg-border mx-6"></div>
+      <div className="w-px bg-border"></div>
 
       {/* Right Side Calendar */}
-      <div className="w-80 py-6 pr-6">
-        <UpcomingDeadlinesCalendar onTaskClick={handleTaskClick} />
+      <div className="w-80 py-6 pr-6 overflow-auto">
+        <div className="h-full">
+          <UpcomingDeadlinesCalendar onTaskClick={handleTaskClick} />
+        </div>
       </div>
 
       {/* Task Detail Sheet */}

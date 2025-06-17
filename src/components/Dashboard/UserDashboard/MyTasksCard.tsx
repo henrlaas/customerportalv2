@@ -48,17 +48,17 @@ export const MyTasksCard = () => {
 
   if (isLoading) {
     return (
-      <Card className="h-full bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
+      <Card className="h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2 text-blue-700">
-            <CheckCircle className="h-5 w-5" />
+          <CardTitle className="text-lg flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-blue-600" />
             My Tasks
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center text-muted-foreground animate-pulse">
-            <div className="h-12 bg-blue-200 rounded-lg mb-4"></div>
-            <div className="h-8 bg-blue-200 rounded mb-2"></div>
+            <div className="h-12 bg-gray-200 rounded-lg mb-4"></div>
+            <div className="h-8 bg-gray-200 rounded mb-2"></div>
           </div>
         </CardContent>
       </Card>
@@ -68,10 +68,10 @@ export const MyTasksCard = () => {
   const stats = taskStats || { active: 0, overdue: 0 };
 
   return (
-    <Card className="h-full bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 hover:shadow-lg transition-all duration-200">
+    <Card className="h-full hover:shadow-lg transition-all duration-200">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2 text-blue-700">
-          <CheckCircle className="h-5 w-5" />
+        <CardTitle className="text-lg flex items-center gap-2">
+          <CheckCircle className="h-5 w-5 text-blue-600" />
           My Tasks
         </CardTitle>
       </CardHeader>
@@ -79,7 +79,7 @@ export const MyTasksCard = () => {
         {/* Hero Section */}
         <div className="text-center">
           <div className="text-4xl font-bold text-blue-600 mb-1">{stats.active}</div>
-          <div className="text-sm text-blue-600/70 font-medium">Active Tasks</div>
+          <div className="text-sm text-muted-foreground font-medium">Active Tasks</div>
         </div>
 
         {/* Overdue Warning */}
@@ -95,7 +95,7 @@ export const MyTasksCard = () => {
         )}
 
         {/* Status Indicator */}
-        <div className="flex items-center justify-center gap-2 text-sm text-blue-600/70">
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <Activity className="h-4 w-4" />
           <span>
             {stats.active === 0 ? 'All caught up!' : 'Keep it up!'}

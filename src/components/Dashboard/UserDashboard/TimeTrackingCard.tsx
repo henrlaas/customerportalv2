@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, Target, DollarSign } from 'lucide-react';
+import { Clock, Target } from 'lucide-react';
 
 export const TimeTrackingCard = () => {
   const { user } = useAuth();
@@ -74,17 +74,17 @@ export const TimeTrackingCard = () => {
 
   if (isLoading) {
     return (
-      <Card className="h-full bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100">
+      <Card className="h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2 text-purple-700">
-            <Clock className="h-5 w-5" />
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Clock className="h-5 w-5 text-purple-600" />
             Time Tracking
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center text-muted-foreground animate-pulse">
-            <div className="h-12 bg-purple-200 rounded-lg mb-4"></div>
-            <div className="h-16 bg-purple-200 rounded mb-2"></div>
+            <div className="h-12 bg-gray-200 rounded-lg mb-4"></div>
+            <div className="h-16 bg-gray-200 rounded mb-2"></div>
           </div>
         </CardContent>
       </Card>
@@ -94,10 +94,10 @@ export const TimeTrackingCard = () => {
   const stats = timeStats || { hoursThisMonth: 0, estimatedSalary: 0, progressPercentage: 0, dailyAverage: 0 };
 
   return (
-    <Card className="h-full bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100 hover:shadow-lg transition-all duration-200">
+    <Card className="h-full hover:shadow-lg transition-all duration-200">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2 text-purple-700">
-          <Clock className="h-5 w-5" />
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Clock className="h-5 w-5 text-purple-600" />
           Time Tracking
         </CardTitle>
       </CardHeader>
@@ -105,38 +105,38 @@ export const TimeTrackingCard = () => {
         {/* Hero Section with Progress */}
         <div className="text-center">
           <div className="text-4xl font-bold text-purple-600 mb-1">{stats.hoursThisMonth}h</div>
-          <div className="text-sm text-purple-600/70 font-medium mb-3">This Month</div>
+          <div className="text-sm text-muted-foreground font-medium mb-3">This Month</div>
           
           {/* Progress Bar */}
-          <div className="w-full bg-purple-100 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
               className="bg-purple-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${stats.progressPercentage}%` }}
             ></div>
           </div>
-          <div className="text-xs text-purple-600/70 mt-1">
+          <div className="text-xs text-muted-foreground mt-1">
             {stats.progressPercentage.toFixed(0)}% of 150h goal
           </div>
         </div>
 
         {/* Secondary Metrics */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center bg-white/60 rounded-lg p-3">
+          <div className="text-center bg-gray-50 rounded-lg p-3">
             <div className="text-xl font-semibold text-green-600">
               kr {stats.estimatedSalary.toLocaleString()}
             </div>
-            <div className="text-xs text-green-600/70">Earned</div>
+            <div className="text-xs text-muted-foreground">Earned</div>
           </div>
-          <div className="text-center bg-white/60 rounded-lg p-3">
+          <div className="text-center bg-gray-50 rounded-lg p-3">
             <div className="text-xl font-semibold text-purple-600">{stats.dailyAverage}h</div>
-            <div className="text-xs text-purple-600/70">Daily Avg</div>
+            <div className="text-xs text-muted-foreground">Daily Avg</div>
           </div>
         </div>
 
         {/* Goal Status */}
         <div className="flex items-center justify-center gap-2">
           <Target className="h-4 w-4 text-purple-600" />
-          <span className="text-sm font-medium text-purple-700">
+          <span className="text-sm font-medium text-muted-foreground">
             {stats.progressPercentage >= 100 ? 'Goal achieved!' : 'On track'}
           </span>
         </div>
