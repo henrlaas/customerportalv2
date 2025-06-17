@@ -38,7 +38,7 @@ export function CreateOKRDialog({
     description: '',
     quarter: currentQuarter as 'Q1' | 'Q2' | 'Q3' | 'Q4',
     year: currentYear,
-    owner_id: '',
+    owner_id: 'none',
     status: 'draft' as 'draft' | 'active' | 'completed' | 'cancelled',
   });
 
@@ -52,7 +52,7 @@ export function CreateOKRDialog({
           quarter: data.quarter,
           year: data.year,
           status: data.status,
-          owner_id: data.owner_id || null,
+          owner_id: data.owner_id === 'none' ? null : data.owner_id,
           created_by: (await supabase.auth.getUser()).data.user?.id!,
         });
 
@@ -68,7 +68,7 @@ export function CreateOKRDialog({
         description: '',
         quarter: currentQuarter as 'Q1' | 'Q2' | 'Q3' | 'Q4',
         year: currentYear,
-        owner_id: '',
+        owner_id: 'none',
         status: 'draft',
       });
       onSuccess();
@@ -101,7 +101,7 @@ export function CreateOKRDialog({
       description: '',
       quarter: currentQuarter as 'Q1' | 'Q2' | 'Q3' | 'Q4',
       year: currentYear,
-      owner_id: '',
+      owner_id: 'none',
       status: 'draft',
     });
     onClose();
@@ -179,7 +179,7 @@ export function CreateOKRDialog({
                 <SelectValue placeholder="Select owner..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No owner</SelectItem>
+                <SelectItem value="none">No owner</SelectItem>
                 {profiles.map((profile) => (
                   <SelectItem key={profile.id} value={profile.id}>
                     {profile.first_name || profile.last_name
