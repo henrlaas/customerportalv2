@@ -1,0 +1,207 @@
+
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { newsService, NewsItem } from '@/services/newsService';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { CreateNewsDialog } from './NewsManagement/CreateNewsDialog';
+import { EditNewsDialog } from './NewsManagement/EditNewsDialog';
+import { DeleteNewsDialog } from './NewsManagement/DeleteNewsDialog';
+import { 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Calendar,
+  User,
+  Image as ImageIcon,
+  Newspaper
+} from 'lucide-react';
+import { format } from 'date-fns';
+
+export function NewsManagementTab() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: news = [], isLoading } = useQuery({
+    queryKey: ['news'],
+    queryFn: newsService.getAll,
+  });
+
+  const filteredNews = news.filter(item =>
+    item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleEdit = (newsItem: NewsItem) => {
+    setSelectedNews(newsItem);
+    setEditDialogOpen(true);
+  };
+
+  const handleDelete = (newsItem: NewsItem) => {
+    setSelectedNews(newsItem);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['news'] });
+    toast({
+      title: 'Success',
+      description: 'News operation completed successfully',
+    });
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center p-8">Loading news...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Newspaper className="h-5 w-5" />
+          <h2 className="text-xl font-semibold">News Management</h2>
+        </div>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create News
+        </Button>
+      </div>
+
+      <p className="text-muted-foreground">
+        Manage company news and announcements for employees.
+      </p>
+
+      <Separator />
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input
+          placeholder="Search news..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* News List */}
+      {filteredNews.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Newspaper className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No news found</h3>
+            <p className="text-muted-foreground text-center mb-4">
+              {searchTerm ? 'No news match your search criteria.' : 'Get started by creating your first news article.'}
+            </p>
+            {!searchTerm && (
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create News
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {filteredNews.map((newsItem) => (
+            <Card key={newsItem.id} className="overflow-hidden">
+              <div className="flex">
+                {newsItem.image_banner && (
+                  <div className="w-48 h-32 flex-shrink-0">
+                    <img
+                      src={newsItem.image_banner}
+                      alt={newsItem.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="line-clamp-1">{newsItem.title}</CardTitle>
+                        <CardDescription className="line-clamp-2">
+                          {newsItem.description}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(newsItem)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(newsItem)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {format(new Date(newsItem.created_at), 'MMM d, yyyy')}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        Created by admin
+                      </div>
+                      {newsItem.image_banner && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <ImageIcon className="h-3 w-3" />
+                          Has banner
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Dialogs */}
+      <CreateNewsDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={handleSuccess}
+      />
+
+      {selectedNews && (
+        <>
+          <EditNewsDialog
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            newsItem={selectedNews}
+            onSuccess={handleSuccess}
+          />
+
+          <DeleteNewsDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            newsItem={selectedNews}
+            onSuccess={handleSuccess}
+          />
+        </>
+      )}
+    </div>
+  );
+}

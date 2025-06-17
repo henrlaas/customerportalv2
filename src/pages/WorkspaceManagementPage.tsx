@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +11,7 @@ import { SmsToolsTab } from "@/components/WorkspaceManagement/SmsToolsTab";
 import { AppearanceTab } from "@/components/WorkspaceManagement/AppearanceTab";
 import { ContractTemplateEditor } from "@/components/ContractTemplateEditor";
 import { HomeTab } from "@/components/WorkspaceManagement/HomeTab";
+import { NewsManagementTab } from "@/components/WorkspaceManagement/NewsManagementTab";
 import {
   Settings,
   Users,
@@ -22,6 +22,7 @@ import {
   Palette,
   FileText,
   Home,
+  Newspaper,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -181,6 +182,10 @@ const WorkspaceManagementPage = () => {
             <FileText className="h-4 w-4 mr-2" />
             Contracts
           </TabsTrigger>
+          <TabsTrigger value="news">
+            <Newspaper className="h-4 w-4 mr-2" />
+            News
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="home">
@@ -255,6 +260,10 @@ const WorkspaceManagementPage = () => {
             
             <ContractTemplateEditor />
           </div>
+        </TabsContent>
+
+        <TabsContent value="news">
+          <NewsManagementTab />
         </TabsContent>
       </Tabs>
     </div>

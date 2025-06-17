@@ -7,7 +7,8 @@ import {
   MessageSquare, 
   Palette, 
   FileText,
-  ArrowRight
+  ArrowRight,
+  Newspaper
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,14 @@ export function HomeTab({ onNavigateToTab }: HomeTabProps) {
       value: "contracts",
       color: "bg-orange-50 border-orange-200",
       iconColor: "text-orange-600"
+    },
+    {
+      title: "News",
+      description: "Create and manage company news and announcements that will be displayed to employees on their dashboards.",
+      icon: Newspaper,
+      value: "news",
+      color: "bg-emerald-50 border-emerald-200",
+      iconColor: "text-emerald-600"
     }
   ];
 

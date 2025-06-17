@@ -1046,6 +1046,36 @@ export type Database = {
           },
         ]
       }
+      news: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          image_banner: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          image_banner?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          image_banner?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       okr_updates: {
         Row: {
           created_at: string
