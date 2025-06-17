@@ -419,7 +419,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-[700px] p-0">
+        <SheetContent className="sm:max-w-[500px] p-0">
           <div className="h-full flex flex-col">
             <SheetHeader className="p-6 pb-2">
               <div className="flex items-start justify-between">
