@@ -19,20 +19,20 @@ export const MyProjectsCard = () => {
         .from('project_assignees')
         .select(`
           project_id,
-          projects:project_id (
+          projects (
             id,
-            deadline,
-            milestones (
-              id,
-              status
-            )
+            deadline
           )
         `)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      const userProjects = projectAssignees?.map(pa => pa.projects).filter(Boolean) || [];
+      if (!projectAssignees) {
+        return { total: 0, inProgress: 0, completed: 0, overdue: 0 };
+      }
+
+      const userProjects = projectAssignees.map(pa => pa.projects).filter(Boolean);
       const total = userProjects.length;
       const now = new Date();
 
@@ -40,25 +40,40 @@ export const MyProjectsCard = () => {
       let completed = 0;
       let overdue = 0;
 
-      userProjects.forEach(project => {
-        const milestones = project.milestones || [];
-        const completedMilestones = milestones.filter(m => m.status === 'completed').length;
-        const totalMilestones = milestones.length;
+      // Get milestones for each project
+      const projectIds = userProjects.map(p => p.id);
+      
+      if (projectIds.length > 0) {
+        const { data: milestones, error: milestonesError } = await supabase
+          .from('milestones')
+          .select('project_id, status')
+          .in('project_id', projectIds);
 
-        // Determine project status based on milestones
-        if (totalMilestones === 0) {
-          inProgress++;
-        } else if (completedMilestones === totalMilestones) {
-          completed++;
-        } else {
-          inProgress++;
-        }
+        if (milestonesError) throw milestonesError;
 
-        // Check if overdue
-        if (project.deadline && new Date(project.deadline) < now && completedMilestones < totalMilestones) {
-          overdue++;
-        }
-      });
+        userProjects.forEach(project => {
+          const projectMilestones = milestones?.filter(m => m.project_id === project.id) || [];
+          const completedMilestones = projectMilestones.filter(m => m.status === 'completed').length;
+          const totalMilestones = projectMilestones.length;
+
+          // Determine project status based on milestones
+          if (totalMilestones === 0) {
+            inProgress++;
+          } else if (completedMilestones === totalMilestones) {
+            completed++;
+          } else {
+            inProgress++;
+          }
+
+          // Check if overdue
+          if (project.deadline && new Date(project.deadline) < now && completedMilestones < totalMilestones) {
+            overdue++;
+          }
+        });
+      } else {
+        // If no projects, all counts remain 0
+        inProgress = total;
+      }
 
       return { total, inProgress, completed, overdue };
     },

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { newsService } from '@/services/newsService';
 import { useUserProfiles } from '@/hooks/useUserProfiles';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { Newspaper } from 'lucide-react';
@@ -24,11 +25,8 @@ export const NewsCard = () => {
   const creatorUserIds = latestNews ? [latestNews.created_by] : [];
   const { data: userProfiles = {} } = useUserProfiles(creatorUserIds);
 
-  const getCreatorName = (userId: string) => {
+  const getCreatorFirstName = (userId: string) => {
     const profile = userProfiles[userId];
-    if (profile?.first_name && profile?.last_name) {
-      return `${profile.first_name} ${profile.last_name}`;
-    }
     if (profile?.first_name) {
       return profile.first_name;
     }
@@ -84,42 +82,49 @@ export const NewsCard = () => {
           <div className="absolute inset-0 bg-black bg-opacity-40" />
         )}
         
-        {/* Content */}
-        <CardContent className="relative z-10 p-6 h-full flex flex-col justify-end">
-          <div className={latestNews.image_banner ? 'text-white' : ''}>
+        {/* Latest News Badge */}
+        <Badge 
+          variant="secondary" 
+          className="absolute top-4 left-4 z-10 bg-black/30 text-white border-white/20 backdrop-blur-sm"
+        >
+          Latest news
+        </Badge>
+        
+        {/* Content - Three sections layout */}
+        <CardContent className="relative z-10 p-6 h-full flex flex-col justify-between">
+          {/* Top spacer for badge */}
+          <div className="h-6"></div>
+          
+          {/* Middle section - Title and Description */}
+          <div className={`flex-1 flex flex-col justify-center ${latestNews.image_banner ? 'text-white' : ''}`}>
             <h3 className="text-xl font-bold mb-2 line-clamp-2">
               {latestNews.title}
             </h3>
-            <p className="text-sm mb-3 line-clamp-3">
+            <p className="text-sm line-clamp-3">
               {truncateText(latestNews.description, 150)}
             </p>
-            <div className="flex items-center justify-between text-xs opacity-90">
-              <span>Published by {getCreatorName(latestNews.created_by)}</span>
-              <span>{format(new Date(latestNews.created_at), 'MMM d, yyyy')}</span>
-            </div>
+          </div>
+          
+          {/* Bottom section - Publisher and Date */}
+          <div className={`flex items-center justify-between text-xs opacity-90 ${latestNews.image_banner ? 'text-white' : ''}`}>
+            <span>Published by {getCreatorFirstName(latestNews.created_by)}</span>
+            <span>{format(new Date(latestNews.created_at), 'MMM d, yyyy')}</span>
           </div>
         </CardContent>
       </Card>
 
-      {/* News Detail Dialog */}
+      {/* News Detail Dialog - Without banner image */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>{selectedNews?.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {selectedNews?.image_banner && (
-              <img
-                src={selectedNews.image_banner}
-                alt="News banner"
-                className="w-full h-48 object-cover rounded-md"
-              />
-            )}
             <p className="text-sm text-muted-foreground leading-relaxed">
               {selectedNews?.description}
             </p>
             <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t">
-              <span>Published by {selectedNews && getCreatorName(selectedNews.created_by)}</span>
+              <span>Published by {selectedNews && getCreatorFirstName(selectedNews.created_by)}</span>
               <span>{selectedNews && format(new Date(selectedNews.created_at), 'MMM d, yyyy')}</span>
             </div>
           </div>
