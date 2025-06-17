@@ -62,7 +62,8 @@ export function CreateNewsDialog({ open, onOpenChange, onSuccess }: CreateNewsDi
       }
 
       return newsService.create({
-        ...data,
+        title: data.title,
+        description: data.description,
         image_banner: bannerUrl,
       });
     },
