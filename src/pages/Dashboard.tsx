@@ -1,6 +1,6 @@
-
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserDashboard } from '@/components/Dashboard/UserDashboard/UserDashboard';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,6 +37,11 @@ interface DashboardCounts {
 const Dashboard = () => {
   const { profile, isAdmin, isEmployee, isClient } = useAuth();
   const t = useTranslation();
+  
+  // Only show the new dashboard for admin and employee users
+  if (isAdmin || isEmployee) {
+    return <UserDashboard />;
+  }
   
   // Query for fetching dashboard data
   const { data: dashboardData, isLoading } = useQuery({
