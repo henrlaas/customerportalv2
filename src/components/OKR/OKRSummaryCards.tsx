@@ -1,6 +1,5 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Target, TrendingUp, Users, Calendar } from 'lucide-react';
 import { OKR } from '@/pages/OKRPage';
 
@@ -21,55 +20,55 @@ export function OKRSummaryCards({ okrs }: OKRSummaryCardsProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Active OKRs</CardTitle>
-          <Target className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{activeOKRs.length}</div>
-          <p className="text-xs text-muted-foreground">
-            {okrs.length} total OKRs
-          </p>
+      <Card className="bg-blue-50 text-blue-700 border-blue-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Active OKRs</p>
+              <p className="text-2xl font-bold mt-1">{activeOKRs.length}</p>
+              <p className="text-xs opacity-80 mt-1">{okrs.length} total OKRs</p>
+            </div>
+            <Target className="h-8 w-8 text-blue-500" />
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{completionRate}%</div>
-          <p className="text-xs text-muted-foreground">
-            {completedKeyResults} of {totalKeyResults} key results
-          </p>
+      <Card className="bg-green-50 text-green-700 border-green-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Completion Rate</p>
+              <p className="text-2xl font-bold mt-1">{completionRate}%</p>
+              <p className="text-xs opacity-80 mt-1">{completedKeyResults} of {totalKeyResults} key results</p>
+            </div>
+            <TrendingUp className="h-8 w-8 text-green-500" />
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Completed OKRs</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{completedOKRs.length}</div>
-          <p className="text-xs text-muted-foreground">
-            This period
-          </p>
+      <Card className="bg-purple-50 text-purple-700 border-purple-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Completed OKRs</p>
+              <p className="text-2xl font-bold mt-1">{completedOKRs.length}</p>
+              <p className="text-xs opacity-80 mt-1">This period</p>
+            </div>
+            <Calendar className="h-8 w-8 text-purple-500" />
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Key Results</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{totalKeyResults}</div>
-          <p className="text-xs text-muted-foreground">
-            Across all OKRs
-          </p>
+      <Card className="bg-orange-50 text-orange-700 border-orange-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Key Results</p>
+              <p className="text-2xl font-bold mt-1">{totalKeyResults}</p>
+              <p className="text-xs opacity-80 mt-1">Across all OKRs</p>
+            </div>
+            <Users className="h-8 w-8 text-orange-500" />
+          </div>
         </CardContent>
       </Card>
     </div>
