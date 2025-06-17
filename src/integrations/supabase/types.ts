@@ -1082,6 +1082,75 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_settings: {
+        Row: {
+          created_at: string | null
+          email_enabled: boolean | null
+          enabled: boolean | null
+          id: string
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_enabled?: boolean | null
+          enabled?: boolean | null
+          id?: string
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_enabled?: boolean | null
+          enabled?: boolean | null
+          id?: string
+          notification_type?: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       okr_updates: {
         Row: {
           created_at: string
@@ -1816,6 +1885,17 @@ export type Database = {
         Args: { admin_email: string }
         Returns: string
       }
+      create_notification: {
+        Args: {
+          p_user_id: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_title: string
+          p_message: string
+          p_entity_type?: string
+          p_entity_id?: string
+        }
+        Returns: string
+      }
       duplicate_campaign: {
         Args: { campaign_id_param: string }
         Returns: string
@@ -1880,6 +1960,17 @@ export type Database = {
         | "October"
         | "November"
         | "December"
+      notification_type:
+        | "project_assigned"
+        | "deal_assigned"
+        | "deal_stage_changed"
+        | "task_assigned"
+        | "contract_signed"
+        | "due_date_approaching"
+        | "campaign_comment_added"
+        | "campaign_approved"
+        | "campaign_rejected"
+        | "news_posted"
       okr_status: "draft" | "active" | "completed" | "cancelled"
       quarter: "Q1" | "Q2" | "Q3" | "Q4"
       user_role: "admin" | "employee" | "client"
@@ -2013,6 +2104,18 @@ export const Constants = {
         "October",
         "November",
         "December",
+      ],
+      notification_type: [
+        "project_assigned",
+        "deal_assigned",
+        "deal_stage_changed",
+        "task_assigned",
+        "contract_signed",
+        "due_date_approaching",
+        "campaign_comment_added",
+        "campaign_approved",
+        "campaign_rejected",
+        "news_posted",
       ],
       okr_status: ["draft", "active", "completed", "cancelled"],
       quarter: ["Q1", "Q2", "Q3", "Q4"],

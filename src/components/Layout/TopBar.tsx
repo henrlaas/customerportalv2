@@ -1,5 +1,5 @@
 
-import { Bell, Globe } from 'lucide-react';
+import { Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
+import { NotificationDropdown } from '@/components/Notifications/NotificationDropdown';
 
 export const TopBar: React.FC = () => {
   const { signOut, profile, isAdmin, isEmployee, language, setLanguage } = useAuth();
@@ -31,9 +32,7 @@ export const TopBar: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="icon" className="text-gray-600 rounded-full">
-            <Bell className="h-5 w-5" />
-          </Button>
+          <NotificationDropdown />
           
           {/* Language selector dropdown */}
           <DropdownMenu>
