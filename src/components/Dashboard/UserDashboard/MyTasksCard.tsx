@@ -14,6 +14,8 @@ export const MyTasksCard = () => {
     queryFn: async () => {
       if (!user?.id) return { active: 0, overdue: 0 };
 
+      console.log('Fetching tasks for user:', user.id);
+
       // Get tasks assigned to the current user
       const { data: tasks, error } = await supabase
         .from('task_assignees')
@@ -22,17 +24,31 @@ export const MyTasksCard = () => {
           tasks:task_id (
             id,
             status,
-            due_date
+            due_date,
+            title
           )
         `)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        throw error;
+      }
+
+      console.log('Raw task data:', tasks);
 
       const userTasks = tasks?.map(t => t.tasks).filter(Boolean) || [];
+      console.log('User tasks:', userTasks);
+      
+      // Count active tasks (both todo and in-progress)
       const active = userTasks.filter(task => 
         task.status === 'todo' || task.status === 'in-progress'
       ).length;
+      
+      console.log('Active tasks count:', active);
+      console.log('Active tasks:', userTasks.filter(task => 
+        task.status === 'todo' || task.status === 'in-progress'
+      ));
       
       const now = new Date();
       const overdue = userTasks.filter(task => 
@@ -40,6 +56,8 @@ export const MyTasksCard = () => {
         task.due_date && 
         new Date(task.due_date) < now
       ).length;
+
+      console.log('Overdue tasks count:', overdue);
 
       return { active, overdue };
     },
@@ -68,7 +86,7 @@ export const MyTasksCard = () => {
   const stats = taskStats || { active: 0, overdue: 0 };
 
   return (
-    <Card className="h-full hover:shadow-lg transition-all duration-200">
+    <Card className="h-full hover:shadow-lg transition-all duration-200 bg-white border border-gray-200">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <CheckCircle className="h-5 w-5 text-blue-600" />

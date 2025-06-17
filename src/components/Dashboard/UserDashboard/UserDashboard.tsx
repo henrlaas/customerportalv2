@@ -22,42 +22,42 @@ export const UserDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Main Dashboard Content */}
-      <div className="flex-1 p-6 pr-0 overflow-auto">
-        <div className="grid grid-cols-2 gap-6 min-h-full">
-          {/* Row 1: Greeting - spans 2 columns */}
-          <div className="col-span-2">
-            <GreetingCard />
-          </div>
-          
-          {/* Row 2: News Card - spans 2 columns */}
-          <div className="col-span-2">
-            <NewsCard />
-          </div>
-          
-          {/* Row 3: 2x2 Grid of Cards */}
-          <div>
-            <MyTasksCard />
-          </div>
-          <div>
-            <MyDealsCard />
-          </div>
-          <div>
-            <TimeTrackingCard />
-          </div>
-          <div>
-            <MyProjectsCard />
+    <div className="min-h-screen">
+      <div className="flex">
+        {/* Main Dashboard Content */}
+        <div className="flex-1 p-6 pr-0">
+          <div className="grid grid-cols-2 gap-6">
+            {/* Row 1: Greeting - spans 2 columns */}
+            <div className="col-span-2">
+              <GreetingCard />
+            </div>
+            
+            {/* Row 2: News Card - spans 2 columns */}
+            <div className="col-span-2">
+              <NewsCard />
+            </div>
+            
+            {/* Row 3: 2x2 Grid of Cards */}
+            <div>
+              <MyTasksCard />
+            </div>
+            <div>
+              <MyDealsCard />
+            </div>
+            <div>
+              <TimeTrackingCard />
+            </div>
+            <div>
+              <MyProjectsCard />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Vertical separator */}
-      <div className="w-px bg-border"></div>
+        {/* Vertical separator */}
+        <div className="w-px bg-border mx-6"></div>
 
-      {/* Right Side Calendar */}
-      <div className="w-80 py-6 pr-6 overflow-auto">
-        <div className="h-full">
+        {/* Right Side Calendar */}
+        <div className="w-80 py-6 pr-6">
           <UpcomingDeadlinesCalendar onTaskClick={handleTaskClick} />
         </div>
       </div>
