@@ -17,6 +17,7 @@ import {
   Home,
   Calendar,
   BarChart3,
+  Target,
 } from "lucide-react";
 
 export function getSidebarItems() {
@@ -134,6 +135,16 @@ export function getSidebarItems() {
       hasDropdown: false,
       disabled: true,
       tooltip: "This is not available yet"
+    },
+    {
+      title: 'OKRs',
+      href: '/okr',
+      icon: Target,
+      roles: ['admin'],
+      category: 'MENU',
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Analytics'),

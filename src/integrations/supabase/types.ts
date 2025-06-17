@@ -844,6 +844,53 @@ export type Database = {
           },
         ]
       }
+      key_results: {
+        Row: {
+          created_at: string
+          current_value: number
+          description: string | null
+          id: string
+          okr_id: string
+          status: Database["public"]["Enums"]["key_result_status"]
+          target_value: number
+          title: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          id?: string
+          okr_id: string
+          status?: Database["public"]["Enums"]["key_result_status"]
+          target_value: number
+          title: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          id?: string
+          okr_id?: string
+          status?: Database["public"]["Enums"]["key_result_status"]
+          target_value?: number
+          title?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "key_results_okr_id_fkey"
+            columns: ["okr_id"]
+            isOneToOne: false
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_favorites: {
         Row: {
           bucket_id: string
@@ -995,6 +1042,112 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      okr_updates: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          key_result_id: string | null
+          okr_id: string
+          progress_percentage: number | null
+          update_text: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          key_result_id?: string | null
+          okr_id: string
+          progress_percentage?: number | null
+          update_text: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          key_result_id?: string | null
+          okr_id?: string
+          progress_percentage?: number | null
+          update_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_updates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_updates_key_result_id_fkey"
+            columns: ["key_result_id"]
+            isOneToOne: false
+            referencedRelation: "key_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_updates_okr_id_fkey"
+            columns: ["okr_id"]
+            isOneToOne: false
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      okrs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          owner_id: string | null
+          quarter: Database["public"]["Enums"]["quarter"]
+          status: Database["public"]["Enums"]["okr_status"]
+          title: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          owner_id?: string | null
+          quarter: Database["public"]["Enums"]["quarter"]
+          status?: Database["public"]["Enums"]["okr_status"]
+          title: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          owner_id?: string | null
+          quarter?: Database["public"]["Enums"]["quarter"]
+          status?: Database["public"]["Enums"]["okr_status"]
+          title?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okrs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okrs_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1676,7 +1829,10 @@ export type Database = {
       }
     }
     Enums: {
+      key_result_status: "not_started" | "on_track" | "at_risk" | "completed"
       milestone_status: "created" | "completed"
+      okr_status: "draft" | "active" | "completed" | "cancelled"
+      quarter: "Q1" | "Q2" | "Q3" | "Q4"
       user_role: "admin" | "employee" | "client"
     }
     CompositeTypes: {
@@ -1793,7 +1949,10 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      key_result_status: ["not_started", "on_track", "at_risk", "completed"],
       milestone_status: ["created", "completed"],
+      okr_status: ["draft", "active", "completed", "cancelled"],
+      quarter: ["Q1", "Q2", "Q3", "Q4"],
       user_role: ["admin", "employee", "client"],
     },
   },

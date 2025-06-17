@@ -32,6 +32,7 @@ import Unauthorized from './pages/Unauthorized';
 import SetPassword from './pages/SetPassword';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
+import OKRPage from './pages/OKRPage';
 
 import { ProtectedRoute } from './components/providers/ProtectedRoute';
 import { ClientProtectedRoute } from './components/ClientProtectedRoute';
@@ -109,6 +110,7 @@ function App() {
                 <Route element={<AppLayout />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/calendar" element={<CalendarPage />} />
+                  <Route path="/okr" element={<OKRPage />} />
                   <Route path="/analytics" element={<AnalyticsPage />} />
                   <Route path="/companies" element={<CompaniesPage />} />
                   <Route path="/companies/:companyId" element={<CompanyDetailsPage />} />
