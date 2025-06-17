@@ -38,75 +38,67 @@ export const EmployeeSummaryCards = ({ employees }: EmployeeSummaryCardsProps) =
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {/* Total Employees Card */}
-      <Card>
-        <CardContent className="p-6">
+      <Card className="bg-blue-50 text-blue-700 border-blue-200 border">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Employees</p>
-              <p className="text-3xl font-bold text-blue-600">{totalEmployees}</p>
-              <p className="text-xs text-muted-foreground mt-1">Active workforce</p>
+              <p className="text-sm font-medium opacity-80">Total Employees</p>
+              <p className="text-2xl font-bold mt-1">{totalEmployees}</p>
+              <p className="text-xs opacity-80 mt-1">Active workforce</p>
             </div>
-            <div className="p-3 bg-muted rounded-lg">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
+            <Users className="h-8 w-8 text-blue-500" />
           </div>
         </CardContent>
       </Card>
 
       {/* Employee Types Card */}
-      <Card>
-        <CardContent className="p-6">
+      <Card className="bg-green-50 text-green-700 border-green-200 border">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Employee Types</p>
+              <p className="text-sm font-medium opacity-80">Employee Types</p>
               <div className="flex gap-4 mt-1">
                 <div>
-                  <p className="text-lg font-bold text-green-600">{employeeCount}</p>
-                  <p className="text-xs text-muted-foreground">Employees</p>
+                  <p className="text-lg font-bold">{employeeCount}</p>
+                  <p className="text-xs opacity-80">Employees</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-green-600">{freelancerCount}</p>
-                  <p className="text-xs text-muted-foreground">Freelancers</p>
+                  <p className="text-lg font-bold">{freelancerCount}</p>
+                  <p className="text-xs opacity-80">Freelancers</p>
                 </div>
               </div>
             </div>
-            <div className="p-3 bg-muted rounded-lg">
-              <UserCheck className="h-6 w-6 text-green-600" />
-            </div>
+            <UserCheck className="h-8 w-8 text-green-500" />
           </div>
         </CardContent>
       </Card>
 
       {/* Average Salary Card */}
-      <Card>
-        <CardContent className="p-6">
+      <Card className="bg-purple-50 text-purple-700 border-purple-200 border">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Average Salary</p>
-              <p className="text-3xl font-bold text-purple-600">{formatCurrency(averageSalary)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Per hour</p>
+              <p className="text-sm font-medium opacity-80">Average Salary</p>
+              <p className="text-2xl font-bold mt-1">{formatCurrency(averageSalary)}</p>
+              <p className="text-xs opacity-80 mt-1">Per hour</p>
             </div>
-            <div className="p-3 bg-muted rounded-lg">
-              <DollarSign className="h-6 w-6 text-purple-600" />
-            </div>
+            <DollarSign className="h-8 w-8 text-purple-500" />
           </div>
         </CardContent>
       </Card>
 
       {/* Employment Stats Card */}
-      <Card>
-        <CardContent className="p-6">
+      <Card className="bg-orange-50 text-orange-700 border-orange-200 border">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Employment Stats</p>
-              <p className="text-3xl font-bold text-amber-600">{Math.round(averageEmploymentPercentage)}%</p>
-              <p className="text-xs text-muted-foreground mt-1">{fullTimeEmployees} full-time</p>
+              <p className="text-sm font-medium opacity-80">Employment Stats</p>
+              <p className="text-2xl font-bold mt-1">{Math.round(averageEmploymentPercentage)}%</p>
+              <p className="text-xs opacity-80 mt-1">{fullTimeEmployees} full-time</p>
             </div>
-            <div className="p-3 bg-muted rounded-lg">
-              <Clock className="h-6 w-6 text-amber-600" />
-            </div>
+            <Clock className="h-8 w-8 text-orange-500" />
           </div>
         </CardContent>
       </Card>
