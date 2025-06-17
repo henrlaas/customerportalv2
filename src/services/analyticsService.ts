@@ -136,35 +136,53 @@ export const analyticsService = {
     const milestones = milestonesResult.data;
     
     // Group milestones by project to determine project status
-    const projectStatusMap = new Map<string, string>();
+    const projectMilestones = new Map<string, {total: number, completed: number}>();
+    
+    // Initialize project milestone counts
+    projects.forEach(project => {
+      projectMilestones.set(project.id, {total: 0, completed: 0});
+    });
+    
+    // Count milestones for each project
     milestones.forEach(milestone => {
-      const currentStatus = projectStatusMap.get(milestone.project_id) || 'created';
-      if (milestone.status === 'completed' && currentStatus !== 'completed') {
-        projectStatusMap.set(milestone.project_id, 'in_progress');
-      } else if (milestone.status === 'completed') {
-        projectStatusMap.set(milestone.project_id, 'completed');
+      const projectStats = projectMilestones.get(milestone.project_id);
+      if (projectStats) {
+        projectStats.total += 1;
+        if (milestone.status === 'completed') {
+          projectStats.completed += 1;
+        }
       }
     });
 
     const totalProjects = projects.length;
     const totalProjectsValue = projects.reduce((sum, p) => sum + (p.value || 0), 0);
     
-    const completedProjects = projects.filter(p => 
-      projectStatusMap.get(p.id) === 'completed'
-    ).length;
+    // A project is completed only when ALL its milestones are completed
+    const completedProjects = projects.filter(project => {
+      const stats = projectMilestones.get(project.id);
+      return stats && stats.total > 0 && stats.completed === stats.total;
+    }).length;
     
-    const inProgressProjects = projects.filter(p => 
-      projectStatusMap.get(p.id) === 'in_progress' || !projectStatusMap.has(p.id)
-    ).length;
+    // A project is in progress when it has some completed milestones but not all
+    const inProgressProjects = projects.filter(project => {
+      const stats = projectMilestones.get(project.id);
+      if (!stats || stats.total === 0) return true; // Projects with no milestones are considered in progress
+      return stats.completed > 0 && stats.completed < stats.total;
+    }).length;
     
     const completedProjectsValue = projects
-      .filter(p => projectStatusMap.get(p.id) === 'completed')
+      .filter(project => {
+        const stats = projectMilestones.get(project.id);
+        return stats && stats.total > 0 && stats.completed === stats.total;
+      })
       .reduce((sum, p) => sum + (p.value || 0), 0);
     
     const now = new Date();
-    const overdueProjects = projects.filter(p => 
-      p.deadline && new Date(p.deadline) < now && projectStatusMap.get(p.id) !== 'completed'
-    ).length;
+    const overdueProjects = projects.filter(p => {
+      const stats = projectMilestones.get(p.id);
+      const isCompleted = stats && stats.total > 0 && stats.completed === stats.total;
+      return p.deadline && new Date(p.deadline) < now && !isCompleted;
+    }).length;
 
     // Process contracts data
     const contracts = contractsData.data;
