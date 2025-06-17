@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { FileText, CheckSquare, Clock, DollarSign } from 'lucide-react';
 import { ProjectWithRelations } from '@/hooks/useProjects';
 import { getProjectStatus } from '@/utils/projectStatus';
@@ -19,7 +19,6 @@ export const ProjectsSummaryCards: React.FC<ProjectsSummaryCardsProps> = ({
   // Calculate summary data
   const totalProjects = projects.length;
   
-  // Calculate in progress and completed projects based on milestones
   let inProgressProjects = 0;
   let completedProjects = 0;
   let totalCompletedValue = 0;
@@ -40,9 +39,12 @@ export const ProjectsSummaryCards: React.FC<ProjectsSummaryCardsProps> = ({
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="p-6 animate-pulse">
-            <div className="h-8 bg-gray-200 rounded mb-2 w-1/4"></div>
-            <div className="h-5 bg-gray-200 rounded w-1/2"></div>
+          <Card key={i} className="animate-pulse bg-gray-50 border">
+            <CardContent className="p-4">
+              <div className="h-5 bg-gray-200 rounded w-1/2 mb-2"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-1"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -51,52 +53,52 @@ export const ProjectsSummaryCards: React.FC<ProjectsSummaryCardsProps> = ({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <Card className="p-6">
-        <div className="flex items-start">
-          <div className="rounded-full bg-blue-100 p-3 mr-4">
-            <FileText className="h-6 w-6 text-blue-700" />
+      <Card className="bg-blue-50 text-blue-700 border-blue-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Total Projects</p>
+              <p className="text-2xl font-bold mt-1">{totalProjects}</p>
+            </div>
+            <FileText className="h-8 w-8 text-blue-500" />
           </div>
-          <div>
-            <div className="text-2xl font-bold">{totalProjects}</div>
-            <div className="text-muted-foreground">Total Projects</div>
-          </div>
-        </div>
+        </CardContent>
       </Card>
       
-      <Card className="p-6">
-        <div className="flex items-start">
-          <div className="rounded-full bg-orange-100 p-3 mr-4">
-            <Clock className="h-6 w-6 text-orange-700" />
+      <Card className="bg-orange-50 text-orange-700 border-orange-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">In Progress Projects</p>
+              <p className="text-2xl font-bold mt-1">{inProgressProjects}</p>
+            </div>
+            <Clock className="h-8 w-8 text-orange-500" />
           </div>
-          <div>
-            <div className="text-2xl font-bold">{inProgressProjects}</div>
-            <div className="text-muted-foreground">In Progress Projects</div>
-          </div>
-        </div>
+        </CardContent>
       </Card>
       
-      <Card className="p-6">
-        <div className="flex items-start">
-          <div className="rounded-full bg-green-100 p-3 mr-4">
-            <CheckSquare className="h-6 w-6 text-green-700" />
+      <Card className="bg-green-50 text-green-700 border-green-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Completed Projects</p>
+              <p className="text-2xl font-bold mt-1">{completedProjects}</p>
+            </div>
+            <CheckSquare className="h-8 w-8 text-green-500" />
           </div>
-          <div>
-            <div className="text-2xl font-bold">{completedProjects}</div>
-            <div className="text-muted-foreground">Completed Projects</div>
-          </div>
-        </div>
+        </CardContent>
       </Card>
       
-      <Card className="p-6">
-        <div className="flex items-start">
-          <div className="rounded-full bg-purple-100 p-3 mr-4">
-            <DollarSign className="h-6 w-6 text-purple-700" />
+      <Card className="bg-purple-50 text-purple-700 border-purple-200 border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Total Completed Value</p>
+              <p className="text-2xl font-bold mt-1">{totalCompletedValue.toLocaleString()} NOK</p>
+            </div>
+            <DollarSign className="h-8 w-8 text-purple-500" />
           </div>
-          <div>
-            <div className="text-2xl font-bold">{totalCompletedValue.toLocaleString()} NOK</div>
-            <div className="text-muted-foreground">Total Completed Value</div>
-          </div>
-        </div>
+        </CardContent>
       </Card>
     </div>
   );
