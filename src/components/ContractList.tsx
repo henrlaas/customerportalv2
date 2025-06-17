@@ -193,7 +193,7 @@ export const ContractList = () => {
     
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card className="bg-blue-50 text-blue-700">
+        <Card className="bg-blue-50 text-blue-700 border-blue-200 border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -204,7 +204,7 @@ export const ContractList = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-orange-50 text-orange-700">
+        <Card className="bg-orange-50 text-orange-700 border-orange-200 border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -215,7 +215,7 @@ export const ContractList = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-green-50 text-green-700">
+        <Card className="bg-green-50 text-green-700 border-green-200 border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -233,19 +233,19 @@ export const ContractList = () => {
   // Skeleton loader for the stats cards
   const StatCardsSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      <Card className="bg-blue-50 text-blue-700">
+      <Card className="bg-blue-50 text-blue-700 border-blue-200 border">
         <CardContent className="p-4">
           <Skeleton className="h-8 w-24 mb-2" />
           <Skeleton className="h-4 w-32" />
         </CardContent>
       </Card>
-      <Card className="bg-orange-50 text-orange-700">
+      <Card className="bg-orange-50 text-orange-700 border-orange-200 border">
         <CardContent className="p-4">
           <Skeleton className="h-8 w-24 mb-2" />
           <Skeleton className="h-4 w-32" />
         </CardContent>
       </Card>
-      <Card className="bg-green-50 text-green-700">
+      <Card className="bg-green-50 text-green-700 border-green-200 border">
         <CardContent className="p-4">
           <Skeleton className="h-8 w-24 mb-2" />
           <Skeleton className="h-4 w-32" />
