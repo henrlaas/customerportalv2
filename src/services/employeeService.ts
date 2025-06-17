@@ -26,7 +26,7 @@ export const employeeService = {
     // Parse the JSON structure correctly to ensure all fields are accessible
     const parsedEmployees = data ? data.map((item: any) => {
       // Log specific JSON parsing for debugging
-      console.log('Processing employee item with city:', item.city);
+      console.log('Processing employee item with city:', item.city, 'and team:', item.team);
       
       // Return a properly structured employee object ensuring all fields are included
       return {
@@ -38,8 +38,8 @@ export const employeeService = {
         address: item.address,
         zipcode: item.zipcode,
         country: item.country,
-        team: item.team,
-        city: item.city, // Explicitly include the city field
+        team: item.team, // This will now come from the employees table
+        city: item.city,
         employee_type: item.employee_type,
         hourly_salary: item.hourly_salary,
         employed_percentage: item.employed_percentage,

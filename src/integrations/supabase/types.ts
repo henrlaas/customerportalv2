@@ -726,6 +726,7 @@ export type Database = {
           id: string
           paycheck_solution: string
           social_security_number: string
+          team: string | null
           updated_at: string
           zipcode: string
         }
@@ -741,6 +742,7 @@ export type Database = {
           id: string
           paycheck_solution: string
           social_security_number: string
+          team?: string | null
           updated_at?: string
           zipcode: string
         }
@@ -756,6 +758,7 @@ export type Database = {
           id?: string
           paycheck_solution?: string
           social_security_number?: string
+          team?: string | null
           updated_at?: string
           zipcode?: string
         }

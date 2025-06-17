@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { employeeService } from '@/services/employeeService';
-import { userService } from '@/services/userService';
+import { useInviteEmployee } from '@/hooks/useInviteEmployee';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentInfoStepProps {
@@ -40,6 +40,23 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
     social_security_number: formData.social_security_number,
     account_number: formData.account_number,
     paycheck_solution: formData.paycheck_solution || ''
+  });
+
+  const inviteEmployee = useInviteEmployee({
+    onSuccess: () => {
+      toast({
+        title: "Employee Added",
+        description: `${formData.first_name} ${formData.last_name} has been added successfully. An invitation email has been sent.`,
+      });
+      onClose();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add employee",
+        variant: "destructive",
+      });
+    }
   });
 
   const validateForm = () => {
@@ -89,7 +106,7 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           social_security_number: formData.social_security_number,
           account_number: formData.account_number,
           paycheck_solution: formData.paycheck_solution || '',
-          team: formData.team  // Include team in the update
+          team: formData.team
         };
         
         await employeeService.updateEmployee(employeeId, employeeData);
@@ -100,7 +117,8 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           .update({ 
             first_name: formData.first_name,
             last_name: formData.last_name,
-            phone_number: formData.phone_number || null
+            phone_number: formData.phone_number || null,
+            team: formData.team
           })
           .eq('id', employeeId);
         
@@ -108,70 +126,42 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
           title: "Employee Updated",
           description: `${formData.first_name} ${formData.last_name} has been updated successfully.`,
         });
+        onClose();
       } else {
-        // Create new employee
-        // First, invite user and create auth user using userService.inviteUser
-        const userData = {
+        // Create new employee using the dedicated invite function
+        await inviteEmployee.mutateAsync({
+          email: formData.email,
           firstName: formData.first_name,
           lastName: formData.last_name,
           phoneNumber: formData.phone_number || undefined,
-          role: 'employee',
-          language: 'en',
-          team: formData.team
-        };
-        
-        // Use the userService.inviteUser method directly
-        const result = await userService.inviteUser(formData.email, userData);
-        
-        if (!result || !result.user) {
-          throw new Error('Failed to create user');
-        }
-
-        // Create employee record
-        const employeeData = {
+          team: formData.team,
           address: formData.address,
           zipcode: formData.zipcode,
           country: formData.country,
           city: formData.city,
-          employee_type: formData.employee_type,
-          hourly_salary: formData.hourly_salary,
-          employed_percentage: formData.employed_percentage,
-          social_security_number: formData.social_security_number,
-          account_number: formData.account_number,
-          paycheck_solution: formData.paycheck_solution || '',
-          team: formData.team  // Include team when creating the employee
-        };
-        
-        await employeeService.createEmployee(employeeData, result.user.id);
-        
-        // Directly update the profiles table with first name, last name and phone number
-        await supabase
-          .from('profiles')
-          .update({ 
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            phone_number: formData.phone_number || null,
-            role: 'employee'
-          })
-          .eq('id', result.user.id);
-        
-        toast({
-          title: "Employee Added",
-          description: `${formData.first_name} ${formData.last_name} has been added successfully. An invitation email has been sent.`,
+          employeeType: formData.employee_type,
+          hourlySalary: formData.hourly_salary,
+          employedPercentage: formData.employed_percentage,
+          socialSecurityNumber: formData.social_security_number,
+          accountNumber: formData.account_number,
+          paycheckSolution: formData.paycheck_solution || ''
         });
       }
-      
-      onClose();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || (isEdit ? "Failed to update employee" : "Failed to add employee"),
-        variant: "destructive",
-      });
+      // Error handling is done by the hook for new employees
+      if (isEdit) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to update employee",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const isLoading = isSubmitting || inviteEmployee.isPending;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -213,11 +203,11 @@ export function PaymentInfoStep({ formData, onBack, onClose, isEdit = false, emp
       </div>
 
       <div className="flex justify-between">
-        <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
+        <Button type="button" variant="outline" onClick={onBack} disabled={isLoading}>
           Back
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting 
+        <Button type="submit" disabled={isLoading}>
+          {isLoading 
             ? (isEdit ? 'Updating Employee...' : 'Adding Employee...') 
             : (isEdit ? 'Update Employee' : 'Add Employee')}
         </Button>
