@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Clock, DollarSign, Calendar, Target } from 'lucide-react';
+import { Clock, DollarSign, Target } from 'lucide-react';
 
 export const TimeTrackingCard = () => {
   const { user } = useAuth();
@@ -99,8 +99,8 @@ export const TimeTrackingCard = () => {
 
   const stats = timeStats || { hoursThisMonth: 0, estimatedSalary: 0, daysWorked: 0, averageDaily: 0 };
   
-  // Assuming a target of 160 hours per month (8 hours * 20 working days)
-  const monthlyTarget = 160;
+  // Updated monthly target to 150 hours
+  const monthlyTarget = 150;
   const progressPercentage = Math.min((stats.hoursThisMonth / monthlyTarget) * 100, 100);
 
   return (
@@ -156,20 +156,6 @@ export const TimeTrackingCard = () => {
             </div>
             <div className="text-sm font-bold text-blue-700">{stats.averageDaily}h</div>
           </div>
-        </div>
-
-        {/* Status Insights */}
-        <div className="space-y-2 pt-1">
-          <div className="flex items-center gap-2 text-sm text-blue-600">
-            <Calendar className="h-3 w-3" />
-            <span>{stats.daysWorked} days worked this month</span>
-          </div>
-          {stats.averageDaily > 0 && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <Clock className="h-3 w-3" />
-              <span>{stats.averageDaily}h average per day</span>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

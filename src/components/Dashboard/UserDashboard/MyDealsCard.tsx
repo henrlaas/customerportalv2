@@ -4,9 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, CircleDollarSign, Target, TrendingDown } from 'lucide-react';
+import { TrendingUp, CircleDollarSign, CheckCircle, Target } from 'lucide-react';
 
 export const MyDealsCard = () => {
   const { user } = useAuth();
@@ -14,7 +13,7 @@ export const MyDealsCard = () => {
   const { data: dealStats, isLoading } = useQuery({
     queryKey: ['user-deal-stats', user?.id],
     queryFn: async () => {
-      if (!user?.id) return { total: 0, open: 0, closed: 0, totalValue: 0 };
+      if (!user?.id) return { open: 0, closed: 0, totalValue: 0 };
 
       // Get deals assigned to the current user
       const { data: deals, error } = await supabase
@@ -28,30 +27,19 @@ export const MyDealsCard = () => {
 
       if (error) throw error;
 
-      // Get deal stages to identify closed deals
-      const { data: dealStages, error: stagesError } = await supabase
-        .from('deal_stages')
-        .select('*')
-        .order('position', { ascending: true });
-
-      if (stagesError) throw stagesError;
-
       const userDeals = deals || [];
-      const total = userDeals.length;
       
-      // Assuming the last stage is "closed"
-      const closedStageId = dealStages && dealStages.length > 0 ? 
-        dealStages[dealStages.length - 1].id : null;
+      // The specific "Closed Won" stage ID
+      const closedWonStageId = '338e9b9c-bdd6-4ffb-8543-83cbeab7a7ae';
       
-      const closed = closedStageId ? 
-        userDeals.filter(deal => deal.stage_id === closedStageId).length : 0;
-      const open = total - closed;
+      const closed = userDeals.filter(deal => deal.stage_id === closedWonStageId).length;
+      const open = userDeals.filter(deal => deal.stage_id !== closedWonStageId).length;
       
       const totalValue = userDeals.reduce((sum, deal) => 
         sum + (Number(deal.value) || 0), 0
       );
 
-      return { total, open, closed, totalValue };
+      return { open, closed, totalValue };
     },
     enabled: !!user?.id,
   });
@@ -78,9 +66,7 @@ export const MyDealsCard = () => {
     );
   }
 
-  const stats = dealStats || { total: 0, open: 0, closed: 0, totalValue: 0 };
-  const closeRate = stats.total > 0 ? Math.round((stats.closed / stats.total) * 100) : 0;
-  const trendDirection = closeRate >= 50 ? 'up' : 'down';
+  const stats = dealStats || { open: 0, closed: 0, totalValue: 0 };
 
   return (
     <Card className="h-full">
@@ -90,9 +76,6 @@ export const MyDealsCard = () => {
             <TrendingUp className="h-5 w-5 text-primary" />
             My Deals
           </div>
-          <Badge variant={closeRate >= 50 ? "default" : "secondary"} className="text-xs">
-            {closeRate}% close rate
-          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -104,35 +87,8 @@ export const MyDealsCard = () => {
           <div className="text-sm text-muted-foreground">Total Pipeline Value</div>
         </div>
 
-        {/* Close Rate Progress */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Close Rate</span>
-            <div className="flex items-center gap-1">
-              {trendDirection === 'up' ? (
-                <TrendingUp className="h-3 w-3 text-green-600" />
-              ) : (
-                <TrendingDown className="h-3 w-3 text-orange-600" />
-              )}
-              <span className="font-medium">{closeRate}%</span>
-            </div>
-          </div>
-          <Progress 
-            value={closeRate} 
-            className={`h-2 ${closeRate >= 70 ? 'bg-green-100' : closeRate >= 40 ? 'bg-orange-100' : 'bg-red-100'}`} 
-          />
-        </div>
-
         {/* Supporting Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-blue-50 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Target className="h-3 w-3 text-blue-600" />
-              <span className="text-xs text-blue-600 font-medium">Total</span>
-            </div>
-            <div className="text-lg font-bold text-blue-700">{stats.total}</div>
-          </div>
-          
           <div className="bg-orange-50 rounded-lg p-3 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
               <CircleDollarSign className="h-3 w-3 text-orange-600" />
@@ -140,12 +96,20 @@ export const MyDealsCard = () => {
             </div>
             <div className="text-lg font-bold text-orange-700">{stats.open}</div>
           </div>
+          
+          <div className="bg-green-50 rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <CheckCircle className="h-3 w-3 text-green-600" />
+              <span className="text-xs text-green-600 font-medium">Closed</span>
+            </div>
+            <div className="text-lg font-bold text-green-700">{stats.closed}</div>
+          </div>
         </div>
 
         {/* Status Insights */}
         <div className="space-y-2 pt-1">
           <div className="flex items-center gap-2 text-sm text-green-600">
-            <TrendingUp className="h-3 w-3" />
+            <CheckCircle className="h-3 w-3" />
             <span>{stats.closed} deals closed</span>
           </div>
           {stats.open > 0 && (
