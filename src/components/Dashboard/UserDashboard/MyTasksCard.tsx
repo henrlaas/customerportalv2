@@ -156,7 +156,7 @@ export const MyTasksCard = () => {
   const stats = taskStats || { active: 0, overdue: 0 };
 
   return (
-    <Card className="h-full hover:shadow-lg transition-all duration-200 bg-white border border-gray-200">
+    <Card className="h-full hover:shadow-lg transition-all duration-200">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <CheckCircle className="h-5 w-5 text-blue-600" />
