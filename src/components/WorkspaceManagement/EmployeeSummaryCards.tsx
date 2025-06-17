@@ -1,4 +1,3 @@
-
 import { Users, UserCheck, DollarSign, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmployeeWithProfile } from '@/types/employee';
@@ -41,16 +40,15 @@ export const EmployeeSummaryCards = ({ employees }: EmployeeSummaryCardsProps) =
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
       {/* Total Employees Card */}
-      <Card className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100" />
-        <CardContent className="relative p-6">
+      <Card>
+        <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-700">Total Employees</p>
-              <p className="text-3xl font-bold text-blue-900">{totalEmployees}</p>
-              <p className="text-xs text-blue-600 mt-1">Active workforce</p>
+              <p className="text-sm font-medium text-muted-foreground">Total Employees</p>
+              <p className="text-3xl font-bold text-blue-600">{totalEmployees}</p>
+              <p className="text-xs text-muted-foreground mt-1">Active workforce</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
+            <div className="p-3 bg-muted rounded-lg">
               <Users className="h-6 w-6 text-blue-600" />
             </div>
           </div>
@@ -58,24 +56,23 @@ export const EmployeeSummaryCards = ({ employees }: EmployeeSummaryCardsProps) =
       </Card>
 
       {/* Employee Types Card */}
-      <Card className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-green-100" />
-        <CardContent className="relative p-6">
+      <Card>
+        <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-green-700">Employee Types</p>
+              <p className="text-sm font-medium text-muted-foreground">Employee Types</p>
               <div className="flex gap-4 mt-1">
                 <div>
-                  <p className="text-lg font-bold text-green-900">{employeeCount}</p>
-                  <p className="text-xs text-green-600">Employees</p>
+                  <p className="text-lg font-bold text-green-600">{employeeCount}</p>
+                  <p className="text-xs text-muted-foreground">Employees</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-green-900">{freelancerCount}</p>
-                  <p className="text-xs text-green-600">Freelancers</p>
+                  <p className="text-lg font-bold text-green-600">{freelancerCount}</p>
+                  <p className="text-xs text-muted-foreground">Freelancers</p>
                 </div>
               </div>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
+            <div className="p-3 bg-muted rounded-lg">
               <UserCheck className="h-6 w-6 text-green-600" />
             </div>
           </div>
@@ -83,16 +80,15 @@ export const EmployeeSummaryCards = ({ employees }: EmployeeSummaryCardsProps) =
       </Card>
 
       {/* Average Salary Card */}
-      <Card className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-purple-100" />
-        <CardContent className="relative p-6">
+      <Card>
+        <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-purple-700">Average Salary</p>
-              <p className="text-3xl font-bold text-purple-900">{formatCurrency(averageSalary)}</p>
-              <p className="text-xs text-purple-600 mt-1">Per hour</p>
+              <p className="text-sm font-medium text-muted-foreground">Average Salary</p>
+              <p className="text-3xl font-bold text-purple-600">{formatCurrency(averageSalary)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Per hour</p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
+            <div className="p-3 bg-muted rounded-lg">
               <DollarSign className="h-6 w-6 text-purple-600" />
             </div>
           </div>
@@ -100,16 +96,15 @@ export const EmployeeSummaryCards = ({ employees }: EmployeeSummaryCardsProps) =
       </Card>
 
       {/* Employment Stats Card */}
-      <Card className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-amber-100" />
-        <CardContent className="relative p-6">
+      <Card>
+        <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-amber-700">Employment Stats</p>
-              <p className="text-3xl font-bold text-amber-900">{Math.round(averageEmploymentPercentage)}%</p>
-              <p className="text-xs text-amber-600 mt-1">{fullTimeEmployees} full-time</p>
+              <p className="text-sm font-medium text-muted-foreground">Employment Stats</p>
+              <p className="text-3xl font-bold text-amber-600">{Math.round(averageEmploymentPercentage)}%</p>
+              <p className="text-xs text-muted-foreground mt-1">{fullTimeEmployees} full-time</p>
             </div>
-            <div className="p-3 bg-amber-100 rounded-lg">
+            <div className="p-3 bg-muted rounded-lg">
               <Clock className="h-6 w-6 text-amber-600" />
             </div>
           </div>
