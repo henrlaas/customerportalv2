@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,13 +8,12 @@ import { CheckCircle, AlertTriangle, Activity } from 'lucide-react';
 
 export const MyTasksCard = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const { data: taskStats, isLoading } = useQuery({
+  const { data: taskStats, isLoading, error } = useQuery({
     queryKey: ['user-task-stats', user?.id],
     queryFn: async () => {
       if (!user?.id) return { active: 0, overdue: 0 };
-
-      console.log('Fetching tasks for user:', user.id);
 
       // Get tasks assigned to the current user - using tasks table as primary
       const { data: tasks, error } = await supabase
@@ -35,19 +34,13 @@ export const MyTasksCard = () => {
         throw error;
       }
 
-      console.log('Raw task data:', tasks);
-
       const userTasks = tasks || [];
-      console.log('User tasks:', userTasks);
       
       // Count active tasks (both todo and in-progress) - ALL tasks regardless of due date
       const activeTasks = userTasks.filter(task => 
         task.status === 'todo' || task.status === 'in-progress'
       );
       const active = activeTasks.length;
-      
-      console.log('Active tasks count:', active);
-      console.log('Active tasks:', activeTasks);
       
       // Count overdue tasks - only from active tasks that have a due date in the past
       const now = new Date();
@@ -57,13 +50,70 @@ export const MyTasksCard = () => {
       );
       const overdue = overdueTasks.length;
 
-      console.log('Overdue tasks count:', overdue);
-      console.log('Overdue tasks:', overdueTasks);
-
       return { active, overdue };
     },
     enabled: !!user?.id,
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 60 * 1000, // Refetch every minute
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
+
+  // Subscribe to real-time updates for tasks
+  React.useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('task-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          // Invalidate and refetch the task stats when any task changes
+          queryClient.invalidateQueries({ queryKey: ['user-task-stats', user.id] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'task_assignees'
+        },
+        () => {
+          // Invalidate and refetch when task assignments change
+          queryClient.invalidateQueries({ queryKey: ['user-task-stats', user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
+
+  if (error) {
+    console.error('Task stats query error:', error);
+    return (
+      <Card className="h-full">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-blue-600" />
+            My Tasks
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-red-500">
+            Error loading tasks. Please try again.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
