@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,6 +12,7 @@ import { CampaignsSummary } from '@/components/Dashboard/CampaignsSummary';
 import { CompaniesSummary } from '@/components/Dashboard/CompaniesSummary';
 import { DealsSummary } from '@/components/Dashboard/DealsSummary';
 import { MrrChart } from '@/components/Dashboard/MrrChart';
+import { UserDashboard } from '@/components/Dashboard/UserDashboard/UserDashboard';
 import { ArrowDownIcon, ArrowUpIcon, BarChart3, CheckIcon, ChartBarIcon, CircleDollarSignIcon, LayoutDashboard, SquareCheckIcon, SquareCode } from 'lucide-react';
 
 // Types for our dashboard data
@@ -38,7 +38,16 @@ const Dashboard = () => {
   const { profile, isAdmin, isEmployee, isClient } = useAuth();
   const t = useTranslation();
   
-  // Query for fetching dashboard data
+  // If user is admin or employee, show the new user-specific dashboard
+  if (isAdmin || isEmployee) {
+    return (
+      <div className="h-screen flex flex-col">
+        <UserDashboard />
+      </div>
+    );
+  }
+  
+  // Query for fetching dashboard data (for clients)
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboard-data'],
     queryFn: async () => {
@@ -209,6 +218,7 @@ const Dashboard = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  // Client dashboard (original dashboard for clients)
   return (
     <div className="space-y-6 p-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
