@@ -46,16 +46,6 @@ export function getSidebarItems() {
       tooltip: null
     },
     {
-      title: t('Analytics'),
-      href: '/analytics',
-      icon: BarChart3,
-      roles: ['admin'],
-      category: 'MENU',
-      hasDropdown: false,
-      disabled: false,
-      tooltip: null
-    },
-    {
       title: t('Companies'),
       href: '/companies',
       icon: Building,
@@ -144,6 +134,16 @@ export function getSidebarItems() {
       hasDropdown: false,
       disabled: true,
       tooltip: "This is not available yet"
+    },
+    {
+      title: t('Analytics'),
+      href: '/analytics',
+      icon: BarChart3,
+      roles: ['admin'],
+      category: 'MENU',
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
     },
     {
       title: t('Management'),
