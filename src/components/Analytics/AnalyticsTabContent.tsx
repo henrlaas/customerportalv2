@@ -23,35 +23,35 @@ export const AnalyticsTabContent = () => {
         <TabsTrigger value="files" className="text-xs lg:text-sm">Files</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="overview" className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 border-l-4 border-blue-500">
+      <TabsContent value="overview" className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6">
         <OverviewTab />
       </TabsContent>
 
-      <TabsContent value="companies" className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-6 border-l-4 border-emerald-500">
+      <TabsContent value="companies" className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-6">
         <CompaniesTab />
       </TabsContent>
 
-      <TabsContent value="projects" className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 border-l-4 border-purple-500">
+      <TabsContent value="projects" className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6">
         <ProjectsTab />
       </TabsContent>
 
-      <TabsContent value="tasks" className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-6 border-l-4 border-orange-500">
+      <TabsContent value="tasks" className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-6">
         <TasksTab />
       </TabsContent>
 
-      <TabsContent value="campaigns" className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-6 border-l-4 border-teal-500">
+      <TabsContent value="campaigns" className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-6">
         <CampaignsTab />
       </TabsContent>
 
-      <TabsContent value="deals" className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-lg p-6 border-l-4 border-rose-500">
+      <TabsContent value="deals" className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-lg p-6">
         <DealsTab />
       </TabsContent>
 
-      <TabsContent value="users" className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-6 border-l-4 border-indigo-500">
+      <TabsContent value="users" className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-6">
         <UsersTab />
       </TabsContent>
 
-      <TabsContent value="files" className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-6 border-l-4 border-amber-500">
+      <TabsContent value="files" className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-6">
         <FilesTab />
       </TabsContent>
     </Tabs>
