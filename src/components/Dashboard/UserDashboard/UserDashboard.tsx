@@ -22,7 +22,7 @@ export const UserDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="h-full">
       <div className="flex">
         {/* Main Dashboard Content */}
         <div className="flex-1 p-6 pr-0">
