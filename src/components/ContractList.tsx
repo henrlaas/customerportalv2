@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -16,17 +17,24 @@ import { ViewContractDialog } from './ViewContractDialog';
 
 type Contract = {
   id: string;
-  title: string;
-  description: string | null;
-  contract_type: string;
-  status: 'draft' | 'sent' | 'signed' | 'expired';
+  title?: string | null;
+  description?: string | null;
+  contract_type?: string | null;
+  status: 'unsigned' | 'signed' | 'draft' | 'sent' | 'expired';
   created_at: string;
   updated_at: string;
-  client_name: string | null;
-  client_email: string | null;
+  client_name?: string | null;
+  client_email?: string | null;
   company_id: string | null;
   contact_id: string | null;
-  file_path: string | null;
+  file_path?: string | null;
+  file_url?: string | null;
+  template_type: string;
+  content?: string | null;
+  project_id?: string | null;
+  created_by?: string | null;
+  signed_at?: string | null;
+  signature_data?: string | null;
   companies?: {
     id: string;
     name: string;
@@ -145,7 +153,7 @@ export default function ContractList() {
 
   const filteredContracts = contracts.filter(contract => {
     const matchesSearch = 
-      contract.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contract.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contract.companies?.name.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -159,6 +167,7 @@ export default function ContractList() {
       draft: 'secondary',
       sent: 'outline',
       signed: 'default',
+      unsigned: 'outline',
       expired: 'destructive'
     } as const;
     
@@ -170,22 +179,25 @@ export default function ContractList() {
   };
 
   const handleDownload = async (contract: Contract) => {
-    if (!contract.file_path) {
+    if (!contract.file_path && !contract.file_url) {
       toast.error('No file available for download');
       return;
     }
 
     try {
+      const filePath = contract.file_path || contract.file_url;
+      if (!filePath) return;
+
       const { data, error } = await supabase.storage
         .from('contracts')
-        .download(contract.file_path);
+        .download(filePath);
 
       if (error) throw error;
 
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${contract.title}.pdf`;
+      a.download = `${contract.title || 'contract'}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -259,6 +271,7 @@ export default function ContractList() {
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="sent">Sent</SelectItem>
                 <SelectItem value="signed">Signed</SelectItem>
+                <SelectItem value="unsigned">Unsigned</SelectItem>
                 <SelectItem value="expired">Expired</SelectItem>
               </SelectContent>
             </Select>
@@ -304,7 +317,7 @@ export default function ContractList() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold">{contract.title}</h3>
+                          <h3 className="font-semibold">{contract.title || 'Untitled Contract'}</h3>
                           {getStatusBadge(contract.status)}
                         </div>
                         <div className="text-sm text-muted-foreground space-y-1">
@@ -313,7 +326,7 @@ export default function ContractList() {
                             {contract.companies?.name || contract.client_name || 'N/A'}
                           </p>
                           <p>
-                            <span className="font-medium">Type:</span> {contract.contract_type}
+                            <span className="font-medium">Type:</span> {contract.contract_type || contract.template_type || 'N/A'}
                           </p>
                           <p>
                             <span className="font-medium">Created:</span>{' '}
@@ -330,7 +343,7 @@ export default function ContractList() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {contract.file_path && (
+                        {(contract.file_path || contract.file_url) && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -363,7 +376,7 @@ export default function ContractList() {
       />
 
       <DeleteContractDialog
-        contract={contractToDelete}
+        contractId={contractToDelete?.id || ''}
         onClose={() => setContractToDelete(null)}
         onConfirm={(contractId) => {
           handleDelete(contractId);
@@ -371,10 +384,13 @@ export default function ContractList() {
         }}
       />
 
-      <ViewContractDialog
-        contract={contractToView}
-        onClose={() => setContractToView(null)}
-      />
+      {contractToView && (
+        <ViewContractDialog
+          contract={contractToView}
+          isOpen={true}
+          onClose={() => setContractToView(null)}
+        />
+      )}
     </div>
   );
 }
