@@ -193,42 +193,36 @@ export const ContractList = () => {
     
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <ClipboardList className="h-6 w-6 text-blue-600" />
-              </div>
+        <Card className="bg-blue-50 text-blue-700 border-blue-200 border">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold">{totalCount}</div>
-                <p className="text-muted-foreground">Total Contracts</p>
+                <p className="text-sm font-medium opacity-80">Total Contracts</p>
+                <p className="text-2xl font-bold mt-1">{totalCount}</p>
               </div>
+              <ClipboardList className="h-8 w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-amber-100 p-3 rounded-full">
-                <FilePlus className="h-6 w-6 text-amber-600" />
-              </div>
+        <Card className="bg-orange-50 text-orange-700 border-orange-200 border">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold">{unsignedCount}</div>
-                <p className="text-muted-foreground">Unsigned Contracts</p>
+                <p className="text-sm font-medium opacity-80">Unsigned Contracts</p>
+                <p className="text-2xl font-bold mt-1">{unsignedCount}</p>
               </div>
+              <FilePlus className="h-8 w-8 text-orange-500" />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-green-100 p-3 rounded-full">
-                <FileCheck className="h-6 w-6 text-green-600" />
-              </div>
+        <Card className="bg-green-50 text-green-700 border-green-200 border">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold">{signedCount}</div>
-                <p className="text-muted-foreground">Signed Contracts</p>
+                <p className="text-sm font-medium opacity-80">Signed Contracts</p>
+                <p className="text-2xl font-bold mt-1">{signedCount}</p>
               </div>
+              <FileCheck className="h-8 w-8 text-green-500" />
             </div>
           </CardContent>
         </Card>
@@ -239,14 +233,24 @@ export const ContractList = () => {
   // Skeleton loader for the stats cards
   const StatCardsSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      {[1, 2, 3].map((item) => (
-        <Card key={item}>
-          <CardContent className="pt-6">
-            <Skeleton className="h-8 w-24 mb-2" />
-            <Skeleton className="h-4 w-32" />
-          </CardContent>
-        </Card>
-      ))}
+      <Card className="bg-blue-50 text-blue-700 border-blue-200 border">
+        <CardContent className="p-4">
+          <Skeleton className="h-8 w-24 mb-2" />
+          <Skeleton className="h-4 w-32" />
+        </CardContent>
+      </Card>
+      <Card className="bg-orange-50 text-orange-700 border-orange-200 border">
+        <CardContent className="p-4">
+          <Skeleton className="h-8 w-24 mb-2" />
+          <Skeleton className="h-4 w-32" />
+        </CardContent>
+      </Card>
+      <Card className="bg-green-50 text-green-700 border-green-200 border">
+        <CardContent className="p-4">
+          <Skeleton className="h-8 w-24 mb-2" />
+          <Skeleton className="h-4 w-32" />
+        </CardContent>
+      </Card>
     </div>
   );
   
