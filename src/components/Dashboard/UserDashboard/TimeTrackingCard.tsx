@@ -115,7 +115,7 @@ export const TimeTrackingCard = () => {
             ></div>
           </div>
           <div className="text-xs text-muted-foreground mt-1">
-            {stats.progressPercentage.toFixed(0)}% of 150h goal
+            {stats.hoursThisMonth}h of the 150h goal
           </div>
         </div>
 
