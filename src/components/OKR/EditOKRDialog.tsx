@@ -24,7 +24,7 @@ export function EditOKRDialog({ okr, isOpen, onClose, onSuccess }: EditOKRDialog
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    quarter: 'Q1' as 'Q1' | 'Q2' | 'Q3' | 'Q4',
+    month: 'January' as 'January' | 'February' | 'March' | 'April' | 'May' | 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December',
     year: new Date().getFullYear(),
     status: 'draft' as 'draft' | 'active' | 'completed' | 'cancelled',
   });
@@ -35,12 +35,17 @@ export function EditOKRDialog({ okr, isOpen, onClose, onSuccess }: EditOKRDialog
       setFormData({
         title: okr.title,
         description: okr.description || '',
-        quarter: okr.quarter,
+        month: okr.month,
         year: okr.year,
         status: okr.status,
       });
     }
   }, [okr]);
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   const updateOKRMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -119,19 +124,20 @@ export function EditOKRDialog({ okr, isOpen, onClose, onSuccess }: EditOKRDialog
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="quarter">Quarter</Label>
+              <Label htmlFor="month">Month</Label>
               <Select
-                value={formData.quarter}
-                onValueChange={(value) => setFormData({ ...formData, quarter: value as 'Q1' | 'Q2' | 'Q3' | 'Q4' })}
+                value={formData.month}
+                onValueChange={(value) => setFormData({ ...formData, month: value as 'January' | 'February' | 'March' | 'April' | 'May' | 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December' })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Q1">Q1</SelectItem>
-                  <SelectItem value="Q2">Q2</SelectItem>
-                  <SelectItem value="Q3">Q3</SelectItem>
-                  <SelectItem value="Q4">Q4</SelectItem>
+                  {months.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {month}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
