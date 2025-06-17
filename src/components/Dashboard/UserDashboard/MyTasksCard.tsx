@@ -15,6 +15,8 @@ export const MyTasksCard = () => {
     queryFn: async () => {
       if (!user?.id) return { active: 0, overdue: 0 };
 
+      console.log('Dashboard: Fetching tasks for user:', user.id);
+
       // Get tasks assigned to the current user - using tasks table as primary
       const { data: tasks, error } = await supabase
         .from('tasks')
@@ -30,17 +32,27 @@ export const MyTasksCard = () => {
         .eq('task_assignees.user_id', user.id);
 
       if (error) {
-        console.error('Error fetching tasks:', error);
+        console.error('Dashboard: Error fetching tasks:', error);
         throw error;
       }
 
       const userTasks = tasks || [];
+      console.log('Dashboard: Total tasks fetched:', userTasks.length);
+      console.log('Dashboard: Task statuses breakdown:', 
+        userTasks.reduce((acc, task) => {
+          acc[task.status] = (acc[task.status] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>)
+      );
       
-      // Count active tasks (both todo and in-progress) - ALL tasks regardless of due date
+      // Count active tasks - exclude completed (like Calendar does)
       const activeTasks = userTasks.filter(task => 
-        task.status === 'todo' || task.status === 'in-progress'
+        task.status !== 'completed'
       );
       const active = activeTasks.length;
+      
+      console.log('Dashboard: Active tasks (non-completed):', active);
+      console.log('Dashboard: Active task IDs:', activeTasks.map(t => t.id));
       
       // Count overdue tasks - only from active tasks that have a due date in the past
       const now = new Date();
@@ -50,11 +62,16 @@ export const MyTasksCard = () => {
       );
       const overdue = overdueTasks.length;
 
+      console.log('Dashboard: Overdue tasks:', overdue);
+      console.log('Dashboard: Overdue task details:', 
+        overdueTasks.map(t => ({ id: t.id, title: t.title, due_date: t.due_date, status: t.status }))
+      );
+
       return { active, overdue };
     },
     enabled: !!user?.id,
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 60 * 1000, // Refetch every minute
+    staleTime: 0, // Don't use stale data, always fetch fresh
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
@@ -73,6 +90,7 @@ export const MyTasksCard = () => {
           table: 'tasks'
         },
         () => {
+          console.log('Dashboard: Task update detected, invalidating cache');
           // Invalidate and refetch the task stats when any task changes
           queryClient.invalidateQueries({ queryKey: ['user-task-stats', user.id] });
         }
@@ -85,6 +103,7 @@ export const MyTasksCard = () => {
           table: 'task_assignees'
         },
         () => {
+          console.log('Dashboard: Task assignment update detected, invalidating cache');
           // Invalidate and refetch when task assignments change
           queryClient.invalidateQueries({ queryKey: ['user-task-stats', user.id] });
         }
