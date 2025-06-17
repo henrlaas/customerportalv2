@@ -162,21 +162,19 @@ export function UserManagementTab() {
       <UserSummaryCards users={users} />
 
       {/* Search and filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <UserFilters 
-          searchTerm={searchTerm}
-          setSearchTerm={(term) => {
-            setSearchTerm(term);
-            handleFilterChange();
-          }}
-          roleFilter={roleFilter}
-          setRoleFilter={(role) => {
-            setRoleFilter(role);
-            handleFilterChange();
-          }}
-          roles={roles}
-        />
-      </div>
+      <UserFilters 
+        searchTerm={searchTerm}
+        setSearchTerm={(term) => {
+          setSearchTerm(term);
+          handleFilterChange();
+        }}
+        roleFilter={roleFilter}
+        setRoleFilter={(role) => {
+          setRoleFilter(role);
+          handleFilterChange();
+        }}
+        roles={roles}
+      />
 
       <div className="rounded-md border">
         <UserTable 
