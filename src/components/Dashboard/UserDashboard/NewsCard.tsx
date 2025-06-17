@@ -33,11 +33,6 @@ export const NewsCard = () => {
     return 'Unknown User';
   };
 
-  const truncateText = (text: string, maxLength: number) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-  };
-
   const handleNewsClick = () => {
     if (latestNews) {
       setSelectedNews(latestNews);
@@ -95,14 +90,16 @@ export const NewsCard = () => {
           {/* Top spacer for badge */}
           <div className="h-6"></div>
           
-          {/* Middle section - Title and Description */}
+          {/* Middle section - Title and Banner Subtitle */}
           <div className={`flex-1 flex flex-col justify-center ${latestNews.image_banner ? 'text-white' : ''}`}>
             <h3 className="text-xl font-bold mb-2 line-clamp-2">
               {latestNews.title}
             </h3>
-            <p className="text-sm line-clamp-3">
-              {truncateText(latestNews.description, 150)}
-            </p>
+            {latestNews.banner_subtitle && (
+              <p className="text-sm line-clamp-3">
+                {latestNews.banner_subtitle}
+              </p>
+            )}
           </div>
           
           {/* Bottom section - Publisher and Date */}
@@ -113,16 +110,16 @@ export const NewsCard = () => {
         </CardContent>
       </Card>
 
-      {/* News Detail Dialog - Without banner image */}
+      {/* News Detail Dialog - Without banner image, with preserved formatting */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>{selectedNews?.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <pre className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap font-sans">
               {selectedNews?.description}
-            </p>
+            </pre>
             <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t">
               <span>Published by {selectedNews && getCreatorFirstName(selectedNews.created_by)}</span>
               <span>{selectedNews && format(new Date(selectedNews.created_at), 'MMM d, yyyy')}</span>

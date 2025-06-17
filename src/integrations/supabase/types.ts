@@ -1048,6 +1048,7 @@ export type Database = {
       }
       news: {
         Row: {
+          banner_subtitle: string | null
           created_at: string
           created_by: string
           description: string
@@ -1057,6 +1058,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          banner_subtitle?: string | null
           created_at?: string
           created_by: string
           description: string
@@ -1066,6 +1068,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          banner_subtitle?: string | null
           created_at?: string
           created_by?: string
           description?: string

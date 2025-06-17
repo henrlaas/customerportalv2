@@ -29,6 +29,7 @@ import { X, Image as ImageIcon } from 'lucide-react';
 
 const editNewsSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
+  banner_subtitle: z.string().max(150, 'Banner subtitle must be less than 150 characters').optional(),
   description: z.string().min(1, 'Description is required').max(2000, 'Description must be less than 2000 characters'),
 });
 
@@ -51,6 +52,7 @@ export function EditNewsDialog({ open, onOpenChange, newsItem, onSuccess }: Edit
     resolver: zodResolver(editNewsSchema),
     defaultValues: {
       title: newsItem.title,
+      banner_subtitle: newsItem.banner_subtitle || '',
       description: newsItem.description,
     },
   });
@@ -59,6 +61,7 @@ export function EditNewsDialog({ open, onOpenChange, newsItem, onSuccess }: Edit
     if (open) {
       form.reset({
         title: newsItem.title,
+        banner_subtitle: newsItem.banner_subtitle || '',
         description: newsItem.description,
       });
       setBannerPreview(newsItem.image_banner || null);
@@ -88,6 +91,7 @@ export function EditNewsDialog({ open, onOpenChange, newsItem, onSuccess }: Edit
 
       return newsService.update(newsItem.id, {
         ...data,
+        banner_subtitle: data.banner_subtitle || undefined,
         image_banner: bannerUrl,
       });
     },
@@ -157,6 +161,20 @@ export function EditNewsDialog({ open, onOpenChange, newsItem, onSuccess }: Edit
                   <FormLabel>Title</FormLabel>
                   <FormControl>
                     <Input placeholder="Enter news title..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="banner_subtitle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Banner Subtitle (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Short subtitle for the news card..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

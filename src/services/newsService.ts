@@ -5,6 +5,7 @@ export interface NewsItem {
   id: string;
   title: string;
   description: string;
+  banner_subtitle?: string;
   image_banner?: string;
   created_by: string;
   created_at: string;
@@ -14,12 +15,14 @@ export interface NewsItem {
 export interface CreateNewsData {
   title: string;
   description: string;
+  banner_subtitle?: string;
   image_banner?: string;
 }
 
 export interface UpdateNewsData {
   title?: string;
   description?: string;
+  banner_subtitle?: string;
   image_banner?: string;
 }
 

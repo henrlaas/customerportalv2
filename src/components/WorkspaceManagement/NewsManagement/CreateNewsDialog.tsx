@@ -25,10 +25,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { X, Image as ImageIcon } from 'lucide-react';
 
 const createNewsSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
+  banner_subtitle: z.string().max(150, 'Banner subtitle must be less than 150 characters').optional(),
   description: z.string().min(1, 'Description is required').max(2000, 'Description must be less than 2000 characters'),
 });
 
@@ -49,6 +50,7 @@ export function CreateNewsDialog({ open, onOpenChange, onSuccess }: CreateNewsDi
     resolver: zodResolver(createNewsSchema),
     defaultValues: {
       title: '',
+      banner_subtitle: '',
       description: '',
     },
   });
@@ -63,6 +65,7 @@ export function CreateNewsDialog({ open, onOpenChange, onSuccess }: CreateNewsDi
 
       return newsService.create({
         title: data.title,
+        banner_subtitle: data.banner_subtitle || undefined,
         description: data.description,
         image_banner: bannerUrl,
       });
@@ -132,6 +135,20 @@ export function CreateNewsDialog({ open, onOpenChange, onSuccess }: CreateNewsDi
                   <FormLabel>Title</FormLabel>
                   <FormControl>
                     <Input placeholder="Enter news title..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="banner_subtitle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Banner Subtitle (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Short subtitle for the news card..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
