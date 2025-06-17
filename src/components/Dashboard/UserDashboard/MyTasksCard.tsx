@@ -16,19 +16,19 @@ export const MyTasksCard = () => {
 
       console.log('Fetching tasks for user:', user.id);
 
-      // Get tasks assigned to the current user
+      // Get tasks assigned to the current user - using tasks table as primary
       const { data: tasks, error } = await supabase
-        .from('task_assignees')
+        .from('tasks')
         .select(`
-          task_id,
-          tasks:task_id (
-            id,
-            status,
-            due_date,
-            title
+          id,
+          status,
+          due_date,
+          title,
+          task_assignees!inner (
+            user_id
           )
         `)
-        .eq('user_id', user.id);
+        .eq('task_assignees.user_id', user.id);
 
       if (error) {
         console.error('Error fetching tasks:', error);
@@ -37,27 +37,28 @@ export const MyTasksCard = () => {
 
       console.log('Raw task data:', tasks);
 
-      const userTasks = tasks?.map(t => t.tasks).filter(Boolean) || [];
+      const userTasks = tasks || [];
       console.log('User tasks:', userTasks);
       
-      // Count active tasks (both todo and in-progress)
-      const active = userTasks.filter(task => 
+      // Count active tasks (both todo and in-progress) - ALL tasks regardless of due date
+      const activeTasks = userTasks.filter(task => 
         task.status === 'todo' || task.status === 'in-progress'
-      ).length;
+      );
+      const active = activeTasks.length;
       
       console.log('Active tasks count:', active);
-      console.log('Active tasks:', userTasks.filter(task => 
-        task.status === 'todo' || task.status === 'in-progress'
-      ));
+      console.log('Active tasks:', activeTasks);
       
+      // Count overdue tasks - only from active tasks that have a due date in the past
       const now = new Date();
-      const overdue = userTasks.filter(task => 
-        (task.status === 'todo' || task.status === 'in-progress') &&
+      const overdueTasks = activeTasks.filter(task => 
         task.due_date && 
         new Date(task.due_date) < now
-      ).length;
+      );
+      const overdue = overdueTasks.length;
 
       console.log('Overdue tasks count:', overdue);
+      console.log('Overdue tasks:', overdueTasks);
 
       return { active, overdue };
     },
