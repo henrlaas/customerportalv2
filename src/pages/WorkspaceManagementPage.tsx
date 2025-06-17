@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -132,7 +131,7 @@ const WorkspaceManagementPage = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Settings className="h-6 w-6" />
-          <h1 className="text-3xl font-bold">Workspace Management</h1>
+          <h1 className="text-2xl font-bold">Workspace Management</h1>
         </div>
       </div>
       

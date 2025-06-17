@@ -17,7 +17,7 @@ const AnalyticsPage = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-6 w-6" />
-          <h1 className="text-3xl font-bold">Analytics</h1>
+          <h1 className="text-2xl font-bold">Analytics</h1>
         </div>
       </div>
       

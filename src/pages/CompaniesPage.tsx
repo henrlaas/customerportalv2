@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -75,7 +76,7 @@ const CompaniesPage = () => {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Companies</h1>
+        <h1 className="text-2xl font-bold">Companies</h1>
         {canModify && (
           <Button onClick={() => setIsCreating(true)}>
             <Plus className="mr-2 h-4 w-4" />
