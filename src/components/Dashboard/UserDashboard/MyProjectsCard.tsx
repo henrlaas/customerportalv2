@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { FolderOpen, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { FolderOpen, Clock, CheckCircle, AlertTriangle, Target } from 'lucide-react';
 
 export const MyProjectsCard = () => {
   const { user } = useAuth();
@@ -13,7 +14,7 @@ export const MyProjectsCard = () => {
   const { data: projectStats, isLoading } = useQuery({
     queryKey: ['user-project-stats', user?.id],
     queryFn: async () => {
-      if (!user?.id) return { inProgress: 0, completed: 0, overdue: 0 };
+      if (!user?.id) return { total: 0, inProgress: 0, completed: 0, overdue: 0 };
 
       // Get projects assigned to the current user
       const { data: projectAssignees, error } = await supabase
@@ -30,10 +31,11 @@ export const MyProjectsCard = () => {
       if (error) throw error;
 
       if (!projectAssignees) {
-        return { inProgress: 0, completed: 0, overdue: 0 };
+        return { total: 0, inProgress: 0, completed: 0, overdue: 0 };
       }
 
       const userProjects = projectAssignees.map(pa => pa.projects).filter(Boolean);
+      const total = userProjects.length;
       const now = new Date();
 
       let inProgress = 0;
@@ -72,10 +74,10 @@ export const MyProjectsCard = () => {
         });
       } else {
         // If no projects, all counts remain 0
-        inProgress = userProjects.length;
+        inProgress = total;
       }
 
-      return { inProgress, completed, overdue };
+      return { total, inProgress, completed, overdue };
     },
     enabled: !!user?.id,
   });
@@ -102,7 +104,8 @@ export const MyProjectsCard = () => {
     );
   }
 
-  const stats = projectStats || { inProgress: 0, completed: 0, overdue: 0 };
+  const stats = projectStats || { total: 0, inProgress: 0, completed: 0, overdue: 0 };
+  const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
   return (
     <Card className="h-full">
@@ -125,17 +128,26 @@ export const MyProjectsCard = () => {
           <div className="text-3xl font-bold text-primary mb-1">
             {stats.inProgress}
           </div>
-          <div className="text-sm text-muted-foreground">In Progress Projects</div>
+          <div className="text-sm text-muted-foreground">Active Projects</div>
+        </div>
+
+        {/* Completion Progress */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Completion</span>
+            <span className="font-medium">{completionRate}%</span>
+          </div>
+          <Progress value={completionRate} className="h-2" />
         </div>
 
         {/* Supporting Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-orange-50 rounded-lg p-3 text-center">
+          <div className="bg-blue-50 rounded-lg p-3 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
-              <Clock className="h-3 w-3 text-orange-600" />
-              <span className="text-xs text-orange-600 font-medium">In Progress</span>
+              <Target className="h-3 w-3 text-blue-600" />
+              <span className="text-xs text-blue-600 font-medium">Total</span>
             </div>
-            <div className="text-lg font-bold text-orange-700">{stats.inProgress}</div>
+            <div className="text-lg font-bold text-blue-700">{stats.total}</div>
           </div>
           
           <div className="bg-green-50 rounded-lg p-3 text-center">
@@ -150,7 +162,7 @@ export const MyProjectsCard = () => {
         {/* Status Insights */}
         <div className="space-y-2 pt-1">
           {stats.inProgress > 0 && (
-            <div className="flex items-center gap-2 text-sm text-orange-600">
+            <div className="flex items-center gap-2 text-sm text-blue-600">
               <Clock className="h-3 w-3" />
               <span>{stats.inProgress} projects active</span>
             </div>
@@ -161,7 +173,7 @@ export const MyProjectsCard = () => {
               <span>{stats.overdue} projects overdue</span>
             </div>
           )}
-          {stats.inProgress === 0 && stats.completed > 0 && (
+          {stats.inProgress === 0 && stats.total > 0 && (
             <div className="flex items-center gap-2 text-sm text-green-600">
               <CheckCircle className="h-3 w-3" />
               <span>All projects completed! 🎉</span>
