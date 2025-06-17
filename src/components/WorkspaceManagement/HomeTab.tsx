@@ -88,9 +88,6 @@ export function HomeTab() {
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900">Workspace Management</h1>
-        <p className="text-lg text-muted-foreground">Central hub for configuring your workspace</p>
-        
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
