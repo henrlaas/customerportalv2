@@ -51,6 +51,14 @@ export function BasicInfoStep({
       newErrors.email = 'Please enter a valid email address';
     }
     
+    if (!formData.phone_number || formData.phone_number === '+47') {
+      newErrors.phone_number = 'Phone number is required';
+    }
+    
+    if (!formData.team) {
+      newErrors.team = 'Team selection is required';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -117,7 +125,7 @@ export function BasicInfoStep({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone_number">Phone Number</Label>
+          <Label htmlFor="phone_number">Phone Number *</Label>
           <PhoneInput
             country={'no'}
             value={formData.phone_number}
@@ -126,14 +134,14 @@ export function BasicInfoStep({
               width: '100%',
               height: '40px',
               fontSize: '14px',
-              border: '1px solid hsl(var(--border))',
+              border: errors.phone_number ? '1px solid #ef4444' : '1px solid hsl(var(--border))',
               borderRadius: '6px',
               paddingLeft: '48px',
               backgroundColor: 'hsl(var(--background))',
               color: 'hsl(var(--foreground))',
             }}
             buttonStyle={{
-              border: '1px solid hsl(var(--border))',
+              border: errors.phone_number ? '1px solid #ef4444' : '1px solid hsl(var(--border))',
               borderRight: 'none',
               borderRadius: '6px 0 0 6px',
               backgroundColor: 'hsl(var(--background))',
@@ -153,15 +161,16 @@ export function BasicInfoStep({
             }}
             placeholder="Enter phone number"
           />
+          {errors.phone_number && <p className="text-sm text-red-500">{errors.phone_number}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="team">Team</Label>
+          <Label htmlFor="team">Team *</Label>
           <Select
             value={formData.team || ''}
             onValueChange={(value) => onUpdate({ team: value })}
           >
-            <SelectTrigger id="team">
+            <SelectTrigger id="team" className={errors.team ? 'border-red-500' : ''}>
               <SelectValue placeholder="Select a team" />
             </SelectTrigger>
             <SelectContent>
@@ -172,6 +181,7 @@ export function BasicInfoStep({
               ))}
             </SelectContent>
           </Select>
+          {errors.team && <p className="text-sm text-red-500">{errors.team}</p>}
         </div>
       </div>
 
