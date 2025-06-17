@@ -29,7 +29,7 @@ import { X, Image as ImageIcon } from 'lucide-react';
 
 const createNewsSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
-  banner_subtitle: z.string().max(150, 'Banner subtitle must be less than 150 characters').optional(),
+  banner_subtitle: z.string().min(1, 'Banner subtitle is required').max(150, 'Banner subtitle must be less than 150 characters'),
   description: z.string().min(1, 'Description is required').max(2000, 'Description must be less than 2000 characters'),
 });
 
@@ -146,9 +146,9 @@ export function CreateNewsDialog({ open, onOpenChange, onSuccess }: CreateNewsDi
               name="banner_subtitle"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Banner Subtitle (Optional)</FormLabel>
+                  <FormLabel>Banner Subtitle</FormLabel>
                   <FormControl>
-                    <Input placeholder="Short subtitle for the news card..." {...field} />
+                    <Input placeholder="Enter subtitle for the news card..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

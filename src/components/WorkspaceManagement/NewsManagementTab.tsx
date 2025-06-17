@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { CreateNewsDialog } from './NewsManagement/CreateNewsDialog';
 import { EditNewsDialog } from './NewsManagement/EditNewsDialog';
 import { DeleteNewsDialog } from './NewsManagement/DeleteNewsDialog';
+import { NewsPagination } from './NewsManagement/NewsPagination';
 import { 
   Plus, 
   Search, 
@@ -24,8 +25,11 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
+const ITEMS_PER_PAGE = 3;
+
 export function NewsManagementTab() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -44,8 +48,21 @@ export function NewsManagementTab() {
 
   const filteredNews = news.filter(item =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchTerm.toLowerCase())
+    item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.banner_subtitle && item.banner_subtitle.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredNews.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedNews = filteredNews.slice(startIndex, endIndex);
+
+  // Reset to first page when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
 
   const getCreatorName = (userId: string) => {
     const profile = userProfiles[userId];
@@ -106,7 +123,7 @@ export function NewsManagementTab() {
         <Input
           placeholder="Search news..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           className="pl-9"
         />
       </div>
@@ -129,76 +146,87 @@ export function NewsManagementTab() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {filteredNews.map((newsItem) => (
-            <Card 
-              key={newsItem.id} 
-              className="overflow-hidden relative min-h-[200px]"
-              style={{
-                backgroundImage: newsItem.image_banner ? `url(${newsItem.image_banner})` : 'none',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            >
-              {/* Black overlay */}
-              {newsItem.image_banner && (
-                <div className="absolute inset-0 bg-black bg-opacity-40" />
-              )}
-              
-              {/* Content */}
-              <div className="relative z-10">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1 flex-1">
+        <>
+          <div className="grid gap-4">
+            {paginatedNews.map((newsItem) => (
+              <Card 
+                key={newsItem.id} 
+                className="overflow-hidden relative min-h-[200px]"
+                style={{
+                  backgroundImage: newsItem.image_banner ? `url(${newsItem.image_banner})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              >
+                {/* Black overlay */}
+                {newsItem.image_banner && (
+                  <div className="absolute inset-0 bg-black bg-opacity-40" />
+                )}
+                
+                {/* Content - Left aligned and centered */}
+                <div className="relative z-10 h-full flex">
+                  <div className="flex-1 flex flex-col justify-center p-6">
+                    <div className="space-y-2">
                       <CardTitle className={`line-clamp-2 ${newsItem.image_banner ? 'text-white' : ''}`}>
                         {newsItem.title}
                       </CardTitle>
-                      <CardDescription className={`line-clamp-3 ${newsItem.image_banner ? 'text-gray-200' : ''}`}>
-                        {newsItem.description}
+                      <CardDescription className={`line-clamp-2 ${newsItem.image_banner ? 'text-gray-200' : ''}`}>
+                        {newsItem.banner_subtitle}
                       </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(newsItem)}
-                        className={newsItem.image_banner ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : ''}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(newsItem)}
-                        className={newsItem.image_banner ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : ''}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      
+                      <div className={`flex items-center gap-4 text-sm ${newsItem.image_banner ? 'text-gray-200' : 'text-muted-foreground'}`}>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(newsItem.created_at), 'MMM d, yyyy')}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          Created by {getCreatorName(newsItem.created_by)}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 pt-2">
+                        {newsItem.image_banner && (
+                          <Badge variant="secondary" className="flex items-center gap-1 bg-white/20 text-white border-white/20">
+                            <ImageIcon className="h-3 w-3" />
+                            Banner Active
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className={`flex items-center gap-4 text-sm ${newsItem.image_banner ? 'text-gray-200' : 'text-muted-foreground'}`}>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(newsItem.created_at), 'MMM d, yyyy')}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <User className="h-3 w-3" />
-                      Created by {getCreatorName(newsItem.created_by)}
-                    </div>
-                    {newsItem.image_banner && (
-                      <Badge variant="secondary" className="flex items-center gap-1 bg-white/20 text-white border-white/20">
-                        <ImageIcon className="h-3 w-3" />
-                        Has banner
-                      </Badge>
-                    )}
+                  
+                  {/* Action buttons - positioned at the right */}
+                  <div className="flex flex-col items-center justify-center gap-2 p-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(newsItem)}
+                      className={newsItem.image_banner ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : ''}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(newsItem)}
+                      className={newsItem.image_banner ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : ''}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                </CardContent>
-              </div>
-            </Card>
-          ))}
-        </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          <NewsPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </>
       )}
 
       {/* Dialogs */}

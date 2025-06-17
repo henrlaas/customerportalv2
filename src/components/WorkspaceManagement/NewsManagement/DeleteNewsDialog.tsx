@@ -74,14 +74,6 @@ export function DeleteNewsDialog({ open, onOpenChange, newsItem, onSuccess }: De
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-2">
-          <h4 className="font-medium">Article Details:</h4>
-          <p className="text-sm text-muted-foreground">{newsItem.description}</p>
-          {newsItem.image_banner && (
-            <p className="text-sm text-muted-foreground">• Contains banner image</p>
-          )}
-        </div>
-
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
