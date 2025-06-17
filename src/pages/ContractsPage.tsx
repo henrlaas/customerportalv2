@@ -1,6 +1,6 @@
 
 import React from 'react';
-import ContractList from '@/components/ContractList';
+import { ContractList } from '@/components/ContractList';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ContractsPage = () => {
