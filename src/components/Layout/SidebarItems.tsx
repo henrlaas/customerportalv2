@@ -1,4 +1,3 @@
-
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -16,6 +15,7 @@ import {
   Building,
   Home,
   Calendar,
+  BarChart3,
 } from "lucide-react";
 
 export function getSidebarItems() {
@@ -39,6 +39,16 @@ export function getSidebarItems() {
       href: '/calendar',
       icon: Calendar,
       roles: ['admin', 'employee', 'client'],
+      category: 'MENU',
+      hasDropdown: false,
+      disabled: false,
+      tooltip: null
+    },
+    {
+      title: t('Analytics'),
+      href: '/analytics',
+      icon: BarChart3,
+      roles: ['admin'],
       category: 'MENU',
       hasDropdown: false,
       disabled: false,
