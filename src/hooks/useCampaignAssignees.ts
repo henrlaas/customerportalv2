@@ -26,7 +26,7 @@ export const useCampaignAssignees = (campaignId?: string) => {
       if (!campaignId) return [];
 
       // First get the campaign assignees
-      const { data: assigneesData, error: assigneesError } = await supabaseClient
+      const { data: assigneesData, error: assigneesError } = await supabase
         .from('campaign_assignees')
         .select('*')
         .eq('campaign_id', campaignId);
@@ -39,7 +39,7 @@ export const useCampaignAssignees = (campaignId?: string) => {
       // Then get the profiles for those assignees including the role
       const assigneesWithProfiles = await Promise.all(
         assigneesData.map(async (assignee) => {
-          const { data: profileData, error: profileError } = await supabaseClient
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('id, first_name, last_name, avatar_url, role')
             .eq('id', assignee.user_id)
@@ -69,7 +69,7 @@ export const useCampaignAssignees = (campaignId?: string) => {
   // Add an assignee to a campaign
   const addAssignee = useMutation({
     mutationFn: async ({ campaignId, userId }: { campaignId: string; userId: string }) => {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('campaign_assignees')
         .insert({
           campaign_id: campaignId,
@@ -92,7 +92,7 @@ export const useCampaignAssignees = (campaignId?: string) => {
   // Remove an assignee from a campaign
   const removeAssignee = useMutation({
     mutationFn: async (assigneeId: string) => {
-      const { error } = await supabaseClient
+      const { error } = await supabase
         .from('campaign_assignees')
         .delete()
         .eq('id', assigneeId);
