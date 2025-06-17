@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Steps } from './Steps';
 import { BasicInfoStep } from './BasicInfoStep';
 import { EmploymentDetailsStep } from './EmploymentDetailsStep';
@@ -46,6 +46,13 @@ export function AddEmployeeDialog({ open, onClose }: AddEmployeeDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Add Employee</DialogTitle>
+          <DialogDescription>
+            Create a new employee profile with their basic information, employment details, and payment information.
+          </DialogDescription>
+        </DialogHeader>
+
         <Steps currentStep={step} />
 
         {step === 1 && (
