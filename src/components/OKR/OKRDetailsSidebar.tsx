@@ -1,22 +1,27 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Target, Plus, Edit, Trash2, MessageSquare, TrendingUp, User, Calendar } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { Edit, Trash2, Plus, Target, TrendingUp, Calendar, User } from 'lucide-react';
 import { OKR, KeyResult, OKRUpdate } from '@/pages/OKRPage';
-import { EditOKRDialog } from './EditOKRDialog';
 import { CreateKeyResultDialog } from './CreateKeyResultDialog';
+import { EditOKRDialog } from './EditOKRDialog';
+import { DeleteOKRDialog } from './DeleteOKRDialog';
+import { EditKeyResultDialog } from './EditKeyResultDialog';
+import { DeleteKeyResultDialog } from './DeleteKeyResultDialog';
 
 interface OKRDetailsSidebarProps {
   okr: OKR | null;
@@ -25,41 +30,29 @@ interface OKRDetailsSidebarProps {
   onUpdate: () => void;
 }
 
-export function OKRDetailsSidebar({ okr, isOpen, onClose, onUpdate }: OKRDetailsSidebarProps) {
+export const OKRDetailsSidebar: React.FC<OKRDetailsSidebarProps> = ({
+  okr,
+  isOpen,
+  onClose,
+  onUpdate,
+}) => {
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
   const [isCreateKeyResultOpen, setIsCreateKeyResultOpen] = useState(false);
-  const [updateText, setUpdateText] = useState('');
-
-  // Fetch detailed OKR data with updates
-  const { data: detailedOKR, isLoading } = useQuery({
-    queryKey: ['okr', okr?.id],
-    queryFn: async () => {
-      if (!okr?.id) return null;
-      
-      const { data, error } = await supabase
-        .from('okrs')
-        .select(`
-          *,
-          key_results(*),
-          owner:profiles!okrs_owner_id_fkey(id, first_name, last_name)
-        `)
-        .eq('id', okr.id)
-        .single();
-
-      if (error) throw error;
-      return data as OKR;
-    },
-    enabled: !!okr?.id,
-  });
+  const [isEditOKROpen, setIsEditOKROpen] = useState(false);
+  const [isDeleteOKROpen, setIsDeleteOKROpen] = useState(false);
+  const [selectedKeyResult, setSelectedKeyResult] = useState<KeyResult | null>(null);
+  const [isEditKeyResultOpen, setIsEditKeyResultOpen] = useState(false);
+  const [isDeleteKeyResultOpen, setIsDeleteKeyResultOpen] = useState(false);
 
   // Fetch OKR updates
   const { data: updates = [] } = useQuery({
     queryKey: ['okr-updates', okr?.id],
     queryFn: async () => {
       if (!okr?.id) return [];
-      
+
       const { data, error } = await supabase
         .from('okr_updates')
         .select(`
@@ -75,304 +68,295 @@ export function OKRDetailsSidebar({ okr, isOpen, onClose, onUpdate }: OKRDetails
     enabled: !!okr?.id,
   });
 
-  // Add update mutation
-  const addUpdateMutation = useMutation({
-    mutationFn: async ({ text }: { text: string }) => {
-      if (!okr?.id) throw new Error('No OKR selected');
-      
-      const { error } = await supabase
-        .from('okr_updates')
-        .insert({
-          okr_id: okr.id,
-          update_text: text,
-          created_by: (await supabase.auth.getUser()).data.user?.id!,
-        });
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setUpdateText('');
-      queryClient.invalidateQueries({ queryKey: ['okr-updates', okr?.id] });
-      toast({
-        title: 'Update added',
-        description: 'Progress update has been added successfully.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error adding update',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const calculateProgress = (keyResults: KeyResult[] = []) => {
-    if (keyResults.length === 0) return 0;
-    
-    const totalProgress = keyResults.reduce((sum, kr) => {
-      return sum + Math.min((kr.current_value / kr.target_value) * 100, 100);
-    }, 0);
-    
-    return Math.round(totalProgress / keyResults.length);
-  };
-
-  const getStatusBadge = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Active</Badge>;
-      case 'completed':
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
-      case 'cancelled':
-        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">Cancelled</Badge>;
-      default:
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">Draft</Badge>;
+      case 'draft': return 'bg-gray-500';
+      case 'active': return 'bg-blue-500';
+      case 'completed': return 'bg-green-500';
+      case 'cancelled': return 'bg-red-500';
+      default: return 'bg-gray-500';
     }
   };
 
-  const getKeyResultStatusBadge = (status: string) => {
+  const getKeyResultStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
-      case 'on_track':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">On Track</Badge>;
-      case 'at_risk':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">At Risk</Badge>;
-      default:
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">Not Started</Badge>;
+      case 'not_started': return 'bg-gray-500';
+      case 'on_track': return 'bg-green-500';
+      case 'at_risk': return 'bg-yellow-500';
+      case 'completed': return 'bg-blue-500';
+      default: return 'bg-gray-500';
     }
   };
 
-  const handleAddUpdate = () => {
-    if (!updateText.trim()) return;
-    addUpdateMutation.mutate({ text: updateText });
+  const calculateProgress = (current: number, target: number) => {
+    if (target === 0) return 0;
+    return Math.min((current / target) * 100, 100);
+  };
+
+  const handleEditKeyResult = (keyResult: KeyResult) => {
+    setSelectedKeyResult(keyResult);
+    setIsEditKeyResultOpen(true);
+  };
+
+  const handleDeleteKeyResult = (keyResult: KeyResult) => {
+    setSelectedKeyResult(keyResult);
+    setIsDeleteKeyResultOpen(true);
+  };
+
+  const handleOKRDeleted = () => {
+    onClose(); // Close the sidebar when OKR is deleted
+    onUpdate(); // Refresh the OKR list
   };
 
   if (!okr) return null;
 
-  const currentOKR = detailedOKR || okr;
-  const progress = calculateProgress(currentOKR.key_results);
-
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="w-[600px] max-w-[90vw] overflow-y-auto">
-          <SheetHeader className="mb-6">
+        <SheetContent className="w-[600px] sm:w-[600px] overflow-y-auto">
+          <SheetHeader className="space-y-4">
             <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <SheetTitle className="text-xl mb-2">{currentOKR.title}</SheetTitle>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {currentOKR.quarter} {currentOKR.year}
-                  </div>
-                  {currentOKR.owner && (
-                    <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" />
-                      {currentOKR.owner.first_name || currentOKR.owner.last_name
-                        ? `${currentOKR.owner.first_name || ''} ${currentOKR.owner.last_name || ''}`.trim()
-                        : 'Unassigned'}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  {getStatusBadge(currentOKR.status)}
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    <span className="font-medium">{progress}% Complete</span>
-                  </div>
+              <div className="flex-1 min-w-0">
+                <SheetTitle className="text-xl font-bold break-words">{okr.title}</SheetTitle>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge className={`${getStatusColor(okr.status)} text-white`}>
+                    {okr.status.charAt(0).toUpperCase() + okr.status.slice(1)}
+                  </Badge>
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {okr.quarter} {okr.year}
+                  </Badge>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditDialogOpen(true)}
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
+              {isAdmin && (
+                <div className="flex items-center gap-1 ml-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsEditOKROpen(true)}
+                    className="h-8 w-8"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsDeleteOKROpen(true)}
+                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </SheetHeader>
 
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="key-results">Key Results</TabsTrigger>
-              <TabsTrigger value="updates">Updates</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-6">
-              {/* Progress Overview */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Progress Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">Overall Progress</span>
-                        <span className="text-lg font-bold">{progress}%</span>
-                      </div>
-                      <Progress value={progress} className="h-3" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Key Results</p>
-                        <p className="font-medium">{currentOKR.key_results?.length || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Completed</p>
-                        <p className="font-medium">
-                          {currentOKR.key_results?.filter(kr => kr.status === 'completed').length || 0}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Description */}
-              {currentOKR.description && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Description</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">{currentOKR.description}</p>
-                  </CardContent>
-                </Card>
+          <div className="space-y-6 mt-6">
+            {/* OKR Details */}
+            <div className="space-y-4">
+              {okr.description && (
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-2">Description</h3>
+                  <p className="text-sm">{okr.description}</p>
+                </div>
               )}
-            </TabsContent>
 
-            <TabsContent value="key-results" className="space-y-4">
+              {okr.owner && (
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Owner: {okr.owner.first_name} {okr.owner.last_name}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Key Results Section */}
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Key Results</h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsCreateKeyResultOpen(true)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Key Result
-                </Button>
+                <h3 className="font-medium flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Key Results ({okr.key_results?.length || 0})
+                </h3>
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsCreateKeyResultOpen(true)}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add Key Result
+                  </Button>
+                )}
               </div>
 
-              {currentOKR.key_results?.map((keyResult) => {
-                const krProgress = Math.min((keyResult.current_value / keyResult.target_value) * 100, 100);
-                
-                return (
-                  <Card key={keyResult.id}>
-                    <CardContent className="pt-4">
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between">
-                          <h4 className="font-medium">{keyResult.title}</h4>
-                          {getKeyResultStatusBadge(keyResult.status)}
-                        </div>
-                        
-                        {keyResult.description && (
-                          <p className="text-sm text-muted-foreground">{keyResult.description}</p>
-                        )}
-                        
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span>Progress</span>
-                            <span className="font-medium">
-                              {keyResult.current_value} / {keyResult.target_value} {keyResult.unit}
-                            </span>
-                          </div>
-                          <Progress value={krProgress} className="h-2" />
-                          <p className="text-xs text-muted-foreground">{Math.round(krProgress)}% complete</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-
-              {(!currentOKR.key_results || currentOKR.key_results.length === 0) && (
-                <div className="text-center p-8 text-muted-foreground">
-                  <Target className="h-8 w-8 mx-auto mb-2" />
-                  <p>No key results yet</p>
-                  <p className="text-sm">Add key results to track progress</p>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="updates" className="space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="update">Add Progress Update</Label>
-                  <div className="mt-2 space-y-2">
-                    <Textarea
-                      id="update"
-                      placeholder="Share progress, challenges, or achievements..."
-                      value={updateText}
-                      onChange={(e) => setUpdateText(e.target.value)}
-                    />
-                    <Button
-                      onClick={handleAddUpdate}
-                      disabled={!updateText.trim() || addUpdateMutation.isPending}
-                      size="sm"
-                    >
-                      Add Update
-                    </Button>
-                  </div>
-                </div>
-
+              {okr.key_results && okr.key_results.length > 0 ? (
                 <div className="space-y-3">
-                  {updates.map((update) => (
-                    <Card key={update.id}>
-                      <CardContent className="pt-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>
-                              {update.creator?.first_name || update.creator?.last_name
-                                ? `${update.creator.first_name || ''} ${update.creator.last_name || ''}`.trim()
-                                : 'Unknown User'}
-                            </span>
-                            <span>{new Date(update.created_at).toLocaleDateString()}</span>
+                  {okr.key_results.map((keyResult) => {
+                    const progress = calculateProgress(keyResult.current_value, keyResult.target_value);
+                    return (
+                      <Card key={keyResult.id} className="relative">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-sm font-medium break-words">
+                                {keyResult.title}
+                              </CardTitle>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge 
+                                  className={`${getKeyResultStatusColor(keyResult.status)} text-white text-xs`}
+                                >
+                                  {keyResult.status.replace('_', ' ').charAt(0).toUpperCase() + 
+                                   keyResult.status.replace('_', ' ').slice(1)}
+                                </Badge>
+                              </div>
+                            </div>
+                            {isAdmin && (
+                              <div className="flex items-center gap-1 ml-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEditKeyResult(keyResult)}
+                                  className="h-6 w-6"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteKeyResult(keyResult)}
+                                  className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                          <p className="text-sm">{update.update_text}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-
-                  {updates.length === 0 && (
-                    <div className="text-center p-8 text-muted-foreground">
-                      <MessageSquare className="h-8 w-8 mx-auto mb-2" />
-                      <p>No updates yet</p>
-                      <p className="text-sm">Add the first progress update</p>
-                    </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          {keyResult.description && (
+                            <p className="text-xs text-muted-foreground mb-2">{keyResult.description}</p>
+                          )}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                              <span>Progress</span>
+                              <span className="font-medium">
+                                {keyResult.current_value} / {keyResult.target_value} {keyResult.unit}
+                              </span>
+                            </div>
+                            <Progress value={progress} className="h-2" />
+                            <div className="text-right text-xs text-muted-foreground">
+                              {progress.toFixed(1)}%
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No key results yet</p>
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsCreateKeyResultOpen(true)}
+                      className="mt-2"
+                    >
+                      Add First Key Result
+                    </Button>
                   )}
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Updates Section */}
+            <div className="space-y-4">
+              <h3 className="font-medium flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Recent Updates ({updates.length})
+              </h3>
+
+              {updates.length > 0 ? (
+                <div className="space-y-3">
+                  {updates.slice(0, 5).map((update) => (
+                    <div key={update.id} className="border rounded-lg p-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="text-xs text-muted-foreground">
+                          {update.creator?.first_name} {update.creator?.last_name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(update.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <p className="text-sm">{update.update_text}</p>
+                      {update.progress_percentage !== null && (
+                        <div className="mt-2">
+                          <div className="text-xs text-muted-foreground mb-1">Progress Update</div>
+                          <Progress value={update.progress_percentage} className="h-1" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">No updates yet</p>
+                </div>
+              )}
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
 
-      <EditOKRDialog
-        okr={currentOKR}
-        isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
-        onSuccess={() => {
-          setIsEditDialogOpen(false);
-          onUpdate();
-        }}
-      />
-
+      {/* Dialogs */}
       <CreateKeyResultDialog
-        okrId={currentOKR.id}
+        okrId={okr.id}
         isOpen={isCreateKeyResultOpen}
         onClose={() => setIsCreateKeyResultOpen(false)}
-        onSuccess={() => {
-          setIsCreateKeyResultOpen(false);
-          queryClient.invalidateQueries({ queryKey: ['okr', currentOKR.id] });
-          onUpdate();
+        onSuccess={onUpdate}
+      />
+
+      <EditOKRDialog
+        okr={okr}
+        isOpen={isEditOKROpen}
+        onClose={() => setIsEditOKROpen(false)}
+        onSuccess={onUpdate}
+      />
+
+      <DeleteOKRDialog
+        okr={okr}
+        isOpen={isDeleteOKROpen}
+        onClose={() => setIsDeleteOKROpen(false)}
+        onSuccess={handleOKRDeleted}
+      />
+
+      <EditKeyResultDialog
+        keyResult={selectedKeyResult}
+        isOpen={isEditKeyResultOpen}
+        onClose={() => {
+          setIsEditKeyResultOpen(false);
+          setSelectedKeyResult(null);
         }}
+        onSuccess={onUpdate}
+      />
+
+      <DeleteKeyResultDialog
+        keyResult={selectedKeyResult}
+        isOpen={isDeleteKeyResultOpen}
+        onClose={() => {
+          setIsDeleteKeyResultOpen(false);
+          setSelectedKeyResult(null);
+        }}
+        onSuccess={onUpdate}
       />
     </>
   );
-}
+};
