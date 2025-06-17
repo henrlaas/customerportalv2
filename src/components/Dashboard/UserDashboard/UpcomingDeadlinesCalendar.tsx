@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, addDays, isSameDay, parseISO } from 'date-fns';
 import { Calendar, CheckCircle, FolderOpen } from 'lucide-react';
 
@@ -85,31 +84,31 @@ export const UpcomingDeadlinesCalendar = ({ onTaskClick }: UpcomingDeadlinesCale
 
   if (isLoading) {
     return (
-      <Card className="h-full">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
+      <div className="h-full flex flex-col">
+        <div className="pb-2 flex-shrink-0">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
             Upcoming Deadlines
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </h2>
+        </div>
+        <div className="flex-1">
           <div className="text-center text-muted-foreground">Loading...</div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   const { tasks = [], projects = [] } = upcomingItems || {};
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-2 flex-shrink-0">
-        <CardTitle className="text-lg flex items-center gap-2">
+    <div className="h-full flex flex-col">
+      <div className="pb-2 flex-shrink-0">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
           Upcoming Deadlines
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto">
+        </h2>
+      </div>
+      <div className="flex-1 overflow-y-auto">
         <div className="space-y-4">
           {weekDays.map((day, index) => {
             const dayTasks = tasks.filter(task => 
@@ -171,7 +170,7 @@ export const UpcomingDeadlinesCalendar = ({ onTaskClick }: UpcomingDeadlinesCale
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
