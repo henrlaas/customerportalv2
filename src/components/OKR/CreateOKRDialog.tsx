@@ -19,7 +19,7 @@ interface CreateOKRDialogProps {
     first_name: string | null;
     last_name: string | null;
   }>;
-  currentQuarter: string;
+  currentMonth: string;
   currentYear: number;
 }
 
@@ -28,7 +28,7 @@ export function CreateOKRDialog({
   onClose, 
   onSuccess, 
   profiles, 
-  currentQuarter, 
+  currentMonth, 
   currentYear 
 }: CreateOKRDialogProps) {
   const { toast } = useToast();
@@ -36,11 +36,16 @@ export function CreateOKRDialog({
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    quarter: currentQuarter as 'Q1' | 'Q2' | 'Q3' | 'Q4',
+    month: currentMonth as 'January' | 'February' | 'March' | 'April' | 'May' | 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December',
     year: currentYear,
     owner_id: 'none',
     status: 'draft' as 'draft' | 'active' | 'completed' | 'cancelled',
   });
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   const createOKRMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -49,7 +54,7 @@ export function CreateOKRDialog({
         .insert({
           title: data.title,
           description: data.description,
-          quarter: data.quarter,
+          month: data.month,
           year: data.year,
           status: data.status,
           owner_id: data.owner_id === 'none' ? null : data.owner_id,
@@ -66,7 +71,7 @@ export function CreateOKRDialog({
       setFormData({
         title: '',
         description: '',
-        quarter: currentQuarter as 'Q1' | 'Q2' | 'Q3' | 'Q4',
+        month: currentMonth as 'January' | 'February' | 'March' | 'April' | 'May' | 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December',
         year: currentYear,
         owner_id: 'none',
         status: 'draft',
@@ -99,7 +104,7 @@ export function CreateOKRDialog({
     setFormData({
       title: '',
       description: '',
-      quarter: currentQuarter as 'Q1' | 'Q2' | 'Q3' | 'Q4',
+      month: currentMonth as 'January' | 'February' | 'March' | 'April' | 'May' | 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December',
       year: currentYear,
       owner_id: 'none',
       status: 'draft',
@@ -139,19 +144,20 @@ export function CreateOKRDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="quarter">Quarter</Label>
+              <Label htmlFor="month">Month</Label>
               <Select
-                value={formData.quarter}
-                onValueChange={(value) => setFormData({ ...formData, quarter: value as 'Q1' | 'Q2' | 'Q3' | 'Q4' })}
+                value={formData.month}
+                onValueChange={(value) => setFormData({ ...formData, month: value as 'January' | 'February' | 'March' | 'April' | 'May' | 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December' })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Q1">Q1</SelectItem>
-                  <SelectItem value="Q2">Q2</SelectItem>
-                  <SelectItem value="Q3">Q3</SelectItem>
-                  <SelectItem value="Q4">Q4</SelectItem>
+                  {months.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {month}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

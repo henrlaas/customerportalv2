@@ -1137,8 +1137,8 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          month: Database["public"]["Enums"]["month_type"]
           owner_id: string | null
-          quarter: Database["public"]["Enums"]["quarter"]
           status: Database["public"]["Enums"]["okr_status"]
           title: string
           updated_at: string
@@ -1149,8 +1149,8 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          month?: Database["public"]["Enums"]["month_type"]
           owner_id?: string | null
-          quarter: Database["public"]["Enums"]["quarter"]
           status?: Database["public"]["Enums"]["okr_status"]
           title: string
           updated_at?: string
@@ -1161,8 +1161,8 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          month?: Database["public"]["Enums"]["month_type"]
           owner_id?: string | null
-          quarter?: Database["public"]["Enums"]["quarter"]
           status?: Database["public"]["Enums"]["okr_status"]
           title?: string
           updated_at?: string
@@ -1864,6 +1864,19 @@ export type Database = {
     Enums: {
       key_result_status: "not_started" | "on_track" | "at_risk" | "completed"
       milestone_status: "created" | "completed"
+      month_type:
+        | "January"
+        | "February"
+        | "March"
+        | "April"
+        | "May"
+        | "June"
+        | "July"
+        | "August"
+        | "September"
+        | "October"
+        | "November"
+        | "December"
       okr_status: "draft" | "active" | "completed" | "cancelled"
       quarter: "Q1" | "Q2" | "Q3" | "Q4"
       user_role: "admin" | "employee" | "client"
@@ -1984,6 +1997,20 @@ export const Constants = {
     Enums: {
       key_result_status: ["not_started", "on_track", "at_risk", "completed"],
       milestone_status: ["created", "completed"],
+      month_type: [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ],
       okr_status: ["draft", "active", "completed", "cancelled"],
       quarter: ["Q1", "Q2", "Q3", "Q4"],
       user_role: ["admin", "employee", "client"],

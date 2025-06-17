@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 
 interface OKRFiltersProps {
   filters: {
-    quarter: string;
+    month: string;
     year: number;
     status: string;
     owner: string;
@@ -16,13 +16,13 @@ interface OKRFiltersProps {
     first_name: string | null;
     last_name: string | null;
   }>;
-  currentQuarter: string;
+  currentMonth: string;
 }
 
-export function OKRFilters({ filters, setFilters, profiles, currentQuarter }: OKRFiltersProps) {
+export function OKRFilters({ filters, setFilters, profiles, currentMonth }: OKRFiltersProps) {
   const resetFilters = () => {
     setFilters({
-      quarter: 'all',
+      month: 'all',
       year: new Date().getFullYear(),
       status: 'all',
       owner: 'all',
@@ -32,23 +32,29 @@ export function OKRFilters({ filters, setFilters, profiles, currentQuarter }: OK
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
   return (
     <div className="flex flex-wrap gap-4 items-center">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium">Quarter:</label>
+        <label className="text-sm font-medium">Month:</label>
         <Select
-          value={filters.quarter}
-          onValueChange={(value) => setFilters({ ...filters, quarter: value })}
+          value={filters.month}
+          onValueChange={(value) => setFilters({ ...filters, month: value })}
         >
-          <SelectTrigger className="w-[120px]">
+          <SelectTrigger className="w-[140px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Quarters</SelectItem>
-            <SelectItem value="Q1">Q1</SelectItem>
-            <SelectItem value="Q2">Q2</SelectItem>
-            <SelectItem value="Q3">Q3</SelectItem>
-            <SelectItem value="Q4">Q4</SelectItem>
+            <SelectItem value="all">All Months</SelectItem>
+            {months.map((month) => (
+              <SelectItem key={month} value={month}>
+                {month}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

@@ -85,7 +85,7 @@ export function OKRList({ okrs, isLoading, onOKRClick }: OKRListProps) {
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  {okr.quarter} {okr.year}
+                  {okr.month} {okr.year}
                 </div>
                 {okr.owner && (
                   <div className="flex items-center gap-1">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -124,7 +123,7 @@ export const OKRDetailsSidebar: React.FC<OKRDetailsSidebarProps> = ({
                   </Badge>
                   <Badge variant="outline" className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {okr.quarter} {okr.year}
+                    {okr.month} {okr.year}
                   </Badge>
                 </div>
               </div>

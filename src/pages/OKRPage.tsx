@@ -21,7 +21,7 @@ export type OKR = {
   title: string;
   description: string | null;
   status: 'draft' | 'active' | 'completed' | 'cancelled';
-  quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  month: 'January' | 'February' | 'March' | 'April' | 'May' | 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December';
   year: number;
   owner_id: string | null;
   created_by: string | null;
@@ -72,7 +72,7 @@ const OKRPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [filters, setFilters] = useState({
-    quarter: 'all',
+    month: 'all',
     year: new Date().getFullYear(),
     status: 'all',
     owner: 'all',
@@ -97,8 +97,8 @@ const OKRPage = () => {
         .order('created_at', { ascending: false });
 
       // Apply filters
-      if (filters.quarter !== 'all') {
-        query = query.eq('quarter', filters.quarter as 'Q1' | 'Q2' | 'Q3' | 'Q4');
+      if (filters.month !== 'all') {
+        query = query.eq('month', filters.month as 'January' | 'February' | 'March' | 'April' | 'May' | 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December');
       }
       
       if (filters.year) {
@@ -161,7 +161,7 @@ const OKRPage = () => {
     queryClient.invalidateQueries({ queryKey: ['okrs'] });
   };
 
-  const currentQuarter = `Q${Math.ceil((new Date().getMonth() + 1) / 3)}` as 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  const currentMonth = new Date().toLocaleString('en-US', { month: 'long' }) as 'January' | 'February' | 'March' | 'April' | 'May' | 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December';
 
   return (
     <div className="container py-8">
@@ -192,7 +192,7 @@ const OKRPage = () => {
             filters={filters}
             setFilters={setFilters}
             profiles={profiles}
-            currentQuarter={currentQuarter}
+            currentMonth={currentMonth}
           />
         </CardContent>
       </Card>
@@ -223,7 +223,7 @@ const OKRPage = () => {
         onClose={() => setIsCreateDialogOpen(false)}
         onSuccess={handleCreateSuccess}
         profiles={profiles}
-        currentQuarter={currentQuarter}
+        currentMonth={currentMonth}
         currentYear={new Date().getFullYear()}
       />
     </div>
