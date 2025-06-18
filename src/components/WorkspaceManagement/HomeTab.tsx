@@ -1,3 +1,4 @@
+
 import { 
   Settings, 
   Users, 
@@ -8,7 +9,9 @@ import {
   Palette, 
   FileText,
   ArrowRight,
-  Newspaper
+  Newspaper,
+  BarChart3,
+  Monitor
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,14 +23,6 @@ interface HomeTabProps {
 
 export function HomeTab({ onNavigateToTab }: HomeTabProps) {
   const navigationCards = [
-    {
-      title: "Pricing",
-      description: "View and manage price settings for your workspace. Configure global pricing parameters and workspace-specific settings.",
-      icon: Cog,
-      value: "all-settings",
-      color: "bg-blue-50 border-blue-200",
-      iconColor: "text-blue-600"
-    },
     {
       title: "Employees",
       description: "Manage employee profiles, employment details, and payment information. Add new employees with comprehensive onboarding.",
@@ -69,20 +64,28 @@ export function HomeTab({ onNavigateToTab }: HomeTabProps) {
       iconColor: "text-pink-600"
     },
     {
-      title: "Contracts",
-      description: "Manage contract templates and documentation used throughout the application for client agreements.",
-      icon: FileText,
-      value: "contracts",
-      color: "bg-orange-50 border-orange-200",
-      iconColor: "text-orange-600"
-    },
-    {
       title: "News",
       description: "Create and manage company news and announcements that will be displayed to employees on their dashboards.",
       icon: Newspaper,
       value: "news",
       color: "bg-emerald-50 border-emerald-200",
       iconColor: "text-emerald-600"
+    },
+    {
+      title: "Analytics",
+      description: "Monitor system usage, notification performance, and user engagement with detailed analytics and reporting.",
+      icon: BarChart3,
+      value: "analytics",
+      color: "bg-cyan-50 border-cyan-200",
+      iconColor: "text-cyan-600"
+    },
+    {
+      title: "Monitoring",
+      description: "Monitor scheduled notification jobs, cron job executions, and system health with detailed logging.",
+      icon: Monitor,
+      value: "monitoring",
+      color: "bg-slate-50 border-slate-200",
+      iconColor: "text-slate-600"
     }
   ];
 
@@ -180,9 +183,9 @@ export function HomeTab({ onNavigateToTab }: HomeTabProps) {
             <div className="space-y-2">
               <h4 className="font-medium text-blue-700">Regular Maintenance</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Review Pricing settings periodically</li>
-                <li>• Update Contract templates as needed</li>
-                <li>• Monitor User Management for special cases</li>
+                <li>• Monitor cron jobs in the Monitoring tab</li>
+                <li>• Review Analytics for system performance</li>
+                <li>• Update News for team announcements</li>
               </ul>
             </div>
           </div>
