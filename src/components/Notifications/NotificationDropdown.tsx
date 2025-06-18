@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { 
@@ -50,9 +49,8 @@ export const NotificationDropdown: React.FC = () => {
   } = useNotifications();
 
   const handleNotificationClick = (notification: Notification) => {
-    if (!notification.read) {
-      markAsRead(notification.id);
-    }
+    // Mark as read when clicked
+    markAsRead(notification.id);
 
     // Navigate to relevant page based on entity type
     if (notification.entity_type && notification.entity_id) {
@@ -218,7 +216,9 @@ export const NotificationDropdown: React.FC = () => {
           </div>
         ) : notifications.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
-            No notifications yet
+            <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+            <p>No new notifications</p>
+            <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
           </div>
         ) : (
           <ScrollArea className="h-96">
@@ -227,9 +227,7 @@ export const NotificationDropdown: React.FC = () => {
               return (
                 <DropdownMenuItem
                   key={notification.id}
-                  className={`p-3 cursor-pointer hover:bg-gray-50 ${
-                    !notification.read ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''
-                  } ${
+                  className={`p-3 cursor-pointer hover:bg-gray-50 bg-blue-50 border-l-2 border-l-blue-500 ${
                     priority === 'high' ? 'bg-red-50' : priority === 'medium' ? 'bg-yellow-50' : ''
                   }`}
                   onClick={() => handleNotificationClick(notification)}
@@ -240,14 +238,10 @@ export const NotificationDropdown: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
-                        <p className={`text-sm font-medium ${
-                          !notification.read ? 'text-gray-900' : 'text-gray-700'
-                        }`}>
+                        <p className="text-sm font-medium text-gray-900">
                           {notification.title}
                         </p>
-                        {!notification.read && (
-                          <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 ml-2 mt-1"></div>
-                        )}
+                        <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 ml-2 mt-1"></div>
                       </div>
                       <p className="text-xs text-gray-500 mt-1 line-clamp-2">
                         {notification.message}
@@ -263,7 +257,7 @@ export const NotificationDropdown: React.FC = () => {
           </ScrollArea>
         )}
         
-        {notifications.length > 10 && (
+        {notifications.length > 0 && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem 

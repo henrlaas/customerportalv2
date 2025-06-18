@@ -3,16 +3,32 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Notification } from '@/types/notifications';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export const useNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Fetch notifications
-  const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ['notifications'],
+  // Fetch unread notifications for dropdown
+  const { data: unreadNotifications = [], isLoading } = useQuery({
+    queryKey: ['notifications-unread'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('read', false)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return data as Notification[];
+    },
+  });
+
+  // Fetch all notifications for a dedicated notifications page (if needed)
+  const { data: allNotifications = [] } = useQuery({
+    queryKey: ['notifications-all'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notifications')
@@ -50,7 +66,8 @@ export const useNotifications = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
       queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
     },
     onError: (error) => {
@@ -73,7 +90,8 @@ export const useNotifications = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
       queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
       toast({
         title: 'Success',
@@ -101,7 +119,8 @@ export const useNotifications = () => {
           table: 'notifications',
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          queryClient.invalidateQueries({ queryKey: ['notifications-unread'] });
+          queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
           queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
         }
       )
@@ -120,7 +139,8 @@ export const useNotifications = () => {
   }, [unreadCountData]);
 
   return {
-    notifications,
+    notifications: unreadNotifications, // Return only unread notifications for dropdown
+    allNotifications, // Available for full notifications page
     unreadCount,
     isLoading,
     markAsRead: markAsReadMutation.mutate,
