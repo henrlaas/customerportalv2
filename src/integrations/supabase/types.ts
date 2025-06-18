@@ -617,6 +617,33 @@ export type Database = {
           },
         ]
       }
+      cron_job_logs: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          execution_time: string | null
+          id: string
+          job_name: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          execution_time?: string | null
+          id?: string
+          job_name: string
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          execution_time?: string | null
+          id?: string
+          job_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
       deal_notes: {
         Row: {
           content: string
@@ -1971,6 +1998,10 @@ export type Database = {
       is_company_member: {
         Args: { company_uuid: string }
         Returns: boolean
+      }
+      log_cron_execution: {
+        Args: { p_job_name: string; p_status: string; p_details?: Json }
+        Returns: string
       }
     }
     Enums: {

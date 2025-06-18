@@ -113,6 +113,14 @@ export const CronJobMonitoringTab: React.FC = () => {
     return acc;
   }, {} as Record<string, { success: number; error: number; lastRun: string | null }>);
 
+  // Add static jobs that might not have logs yet
+  const knownJobs = ['check-due-dates', 'contract-reminders', 'monthly-reminders'];
+  knownJobs.forEach(job => {
+    if (!jobStats[job]) {
+      jobStats[job] = { success: 0, error: 0, lastRun: null };
+    }
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -173,61 +181,67 @@ export const CronJobMonitoringTab: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-96">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Job Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Execution Time</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Details</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="font-medium">{log.job_name}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        {getStatusIcon(log.status)}
-                        {getStatusBadge(log.status)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(log.execution_time), { addSuffix: true })}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {log.details?.executionTimeMs ? `${log.details.executionTimeMs}ms` : 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {log.status === 'success' ? (
-                        <span className="text-green-600">
-                          {log.details?.notificationsCreated || log.details?.remindersCreated || 0} notifications
-                        </span>
-                      ) : (
-                        <span className="text-red-600 flex items-center">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          {log.details?.errors?.length || 0} errors
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setSelectedLog(log)}
-                        className="text-xs"
-                      >
-                        View Details
-                      </Button>
-                    </TableCell>
+          {logs.length === 0 && !isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No cron job logs found yet. The jobs will start logging once they run.
+            </div>
+          ) : (
+            <ScrollArea className="h-96">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Job Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Execution Time</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Details</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="font-medium">{log.job_name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          {getStatusIcon(log.status)}
+                          {getStatusBadge(log.status)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatDistanceToNow(new Date(log.execution_time), { addSuffix: true })}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {log.details?.executionTimeMs ? `${log.details.executionTimeMs}ms` : 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {log.status === 'success' ? (
+                          <span className="text-green-600">
+                            {log.details?.notificationsCreated || log.details?.remindersCreated || 0} notifications
+                          </span>
+                        ) : (
+                          <span className="text-red-600 flex items-center">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            {log.details?.errors?.length || 0} errors
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSelectedLog(log)}
+                          className="text-xs"
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          )}
         </CardContent>
       </Card>
 
