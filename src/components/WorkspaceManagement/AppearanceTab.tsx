@@ -9,6 +9,41 @@ import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { workspaceService } from "@/services/workspaceService";
 
+// Helper function to convert HEX to HSL (same as in AppearanceProvider)
+const hexToHsl = (hex: string): string => {
+  // Remove the hash if present
+  hex = hex.replace('#', '');
+  
+  // Parse RGB values
+  const r = parseInt(hex.substr(0, 2), 16) / 255;
+  const g = parseInt(hex.substr(2, 2), 16) / 255;
+  const b = parseInt(hex.substr(4, 2), 16) / 255;
+  
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  let l = (max + min) / 2;
+  
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    
+    h = Math.round(h * 60);
+  }
+  
+  s = Math.round(s * 100);
+  l = Math.round(l * 100);
+  
+  return `${h} ${s}% ${l}%`;
+};
+
 export const AppearanceTab = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState("Box Workspace");
@@ -47,6 +82,9 @@ export const AppearanceTab = () => {
         if (buttonTextColorSetting) {
           console.log("Loaded button text color from DB:", buttonTextColorSetting.setting_value);
           setButtonTextColor(buttonTextColorSetting.setting_value);
+        } else {
+          console.log("No button text color in DB, using default: #FFFFFF");
+          setButtonTextColor("#FFFFFF");
         }
       } catch (error) {
         console.error("Failed to fetch appearance settings:", error);
@@ -137,46 +175,13 @@ export const AppearanceTab = () => {
       setIsLoading(true);
       await saveOrCreateSetting('appearance.button.color', buttonColor, 'Button background color');
       
-      // Convert HEX to HSL for button background color
-      const tempElement = document.createElement('div');
-      tempElement.style.backgroundColor = buttonColor;
-      document.body.appendChild(tempElement);
-      const rgbColor = window.getComputedStyle(tempElement).backgroundColor;
-      document.body.removeChild(tempElement);
-      
-      // Parse RGB values
-      const rgb = rgbColor.match(/\d+/g);
-      if (rgb && rgb.length === 3) {
-        const r = parseInt(rgb[0]) / 255;
-        const g = parseInt(rgb[1]) / 255;
-        const b = parseInt(rgb[2]) / 255;
-        
-        // Calculate HSL values
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        let h = 0;
-        let s = 0;
-        let l = (max + min) / 2;
-        
-        if (max !== min) {
-          const d = max - min;
-          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-          
-          switch (max) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-          }
-          
-          h = Math.round(h * 60);
-        }
-        
-        s = Math.round(s * 100);
-        l = Math.round(l * 100);
-        
-        // Set the CSS variable in HSL format
-        document.documentElement.style.setProperty('--primary', `${h} ${s}% ${l}%`);
-        console.log(`Button color set to HSL: ${h} ${s}% ${l}%`);
+      // Use the improved HEX to HSL conversion
+      try {
+        const hslValue = hexToHsl(buttonColor);
+        document.documentElement.style.setProperty('--primary', hslValue);
+        console.log(`Button color set to HSL: ${hslValue}`);
+      } catch (error) {
+        console.error('Error converting button color to HSL:', error);
       }
       
       toast({
@@ -202,51 +207,19 @@ export const AppearanceTab = () => {
       
       console.log("Saving button text color:", buttonTextColor);
       
-      // Convert HEX to HSL for button text color - using the same approach as button background
-      const tempElement = document.createElement('div');
-      tempElement.style.color = buttonTextColor;
-      document.body.appendChild(tempElement);
-      const rgbColor = window.getComputedStyle(tempElement).color;
-      document.body.removeChild(tempElement);
-      
-      // Convert RGB to HSL
-      const rgb = rgbColor.match(/\d+/g);
-      if (rgb && rgb.length === 3) {
-        const r = parseInt(rgb[0]) / 255;
-        const g = parseInt(rgb[1]) / 255;
-        const b = parseInt(rgb[2]) / 255;
-        
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        let h = 0;
-        let s = 0;
-        let l = (max + min) / 2;
-        
-        if (max !== min) {
-          const d = max - min;
-          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-          
-          switch (max) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-          }
-          
-          h = Math.round(h * 60);
-        }
-        
-        s = Math.round(s * 100);
-        l = Math.round(l * 100);
-        
-        // Set the CSS variable in HSL format
-        document.documentElement.style.setProperty('--primary-foreground', `${h} ${s}% ${l}%`);
-        console.log(`Button text color set to HSL: ${h} ${s}% ${l}%`);
+      // Use the improved HEX to HSL conversion
+      try {
+        const hslValue = hexToHsl(buttonTextColor);
+        document.documentElement.style.setProperty('--primary-foreground', hslValue);
+        console.log(`Button text color set to HSL: ${hslValue}`);
         
         // For compatibility, also set the data attribute
         document.documentElement.setAttribute('data-button-text-color', buttonTextColor);
-      } else {
-        // Direct set as a fallback
-        document.documentElement.style.setProperty('--primary-foreground', buttonTextColor);
+      } catch (error) {
+        console.error('Error converting button text color to HSL:', error);
+        // Use fallback
+        const fallbackHsl = hexToHsl("#FFFFFF");
+        document.documentElement.style.setProperty('--primary-foreground', fallbackHsl);
       }
       
       toast({
