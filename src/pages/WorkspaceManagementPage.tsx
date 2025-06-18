@@ -11,7 +11,8 @@ import {
   Palette, 
   FileText, 
   Newspaper,
-  Monitor
+  Monitor,
+  Activity
 } from 'lucide-react';
 import { UserManagementTab } from '@/components/WorkspaceManagement/UserManagementTab';
 import { EmployeeManagementTab } from '@/components/WorkspaceManagement/EmployeeManagementTab';
@@ -79,7 +80,7 @@ const WorkspaceManagementPage: React.FC = () => {
             System
           </TabsTrigger>
           <TabsTrigger value="monitoring" className="flex items-center gap-2">
-            <Monitor className="h-4 w-4" />
+            <Activity className="h-4 w-4" />
             Monitoring
           </TabsTrigger>
         </TabsList>
