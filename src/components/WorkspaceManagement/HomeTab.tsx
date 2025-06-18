@@ -1,4 +1,3 @@
-
 import { 
   Settings, 
   Users, 
@@ -10,7 +9,6 @@ import {
   FileText,
   ArrowRight,
   Newspaper,
-  BarChart3,
   Monitor,
   DollarSign,
   Home
@@ -90,10 +88,10 @@ export function HomeTab({ onNavigateToTab }: HomeTabProps) {
       iconColor: "text-emerald-600"
     },
     {
-      title: "Analytics",
-      description: "Monitor system usage, notification performance, and user engagement with detailed analytics and reporting.",
-      icon: BarChart3,
-      value: "analytics",
+      title: "System",
+      description: "Monitor system usage, notification performance, and user engagement with detailed statistics.",
+      icon: Monitor,
+      value: "system",
       color: "bg-cyan-50 border-cyan-200",
       iconColor: "text-cyan-600"
     },

@@ -11,7 +11,6 @@ import {
   Palette, 
   FileText, 
   Newspaper,
-  BarChart3,
   Monitor
 } from 'lucide-react';
 import { UserManagementTab } from '@/components/WorkspaceManagement/UserManagementTab';
@@ -19,7 +18,7 @@ import { EmployeeManagementTab } from '@/components/WorkspaceManagement/Employee
 import { NewsManagementTab } from '@/components/WorkspaceManagement/NewsManagementTab';
 import { EmailToolsTab } from '@/components/WorkspaceManagement/EmailToolsTab';
 import { SmsToolsTab } from '@/components/WorkspaceManagement/SmsToolsTab';
-import { AnalyticsDashboardTab } from '@/components/WorkspaceManagement/AnalyticsDashboardTab';
+import { SystemDashboardTab } from '@/components/WorkspaceManagement/SystemDashboardTab';
 import { CronJobMonitoringTab } from '@/components/WorkspaceManagement/CronJobMonitoringTab';
 import { HomeTab } from '@/components/WorkspaceManagement/HomeTab';
 import { AppearanceTab } from '@/components/WorkspaceManagement/AppearanceTab';
@@ -75,9 +74,9 @@ const WorkspaceManagementPage: React.FC = () => {
             <Newspaper className="h-4 w-4" />
             News
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Analytics
+          <TabsTrigger value="system" className="flex items-center gap-2">
+            <Monitor className="h-4 w-4" />
+            System
           </TabsTrigger>
           <TabsTrigger value="monitoring" className="flex items-center gap-2">
             <Monitor className="h-4 w-4" />
@@ -121,8 +120,8 @@ const WorkspaceManagementPage: React.FC = () => {
           <NewsManagementTab />
         </TabsContent>
 
-        <TabsContent value="analytics">
-          <AnalyticsDashboardTab />
+        <TabsContent value="system">
+          <SystemDashboardTab />
         </TabsContent>
 
         <TabsContent value="monitoring">
