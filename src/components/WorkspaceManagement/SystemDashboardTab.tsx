@@ -15,19 +15,24 @@ export const SystemDashboardTab: React.FC = () => {
   const { data: notificationStats, isLoading: isLoadingNotifications } = useQuery({
     queryKey: ['notification-statistics'],
     queryFn: async () => {
-      const { data: totalCount, error: countError } = await supabase
+      const { count: totalCount, error: countError } = await supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true });
 
       if (countError) throw countError;
 
-      const { data: typeDistribution, error: typeError } = await supabase
+      const { data: allNotifications, error: typeError } = await supabase
         .from('notifications')
-        .select('type, count')
-        .select('type, count(*)')
-        .group('type');
+        .select('type');
 
       if (typeError) throw typeError;
+
+      // Process type distribution manually
+      const typeDistribution = allNotifications?.reduce((acc, notification) => {
+        const type = notification.type;
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
 
       const { data: weeklyData, error: weeklyError } = await supabase
         .from('notifications')
@@ -40,11 +45,11 @@ export const SystemDashboardTab: React.FC = () => {
       const dailyStats = processWeeklyNotifications(weeklyData || []);
 
       return {
-        totalCount: totalCount?.count || 0,
-        typeDistribution: typeDistribution?.map(item => ({
-          name: formatNotificationType(item.type),
-          value: parseInt(item.count)
-        })) || [],
+        totalCount: totalCount || 0,
+        typeDistribution: Object.entries(typeDistribution).map(([type, count]) => ({
+          name: formatNotificationType(type),
+          value: count
+        })),
         weeklyActivity: dailyStats
       };
     }
@@ -56,23 +61,25 @@ export const SystemDashboardTab: React.FC = () => {
     queryFn: async () => {
       const { data: users, error } = await supabase
         .from('profiles')
-        .select('role, count(*)')
-        .group('role');
+        .select('role');
 
       if (error) throw error;
 
-      let totalUsers = 0;
-      const roleDistribution = users?.map(item => {
-        totalUsers += parseInt(item.count);
-        return {
-          role: item.role,
-          count: parseInt(item.count)
-        };
-      }) || [];
+      // Process role distribution manually
+      const roleDistribution = users?.reduce((acc, user) => {
+        const role = user.role;
+        acc[role] = (acc[role] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const totalUsers = Object.values(roleDistribution).reduce((sum, count) => sum + count, 0);
 
       return {
         totalUsers,
-        roleDistribution
+        roleDistribution: Object.entries(roleDistribution).map(([role, count]) => ({
+          role,
+          count
+        }))
       };
     }
   });
@@ -361,7 +368,7 @@ export const SystemDashboardTab: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-xs">{job.totalRuns} runs</span>
                   <Badge 
-                    variant={job.successRate > 90 ? "success" : job.successRate > 70 ? "outline" : "destructive"}
+                    variant={job.successRate > 90 ? "secondary" : job.successRate > 70 ? "outline" : "destructive"}
                     className={`text-xs ${job.successRate > 90 ? 'bg-green-100 text-green-800' : 
                       job.successRate > 70 ? '' : 'bg-red-100 text-red-800'}`}
                   >
