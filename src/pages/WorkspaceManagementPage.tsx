@@ -38,50 +38,50 @@ const WorkspaceManagementPage: React.FC = () => {
       <h1 className="text-3xl font-bold mb-6">Workspace Management</h1>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-11">
-          <TabsTrigger value="home" className="flex items-center gap-2">
+        <TabsList className="flex flex-wrap justify-start gap-1 h-auto p-1 bg-muted/50 rounded-lg">
+          <TabsTrigger value="home" className="flex items-center gap-2 px-3 py-2 text-sm">
             <Home className="h-4 w-4" />
-            Home
+            <span className="hidden sm:inline">Home</span>
           </TabsTrigger>
-          <TabsTrigger value="pricing" className="flex items-center gap-2">
+          <TabsTrigger value="pricing" className="flex items-center gap-2 px-3 py-2 text-sm">
             <DollarSign className="h-4 w-4" />
-            Pricing
+            <span className="hidden sm:inline">Pricing</span>
           </TabsTrigger>
-          <TabsTrigger value="employees" className="flex items-center gap-2">
+          <TabsTrigger value="employees" className="flex items-center gap-2 px-3 py-2 text-sm">
             <Users className="h-4 w-4" />
-            Employees
+            <span className="hidden sm:inline">Employees</span>
           </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
+          <TabsTrigger value="users" className="flex items-center gap-2 px-3 py-2 text-sm">
             <UserCheck className="h-4 w-4" />
-            Users
+            <span className="hidden sm:inline">Users</span>
           </TabsTrigger>
-          <TabsTrigger value="email-tools" className="flex items-center gap-2">
+          <TabsTrigger value="email-tools" className="flex items-center gap-2 px-3 py-2 text-sm">
             <Mail className="h-4 w-4" />
-            Email
+            <span className="hidden sm:inline">Email</span>
           </TabsTrigger>
-          <TabsTrigger value="sms-tools" className="flex items-center gap-2">
+          <TabsTrigger value="sms-tools" className="flex items-center gap-2 px-3 py-2 text-sm">
             <MessageSquare className="h-4 w-4" />
-            SMS
+            <span className="hidden sm:inline">SMS</span>
           </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex items-center gap-2">
+          <TabsTrigger value="appearance" className="flex items-center gap-2 px-3 py-2 text-sm">
             <Palette className="h-4 w-4" />
-            Appearance
+            <span className="hidden sm:inline">Appearance</span>
           </TabsTrigger>
-          <TabsTrigger value="contracts" className="flex items-center gap-2">
+          <TabsTrigger value="contracts" className="flex items-center gap-2 px-3 py-2 text-sm">
             <FileText className="h-4 w-4" />
-            Contracts
+            <span className="hidden sm:inline">Contracts</span>
           </TabsTrigger>
-          <TabsTrigger value="news" className="flex items-center gap-2">
+          <TabsTrigger value="news" className="flex items-center gap-2 px-3 py-2 text-sm">
             <Newspaper className="h-4 w-4" />
-            News
+            <span className="hidden sm:inline">News</span>
           </TabsTrigger>
-          <TabsTrigger value="system" className="flex items-center gap-2">
+          <TabsTrigger value="system" className="flex items-center gap-2 px-3 py-2 text-sm">
             <Monitor className="h-4 w-4" />
-            System
+            <span className="hidden sm:inline">System</span>
           </TabsTrigger>
-          <TabsTrigger value="monitoring" className="flex items-center gap-2">
+          <TabsTrigger value="monitoring" className="flex items-center gap-2 px-3 py-2 text-sm">
             <Activity className="h-4 w-4" />
-            Monitoring
+            <span className="hidden sm:inline">Monitoring</span>
           </TabsTrigger>
         </TabsList>
 
