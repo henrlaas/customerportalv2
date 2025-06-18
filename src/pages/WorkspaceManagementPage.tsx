@@ -38,7 +38,7 @@ const WorkspaceManagementPage: React.FC = () => {
       <h1 className="text-3xl font-bold mb-6">Workspace Management</h1>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="flex flex-wrap justify-start gap-1 h-auto p-1 bg-muted/50 rounded-lg">
+        <TabsList className="flex flex-wrap justify-start gap-1 h-auto p-1 rounded-lg">
           <TabsTrigger value="home" className="flex items-center gap-2 px-3 py-2 text-sm">
             <Home className="h-4 w-4" />
             <span className="hidden sm:inline">Home</span>
