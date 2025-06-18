@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +34,8 @@ export const CronJobMonitoringTab: React.FC = () => {
         .limit(100);
 
       if (error) throw error;
-      setLogs(data || []);
+      // Type cast the data since we know the database constraint ensures only 'success' | 'error' values
+      setLogs((data || []) as CronJobLog[]);
     } catch (error) {
       console.error('Error fetching cron job logs:', error);
       toast({
