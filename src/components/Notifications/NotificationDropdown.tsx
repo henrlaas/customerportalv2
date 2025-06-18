@@ -4,7 +4,6 @@ import {
   Bell, 
   Check, 
   CheckCheck, 
-  Eye, 
   Trophy, 
   Target, 
   Users, 
@@ -255,19 +254,6 @@ export const NotificationDropdown: React.FC = () => {
               );
             })}
           </ScrollArea>
-        )}
-        
-        {notifications.length > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              className="text-center text-sm text-blue-600 cursor-pointer"
-              onClick={() => navigate('/notifications')}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              View all notifications
-            </DropdownMenuItem>
-          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
