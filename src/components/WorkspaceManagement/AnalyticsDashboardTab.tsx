@@ -181,11 +181,11 @@ export const AnalyticsDashboardTab: React.FC = () => {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm">Database Response Time</span>
-              <Badge variant="secondary">< 100ms</Badge>
+              <Badge variant="secondary">{"< 100ms"}</Badge>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm">API Response Time</span>
-              <Badge variant="secondary">< 200ms</Badge>
+              <Badge variant="secondary">{"< 200ms"}</Badge>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm">Error Rate</span>
