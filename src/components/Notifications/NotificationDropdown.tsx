@@ -17,7 +17,10 @@ import {
   AlertTriangle,
   BarChart3,
   Upload,
-  UserCheck
+  UserCheck,
+  Building,
+  MessageSquare,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -82,6 +85,10 @@ export const NotificationDropdown: React.FC = () => {
         case 'news':
           navigate(`/dashboard`);
           break;
+        case 'ad':
+          // Navigate to the ad details page
+          navigate(`/ads/${notification.entity_id}`);
+          break;
         default:
           break;
       }
@@ -116,6 +123,18 @@ export const NotificationDropdown: React.FC = () => {
         return <Users className="h-4 w-4 text-pink-500" />;
       case 'company_advisor_assigned':
         return <UserCheck className="h-4 w-4 text-teal-500" />;
+      case 'new_company_contact':
+        return <UserCheck className="h-4 w-4 text-blue-600" />;
+      case 'new_subsidiary':
+        return <Building className="h-4 w-4 text-purple-600" />;
+      case 'company_edited':
+        return <Settings className="h-4 w-4 text-gray-600" />;
+      case 'company_deleted':
+        return <AlertTriangle className="h-4 w-4 text-red-600" />;
+      case 'ads_status_change':
+        return <Star className="h-4 w-4 text-yellow-600" />;
+      case 'ads_comments_change':
+        return <MessageSquare className="h-4 w-4 text-indigo-600" />;
       case 'role_changed':
         return <Settings className="h-4 w-4 text-gray-500" />;
       case 'monthly_time_reminder':
@@ -137,8 +156,23 @@ export const NotificationDropdown: React.FC = () => {
   };
 
   const getNotificationPriority = (type: string) => {
-    const highPriority = ['deal_won', 'task_overdue', 'contract_signature_reminder', 'meeting_deadline_conflict'];
-    const mediumPriority = ['project_deadline_approaching', 'due_date_approaching', 'role_changed'];
+    const highPriority = [
+      'deal_won', 
+      'task_overdue', 
+      'contract_signature_reminder', 
+      'meeting_deadline_conflict',
+      'company_deleted',
+      'ads_status_change'
+    ];
+    const mediumPriority = [
+      'project_deadline_approaching', 
+      'due_date_approaching', 
+      'role_changed',
+      'company_edited',
+      'new_company_contact',
+      'new_subsidiary',
+      'ads_comments_change'
+    ];
     
     if (highPriority.includes(type)) return 'high';
     if (mediumPriority.includes(type)) return 'medium';

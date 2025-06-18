@@ -2016,6 +2016,12 @@ export type Database = {
         | "monthly_progress_report"
         | "file_uploaded_to_project"
         | "meeting_deadline_conflict"
+        | "new_company_contact"
+        | "new_subsidiary"
+        | "company_edited"
+        | "company_deleted"
+        | "ads_status_change"
+        | "ads_comments_change"
       okr_status: "draft" | "active" | "completed" | "cancelled"
       quarter: "Q1" | "Q2" | "Q3" | "Q4"
       user_role: "admin" | "employee" | "client"
@@ -2177,6 +2183,12 @@ export const Constants = {
         "monthly_progress_report",
         "file_uploaded_to_project",
         "meeting_deadline_conflict",
+        "new_company_contact",
+        "new_subsidiary",
+        "company_edited",
+        "company_deleted",
+        "ads_status_change",
+        "ads_comments_change",
       ],
       okr_status: ["draft", "active", "completed", "cancelled"],
       quarter: ["Q1", "Q2", "Q3", "Q4"],

@@ -25,7 +25,13 @@ export type NotificationType =
   | 'weekly_progress_report'
   | 'monthly_progress_report'
   | 'file_uploaded_to_project'
-  | 'meeting_deadline_conflict';
+  | 'meeting_deadline_conflict'
+  | 'new_company_contact'
+  | 'new_subsidiary'
+  | 'company_edited'
+  | 'company_deleted'
+  | 'ads_status_change'
+  | 'ads_comments_change';
 
 export interface Notification {
   id: string;
