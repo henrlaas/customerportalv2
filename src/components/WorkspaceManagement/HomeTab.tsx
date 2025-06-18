@@ -3,7 +3,7 @@ import {
   Settings, 
   Users, 
   Mail, 
-  UserCog, 
+  UserCheck, 
   Cog, 
   MessageSquare, 
   Palette, 
@@ -11,7 +11,9 @@ import {
   ArrowRight,
   Newspaper,
   BarChart3,
-  Monitor
+  Monitor,
+  DollarSign,
+  Home
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,17 +26,25 @@ interface HomeTabProps {
 export function HomeTab({ onNavigateToTab }: HomeTabProps) {
   const navigationCards = [
     {
-      title: "Employees",
-      description: "Manage employee profiles, employment details, and payment information. Add new employees with comprehensive onboarding.",
-      icon: Users,
-      value: "employees",
+      title: "Pricing",
+      description: "Manage pricing tiers, subscription plans, and revenue analytics. Set up different pricing models for your services.",
+      icon: DollarSign,
+      value: "pricing",
       color: "bg-green-50 border-green-200",
       iconColor: "text-green-600"
     },
     {
+      title: "Employees",
+      description: "Manage employee profiles, employment details, and payment information. Add new employees with comprehensive onboarding.",
+      icon: Users,
+      value: "employees",
+      color: "bg-blue-50 border-blue-200",
+      iconColor: "text-blue-600"
+    },
+    {
       title: "Users",
       description: "Special user management for edge cases. Generally, use Employee Management for regular personnel management.",
-      icon: UserCog,
+      icon: UserCheck,
       value: "users",
       color: "bg-yellow-50 border-yellow-200",
       iconColor: "text-yellow-600"
@@ -62,6 +72,14 @@ export function HomeTab({ onNavigateToTab }: HomeTabProps) {
       value: "appearance",
       color: "bg-pink-50 border-pink-200",
       iconColor: "text-pink-600"
+    },
+    {
+      title: "Contracts",
+      description: "Manage all contracts, templates, and document workflows. Track contract status and handle digital signatures.",
+      icon: FileText,
+      value: "contracts",
+      color: "bg-orange-50 border-orange-200",
+      iconColor: "text-orange-600"
     },
     {
       title: "News",
@@ -114,7 +132,7 @@ export function HomeTab({ onNavigateToTab }: HomeTabProps) {
               <p className="text-blue-800 text-sm">
                 Navigate through the different sections using the tabs above. Each section is designed 
                 to handle specific aspects of your workspace management. Start with Employee Management 
-                for personnel, or Email Tools for communication setup.
+                for personnel, Pricing for revenue management, or Email Tools for communication setup.
               </p>
             </div>
           </CardContent>
@@ -175,7 +193,8 @@ export function HomeTab({ onNavigateToTab }: HomeTabProps) {
             <div className="space-y-2">
               <h4 className="font-medium text-green-700">For New Setups</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Start with Employee Management to add your team</li>
+                <li>• Start with Pricing to set up your revenue model</li>
+                <li>• Add employees through Employee Management</li>
                 <li>• Configure Email Tools for communication</li>
                 <li>• Set up Appearance to match your brand</li>
               </ul>
@@ -185,6 +204,7 @@ export function HomeTab({ onNavigateToTab }: HomeTabProps) {
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Monitor cron jobs in the Monitoring tab</li>
                 <li>• Review Analytics for system performance</li>
+                <li>• Manage Contracts for client agreements</li>
                 <li>• Update News for team announcements</li>
               </ul>
             </div>

@@ -1,6 +1,19 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { 
+  Home, 
+  DollarSign, 
+  Users, 
+  UserCheck, 
+  Mail, 
+  MessageSquare, 
+  Palette, 
+  FileText, 
+  Newspaper,
+  BarChart3,
+  Monitor
+} from 'lucide-react';
 import { UserManagementTab } from '@/components/WorkspaceManagement/UserManagementTab';
 import { EmployeeManagementTab } from '@/components/WorkspaceManagement/EmployeeManagementTab';
 import { NewsManagementTab } from '@/components/WorkspaceManagement/NewsManagementTab';
@@ -10,6 +23,8 @@ import { AnalyticsDashboardTab } from '@/components/WorkspaceManagement/Analytic
 import { CronJobMonitoringTab } from '@/components/WorkspaceManagement/CronJobMonitoringTab';
 import { HomeTab } from '@/components/WorkspaceManagement/HomeTab';
 import { AppearanceTab } from '@/components/WorkspaceManagement/AppearanceTab';
+import { PricingTab } from '@/components/WorkspaceManagement/PricingTab';
+import { ContractsTab } from '@/components/WorkspaceManagement/ContractsTab';
 
 const WorkspaceManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("home");
@@ -23,32 +38,67 @@ const WorkspaceManagementPage: React.FC = () => {
       <h1 className="text-3xl font-bold mb-6">Workspace Management</h1>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-9">
-          <TabsTrigger value="home">Home</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="employees">Employees</TabsTrigger>
-          <TabsTrigger value="news">News</TabsTrigger>
-          <TabsTrigger value="email-tools">Email</TabsTrigger>
-          <TabsTrigger value="sms-tools">SMS</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-11">
+          <TabsTrigger value="home" className="flex items-center gap-2">
+            <Home className="h-4 w-4" />
+            Home
+          </TabsTrigger>
+          <TabsTrigger value="pricing" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Pricing
+          </TabsTrigger>
+          <TabsTrigger value="employees" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Employees
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <UserCheck className="h-4 w-4" />
+            Users
+          </TabsTrigger>
+          <TabsTrigger value="email-tools" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Email
+          </TabsTrigger>
+          <TabsTrigger value="sms-tools" className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            SMS
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Appearance
+          </TabsTrigger>
+          <TabsTrigger value="contracts" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Contracts
+          </TabsTrigger>
+          <TabsTrigger value="news" className="flex items-center gap-2">
+            <Newspaper className="h-4 w-4" />
+            News
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="monitoring" className="flex items-center gap-2">
+            <Monitor className="h-4 w-4" />
+            Monitoring
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="home">
           <HomeTab onNavigateToTab={handleNavigateToTab} />
         </TabsContent>
 
-        <TabsContent value="users">
-          <UserManagementTab />
+        <TabsContent value="pricing">
+          <PricingTab />
         </TabsContent>
 
         <TabsContent value="employees">
           <EmployeeManagementTab />
         </TabsContent>
 
-        <TabsContent value="news">
-          <NewsManagementTab />
+        <TabsContent value="users">
+          <UserManagementTab />
         </TabsContent>
 
         <TabsContent value="email-tools">
@@ -61,6 +111,14 @@ const WorkspaceManagementPage: React.FC = () => {
 
         <TabsContent value="appearance">
           <AppearanceTab />
+        </TabsContent>
+
+        <TabsContent value="contracts">
+          <ContractsTab />
+        </TabsContent>
+
+        <TabsContent value="news">
+          <NewsManagementTab />
         </TabsContent>
 
         <TabsContent value="analytics">
