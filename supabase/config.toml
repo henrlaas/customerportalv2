@@ -1,5 +1,14 @@
 
 project_id = "vjqbgnjeuvuxvuruewyc"
 
+[functions.check-due-dates]
+verify_jwt = false
+
+[functions.contract-reminders]
+verify_jwt = false
+
+[functions.monthly-reminders]
+verify_jwt = false
+
 [functions.user-management]
 verify_jwt = true

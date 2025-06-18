@@ -1,269 +1,76 @@
-import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
-import { workspaceService, WorkspaceSetting } from "@/services/workspaceService";
-import { SettingItem } from "@/components/WorkspaceManagement/SettingItem";
-import { AddSettingForm } from "@/components/WorkspaceManagement/AddSettingForm";
-import { UserManagementTab } from "@/components/WorkspaceManagement/UserManagementTab";
-import { EmailToolsTab } from "@/components/WorkspaceManagement/EmailToolsTab";
-import { SmsToolsTab } from "@/components/WorkspaceManagement/SmsToolsTab";
-import { AppearanceTab } from "@/components/WorkspaceManagement/AppearanceTab";
-import { ContractTemplateEditor } from "@/components/ContractTemplateEditor";
-import { HomeTab } from "@/components/WorkspaceManagement/HomeTab";
-import { NewsManagementTab } from "@/components/WorkspaceManagement/NewsManagementTab";
-import {
-  Settings,
-  Users,
-  Mail,
-  UserCog,
-  Cog,
-  MessageSquare,
-  Palette,
-  FileText,
-  Home,
-  Newspaper,
-} from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { EmployeeManagementTab } from "@/components/WorkspaceManagement/EmployeeManagementTab";
-import { Card } from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { UserManagementTab } from '@/components/WorkspaceManagement/UserManagementTab';
+import { EmployeeManagementTab } from '@/components/WorkspaceManagement/EmployeeManagementTab';
+import { NewsManagementTab } from '@/components/WorkspaceManagement/NewsManagementTab';
+import { EmailConfigurationTab } from '@/components/WorkspaceManagement/EmailConfigurationTab';
+import { SMSConfigurationTab } from '@/components/WorkspaceManagement/SMSConfigurationTab';
+import { AnalyticsDashboardTab } from '@/components/WorkspaceManagement/AnalyticsDashboardTab';
+import { CronJobMonitoringTab } from '@/components/WorkspaceManagement/CronJobMonitoringTab';
 
-// Helper to filter settings by category
-const filterSettingsByCategory = (settings: WorkspaceSetting[], category: string) => {
-  return settings.filter(setting => setting.setting_key.startsWith(category));
-};
+const tabs = [
+  { value: "home", label: "Home" },
+  { value: "users", label: "Users" },
+  { value: "employees", label: "Employees" },
+  { value: "news", label: "News" },
+  { value: "email", label: "Email" },
+  { value: "sms", label: "SMS" },
+  { value: "analytics", label: "Analytics" },
+  { value: "monitoring", label: "Monitoring" },
+];
 
-const WorkspaceManagementPage = () => {
-  const { isAdmin } = useAuth();
-  const [settings, setSettings] = useState<WorkspaceSetting[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("home");
-  const { toast } = useToast();
-
-  // Only admins can access this page
-  if (!isAdmin) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        setIsLoading(true);
-        const data = await workspaceService.getSettings();
-        setSettings(data);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message || "Failed to load workspace settings");
-        console.error("Error fetching settings:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSettings();
-  }, []);
-
-  const handleTabChange = (tabValue: string) => {
-    setActiveTab(tabValue);
-  };
-
-  const handleUpdateSetting = async (id: string, newValue: string) => {
-    try {
-      await workspaceService.updateSetting(id, newValue);
-      
-      // Update local state
-      setSettings(prev => 
-        prev.map(setting => 
-          setting.id === id 
-            ? { ...setting, setting_value: newValue } 
-            : setting
-        )
-      );
-      
-      toast({
-        title: "Setting updated",
-        description: "The workspace setting has been updated successfully.",
-      });
-    } catch (err: any) {
-      toast({
-        title: "Update failed",
-        description: err.message || "Failed to update setting.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleAddSetting = async (key: string, value: string, description?: string) => {
-    try {
-      const newSetting = await workspaceService.createSetting(key, value, description);
-      
-      // Add to local state
-      setSettings(prev => [...prev, newSetting]);
-      
-      toast({
-        title: "Setting added",
-        description: "The new workspace setting has been added successfully.",
-      });
-    } catch (err: any) {
-      toast({
-        title: "Failed to add setting",
-        description: err.message || "An error occurred while adding the setting.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Get settings by category, filtering out the email.template.default
-  const allSettings = settings.filter(setting => 
-    setting.setting_key !== 'email.template.default' && 
-    !setting.setting_key.startsWith('appearance.')
-  );
-
-  if (isLoading) {
-    return <div className="flex justify-center p-8">Loading workspace settings...</div>;
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive" className="max-w-xl mx-auto mt-8 shadow-md rounded-xl">
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
+const WorkspaceManagementPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>("home");
 
   return (
-    <div className="container py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Settings className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Workspace Management</h1>
-        </div>
-      </div>
-      
-      <p className="text-muted-foreground mb-8">
-        Configure global settings for your workspace and manage users.
-      </p>
+    <div className="container mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-6">Workspace Management</h1>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="home">
-            <Home className="h-4 w-4 mr-2" />
-            Home
-          </TabsTrigger>
-          <TabsTrigger value="all-settings">
-            <Cog className="h-4 w-4 mr-2" />
-            Pricing
-          </TabsTrigger>
-          <TabsTrigger value="employees">
-            <Users className="h-4 w-4 mr-2" />
-            Employees
-          </TabsTrigger>
-          <TabsTrigger value="users">
-            <UserCog className="h-4 w-4 mr-2" />
-            Users
-          </TabsTrigger>
-          <TabsTrigger value="email-tools">
-            <Mail className="h-4 w-4 mr-2" />
-            Email Tools
-          </TabsTrigger>
-          <TabsTrigger value="sms-tools">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            SMS Tools
-          </TabsTrigger>
-          <TabsTrigger value="appearance">
-            <Palette className="h-4 w-4 mr-2" />
-            Appearance
-          </TabsTrigger>
-          <TabsTrigger value="contracts">
-            <FileText className="h-4 w-4 mr-2" />
-            Contracts
-          </TabsTrigger>
-          <TabsTrigger value="news">
-            <Newspaper className="h-4 w-4 mr-2" />
-            News
-          </TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-8">
+          <TabsTrigger value="home">Home</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="employees">Employees</TabsTrigger>
+          <TabsTrigger value="news">News</TabsTrigger>
+          <TabsTrigger value="email">Email</TabsTrigger>
+          <TabsTrigger value="sms">SMS</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
         </TabsList>
 
         <TabsContent value="home">
-          <HomeTab onNavigateToTab={handleTabChange} />
-        </TabsContent>
-
-        <TabsContent value="all-settings" className="space-y-4">
-          <div className="grid gap-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Pricing
-            </h2>
-            <p className="text-muted-foreground">
-              View and manage price settings for your workspace.
-            </p>
-            <Separator />
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Welcome to Workspace Management!</h2>
+            <p>Use the tabs above to manage different aspects of your workspace.</p>
           </div>
-
-          {allSettings.length === 0 ? (
-            <div className="text-center p-4 bg-muted rounded-xl shadow-sm">
-              No settings found.
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {allSettings.map((setting) => (
-                <SettingItem
-                  key={setting.id}
-                  setting={setting}
-                  onSave={handleUpdateSetting}
-                />
-              ))}
-            </div>
-          )}
-          
-          <div className="mt-4">
-            <AddSettingForm onAdd={handleAddSetting} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="employees">
-          <EmployeeManagementTab />
         </TabsContent>
 
         <TabsContent value="users">
           <UserManagementTab />
         </TabsContent>
 
-        <TabsContent value="email-tools">
-          <EmailToolsTab />
-        </TabsContent>
-        
-        <TabsContent value="sms-tools">
-          <SmsToolsTab />
-        </TabsContent>
-
-        <TabsContent value="appearance">
-          <AppearanceTab />
-        </TabsContent>
-
-        <TabsContent value="contracts">
-          <div className="grid gap-6">
-            <div className="grid gap-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Contract Templates
-              </h2>
-              <p className="text-muted-foreground">
-                Manage contract templates used throughout the application.
-              </p>
-              <Separator />
-            </div>
-            
-            <ContractTemplateEditor />
-          </div>
+        <TabsContent value="employees">
+          <EmployeeManagementTab />
         </TabsContent>
 
         <TabsContent value="news">
           <NewsManagementTab />
+        </TabsContent>
+
+        <TabsContent value="email">
+          <EmailConfigurationTab />
+        </TabsContent>
+
+        <TabsContent value="sms">
+          <SMSConfigurationTab />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <AnalyticsDashboardTab />
+        </TabsContent>
+
+        <TabsContent value="monitoring">
+          <CronJobMonitoringTab />
         </TabsContent>
       </Tabs>
     </div>
