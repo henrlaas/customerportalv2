@@ -1,14 +1,16 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckSquare, Calendar, AlertTriangle, Clock } from 'lucide-react';
+import { CheckSquare, Calendar, AlertTriangle, Clock, Megaphone, TrendingUp } from 'lucide-react';
 
 interface MonthlyOverviewCardsProps {
   monthlyStats: {
     totalTasks: number;
     totalProjects: number;
+    totalCampaigns: number;
     overdueTasks: number;
     overdueProjects: number;
+    overdueCampaigns: number;
   };
 }
 
@@ -29,6 +31,13 @@ export const MonthlyOverviewCards: React.FC<MonthlyOverviewCardsProps> = ({ mont
       iconClassName: 'text-green-500'
     },
     {
+      title: 'Total Campaigns',
+      value: monthlyStats.totalCampaigns,
+      icon: Megaphone,
+      className: 'bg-purple-50 text-purple-700 border-purple-200',
+      iconClassName: 'text-purple-500'
+    },
+    {
       title: 'Overdue Tasks',
       value: monthlyStats.overdueTasks,
       icon: AlertTriangle,
@@ -41,11 +50,18 @@ export const MonthlyOverviewCards: React.FC<MonthlyOverviewCardsProps> = ({ mont
       icon: Clock,
       className: 'bg-orange-50 text-orange-700 border-orange-200',
       iconClassName: 'text-orange-500'
+    },
+    {
+      title: 'Overdue Campaigns',
+      value: monthlyStats.overdueCampaigns,
+      icon: TrendingUp,
+      className: 'bg-pink-50 text-pink-700 border-pink-200',
+      iconClassName: 'text-pink-500'
     }
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (

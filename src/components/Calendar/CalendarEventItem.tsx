@@ -1,12 +1,13 @@
 
 import React from 'react';
-import { Calendar, CheckSquare } from 'lucide-react';
+import { Calendar, CheckSquare, Megaphone } from 'lucide-react';
 
 interface CalendarEventItemProps {
-  type: 'task' | 'project';
+  type: 'task' | 'project' | 'campaign';
   title: string;
   id: string;
   priority?: string;
+  platform?: string;
   onClick: () => void;
 }
 
@@ -14,6 +15,7 @@ export const CalendarEventItem: React.FC<CalendarEventItemProps> = ({
   type,
   title,
   priority,
+  platform,
   onClick,
 }) => {
   const getPriorityColor = (priority?: string) => {
@@ -33,11 +35,16 @@ export const CalendarEventItem: React.FC<CalendarEventItemProps> = ({
     if (type === 'project') {
       return 'bg-blue-100 text-blue-700 border-blue-200';
     }
+    if (type === 'campaign') {
+      return 'bg-purple-100 text-purple-700 border-purple-200';
+    }
     return getPriorityColor(priority);
   };
 
   const getIcon = () => {
-    return type === 'project' ? Calendar : CheckSquare;
+    if (type === 'project') return Calendar;
+    if (type === 'campaign') return Megaphone;
+    return CheckSquare;
   };
 
   const Icon = getIcon();
@@ -46,7 +53,7 @@ export const CalendarEventItem: React.FC<CalendarEventItemProps> = ({
     <div
       onClick={onClick}
       className={`flex items-center gap-1 p-1 rounded border text-xs cursor-pointer hover:opacity-80 transition-opacity ${getEventStyle()}`}
-      title={title}
+      title={`${title}${platform ? ` (${platform})` : ''}`}
     >
       <Icon className="h-3 w-3 flex-shrink-0" />
       <span className="truncate flex-1">{title}</span>

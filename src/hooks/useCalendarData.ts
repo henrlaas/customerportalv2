@@ -80,6 +80,42 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
+  // Fetch campaigns with start dates where user is assigned (not ongoing)
+  const { data: allCampaigns, isLoading: campaignsLoading } = useQuery({
+    queryKey: ['calendar-campaigns', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      console.log('Fetching calendar campaigns for user:', user.id);
+      
+      const { data, error } = await supabase
+        .from('campaigns')
+        .select(`
+          id, 
+          name, 
+          start_date, 
+          status,
+          platform,
+          campaign_assignees!inner(user_id)
+        `)
+        .not('start_date', 'is', null)
+        .eq('is_ongoing', false)
+        .eq('campaign_assignees.user_id', user.id)
+        .order('start_date', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching calendar campaigns:', error);
+        throw error;
+      }
+
+      console.log('Calendar campaigns found:', data);
+      return data || [];
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+
   // Fetch project milestones for the user's assigned projects to determine completion status
   const { data: milestones, isLoading: milestonesLoading } = useQuery({
     queryKey: ['project-milestones-user', user?.id],
@@ -121,13 +157,16 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
 
   // Use filtered data
   const tasks = allTasks || [];
+  const campaigns = allCampaigns || [];
 
   // Calculate monthly statistics
   const monthlyStats = {
     totalTasks: 0,
     totalProjects: 0,
+    totalCampaigns: 0,
     overdueTasks: 0,
-    overdueProjects: 0
+    overdueProjects: 0,
+    overdueCampaigns: 0
   };
 
   if (tasks) {
@@ -166,17 +205,37 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     }).length;
   }
 
+  if (campaigns) {
+    // Campaigns this month (based on start date)
+    const monthCampaigns = campaigns.filter(campaign => {
+      if (!campaign.start_date) return false;
+      const startDate = new Date(campaign.start_date);
+      return startDate >= monthStart && startDate <= monthEnd;
+    });
+    
+    monthlyStats.totalCampaigns = monthCampaigns.length;
+    
+    // Overdue campaigns (past start date)
+    monthlyStats.overdueCampaigns = campaigns.filter(campaign => {
+      if (!campaign.start_date) return false;
+      const startDate = new Date(campaign.start_date);
+      return isBefore(startDate, today);
+    }).length;
+  }
+
   console.log('Calendar data summary:', {
     userId: user?.id,
     tasksCount: tasks.length,
     projectsCount: projects.length,
+    campaignsCount: campaigns.length,
     monthlyStats
   });
 
   return {
     tasks,
     projects,
+    campaigns,
     monthlyStats,
-    isLoading: tasksLoading || projectsLoading || milestonesLoading || !user,
+    isLoading: tasksLoading || projectsLoading || campaignsLoading || milestonesLoading || !user,
   };
 };
