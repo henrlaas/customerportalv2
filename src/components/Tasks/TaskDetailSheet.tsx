@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -105,14 +104,14 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     }
   };
 
-  const { data: task, isLoading, error } = useQuery({
+  const { data: task, isLoading, error, isFetching } = useQuery({
     queryKey: ['task', taskId],
     queryFn: async () => {
       if (!taskId) return null;
 
       console.log('Fetching task data for ID:', taskId);
 
-      // Modified query to fetch task data without using join syntax
+      // Fetch task data with a simplified approach
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .select('*')
@@ -141,95 +140,94 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         creator: null
       };
 
-      try {
-        // Fetch assignees separately with error handling
-        const { data: assigneesData, error: assigneesError } = await supabase
+      // Fetch all related data in parallel with error handling
+      const [
+        assigneesResult,
+        companyResult,
+        campaignResult,
+        projectResult,
+        creatorResult
+      ] = await Promise.allSettled([
+        // Fetch assignees
+        taskData ? supabase
           .from('task_assignees')
           .select('id, user_id')
-          .eq('task_id', taskId);
+          .eq('task_id', taskId) : Promise.resolve({ data: [], error: null }),
+        
+        // Fetch company if company_id exists
+        taskData.company_id ? supabase
+          .from('companies')
+          .select('*')
+          .eq('id', taskData.company_id)
+          .single() : Promise.resolve({ data: null, error: null }),
+        
+        // Fetch campaign if campaign_id exists
+        taskData.campaign_id ? supabase
+          .from('campaigns')
+          .select('*')
+          .eq('id', taskData.campaign_id)
+          .single() : Promise.resolve({ data: null, error: null }),
+        
+        // Fetch project if project_id exists
+        taskData.project_id ? supabase
+          .from('projects')
+          .select('*')
+          .eq('id', taskData.project_id)
+          .single() : Promise.resolve({ data: null, error: null }),
+        
+        // Fetch creator if creator_id exists
+        taskData.creator_id ? supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', taskData.creator_id)
+          .single() : Promise.resolve({ data: null, error: null })
+      ]);
 
-        if (!assigneesError && assigneesData) {
-          completeTaskData.assignees = assigneesData;
-          console.log('Assignees fetched:', assigneesData);
-        } else if (assigneesError) {
-          console.error('Error fetching task assignees:', assigneesError);
-        }
+      // Process results with fallbacks
+      if (assigneesResult.status === 'fulfilled' && assigneesResult.value.data) {
+        completeTaskData.assignees = assigneesResult.value.data;
+        console.log('Assignees fetched:', assigneesResult.value.data);
+      } else {
+        console.error('Error fetching assignees:', assigneesResult.status === 'rejected' ? assigneesResult.reason : 'No data');
+      }
 
-        // Fetch company data if company_id exists
-        if (taskData.company_id) {
-          const { data: company, error: companyError } = await supabase
-            .from('companies')
-            .select('*')
-            .eq('id', taskData.company_id)
-            .single();
-          
-          if (!companyError && company) {
-            completeTaskData.company = company;
-            console.log('Company data fetched:', company);
-          } else if (companyError) {
-            console.error('Error fetching company:', companyError);
-          }
-        }
+      if (companyResult.status === 'fulfilled' && companyResult.value.data) {
+        completeTaskData.company = companyResult.value.data;
+        console.log('Company data fetched:', companyResult.value.data);
+      } else if (taskData.company_id) {
+        console.error('Error fetching company:', companyResult.status === 'rejected' ? companyResult.reason : 'No data');
+      }
 
-        // Fetch campaign data if campaign_id exists
-        if (taskData.campaign_id) {
-          const { data: campaign, error: campaignError } = await supabase
-            .from('campaigns')
-            .select('*')
-            .eq('id', taskData.campaign_id)
-            .single();
-          
-          if (!campaignError && campaign) {
-            completeTaskData.campaign = campaign;
-            console.log('Campaign data fetched:', campaign);
-          } else if (campaignError) {
-            console.error('Error fetching campaign:', campaignError);
-          }
-        }
+      if (campaignResult.status === 'fulfilled' && campaignResult.value.data) {
+        completeTaskData.campaign = campaignResult.value.data;
+        console.log('Campaign data fetched:', campaignResult.value.data);
+      } else if (taskData.campaign_id) {
+        console.error('Error fetching campaign:', campaignResult.status === 'rejected' ? campaignResult.reason : 'No data');
+      }
 
-        // Fetch project data if project_id exists
-        if (taskData.project_id) {
-          const { data: project, error: projectError } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('id', taskData.project_id)
-            .single();
-          
-          if (!projectError && project) {
-            completeTaskData.project = project;
-            console.log('Project data fetched:', project);
-          } else if (projectError) {
-            console.error('Error fetching project:', projectError);
-          }
-        }
+      if (projectResult.status === 'fulfilled' && projectResult.value.data) {
+        completeTaskData.project = projectResult.value.data;
+        console.log('Project data fetched:', projectResult.value.data);
+      } else if (taskData.project_id) {
+        console.error('Error fetching project:', projectResult.status === 'rejected' ? projectResult.reason : 'No data');
+      }
 
-        // Fetch creator profile if creator_id exists
-        if (taskData.creator_id) {
-          const { data: creator, error: creatorError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', taskData.creator_id)
-            .single();
-          
-          if (!creatorError && creator) {
-            completeTaskData.creator = creator;
-            console.log('Creator data fetched:', creator);
-          } else if (creatorError) {
-            console.error('Error fetching creator:', creatorError);
-          }
-        }
-      } catch (subQueryError) {
-        console.error('Error in sub-queries, but returning base task data:', subQueryError);
-        // Return base task data even if sub-queries fail
+      if (creatorResult.status === 'fulfilled' && creatorResult.value.data) {
+        completeTaskData.creator = creatorResult.value.data;
+        console.log('Creator data fetched:', creatorResult.value.data);
+      } else if (taskData.creator_id) {
+        console.error('Error fetching creator:', creatorResult.status === 'rejected' ? creatorResult.reason : 'No data');
       }
 
       console.log('Complete task data:', completeTaskData);
       return completeTaskData;
     },
     enabled: !!taskId && isOpen,
-    staleTime: 30000, // Keep data fresh for 30 seconds
+    staleTime: 30000,
     retry: 3,
     retryDelay: 1000,
+    keepPreviousData: true, // Keep previous data while refetching
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches
   });
 
   // Fetch profiles for assignees
@@ -271,7 +269,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     staleTime: 60000, // Cache campaigns for 1 minute
   });
 
-  // Mark as completed mutation
+  // Mark as completed mutation with optimistic updates
   const markAsCompletedMutation = useMutation({
     mutationFn: async (taskId: string) => {
       const { error } = await supabase
@@ -283,22 +281,42 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         throw error;
       }
     },
+    onMutate: async (taskId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['task', taskId] });
+      
+      // Snapshot previous value
+      const previousTask = queryClient.getQueryData(['task', taskId]);
+      
+      // Optimistically update to the new value
+      if (previousTask) {
+        queryClient.setQueryData(['task', taskId], (old: any) => ({
+          ...old,
+          status: 'completed'
+        }));
+      }
+      
+      return { previousTask };
+    },
+    onError: (err, taskId, context) => {
+      // If mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousTask) {
+        queryClient.setQueryData(['task', taskId], context.previousTask);
+      }
+      toast({
+        title: 'Error updating task',
+        description: err.message,
+        variant: 'destructive',
+      });
+    },
     onSuccess: () => {
-      // Invalidate with a slight delay to prevent race conditions
+      // Invalidate queries after successful mutation
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['task', taskId] });
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
       }, 100);
       toast({
         title: 'Task completed',
         description: 'The task has been marked as completed',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error updating task',
-        description: error.message,
-        variant: 'destructive',
       });
     }
   });
@@ -332,7 +350,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     }
   });
 
-  // Toggle client visible mutation
+  // Toggle client visible mutation with optimistic updates
   const toggleClientVisibleMutation = useMutation({
     mutationFn: async ({ taskId, clientVisible }: { taskId: string; clientVisible: boolean }) => {
       const { error } = await supabase
@@ -344,22 +362,42 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
         throw error;
       }
     },
+    onMutate: async ({ taskId, clientVisible }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['task', taskId] });
+      
+      // Snapshot previous value
+      const previousTask = queryClient.getQueryData(['task', taskId]);
+      
+      // Optimistically update to the new value
+      if (previousTask) {
+        queryClient.setQueryData(['task', taskId], (old: any) => ({
+          ...old,
+          client_visible: clientVisible
+        }));
+      }
+      
+      return { previousTask };
+    },
+    onError: (err, { taskId }, context) => {
+      // If mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousTask) {
+        queryClient.setQueryData(['task', taskId], context.previousTask);
+      }
+      toast({
+        title: 'Error updating task',
+        description: err.message,
+        variant: 'destructive',
+      });
+    },
     onSuccess: () => {
-      // Invalidate with a slight delay to prevent race conditions
+      // Invalidate queries after successful mutation
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['task', taskId] });
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
       }, 100);
       toast({
         title: 'Task updated',
         description: 'Client visibility has been updated',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error updating task',
-        description: error.message,
-        variant: 'destructive',
       });
     }
   });
@@ -457,8 +495,9 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
 
   if (!isOpen) return null;
 
-  // Show loading state during initial load or critical errors
-  const showLoadingState = isLoading || (!task && !error);
+  // Improved loading state handling
+  const showLoadingState = isLoading && !task;
+  const showRefetchingState = isFetching && task;
 
   return (
     <>
@@ -470,6 +509,9 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 <div className="flex-1 pr-4">
                   <SheetTitle className="text-xl mb-3">
                     {showLoadingState ? 'Loading...' : task?.title || 'Task not found'}
+                    {showRefetchingState && (
+                      <span className="ml-2 text-sm text-muted-foreground">(updating...)</span>
+                    )}
                   </SheetTitle>
                   {/* Status and Priority badges moved here */}
                   {!showLoadingState && task && (

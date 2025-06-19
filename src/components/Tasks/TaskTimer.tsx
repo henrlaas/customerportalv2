@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -161,7 +160,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     return () => clearInterval(interval);
   }, [isRunning]);
   
-  // Start timer mutation
+  // Start timer mutation with optimistic task status update
   const startTimerMutation = useMutation({
     mutationFn: async () => {
       // Check if there's another active timer first
@@ -204,12 +203,37 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
       
       return data;
     },
-    onSuccess: async (data) => {
+    onMutate: async () => {
+      // Optimistically update task status if it's in "todo" status
+      if (task && task.status === 'todo') {
+        // Cancel outgoing refetches for task detail
+        await queryClient.cancelQueries({ queryKey: ['task', taskId] });
+        
+        // Snapshot previous value
+        const previousTask = queryClient.getQueryData(['task', taskId]);
+        
+        // Optimistically update task status to in_progress
+        queryClient.setQueryData(['task', taskId], (old: any) => {
+          if (old) {
+            return {
+              ...old,
+              status: 'in_progress',
+              updated_at: new Date().toISOString()
+            };
+          }
+          return old;
+        });
+        
+        return { previousTask };
+      }
+      return {};
+    },
+    onSuccess: async (data, variables, context) => {
       setIsRunning(true);
       setSeconds(0);
       setActiveEntry(data);
       
-      // Check if task is in "todo" status and automatically move to "in_progress"
+      // Update task status to in_progress if it was in todo status
       if (task && task.status === 'todo') {
         try {
           const { error: updateError } = await supabase
@@ -222,24 +246,39 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
             
           if (updateError) {
             console.error('Error updating task status:', updateError);
+            // Revert optimistic update if database update fails
+            if (context?.previousTask) {
+              queryClient.setQueryData(['task', taskId], context.previousTask);
+            }
           } else {
             toast({
               title: 'Task moved to In Progress',
               description: 'Task automatically moved to "In Progress" when timer started',
             });
             
-            // Invalidate tasks queries to refresh the UI
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+            // Invalidate tasks queries after successful update
+            setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            }, 500); // Longer delay to prevent race conditions
           }
         } catch (error) {
           console.error('Error auto-updating task status:', error);
+          // Revert optimistic update if there's an error
+          if (context?.previousTask) {
+            queryClient.setQueryData(['task', taskId], context.previousTask);
+          }
         }
       }
       
+      // Invalidate time entries
       queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
     },
-    onError: (error: any) => {
+    onError: (error: any, variables, context) => {
+      // Revert optimistic update on error
+      if (context?.previousTask) {
+        queryClient.setQueryData(['task', taskId], context.previousTask);
+      }
+      
       toast({
         title: 'Error starting timer',
         description: error.message,
