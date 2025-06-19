@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays, isSameDay, parseISO } from 'date-fns';
-import { Calendar, CheckCircle, FolderOpen } from 'lucide-react';
+import { Calendar, CheckCircle, FolderOpen, Megaphone } from 'lucide-react';
 
 interface UpcomingDeadlinesCalendarProps {
   onTaskClick: (taskId: string) => void;
@@ -18,7 +18,7 @@ export const UpcomingDeadlinesCalendar = ({ onTaskClick }: UpcomingDeadlinesCale
   const { data: upcomingItems, isLoading } = useQuery({
     queryKey: ['upcoming-deadlines', user?.id],
     queryFn: async () => {
-      if (!user?.id) return { tasks: [], projects: [] };
+      if (!user?.id) return { tasks: [], projects: [], campaigns: [] };
 
       const now = new Date();
       const oneWeekFromNow = addDays(now, 7);
@@ -70,13 +70,37 @@ export const UpcomingDeadlinesCalendar = ({ onTaskClick }: UpcomingDeadlinesCale
         new Date(project.deadline) <= oneWeekFromNow
       ) || [];
 
-      return { tasks, projects };
+      // Get upcoming campaigns
+      const { data: campaigns, error: campaignsError } = await supabase
+        .from('campaigns')
+        .select(`
+          id, 
+          name, 
+          start_date, 
+          status,
+          platform
+        `)
+        .not('start_date', 'is', null)
+        .eq('is_ongoing', false)
+        .eq('associated_user_id', user.id)
+        .in('status', ['draft', 'in-progress'])
+        .gte('start_date', now.toISOString())
+        .lte('start_date', oneWeekFromNow.toISOString())
+        .order('start_date', { ascending: true });
+
+      if (campaignsError) throw campaignsError;
+
+      return { tasks, projects, campaigns: campaigns || [] };
     },
     enabled: !!user?.id,
   });
 
   const handleProjectClick = (projectId: string) => {
     navigate(`/projects/${projectId}`);
+  };
+
+  const handleCampaignClick = (campaignId: string) => {
+    navigate(`/campaigns/${campaignId}`);
   };
 
   // Create a week array
@@ -98,7 +122,7 @@ export const UpcomingDeadlinesCalendar = ({ onTaskClick }: UpcomingDeadlinesCale
     );
   }
 
-  const { tasks = [], projects = [] } = upcomingItems || {};
+  const { tasks = [], projects = [], campaigns = [] } = upcomingItems || {};
 
   return (
     <div className="h-full flex flex-col">
@@ -117,8 +141,11 @@ export const UpcomingDeadlinesCalendar = ({ onTaskClick }: UpcomingDeadlinesCale
             const dayProjects = projects.filter(project => 
               project.deadline && isSameDay(parseISO(project.deadline), day)
             );
+            const dayCampaigns = campaigns.filter(campaign => 
+              campaign.start_date && isSameDay(parseISO(campaign.start_date), day)
+            );
             
-            const hasItems = dayTasks.length > 0 || dayProjects.length > 0;
+            const hasItems = dayTasks.length > 0 || dayProjects.length > 0 || dayCampaigns.length > 0;
 
             return (
               <div key={index} className="space-y-2">
@@ -157,6 +184,22 @@ export const UpcomingDeadlinesCalendar = ({ onTaskClick }: UpcomingDeadlinesCale
                         </div>
                         <div className="text-xs text-muted-foreground ml-5">
                           Project deadline
+                        </div>
+                      </div>
+                    ))}
+
+                    {dayCampaigns.map(campaign => (
+                      <div
+                        key={campaign.id}
+                        className="p-2 rounded border cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => handleCampaignClick(campaign.id)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Megaphone className="h-3 w-3 text-purple-500" />
+                          <span className="text-xs font-medium truncate">{campaign.name}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground ml-5">
+                          Campaign start • {campaign.platform}
                         </div>
                       </div>
                     ))}
