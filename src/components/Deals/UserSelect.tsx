@@ -1,7 +1,7 @@
 
 import React from 'react';
+import Select from 'react-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Profile } from './types/deal';
 
 interface UserSelectProps {
@@ -22,84 +22,119 @@ export const UserSelect: React.FC<UserSelectProps> = ({
     return name || profile.id;
   };
 
-  const getSelectedDisplayValue = () => {
-    if (!selectedUserId) return 'All Users';
-    const selectedProfile = profiles.find(p => p.id === selectedUserId);
-    return selectedProfile ? getUserDisplayName(selectedProfile) : 'Select user...';
-  };
+  // Format options for react-select
+  const options = [
+    { value: null, label: 'All Users', isAllUsers: true },
+    ...profiles.map(profile => ({
+      value: profile.id,
+      label: getUserDisplayName(profile),
+      profile
+    }))
+  ];
 
-  const handleValueChange = (value: string) => {
-    onUserChange(value === 'all' ? null : value);
+  // Find the selected option
+  const selectedOption = selectedUserId 
+    ? options.find(option => option.value === selectedUserId) 
+    : options[0]; // Default to "All Users"
+
+  // Custom formatting for the dropdown options
+  const formatOptionLabel = (option: any) => {
+    if (option.isAllUsers) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-sm">All Users</span>
+        </div>
+      );
+    }
+
+    const profile = option.profile;
+    const initials = `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase() || 'U';
+    
+    return (
+      <div className="flex items-center gap-2">
+        <Avatar className="h-6 w-6">
+          <AvatarImage src={profile.avatar_url || undefined} />
+          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+        </Avatar>
+        <span className="text-sm">{getUserDisplayName(profile)}</span>
+      </div>
+    );
   };
 
   return (
     <Select
-      value={selectedUserId || 'all'}
-      onValueChange={handleValueChange}
-    >
-      <SelectTrigger className="min-w-[200px] h-10">
-        <SelectValue>
-          <div className="flex items-center gap-2">
-            {selectedUserId && selectedUserId !== 'all' ? (
-              <>
-                {(() => {
-                  const selectedProfile = profiles.find(p => p.id === selectedUserId);
-                  if (selectedProfile) {
-                    const initials = `${selectedProfile.first_name?.[0] || ''}${selectedProfile.last_name?.[0] || ''}`.toUpperCase() || 'U';
-                    return (
-                      <>
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={selectedProfile.avatar_url || undefined} />
-                          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm">{getUserDisplayName(selectedProfile)}</span>
-                      </>
-                    );
-                  }
-                  return <span className="text-sm">Select user...</span>;
-                })()}
-              </>
-            ) : (
-              <span className="text-sm">All Users</span>
-            )}
-          </div>
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent 
-        align="start"
-        className="min-w-[200px]"
-        style={{
-          '--hover-bg': '#F2FCE2',
-          '--selected-bg': '#114742',
-        } as React.CSSProperties}
-      >
-        <SelectItem 
-          value="all"
-          className="flex items-center gap-2 cursor-pointer hover:bg-[#F2FCE2] data-[state=checked]:bg-[#114742] data-[state=checked]:text-white focus:bg-[#F2FCE2] pl-3 pr-2 py-1.5"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-sm">All Users</span>
-          </div>
-        </SelectItem>
-        {profiles.map(profile => {
-          const initials = `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase() || 'U';
-          return (
-            <SelectItem 
-              key={profile.id}
-              value={profile.id}
-              className="flex items-center gap-2 cursor-pointer hover:bg-[#F2FCE2] data-[state=checked]:bg-[#114742] data-[state=checked]:text-white focus:bg-[#F2FCE2] pl-3 pr-2 py-1.5"
-            >
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={profile.avatar_url || undefined} />
-                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                </Avatar>
-                <span className="text-sm">{getUserDisplayName(profile)}</span>
-              </div>
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
+      options={options}
+      value={selectedOption}
+      onChange={(option) => onUserChange(option?.value ?? null)}
+      placeholder="Select user..."
+      formatOptionLabel={formatOptionLabel}
+      isSearchable={true}
+      isClearable={false}
+      className="react-select-container min-w-[200px]"
+      classNamePrefix="react-select"
+      styles={{
+        control: (baseStyles, { isFocused }) => ({
+          ...baseStyles,
+          minHeight: '40px',
+          borderColor: isFocused ? 'hsl(var(--ring))' : 'hsl(var(--border))',
+          boxShadow: isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
+          '&:hover': {
+            borderColor: 'hsl(var(--border))'
+          },
+          backgroundColor: 'hsl(var(--background))',
+          fontSize: '14px'
+        }),
+        menu: (baseStyles) => ({
+          ...baseStyles,
+          zIndex: 50,
+          backgroundColor: 'hsl(var(--popover))',
+          border: '1px solid hsl(var(--border))',
+          borderRadius: '6px',
+          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)'
+        }),
+        option: (baseStyles, { isFocused, isSelected }) => ({
+          ...baseStyles,
+          backgroundColor: isSelected 
+            ? '#114742'
+            : isFocused 
+              ? '#F2FCE2'
+              : 'transparent',
+          color: isSelected 
+            ? 'white'
+            : 'hsl(var(--foreground))',
+          cursor: 'pointer',
+          padding: '8px 12px',
+          fontSize: '14px',
+          '&:active': {
+            backgroundColor: isSelected ? '#114742' : '#F2FCE2'
+          }
+        }),
+        singleValue: (baseStyles) => ({
+          ...baseStyles,
+          color: 'hsl(var(--foreground))',
+          fontSize: '14px'
+        }),
+        placeholder: (baseStyles) => ({
+          ...baseStyles,
+          color: 'hsl(var(--muted-foreground))',
+          fontSize: '14px'
+        }),
+        input: (baseStyles) => ({
+          ...baseStyles,
+          color: 'hsl(var(--foreground))',
+          fontSize: '14px'
+        }),
+        indicatorSeparator: () => ({
+          display: 'none'
+        }),
+        dropdownIndicator: (baseStyles) => ({
+          ...baseStyles,
+          color: 'hsl(var(--muted-foreground))',
+          '&:hover': {
+            color: 'hsl(var(--foreground))'
+          }
+        })
+      }}
+    />
   );
 };
