@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
@@ -161,6 +162,7 @@ const DealsPage = () => {
       console.log(`Updating deal ${dealId} to stage ${stageId}`);
       const { data, error } = await updateWithUser('deals', dealId, {
         stage_id: stageId,
+        updated_at: new Date().toISOString(),
       });
 
       if (error) throw error;
