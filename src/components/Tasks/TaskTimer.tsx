@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -70,30 +69,52 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   const { data: timeEntries = [] } = useQuery({
     queryKey: ['time-entries', taskId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First fetch time entries
+      const { data: entriesData, error: entriesError } = await supabase
         .from('time_entries')
-        .select(`
-          *,
-          profiles!inner (
-            id,
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('task_id', taskId)
         .order('start_time', { ascending: false });
       
-      if (error) {
+      if (entriesError) {
         toast({
           title: 'Error fetching time entries',
-          description: error.message,
+          description: entriesError.message,
           variant: 'destructive',
         });
         return [];
       }
+
+      if (!entriesData || entriesData.length === 0) {
+        return [];
+      }
+
+      // Get unique user IDs
+      const userIds = Array.from(new Set(entriesData.map(entry => entry.user_id)));
       
-      return data as TimeEntryWithUser[];
+      // Fetch profiles for these users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .in('id', userIds);
+      
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+
+      // Create a map of profiles by user ID
+      const profilesMap = new Map();
+      profilesData?.forEach(profile => {
+        profilesMap.set(profile.id, profile);
+      });
+
+      // Combine entries with their profiles
+      const entriesWithProfiles: TimeEntryWithUser[] = entriesData.map(entry => ({
+        ...entry,
+        profiles: profilesMap.get(entry.user_id) || null
+      }));
+      
+      return entriesWithProfiles;
     },
   });
   
