@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -73,7 +74,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
         .from('time_entries')
         .select(`
           *,
-          profiles (
+          profiles!inner (
             id,
             first_name,
             last_name,
