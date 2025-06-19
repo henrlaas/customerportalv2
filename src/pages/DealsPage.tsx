@@ -32,26 +32,35 @@ import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { useDealsView } from '@/hooks/useDealsView';
 import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
 import { DealKanbanView } from '@/components/Deals/DealKanbanView';
 import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog';
 import { EditDealDialog } from '@/components/Deals/EditDealDialog';
 import { Deal, Stage, Profile } from '@/components/Deals/types/deal';
 import { Company } from '@/types/company';
+import { UserSelect } from '@/components/Deals/UserSelect';
+import { DealTypeFilters } from '@/components/Deals/DealTypeFilters';
+import React from 'react';
 
 const DealsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentDeal, setCurrentDeal] = useState<Deal | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStageFilter, setSelectedStageFilter] = useState<string>('all');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [recurringFilter, setRecurringFilter] = useState<string>('all');
+  const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
 
   const { toast } = useToast();
   const { isAdmin, isEmployee, user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Set default user filter to current user on mount
+  React.useEffect(() => {
+    if (user?.id && selectedUserId === null) {
+      setSelectedUserId(user.id);
+    }
+  }, [user?.id, selectedUserId]);
 
   // Fetch deals
   const { data: deals = [], isLoading: isLoadingDeals } = useQuery({
@@ -294,22 +303,38 @@ const DealsPage = () => {
     return profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.id : 'Unknown User';
   };
 
-  // Filter deals based on selected stage
+  // Filter deals based on all selected filters
   const getFilteredDeals = () => {
     let filtered = deals.filter(deal => {
+      // Search filter
       const matchesSearch =
         deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         getCompanyName(deal.company_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
         getStageName(deal.stage_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
         getAssignedToName(deal.assigned_to).toLowerCase().includes(searchQuery.toLowerCase());
 
-      return matchesSearch;
-    });
+      if (!matchesSearch) return false;
 
-    // Filter by stage if not "all"
-    if (selectedStageFilter !== 'all') {
-      filtered = filtered.filter(deal => deal.stage_id === selectedStageFilter);
-    }
+      // User filter
+      if (selectedUserId) {
+        if (deal.assigned_to !== selectedUserId) return false;
+      }
+
+      // Recurring filter
+      if (recurringFilter !== 'all') {
+        const isRecurring = deal.is_recurring === true;
+        if (recurringFilter === 'recurring' && !isRecurring) return false;
+        if (recurringFilter === 'one-time' && isRecurring) return false;
+      }
+
+      // Client type filter
+      if (clientTypeFilter !== 'all') {
+        if (clientTypeFilter === 'marketing' && deal.client_deal_type !== 'marketing') return false;
+        if (clientTypeFilter === 'web' && deal.client_deal_type !== 'web') return false;
+      }
+
+      return true;
+    });
 
     return filtered;
   };
@@ -334,7 +359,7 @@ const DealsPage = () => {
         </div>
       </div>
 
-      {/* Search bar and stage filter tabs - responsive layout */}
+      {/* New filter bar with search, user select, and deal type filters */}
       <div className="mb-6 flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -347,17 +372,20 @@ const DealsPage = () => {
           />
         </div>
         
-        <div className="flex-shrink-0 overflow-x-auto">
-          <Tabs value={selectedStageFilter} onValueChange={setSelectedStageFilter}>
-            <TabsList className="w-auto min-w-fit">
-              <TabsTrigger value="all" className="text-xs sm:text-sm">All Deals</TabsTrigger>
-              {stages.map((stage) => (
-                <TabsTrigger key={stage.id} value={stage.id} className="text-xs sm:text-sm">
-                  {stage.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+        <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+          <UserSelect
+            profiles={profiles}
+            selectedUserId={selectedUserId}
+            onUserChange={setSelectedUserId}
+            currentUserId={user?.id}
+          />
+          
+          <DealTypeFilters
+            recurringFilter={recurringFilter}
+            onRecurringFilterChange={setRecurringFilter}
+            clientTypeFilter={clientTypeFilter}
+            onClientTypeFilterChange={setClientTypeFilter}
+          />
         </div>
       </div>
 
@@ -369,7 +397,7 @@ const DealsPage = () => {
         <div className="w-full overflow-hidden">
           <DealKanbanView
             deals={filteredDeals}
-            stages={selectedStageFilter === 'all' ? stages : stages.filter(s => s.id === selectedStageFilter)}
+            stages={stages}
             companies={companies}
             profiles={profiles}
             canModify={canModify}
