@@ -132,13 +132,14 @@ const DealsPage = () => {
     },
   });
 
-  // Fetch profiles for assigned to dropdown - Updated to include avatar_url
+  // Fetch profiles for assigned to dropdown - Updated to filter by admin and employee roles only
   const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, role, avatar_url')
+        .in('role', ['admin', 'employee'])
         .order('first_name');
 
       if (error) {
