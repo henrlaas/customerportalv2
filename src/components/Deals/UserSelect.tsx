@@ -40,7 +40,8 @@ export const UserSelect: React.FC<UserSelectProps> = ({
     }))
   ];
 
-  const selectedOption = options.find(option => option.value === selectedUserId) || options[0];
+  // Allow null selection for cleared state instead of defaulting to "All Users"
+  const selectedOption = options.find(option => option.value === selectedUserId) || null;
 
   const formatOptionLabel = (option: UserOption) => {
     if (!option.profile) {
