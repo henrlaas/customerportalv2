@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -189,20 +190,37 @@ export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
     return <FileText className="h-6 w-6" />;
   };
   
+  // Helper to determine if file should be viewed or downloaded
+  const shouldOpenInNewTab = (fileType: string) => {
+    const viewableTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/avi',
+      'text/plain'
+    ];
+    
+    return viewableTypes.includes(fileType.toLowerCase());
+  };
+  
   // Handle deleting an attachment
   const handleDelete = (id: string) => {
     setDeletingId(id);
     deleteAttachmentMutation.mutate(id);
   };
   
-  // Handle downloading an attachment
-  const handleDownload = (url: string, fileName: string) => {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  // Handle downloading/viewing an attachment
+  const handleDownload = (url: string, fileName: string, fileType: string) => {
+    if (shouldOpenInNewTab(fileType)) {
+      // Open in new tab/window for viewing
+      window.open(url, '_blank');
+    } else {
+      // Force download for documents, PDFs, etc.
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   };
 
   return (
@@ -282,7 +300,7 @@ export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
                 <Button 
                   size="icon" 
                   variant="ghost"
-                  onClick={() => handleDownload(attachment.file_url, attachment.file_name)}
+                  onClick={() => handleDownload(attachment.file_url, attachment.file_name, attachment.file_type)}
                 >
                   <Download className="h-4 w-4" />
                 </Button>
