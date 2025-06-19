@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -226,8 +226,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     staleTime: 30000,
     retry: 3,
     retryDelay: 1000,
-    keepPreviousData: true, // Keep previous data while refetching
-    refetchOnWindowFocus: false, // Prevent unnecessary refetches
+    placeholderData: keepPreviousData, // Updated to use the correct v5 syntax
+    refetchOnWindowFocus: false,
   });
 
   // Fetch profiles for assignees
