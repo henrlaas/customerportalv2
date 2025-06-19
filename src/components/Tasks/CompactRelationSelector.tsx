@@ -1,8 +1,14 @@
 
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Campaign } from '@/types/campaign';
 import { Project } from '@/types/timeTracking';
+
+// Define Campaign type locally since it's not available in the imports
+type Campaign = {
+  id: string;
+  name: string;
+  company_id: string;
+};
 
 interface CompactRelationSelectorProps {
   relatedType: 'none' | 'campaign' | 'project';

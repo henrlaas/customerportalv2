@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
@@ -611,8 +610,6 @@ export const TimeEntryForm = ({
                 companies={allCompanies}
                 selectedCompanyId={field.value || null}
                 onSelect={(companyId) => field.onChange(companyId)}
-                showSubsidiaries={showSubsidiaries}
-                onToggleSubsidiaries={setShowSubsidiaries}
                 isLoading={isLoadingCompanies}
               />
             </FormControl>
