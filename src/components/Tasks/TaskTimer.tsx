@@ -23,14 +23,18 @@ type TimeEntry = {
   start_time: string;
   end_time: string | null;
   created_at: string;
+  updated_at: string;
   is_billable: boolean;
+  is_running: boolean;
   company_id: string | null;
+  project_id: string | null;
+  campaign_id: string | null;
   user_profile?: {
     id: string;
     first_name: string | null;
     last_name: string | null;
     avatar_url: string | null;
-  };
+  } | null;
 };
 
 export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
@@ -92,7 +96,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
         return [];
       }
       
-      return data as TimeEntry[];
+      return data;
     },
   });
   
