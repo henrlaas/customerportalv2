@@ -1,7 +1,6 @@
 
 import { useMemo } from 'react';
 import Select from 'react-select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Company } from '@/types/company';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 
@@ -9,8 +8,6 @@ interface CompanySelectorProps {
   companies: Company[];
   selectedCompanyId: string | null;
   onSelect: (companyId: string | null) => void;
-  showSubsidiaries: boolean;
-  onToggleSubsidiaries: (show: boolean) => void;
   isLoading?: boolean;
   className?: string;
 }
@@ -19,33 +16,14 @@ export function CompanySelector({
   companies,
   selectedCompanyId,
   onSelect,
-  showSubsidiaries,
-  onToggleSubsidiaries,
   isLoading = false,
   className,
 }: CompanySelectorProps) {
-  // Memoize company hierarchy processing to prevent re-calculation on every render
-  const { parentCompanies, subsidiaryCompanies } = useMemo(() => {
-    const parents = companies.filter(company => !company.parent_id);
-    const subsidiaries = companies.filter(company => !!company.parent_id);
-    return { parentCompanies: parents, subsidiaryCompanies: subsidiaries };
-  }, [companies]);
-
-  // Memoize options creation based on showSubsidiaries toggle
+  // Show all companies (parents and subsidiaries)
   const options = useMemo(() => {
-    if (!showSubsidiaries) {
-      // Only show parent companies
-      return parentCompanies.map(company => ({
-        value: company.id,
-        label: company.name,
-        website: company.website,
-        logoUrl: company.logo_url,
-        isSubsidiary: false,
-        parentName: null,
-      }));
-    }
-
-    // Show all companies with better structure
+    const parentCompanies = companies.filter(company => !company.parent_id);
+    const subsidiaryCompanies = companies.filter(company => !!company.parent_id);
+    
     const optionsList: any[] = [];
     
     // Add parent companies first
@@ -73,7 +51,7 @@ export function CompanySelector({
       });
     });
 
-    // Add any orphaned subsidiaries (subsidiaries without a parent in the current list)
+    // Add any orphaned subsidiaries
     const orphanedSubsidiaries = subsidiaryCompanies.filter(sub => 
       !parentCompanies.some(parent => parent.id === sub.parent_id)
     );
@@ -89,7 +67,7 @@ export function CompanySelector({
     });
 
     return optionsList;
-  }, [parentCompanies, subsidiaryCompanies, showSubsidiaries]);
+  }, [companies]);
 
   // Memoize selected option to prevent unnecessary re-renders
   const selectedOption = useMemo(() => {
@@ -98,115 +76,109 @@ export function CompanySelector({
   
   return (
     <div className={className}>
-      <div className="space-y-2">
-        <Select
-          className="react-select-container"
-          classNamePrefix="react-select"
-          options={options}
-          value={selectedOption}
-          onChange={(selected) => onSelect(selected ? selected.value : null)}
-          isLoading={isLoading}
-          isClearable
-          placeholder="Select company..."
-          formatOptionLabel={({ label, website, logoUrl, isSubsidiary, parentName }) => (
-            <div className={`flex items-center ${isSubsidiary ? 'pl-6' : ''}`}>
-              <div className="flex items-center space-x-2 flex-1">
-                <CompanyFavicon 
-                  companyName={label}
-                  website={website}
-                  logoUrl={logoUrl}
-                  size="sm"
-                />
-                <div className="flex flex-col">
-                  <span className={isSubsidiary ? "text-sm" : ""}>{label}</span>
-                  {isSubsidiary && parentName && (
-                    <span className="text-xs text-muted-foreground">
-                      Subsidiary of {parentName}
-                    </span>
-                  )}
-                  {isSubsidiary && !parentName && (
-                    <span className="text-xs text-muted-foreground">(subsidiary)</span>
-                  )}
-                </div>
+      <Select
+        className="react-select-container"
+        classNamePrefix="react-select"
+        options={options}
+        value={selectedOption}
+        onChange={(selected) => onSelect(selected ? selected.value : null)}
+        isLoading={isLoading}
+        isClearable
+        placeholder="Search companies..."
+        noOptionsMessage={() => "Type to search companies"}
+        filterOption={(option, inputValue) => {
+          if (!inputValue) {
+            // Show max 5 companies when no search input
+            const currentIndex = options.indexOf(option);
+            return currentIndex < 5;
+          }
+          // Standard filtering when typing
+          return option.label.toLowerCase().includes(inputValue.toLowerCase());
+        }}
+        formatOptionLabel={({ label, website, logoUrl, isSubsidiary, parentName }) => (
+          <div className={`flex items-center ${isSubsidiary ? 'pl-6' : ''}`}>
+            <div className="flex items-center space-x-2 flex-1">
+              <CompanyFavicon 
+                companyName={label}
+                website={website}
+                logoUrl={logoUrl}
+                size="sm"
+              />
+              <div className="flex flex-col">
+                <span className={isSubsidiary ? "text-sm" : ""}>{label}</span>
+                {isSubsidiary && parentName && (
+                  <span className="text-xs text-muted-foreground">
+                    Subsidiary of {parentName}
+                  </span>
+                )}
+                {isSubsidiary && !parentName && (
+                  <span className="text-xs text-muted-foreground">(subsidiary)</span>
+                )}
               </div>
             </div>
-          )}
-          styles={{
-            control: (baseStyles) => ({
-              ...baseStyles,
-              borderColor: 'hsl(var(--input))',
-              backgroundColor: 'hsl(var(--background))',
-              borderRadius: 'var(--radius)',
-              boxShadow: 'none',
-              '&:hover': {
-                borderColor: 'hsl(var(--input))'
-              },
-              padding: '1px',
-              minHeight: '40px'
-            }),
-            placeholder: (baseStyles) => ({
-              ...baseStyles,
-              color: 'hsl(var(--muted-foreground))'
-            }),
-            menu: (baseStyles) => ({
-              ...baseStyles,
-              backgroundColor: 'hsl(var(--background))',
-              borderColor: 'hsl(var(--border))',
-              zIndex: 50
-            }),
-            option: (baseStyles, { isFocused, isSelected }) => ({
-              ...baseStyles,
-              backgroundColor: isFocused 
-                ? '#f3f3f3' // Light gray for hover/focus
-                : isSelected 
-                  ? 'hsl(var(--accent) / 0.2)'
-                  : undefined,
-              color: 'hsl(var(--foreground))',
-              padding: '8px 12px'
-            }),
-            singleValue: (baseStyles) => ({
-              ...baseStyles,
-              color: 'hsl(var(--foreground))'
-            }),
-            input: (baseStyles) => ({
-              ...baseStyles,
-              color: 'hsl(var(--foreground))'
-            }),
-            indicatorsContainer: (baseStyles) => ({
-              ...baseStyles,
-              color: 'hsl(var(--foreground) / 0.5)'
-            }),
-            dropdownIndicator: (baseStyles) => ({
-              ...baseStyles,
-              color: 'hsl(var(--foreground) / 0.5)',
-              '&:hover': {
-                color: 'hsl(var(--foreground) / 0.8)'
-              }
-            }),
-            clearIndicator: (baseStyles) => ({
-              ...baseStyles,
-              color: 'hsl(var(--foreground) / 0.5)',
-              '&:hover': {
-                color: 'hsl(var(--foreground) / 0.8)'
-              }
-            })
-          }}
-        />
-        
-        <div className="flex items-center pt-1">
-          <Checkbox 
-            id="show-subsidiaries"
-            checked={showSubsidiaries}
-            onCheckedChange={(checked) => onToggleSubsidiaries(!!checked)}
-          />
-          <label 
-            htmlFor="show-subsidiaries" 
-            className="ml-2 text-sm cursor-pointer"
-          >
-            Show subsidiaries
-          </label>
-        </div>
-      </div>
+          </div>
+        )}
+        styles={{
+          control: (baseStyles) => ({
+            ...baseStyles,
+            borderColor: 'hsl(var(--input))',
+            backgroundColor: 'hsl(var(--background))',
+            borderRadius: 'var(--radius)',
+            boxShadow: 'none',
+            '&:hover': {
+              borderColor: 'hsl(var(--input))'
+            },
+            padding: '1px',
+            minHeight: '40px'
+          }),
+          placeholder: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--muted-foreground))'
+          }),
+          menu: (baseStyles) => ({
+            ...baseStyles,
+            backgroundColor: 'hsl(var(--background))',
+            borderColor: 'hsl(var(--border))',
+            zIndex: 50
+          }),
+          option: (baseStyles, { isFocused, isSelected }) => ({
+            ...baseStyles,
+            backgroundColor: isFocused 
+              ? '#f3f3f3' // Light gray for hover/focus
+              : isSelected 
+                ? 'hsl(var(--accent) / 0.2)'
+                : undefined,
+            color: 'hsl(var(--foreground))',
+            padding: '8px 12px'
+          }),
+          singleValue: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--foreground))'
+          }),
+          input: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--foreground))'
+          }),
+          indicatorsContainer: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--foreground) / 0.5)'
+          }),
+          dropdownIndicator: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--foreground) / 0.5)',
+            '&:hover': {
+              color: 'hsl(var(--foreground) / 0.8)'
+            }
+          }),
+          clearIndicator: (baseStyles) => ({
+            ...baseStyles,
+            color: 'hsl(var(--foreground) / 0.5)',
+            '&:hover': {
+              color: 'hsl(var(--foreground) / 0.8)'
+            }
+          })
+        }}
+      />
     </div>
   );
 }

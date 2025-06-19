@@ -1,9 +1,7 @@
 
 import { useState } from 'react';
 import Select from 'react-select';
-import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type User = {
@@ -56,10 +54,6 @@ export function MultiAssigneeSelect({
     safeSelectedUserIds.includes(option.value)
   );
 
-  const handleRemove = (userId: string) => {
-    onChange(safeSelectedUserIds.filter(id => id !== userId));
-  };
-
   // Custom formatting for the dropdown options
   const formatOptionLabel = (option: any) => {
     const user = option.user;
@@ -75,33 +69,7 @@ export function MultiAssigneeSelect({
   };
 
   return (
-    <div className={cn("space-y-2", className)}>
-      {safeSelectedUserIds.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2">
-          {options.filter(option => safeSelectedUserIds.includes(option.value)).map(option => (
-            <Badge 
-              key={option.value} 
-              variant="secondary" 
-              className="flex items-center gap-1 pr-1"
-            >
-              <Avatar className="h-5 w-5 mr-1">
-                <AvatarImage src={option.user.avatar_url || undefined} />
-                <AvatarFallback className="text-xs">{getInitials(option.user)}</AvatarFallback>
-              </Avatar>
-              {getUserDisplayName(option.user)}
-              <button 
-                type="button"
-                className="h-4 w-4 p-0 ml-1 hover:bg-muted rounded-full" 
-                onClick={() => handleRemove(option.value)}
-              >
-                <X className="h-3 w-3" />
-                <span className="sr-only">Remove</span>
-              </button>
-            </Badge>
-          ))}
-        </div>
-      )}
-      
+    <div className={cn("", className)}>
       <Select
         isMulti
         options={options}
