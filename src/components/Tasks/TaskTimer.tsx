@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,12 +10,13 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Clock, Play, Pause, Save, DollarSign } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface TaskTimerProps {
   taskId: string;
 }
 
-type TimeEntry = {
+type TimeEntryWithUser = {
   id: string;
   user_id: string;
   task_id: string;
@@ -24,6 +26,12 @@ type TimeEntry = {
   created_at: string;
   is_billable: boolean;
   company_id: string | null;
+  profiles: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  } | null;
 };
 
 export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
@@ -58,13 +66,21 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     enabled: !!taskId,
   });
   
-  // Fetch time entries for this task
+  // Fetch time entries for this task with user profiles
   const { data: timeEntries = [] } = useQuery({
     queryKey: ['time-entries', taskId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('time_entries')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
         .eq('task_id', taskId)
         .order('start_time', { ascending: false });
       
@@ -77,7 +93,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
         return [];
       }
       
-      return data as TimeEntry[];
+      return data as TimeEntryWithUser[];
     },
   });
   
@@ -262,7 +278,6 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     },
   });
   
-  // Handle billable selection
   const handleBillableSelection = (isBillable: boolean) => {
     finalizeTimeEntryMutation.mutate(isBillable);
   };
@@ -280,7 +295,6 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     ].join(':');
   };
   
-  // Calculate total time spent
   const calculateTotalTimeSpent = () => {
     if (!timeEntries.length) return 0;
     
@@ -299,7 +313,6 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     return totalSeconds;
   };
   
-  // Format a date to a readable string
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
@@ -307,6 +320,22 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   // Handle time entry click to navigate to time tracking page
   const handleTimeEntryClick = (entryId: string) => {
     navigate(`/time-tracking?entry=${entryId}`);
+  };
+  
+  // Helper function to get user display name
+  const getUserDisplayName = (profile: TimeEntryWithUser['profiles']) => {
+    if (!profile) return 'Unknown User';
+    const firstName = profile.first_name || '';
+    const lastName = profile.last_name || '';
+    return `${firstName} ${lastName}`.trim() || 'Unknown User';
+  };
+  
+  // Helper function to get user initials
+  const getUserInitials = (profile: TimeEntryWithUser['profiles']) => {
+    if (!profile) return 'U';
+    const firstName = profile.first_name?.[0] || '';
+    const lastName = profile.last_name?.[0] || '';
+    return (firstName + lastName).toUpperCase() || 'U';
   };
   
   return (
@@ -379,13 +408,30 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
                 {timeEntries.slice(0, 5).map((entry) => (
                   <div 
                     key={entry.id} 
-                    className="text-sm border rounded-md p-2 cursor-pointer hover:bg-muted/30 transition-colors"
+                    className="text-sm border rounded-md p-3 cursor-pointer hover:bg-muted/30 transition-colors"
                     onClick={() => handleTimeEntryClick(entry.id)}
                   >
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3 mb-2">
+                      {/* User Avatar and Name */}
                       <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage 
+                            src={entry.profiles?.avatar_url || undefined} 
+                            alt={getUserDisplayName(entry.profiles)}
+                          />
+                          <AvatarFallback className="text-xs">
+                            {getUserInitials(entry.profiles)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {getUserDisplayName(entry.profiles)}
+                        </span>
+                      </div>
+                      
+                      {/* Duration and Billable Status */}
+                      <div className="flex items-center gap-2 ml-auto">
                         {entry.end_time ? (
-                          <span>
+                          <span className="font-medium">
                             {formatTime(Math.floor(
                               (new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / 1000
                             ))}
@@ -407,13 +453,17 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
                           {entry.is_billable ? 'Billable' : 'Non-billable'}
                         </Badge>
                       </div>
+                    </div>
+                    
+                    {/* Description and Timestamp */}
+                    <div className="flex justify-between items-center">
+                      {entry.description && (
+                        <p className="text-muted-foreground truncate flex-1 mr-2">{entry.description}</p>
+                      )}
                       <div className="text-muted-foreground text-xs">
                         {formatDate(entry.start_time)}
                       </div>
                     </div>
-                    {entry.description && (
-                      <p className="mt-1 text-muted-foreground truncate">{entry.description}</p>
-                    )}
                   </div>
                 ))}
               </div>
