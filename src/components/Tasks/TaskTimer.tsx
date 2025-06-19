@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,7 +52,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tasks')
-        .select('id, title, company_id')
+        .select('id, title, company_id, status')
         .eq('id', taskId)
         .single();
       
@@ -203,10 +204,39 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
       
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setIsRunning(true);
       setSeconds(0);
       setActiveEntry(data);
+      
+      // Check if task is in "todo" status and automatically move to "in_progress"
+      if (task && task.status === 'todo') {
+        try {
+          const { error: updateError } = await supabase
+            .from('tasks')
+            .update({ 
+              status: 'in_progress',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', taskId);
+            
+          if (updateError) {
+            console.error('Error updating task status:', updateError);
+          } else {
+            toast({
+              title: 'Task moved to In Progress',
+              description: 'Task automatically moved to "In Progress" when timer started',
+            });
+            
+            // Invalidate tasks queries to refresh the UI
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+          }
+        } catch (error) {
+          console.error('Error auto-updating task status:', error);
+        }
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
     },
     onError: (error: any) => {
