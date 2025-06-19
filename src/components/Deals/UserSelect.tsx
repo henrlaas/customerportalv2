@@ -1,7 +1,7 @@
 
 import React from 'react';
-import Select, { SingleValue, ActionMeta } from 'react-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Profile } from './types/deal';
 
 interface UserSelectProps {
@@ -9,12 +9,6 @@ interface UserSelectProps {
   selectedUserId: string | null;
   onUserChange: (userId: string | null) => void;
   currentUserId?: string;
-}
-
-interface UserOption {
-  value: string | null;
-  label: string;
-  profile?: Profile;
 }
 
 export const UserSelect: React.FC<UserSelectProps> = ({
@@ -28,94 +22,84 @@ export const UserSelect: React.FC<UserSelectProps> = ({
     return name || profile.id;
   };
 
-  const options: UserOption[] = [
-    {
-      value: null,
-      label: 'All Users',
-    },
-    ...profiles.map(profile => ({
-      value: profile.id,
-      label: getUserDisplayName(profile),
-      profile,
-    }))
-  ];
-
-  // Allow null selection for cleared state instead of defaulting to "All Users"
-  const selectedOption = options.find(option => option.value === selectedUserId) || null;
-
-  const formatOptionLabel = (option: UserOption) => {
-    if (!option.profile) {
-      return (
-        <div className="flex items-center gap-2">
-          <span className="text-sm">All Users</span>
-        </div>
-      );
-    }
-
-    const initials = `${option.profile.first_name?.[0] || ''}${option.profile.last_name?.[0] || ''}`.toUpperCase() || 'U';
-
-    return (
-      <div className="flex items-center gap-2">
-        <Avatar className="h-6 w-6">
-          <AvatarImage src={option.profile.avatar_url || undefined} />
-          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-        </Avatar>
-        <span className="text-sm">{option.label}</span>
-      </div>
-    );
+  const getSelectedDisplayValue = () => {
+    if (!selectedUserId) return 'All Users';
+    const selectedProfile = profiles.find(p => p.id === selectedUserId);
+    return selectedProfile ? getUserDisplayName(selectedProfile) : 'Select user...';
   };
 
-  const handleChange = (
-    newValue: SingleValue<UserOption>,
-    actionMeta: ActionMeta<UserOption>
-  ) => {
-    onUserChange(newValue ? newValue.value : null);
+  const handleValueChange = (value: string) => {
+    onUserChange(value === 'all' ? null : value);
   };
 
   return (
     <Select
-      value={selectedOption}
-      onChange={handleChange}
-      options={options}
-      formatOptionLabel={formatOptionLabel}
-      isSearchable
-      isClearable
-      placeholder="Select user..."
-      className="min-w-[200px]"
-      classNames={{
-        control: () => "h-10 border border-input bg-background text-sm",
-        menu: () => "bg-popover border border-border shadow-md z-50",
-        option: (state) => 
-          `px-3 py-2 text-sm cursor-pointer ${
-            state.isFocused ? 'bg-[#004743] text-white' : ''
-          } ${state.isSelected ? 'bg-primary text-primary-foreground' : ''}`,
-      }}
-      styles={{
-        control: (base, state) => ({
-          ...base,
-          minHeight: '40px',
-          border: '1px solid hsl(var(--input))',
-          borderRadius: '6px',
-          boxShadow: 'none',
-          backgroundColor: 'hsl(var(--background))',
-          '&:hover': {
-            border: '1px solid hsl(var(--input))',
-          },
-          '&:focus-within': {
-            border: '1px solid hsl(var(--ring))',
-            outline: '2px solid transparent',
-            outlineOffset: '2px',
-            boxShadow: '0 0 0 2px hsl(var(--ring))',
-          },
-        }),
-        indicatorSeparator: () => ({
-          display: 'none',
-        }),
-        menu: (base) => ({
-          ...base,
-          zIndex: 50,
-        }),
-      }}
-    />
+      value={selectedUserId || 'all'}
+      onValueChange={handleValueChange}
+    >
+      <SelectTrigger className="min-w-[200px] h-10">
+        <SelectValue>
+          <div className="flex items-center gap-2">
+            {selectedUserId && selectedUserId !== 'all' ? (
+              <>
+                {(() => {
+                  const selectedProfile = profiles.find(p => p.id === selectedUserId);
+                  if (selectedProfile) {
+                    const initials = `${selectedProfile.first_name?.[0] || ''}${selectedProfile.last_name?.[0] || ''}`.toUpperCase() || 'U';
+                    return (
+                      <>
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={selectedProfile.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{getUserDisplayName(selectedProfile)}</span>
+                      </>
+                    );
+                  }
+                  return <span className="text-sm">Select user...</span>;
+                })()}
+              </>
+            ) : (
+              <span className="text-sm">All Users</span>
+            )}
+          </div>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent 
+        align="start"
+        className="min-w-[200px]"
+        style={{
+          '--hover-bg': '#F2FCE2',
+          '--selected-bg': '#114742',
+        } as React.CSSProperties}
+      >
+        <SelectItem 
+          value="all"
+          className="flex items-center gap-2 cursor-pointer hover:bg-[#F2FCE2] data-[state=checked]:bg-[#114742] data-[state=checked]:text-white focus:bg-[#F2FCE2] pl-3 pr-2 py-1.5"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-sm">All Users</span>
+          </div>
+        </SelectItem>
+        {profiles.map(profile => {
+          const initials = `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase() || 'U';
+          return (
+            <SelectItem 
+              key={profile.id}
+              value={profile.id}
+              className="flex items-center gap-2 cursor-pointer hover:bg-[#F2FCE2] data-[state=checked]:bg-[#114742] data-[state=checked]:text-white focus:bg-[#F2FCE2] pl-3 pr-2 py-1.5"
+            >
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={profile.avatar_url || undefined} />
+                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm">{getUserDisplayName(profile)}</span>
+              </div>
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 };
