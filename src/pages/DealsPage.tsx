@@ -64,6 +64,23 @@ const DealsPage = () => {
     }
   }, [user?.id, hasInitializedUser]);
 
+  // Helper function to check if a closed deal is older than 3 days
+  const isOldClosedDeal = (deal: Deal) => {
+    const closedWonStageId = '338e9b9c-bdd6-4ffb-8543-83cbeab7a7ae';
+    const closedLostStageId = 'f276a956-5c5e-434f-ac30-8c1306d1a65e';
+    
+    // Check if deal is in either closed stage
+    if (deal.stage_id !== closedWonStageId && deal.stage_id !== closedLostStageId) {
+      return false;
+    }
+    
+    const updatedAt = new Date(deal.updated_at);
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    
+    return updatedAt < threeDaysAgo;
+  };
+
   // Fetch deals
   const { data: deals = [], isLoading: isLoadingDeals } = useQuery({
     queryKey: ['deals'],
@@ -306,38 +323,40 @@ const DealsPage = () => {
     return profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.id : 'Unknown User';
   };
 
-  // Filter deals based on all selected filters
+  // Filter deals based on all selected filters and hide old closed deals
   const getFilteredDeals = () => {
-    let filtered = deals.filter(deal => {
-      // Search filter
-      const matchesSearch =
-        deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        getCompanyName(deal.company_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
-        getStageName(deal.stage_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
-        getAssignedToName(deal.assigned_to).toLowerCase().includes(searchQuery.toLowerCase());
+    let filtered = deals
+      .filter(deal => !isOldClosedDeal(deal)) // Hide old closed deals
+      .filter(deal => {
+        // Search filter
+        const matchesSearch =
+          deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          getCompanyName(deal.company_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          getStageName(deal.stage_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          getAssignedToName(deal.assigned_to).toLowerCase().includes(searchQuery.toLowerCase());
 
-      if (!matchesSearch) return false;
+        if (!matchesSearch) return false;
 
-      // User filter - only filter if a specific user is selected
-      if (selectedUserId) {
-        if (deal.assigned_to !== selectedUserId) return false;
-      }
+        // User filter - only filter if a specific user is selected
+        if (selectedUserId) {
+          if (deal.assigned_to !== selectedUserId) return false;
+        }
 
-      // Recurring filter
-      if (recurringFilter !== 'all') {
-        const isRecurring = deal.is_recurring === true;
-        if (recurringFilter === 'recurring' && !isRecurring) return false;
-        if (recurringFilter === 'one-time' && isRecurring) return false;
-      }
+        // Recurring filter
+        if (recurringFilter !== 'all') {
+          const isRecurring = deal.is_recurring === true;
+          if (recurringFilter === 'recurring' && !isRecurring) return false;
+          if (recurringFilter === 'one-time' && isRecurring) return false;
+        }
 
-      // Client type filter
-      if (clientTypeFilter !== 'all') {
-        if (clientTypeFilter === 'marketing' && deal.client_deal_type !== 'marketing') return false;
-        if (clientTypeFilter === 'web' && deal.client_deal_type !== 'web') return false;
-      }
+        // Client type filter
+        if (clientTypeFilter !== 'all') {
+          if (clientTypeFilter === 'marketing' && deal.client_deal_type !== 'marketing') return false;
+          if (clientTypeFilter === 'web' && deal.client_deal_type !== 'web') return false;
+        }
 
-      return true;
-    });
+        return true;
+      });
 
     return filtered;
   };
