@@ -87,7 +87,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
         menu: () => "bg-popover border border-border shadow-md z-50",
         option: (state) => 
           `px-3 py-2 text-sm cursor-pointer ${
-            state.isFocused ? 'bg-[#F2FCE2]' : ''
+            state.isFocused ? 'bg-[#004743] text-white' : ''
           } ${state.isSelected ? 'bg-primary text-primary-foreground' : ''}`,
       }}
       styles={{

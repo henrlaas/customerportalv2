@@ -22,7 +22,7 @@ export const DealTypeFilters: React.FC<DealTypeFiltersProps> = ({
         <SelectTrigger className="w-[140px]">
           <SelectValue placeholder="Deal Type" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent align="start">
           <SelectItem value="all">All Types</SelectItem>
           <SelectItem value="recurring">
             <div className="flex items-center gap-2">
@@ -47,7 +47,7 @@ export const DealTypeFilters: React.FC<DealTypeFiltersProps> = ({
         <SelectTrigger className="w-[140px]">
           <SelectValue placeholder="Client Type" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent align="start">
           <SelectItem value="all">All Clients</SelectItem>
           <SelectItem value="marketing">
             <div className="flex items-center gap-2">
