@@ -83,24 +83,36 @@ export const UserSelect: React.FC<UserSelectProps> = ({
       className="min-w-[200px]"
       classNames={{
         control: () => "h-10 border border-input bg-background text-sm",
-        menu: () => "bg-popover border border-border shadow-md",
+        menu: () => "bg-popover border border-border shadow-md z-50",
         option: (state) => 
           `px-3 py-2 text-sm cursor-pointer ${
             state.isFocused ? 'bg-accent' : ''
           } ${state.isSelected ? 'bg-primary text-primary-foreground' : ''}`,
       }}
       styles={{
-        control: (base) => ({
+        control: (base, state) => ({
           ...base,
           minHeight: '40px',
-          border: 'none',
+          border: '1px solid hsl(var(--input))',
+          borderRadius: '6px',
           boxShadow: 'none',
+          backgroundColor: 'hsl(var(--background))',
           '&:hover': {
-            border: 'none',
+            border: '1px solid hsl(var(--input))',
+          },
+          '&:focus-within': {
+            border: '1px solid hsl(var(--ring))',
+            outline: '2px solid transparent',
+            outlineOffset: '2px',
+            boxShadow: '0 0 0 2px hsl(var(--ring))',
           },
         }),
         indicatorSeparator: () => ({
           display: 'none',
+        }),
+        menu: (base) => ({
+          ...base,
+          zIndex: 50,
         }),
       }}
     />

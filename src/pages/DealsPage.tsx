@@ -315,7 +315,7 @@ const DealsPage = () => {
 
       if (!matchesSearch) return false;
 
-      // User filter
+      // User filter - only filter if a specific user is selected
       if (selectedUserId) {
         if (deal.assigned_to !== selectedUserId) return false;
       }
