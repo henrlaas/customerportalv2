@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, isBefore } from 'date-fns';
@@ -80,7 +79,7 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Fetch campaigns with start dates where user is assigned (not ongoing)
+  // Fetch campaigns with start dates where user is the associated user (not ongoing)
   const { data: allCampaigns, isLoading: campaignsLoading } = useQuery({
     queryKey: ['calendar-campaigns', user?.id],
     queryFn: async () => {
@@ -95,12 +94,11 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
           name, 
           start_date, 
           status,
-          platform,
-          campaign_assignees!inner(user_id)
+          platform
         `)
         .not('start_date', 'is', null)
         .eq('is_ongoing', false)
-        .eq('campaign_assignees.user_id', user.id)
+        .eq('associated_user_id', user.id)
         .order('start_date', { ascending: true });
 
       if (error) {
