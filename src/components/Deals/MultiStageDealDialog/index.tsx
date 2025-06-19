@@ -14,7 +14,8 @@ import { CompanySelectionForm } from './CompanySelectionForm';
 import { ExistingCompanyForm } from './ExistingCompanyForm';
 import { NewCompanyForm } from './NewCompanyForm';
 import { ContactForm } from './ContactForm';
-import { DealDetailsForm } from './DealDetailsForm';
+import { DealDetailsStage1Form } from './DealDetailsStage1Form';
+import { DealDetailsStage2Form } from './DealDetailsStage2Form';
 import { ProgressStepper } from './ProgressStepper';
 
 type CompanySelection = 'existing' | 'new' | null;
@@ -29,7 +30,8 @@ type Step =
   | { type: 'existing-company' }
   | { type: 'new-company' }
   | { type: 'contact-info' }
-  | { type: 'deal-details' };
+  | { type: 'deal-details-1' }
+  | { type: 'deal-details-2' };
 
 export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
   isOpen,
@@ -59,6 +61,7 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
           deal_type: dealData.dealDetails.deal_type,
           client_deal_type: dealData.dealDetails.client_deal_type,
           value: dealData.dealDetails.value,
+          price_type: dealData.dealDetails.price_type,
           assigned_to: dealData.dealDetails.assigned_to,
           company_id: dealData.existingCompanyId || null,
           is_recurring: dealData.dealDetails.deal_type === 'recurring',
@@ -140,7 +143,7 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
 
   const handleExistingCompanyNext = (companyId: string) => {
     setFormData({ ...formData, existingCompanyId: companyId });
-    setCurrentStep({ type: 'deal-details' });
+    setCurrentStep({ type: 'deal-details-1' });
   };
 
   const handleNewCompanyNext = (companyData: any) => {
@@ -150,13 +153,23 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
 
   const handleContactNext = (contactData: any) => {
     setFormData({ ...formData, contactInfo: contactData });
-    setCurrentStep({ type: 'deal-details' });
+    setCurrentStep({ type: 'deal-details-1' });
   };
 
-  const handleDealDetailsSubmit = (dealData: any) => {
+  const handleDealDetailsStage1Next = (dealData: any) => {
+    setFormData({ ...formData, dealDetailsStage1: dealData });
+    setCurrentStep({ type: 'deal-details-2' });
+  };
+
+  const handleDealDetailsStage2Submit = (dealData: any) => {
+    const combinedDealDetails = {
+      ...formData.dealDetailsStage1,
+      ...dealData
+    };
+    
     createDealMutation.mutate({
       ...formData,
-      dealDetails: dealData,
+      dealDetails: combinedDealDetails,
     });
   };
 
@@ -185,10 +198,10 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
             onBack={() => setCurrentStep({ type: 'new-company' })}
           />
         );
-      case 'deal-details':
+      case 'deal-details-1':
         return (
-          <DealDetailsForm
-            onSubmit={handleDealDetailsSubmit}
+          <DealDetailsStage1Form
+            onNext={handleDealDetailsStage1Next}
             onBack={() => {
               if (companySelection === 'existing') {
                 setCurrentStep({ type: 'existing-company' });
@@ -196,7 +209,16 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
                 setCurrentStep({ type: 'contact-info' });
               }
             }}
+            defaultValues={formData.dealDetailsStage1}
+          />
+        );
+      case 'deal-details-2':
+        return (
+          <DealDetailsStage2Form
+            onSubmit={handleDealDetailsStage2Submit}
+            onBack={() => setCurrentStep({ type: 'deal-details-1' })}
             isSubmitting={createDealMutation.isPending}
+            defaultValues={formData.dealDetailsStage2}
           />
         );
     }
@@ -212,7 +234,9 @@ export const MultiStageDealDialog: React.FC<MultiStageDealDialogProps> = ({
         return 'New Company Details';
       case 'contact-info':
         return 'Contact Information';
-      case 'deal-details':
+      case 'deal-details-1':
+        return 'Deal Information';
+      case 'deal-details-2':
         return 'Deal Details';
     }
   };

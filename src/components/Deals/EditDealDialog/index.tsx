@@ -14,7 +14,8 @@ import { CompanySelectionForm } from '../MultiStageDealDialog/CompanySelectionFo
 import { ExistingCompanyForm } from '../MultiStageDealDialog/ExistingCompanyForm';
 import { NewCompanyForm } from '../MultiStageDealDialog/NewCompanyForm';
 import { ContactForm } from '../MultiStageDealDialog/ContactForm';
-import { DealDetailsForm } from '../MultiStageDealDialog/DealDetailsForm';
+import { DealDetailsStage1Form } from '../MultiStageDealDialog/DealDetailsStage1Form';
+import { DealDetailsStage2Form } from '../MultiStageDealDialog/DealDetailsStage2Form';
 import { ProgressStepper } from '../MultiStageDealDialog/ProgressStepper';
 import { Deal, Company, Stage, Profile } from '@/components/Deals/types/deal';
 
@@ -34,7 +35,8 @@ type Step =
   | { type: 'existing-company' }
   | { type: 'new-company' }
   | { type: 'contact-info' }
-  | { type: 'deal-details' };
+  | { type: 'deal-details-1' }
+  | { type: 'deal-details-2' };
 
 export const EditDealDialog: React.FC<EditDealDialogProps> = ({
   isOpen,
@@ -59,7 +61,7 @@ export const EditDealDialog: React.FC<EditDealDialogProps> = ({
       if (deal.company_id) {
         setCompanySelection('existing');
         setFormData({ existingCompanyId: deal.company_id });
-        setCurrentStep({ type: 'deal-details' });
+        setCurrentStep({ type: 'deal-details-1' });
       } else {
         // Check if there is a temp company
         fetchTempDealData();
@@ -106,7 +108,7 @@ export const EditDealDialog: React.FC<EditDealDialogProps> = ({
             position: tempContact.position || '',
           }
         }));
-        setCurrentStep({ type: 'deal-details' });
+        setCurrentStep({ type: 'deal-details-1' });
       } else {
         setCurrentStep({ type: 'new-company' });
       }
@@ -128,6 +130,7 @@ export const EditDealDialog: React.FC<EditDealDialogProps> = ({
         deal_type: dealData.dealDetails.deal_type,
         client_deal_type: dealData.dealDetails.client_deal_type,
         value: dealData.dealDetails.value,
+        price_type: dealData.dealDetails.price_type,
         assigned_to: dealData.dealDetails.assigned_to,
         company_id: dealData.existingCompanyId || null,
         is_recurring: dealData.dealDetails.deal_type === 'recurring',
@@ -249,7 +252,7 @@ export const EditDealDialog: React.FC<EditDealDialogProps> = ({
 
   const handleExistingCompanyNext = (companyId: string) => {
     setFormData({ ...formData, existingCompanyId: companyId });
-    setCurrentStep({ type: 'deal-details' });
+    setCurrentStep({ type: 'deal-details-1' });
   };
 
   const handleNewCompanyNext = (companyData: any) => {
@@ -259,13 +262,23 @@ export const EditDealDialog: React.FC<EditDealDialogProps> = ({
 
   const handleContactNext = (contactData: any) => {
     setFormData({ ...formData, contactInfo: contactData });
-    setCurrentStep({ type: 'deal-details' });
+    setCurrentStep({ type: 'deal-details-1' });
   };
 
-  const handleDealDetailsSubmit = (dealData: any) => {
+  const handleDealDetailsStage1Next = (dealData: any) => {
+    setFormData({ ...formData, dealDetailsStage1: dealData });
+    setCurrentStep({ type: 'deal-details-2' });
+  };
+
+  const handleDealDetailsStage2Submit = (dealData: any) => {
+    const combinedDealDetails = {
+      ...formData.dealDetailsStage1,
+      ...dealData
+    };
+    
     updateDealMutation.mutate({
       ...formData,
-      dealDetails: dealData,
+      dealDetails: combinedDealDetails,
     });
   };
 
@@ -299,10 +312,10 @@ export const EditDealDialog: React.FC<EditDealDialogProps> = ({
             defaultValues={formData.contactInfo}
           />
         );
-      case 'deal-details':
+      case 'deal-details-1':
         return (
-          <DealDetailsForm
-            onSubmit={handleDealDetailsSubmit}
+          <DealDetailsStage1Form
+            onNext={handleDealDetailsStage1Next}
             onBack={() => {
               if (companySelection === 'existing') {
                 setCurrentStep({ type: 'existing-company' });
@@ -310,14 +323,26 @@ export const EditDealDialog: React.FC<EditDealDialogProps> = ({
                 setCurrentStep({ type: 'contact-info' });
               }
             }}
-            isSubmitting={updateDealMutation.isPending}
             defaultValues={{
               title: deal.title,
               description: deal.description || '',
+              ...formData.dealDetailsStage1
+            }}
+          />
+        );
+      case 'deal-details-2':
+        return (
+          <DealDetailsStage2Form
+            onSubmit={handleDealDetailsStage2Submit}
+            onBack={() => setCurrentStep({ type: 'deal-details-1' })}
+            isSubmitting={updateDealMutation.isPending}
+            defaultValues={{
               deal_type: deal.deal_type || 'one-time',
               client_deal_type: deal.client_deal_type || 'web',
               value: deal.value || 0,
+              price_type: deal.price_type || 'Project',
               assigned_to: deal.assigned_to || '',
+              ...formData.dealDetailsStage2
             }}
           />
         );
@@ -334,7 +359,9 @@ export const EditDealDialog: React.FC<EditDealDialogProps> = ({
         return 'New Company Details';
       case 'contact-info':
         return 'Contact Information';
-      case 'deal-details':
+      case 'deal-details-1':
+        return 'Deal Information';
+      case 'deal-details-2':
         return 'Deal Details';
     }
   };
