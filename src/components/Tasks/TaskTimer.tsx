@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Clock, Play, Pause, Save, DollarSign } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface TaskTimerProps {
   taskId: string;
@@ -24,6 +25,12 @@ type TimeEntry = {
   created_at: string;
   is_billable: boolean;
   company_id: string | null;
+  user_profile?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  };
 };
 
 export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
@@ -58,13 +65,21 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     enabled: !!taskId,
   });
   
-  // Fetch time entries for this task
+  // Fetch time entries for this task with user profile information
   const { data: timeEntries = [] } = useQuery({
     queryKey: ['time-entries', taskId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('time_entries')
-        .select('*')
+        .select(`
+          *,
+          user_profile:profiles!time_entries_user_id_fkey (
+            id,
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
         .eq('task_id', taskId)
         .order('start_time', { ascending: false });
       
@@ -267,6 +282,42 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     finalizeTimeEntryMutation.mutate(isBillable);
   };
   
+  // Helper function to get user display name
+  const getUserDisplayName = (userProfile: TimeEntry['user_profile']) => {
+    if (!userProfile) return 'Unknown User';
+    
+    const { first_name, last_name } = userProfile;
+    
+    if (first_name && last_name) {
+      return `${first_name} ${last_name}`;
+    } else if (first_name) {
+      return first_name;
+    } else if (last_name) {
+      return last_name;
+    }
+    
+    return 'Unknown User';
+  };
+
+  // Helper function to get user initials
+  const getUserInitials = (userProfile: TimeEntry['user_profile']) => {
+    if (!userProfile) return 'U';
+    
+    const { first_name, last_name } = userProfile;
+    const firstInitial = first_name ? first_name.charAt(0).toUpperCase() : '';
+    const lastInitial = last_name ? last_name.charAt(0).toUpperCase() : '';
+    
+    if (firstInitial && lastInitial) {
+      return `${firstInitial}${lastInitial}`;
+    } else if (firstInitial) {
+      return firstInitial;
+    } else if (lastInitial) {
+      return lastInitial;
+    }
+    
+    return 'U';
+  };
+
   // Format seconds to HH:MM:SS
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -379,40 +430,53 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
                 {timeEntries.slice(0, 5).map((entry) => (
                   <div 
                     key={entry.id} 
-                    className="text-sm border rounded-md p-2 cursor-pointer hover:bg-muted/30 transition-colors"
+                    className="text-sm border rounded-md p-3 cursor-pointer hover:bg-muted/30 transition-colors"
                     onClick={() => handleTimeEntryClick(entry.id)}
                   >
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        {entry.end_time ? (
-                          <span>
-                            {formatTime(Math.floor(
-                              (new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / 1000
-                            ))}
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={entry.user_profile?.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs">
+                            {getUserInitials(entry.user_profile)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            {entry.end_time ? (
+                              <span className="font-medium">
+                                {formatTime(Math.floor(
+                                  (new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / 1000
+                                ))}
+                              </span>
+                            ) : (
+                              <Badge variant="outline" className="bg-green-100 text-green-800">
+                                Running
+                              </Badge>
+                            )}
+                            <Badge 
+                              variant={entry.is_billable ? "default" : "outline"}
+                              className={`flex items-center gap-1 ${
+                                entry.is_billable 
+                                  ? 'bg-green-500 hover:bg-green-600 text-white' 
+                                  : 'bg-gray-100 text-gray-700 border-gray-300'
+                              }`}
+                            >
+                              <DollarSign className="h-3 w-3" />
+                              {entry.is_billable ? 'Billable' : 'Non-billable'}
+                            </Badge>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            by {getUserDisplayName(entry.user_profile)}
                           </span>
-                        ) : (
-                          <Badge variant="outline" className="bg-green-100 text-green-800">
-                            Running
-                          </Badge>
-                        )}
-                        <Badge 
-                          variant={entry.is_billable ? "default" : "outline"}
-                          className={`flex items-center gap-1 ${
-                            entry.is_billable 
-                              ? 'bg-green-500 hover:bg-green-600 text-white' 
-                              : 'bg-gray-100 text-gray-700 border-gray-300'
-                          }`}
-                        >
-                          <DollarSign className="h-3 w-3" />
-                          {entry.is_billable ? 'Billable' : 'Non-billable'}
-                        </Badge>
+                        </div>
                       </div>
                       <div className="text-muted-foreground text-xs">
                         {formatDate(entry.start_time)}
                       </div>
                     </div>
                     {entry.description && (
-                      <p className="mt-1 text-muted-foreground truncate">{entry.description}</p>
+                      <p className="mt-1 text-muted-foreground truncate pl-9">{entry.description}</p>
                     )}
                   </div>
                 ))}
