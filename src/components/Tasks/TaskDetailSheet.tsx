@@ -82,9 +82,26 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const [activeTab, setActiveTab] = useState('details');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Function to format date as DD.MM.YYYY
-  const formatDate = (date: string | Date) => {
-    return format(new Date(date), 'dd.MM.yyyy');
+  // Function to format date as DD.MM.YYYY with proper error handling
+  const formatDate = (date: string | Date | null | undefined) => {
+    // Handle null or undefined
+    if (!date) {
+      return 'N/A';
+    }
+    
+    try {
+      const dateObj = new Date(date);
+      
+      // Check if date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Invalid Date';
+      }
+      
+      return format(dateObj, 'dd.MM.yyyy');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
+    }
   };
 
   const { data: task, isLoading } = useQuery({
