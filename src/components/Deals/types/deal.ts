@@ -17,6 +17,7 @@ export type Deal = {
   is_recurring: boolean | null;
   deal_type?: 'recurring' | 'one-time' | null;
   client_deal_type?: 'marketing' | 'web' | null;
+  price_type?: 'MRR' | 'Project' | null;
 };
 
 // Company type for selecting related companies
@@ -91,16 +92,29 @@ export const contactFormSchema = z.object({
   position: z.string().optional(),
 });
 
-// Schema for deal details form
-export const dealDetailsFormSchema = z.object({
+// Schema for deal details stage 1
+export const dealDetailsStage1Schema = z.object({
   title: z.string().min(1, 'Deal title is required'),
-  description: z.string().optional(),
+  description: z.string().min(1, 'Deal description is required'),
+});
+
+// Schema for deal details stage 2
+export const dealDetailsStage2Schema = z.object({
   deal_type: z.enum(['recurring', 'one-time']),
   client_deal_type: z.enum(['marketing', 'web']),
-  value: z.number().min(0, 'Value must be a positive number'),
+  value: z.number().min(0, 'Value must be 0 or higher'),
+  price_type: z.enum(['MRR', 'Project']),
   assigned_to: z.string().optional(),
+});
+
+// Combined schema for deal details form
+export const dealDetailsFormSchema = z.object({
+  ...dealDetailsStage1Schema.shape,
+  ...dealDetailsStage2Schema.shape,
 });
 
 export type NewCompanyFormValues = z.infer<typeof newCompanyFormSchema>;
 export type ContactFormValues = z.infer<typeof contactFormSchema>;
+export type DealDetailsStage1Values = z.infer<typeof dealDetailsStage1Schema>;
+export type DealDetailsStage2Values = z.infer<typeof dealDetailsStage2Schema>;
 export type DealDetailsFormValues = z.infer<typeof dealDetailsFormSchema>;
