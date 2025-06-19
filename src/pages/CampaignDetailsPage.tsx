@@ -1,3 +1,4 @@
+
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,10 +16,18 @@ import { CampaignDetailsBanner } from '@/components/Campaigns/CampaignDetailsBan
 import { AdSetList } from '@/components/Campaigns/Adsets/AdSetList';
 import { AdsList } from '@/components/Campaigns/Ads/AdsList';
 import { Campaign, CampaignStatus, Platform } from '@/components/Campaigns/types/campaign';
+import { useRealtimeCampaigns } from '@/hooks/realtime/useRealtimeCampaigns';
+import { useRealtimeAdsets } from '@/hooks/realtime/useRealtimeAdsets';
+import { useRealtimeAds } from '@/hooks/realtime/useRealtimeAds';
 
 export function CampaignDetailsPage() {
   const { campaignId } = useParams<{ campaignId: string }>();
   const [selectedAdsetId, setSelectedAdsetId] = useState<string | null>(null);
+
+  // Enable real-time updates for campaign, adsets, and ads
+  useRealtimeCampaigns({ campaignId, enabled: !!campaignId });
+  useRealtimeAdsets({ campaignId, enabled: !!campaignId });
+  useRealtimeAds({ campaignId, enabled: !!campaignId });
 
   // Fetch the campaign details
   const { data: campaign, isLoading: isLoadingCampaign, error: campaignError, refetch: refetchCampaign } = useQuery({
@@ -101,6 +110,7 @@ export function CampaignDetailsPage() {
     enabled: !!campaignId,
     retry: 2,
     retryDelay: 1000, // Retry after 1 second
+    staleTime: 0, // Always fetch fresh data for real-time updates
   });
 
   // Determine if modifications should be disabled
@@ -120,6 +130,7 @@ export function CampaignDetailsPage() {
       return data || [];
     },
     enabled: !!campaignId,
+    staleTime: 0, // Always fetch fresh data for real-time updates
   });
 
   // Set the first adset as selected when data is loaded
@@ -142,6 +153,7 @@ export function CampaignDetailsPage() {
       return data || [];
     },
     enabled: !!selectedAdsetId,
+    staleTime: 0, // Always fetch fresh data for real-time updates
   });
 
   // Fetch the selected adset details
@@ -157,6 +169,7 @@ export function CampaignDetailsPage() {
       return data;
     },
     enabled: !!selectedAdsetId,
+    staleTime: 0, // Always fetch fresh data for real-time updates
   });
 
   const handleAdsetUpdate = () => {

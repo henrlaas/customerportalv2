@@ -5,15 +5,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, AlertTriangle, Activity } from 'lucide-react';
+import { useRealtimeTasks } from '@/hooks/realtime/useRealtimeTasks';
 
 export const MyTasksCard = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Enable real-time updates for tasks
+  useRealtimeTasks({ enabled: !!user?.id });
+
   const { data: taskStats, isLoading, error } = useQuery({
     queryKey: ['user-task-stats', user?.id],
     queryFn: async () => {
-      if (!user?.id) return { active: 0, overdue: 0 };
+      if (!user?.id) return { active: 0, overdue: 0, completed: 0 };
 
       console.log('Dashboard: Fetching tasks for user:', user.id);
 
@@ -38,21 +42,18 @@ export const MyTasksCard = () => {
 
       const userTasks = tasks || [];
       console.log('Dashboard: Total tasks fetched:', userTasks.length);
-      console.log('Dashboard: Task statuses breakdown:', 
-        userTasks.reduce((acc, task) => {
-          acc[task.status] = (acc[task.status] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
-      );
       
-      // Count active tasks - exclude completed (like Calendar does)
+      // Count active tasks - exclude completed
       const activeTasks = userTasks.filter(task => 
         task.status !== 'completed'
       );
       const active = activeTasks.length;
       
-      console.log('Dashboard: Active tasks (non-completed):', active);
-      console.log('Dashboard: Active task IDs:', activeTasks.map(t => t.id));
+      // Count completed tasks
+      const completedTasks = userTasks.filter(task => 
+        task.status === 'completed'
+      );
+      const completed = completedTasks.length;
       
       // Count overdue tasks - only from active tasks that have a due date in the past
       const now = new Date();
@@ -62,58 +63,16 @@ export const MyTasksCard = () => {
       );
       const overdue = overdueTasks.length;
 
-      console.log('Dashboard: Overdue tasks:', overdue);
-      console.log('Dashboard: Overdue task details:', 
-        overdueTasks.map(t => ({ id: t.id, title: t.title, due_date: t.due_date, status: t.status }))
-      );
+      console.log('Dashboard: Task stats:', { active, completed, overdue });
 
-      return { active, overdue };
+      return { active, completed, overdue };
     },
     enabled: !!user?.id,
-    staleTime: 0, // Don't use stale data, always fetch fresh
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds
+    staleTime: 0, // Always fetch fresh data
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds as backup
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
-
-  // Subscribe to real-time updates for tasks
-  React.useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = supabase
-      .channel('task-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks'
-        },
-        () => {
-          console.log('Dashboard: Task update detected, invalidating cache');
-          // Invalidate and refetch the task stats when any task changes
-          queryClient.invalidateQueries({ queryKey: ['user-task-stats', user.id] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'task_assignees'
-        },
-        () => {
-          console.log('Dashboard: Task assignment update detected, invalidating cache');
-          // Invalidate and refetch when task assignments change
-          queryClient.invalidateQueries({ queryKey: ['user-task-stats', user.id] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, queryClient]);
 
   if (error) {
     console.error('Task stats query error:', error);
@@ -153,7 +112,7 @@ export const MyTasksCard = () => {
     );
   }
 
-  const stats = taskStats || { active: 0, overdue: 0 };
+  const stats = taskStats || { active: 0, overdue: 0, completed: 0 };
 
   return (
     <Card className="h-full hover:shadow-lg transition-all duration-200">
@@ -170,25 +129,32 @@ export const MyTasksCard = () => {
           <div className="text-sm text-muted-foreground font-medium">Active Tasks</div>
         </div>
 
-        {/* Overdue Warning */}
-        {stats.overdue > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-              <span className="text-sm font-medium text-red-700">
-                {stats.overdue} task{stats.overdue === 1 ? '' : 's'} overdue
-              </span>
-            </div>
+        {/* Task Statistics Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center bg-green-50 rounded-lg p-3">
+            <div className="text-xl font-semibold text-green-600">{stats.completed}</div>
+            <div className="text-xs text-muted-foreground">Completed</div>
           </div>
-        )}
+          <div className="text-center bg-red-50 rounded-lg p-3">
+            <div className="text-xl font-semibold text-red-600">{stats.overdue}</div>
+            <div className="text-xs text-muted-foreground">Overdue</div>
+          </div>
+        </div>
 
         {/* Status Indicator */}
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Activity className="h-4 w-4" />
-          <span>
-            {stats.active === 0 ? 'All caught up!' : 'Keep it up!'}
-          </span>
-        </div>
+        {stats.overdue > 0 ? (
+          <div className="flex items-center justify-center gap-2 text-sm text-red-600">
+            <AlertTriangle className="h-4 w-4" />
+            <span>Attention needed</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Activity className="h-4 w-4" />
+            <span>
+              {stats.active === 0 ? 'All caught up!' : 'Keep it up!'}
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

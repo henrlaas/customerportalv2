@@ -5,9 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Award } from 'lucide-react';
+import { useRealtimeDeals } from '@/hooks/realtime/useRealtimeDeals';
 
 export const MyDealsCard = () => {
   const { user } = useAuth();
+
+  // Enable real-time updates for deals
+  useRealtimeDeals({ enabled: !!user?.id });
 
   const { data: dealStats, isLoading } = useQuery({
     queryKey: ['user-deal-stats', user?.id],
@@ -41,6 +45,8 @@ export const MyDealsCard = () => {
       return { open, closed, totalValue, successRate };
     },
     enabled: !!user?.id,
+    staleTime: 0, // Always fetch fresh data
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds as backup
   });
 
   if (isLoading) {
@@ -83,11 +89,11 @@ export const MyDealsCard = () => {
 
         {/* Deal Counts */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center bg-gray-50 rounded-lg p-3">
+          <div className="text-center bg-blue-50 rounded-lg p-3">
             <div className="text-xl font-semibold text-blue-600">{stats.open}</div>
             <div className="text-xs text-muted-foreground">Open</div>
           </div>
-          <div className="text-center bg-gray-50 rounded-lg p-3">
+          <div className="text-center bg-green-50 rounded-lg p-3">
             <div className="text-xl font-semibold text-green-600">{stats.closed}</div>
             <div className="text-xs text-muted-foreground">Closed Won</div>
           </div>

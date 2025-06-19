@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ import { Campaign } from '@/components/Campaigns/types/campaign';
 import { useAuth } from '@/contexts/AuthContext';
 import { CreateCampaignDialog } from '@/components/Campaigns/CreateCampaignDialog/CreateCampaignDialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useRealtimeCampaigns } from '@/hooks/realtime/useRealtimeCampaigns';
 
 const CampaignsPage: React.FC = () => {
   const { toast } = useToast();
@@ -16,6 +18,9 @@ const CampaignsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [status, setStatus] = useState('all');
   const { user, session } = useAuth();
+
+  // Enable real-time updates for campaigns
+  useRealtimeCampaigns({ enabled: !!session?.user?.id });
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ['campaigns', session?.user?.id],
@@ -65,6 +70,7 @@ const CampaignsPage: React.FC = () => {
       return campaignsWithProfiles as Campaign[];
     },
     enabled: !!session?.user?.id,
+    staleTime: 0, // Always fetch fresh data for real-time updates
   });
 
   // Filter campaigns based on search term and status
