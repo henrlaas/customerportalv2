@@ -35,7 +35,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
   // Find the selected option
   const selectedOption = selectedUserId 
     ? options.find(option => option.value === selectedUserId) 
-    : options[0]; // Default to "All Users"
+    : null; // Set to null when no user is selected to show placeholder
 
   // Custom formatting for the dropdown options
   const formatOptionLabel = (option: any) => {
@@ -69,13 +69,14 @@ export const UserSelect: React.FC<UserSelectProps> = ({
       placeholder="Select user..."
       formatOptionLabel={formatOptionLabel}
       isSearchable={true}
-      isClearable={false}
+      isClearable={true}
       className="react-select-container min-w-[200px]"
       classNamePrefix="react-select"
       styles={{
         control: (baseStyles, { isFocused }) => ({
           ...baseStyles,
           minHeight: '40px',
+          borderRadius: '8px',
           borderColor: isFocused ? 'hsl(var(--ring))' : 'hsl(var(--border))',
           boxShadow: isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
           '&:hover': {
@@ -89,7 +90,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
           zIndex: 50,
           backgroundColor: 'hsl(var(--popover))',
           border: '1px solid hsl(var(--border))',
-          borderRadius: '6px',
+          borderRadius: '8px',
           boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)'
         }),
         option: (baseStyles, { isFocused, isSelected }) => ({
@@ -128,6 +129,13 @@ export const UserSelect: React.FC<UserSelectProps> = ({
           display: 'none'
         }),
         dropdownIndicator: (baseStyles) => ({
+          ...baseStyles,
+          color: 'hsl(var(--muted-foreground))',
+          '&:hover': {
+            color: 'hsl(var(--foreground))'
+          }
+        }),
+        clearIndicator: (baseStyles) => ({
           ...baseStyles,
           color: 'hsl(var(--muted-foreground))',
           '&:hover': {
