@@ -44,6 +44,16 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   const [description, setDescription] = useState('');
   const [showBillableDialog, setShowBillableDialog] = useState(false);
   const [pendingTimeEntry, setPendingTimeEntry] = useState<any>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  
+  // Get current user ID
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setCurrentUserId(session?.user?.id || null);
+    };
+    getCurrentUser();
+  }, []);
   
   // Fetch task details to get company_id and title
   const { data: task } = useQuery({
@@ -338,9 +348,11 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
     return new Date(dateString).toLocaleString();
   };
   
-  // Handle time entry click to navigate to time tracking page
-  const handleTimeEntryClick = (entryId: string) => {
-    navigate(`/time-tracking?entry=${entryId}`);
+  // Handle time entry click to navigate to time tracking page - only for current user
+  const handleTimeEntryClick = (entryId: string, entryUserId: string) => {
+    if (currentUserId && entryUserId === currentUserId) {
+      navigate(`/time-tracking?entry=${entryId}`);
+    }
   };
   
   // Helper function to get user display name
@@ -426,67 +438,75 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
             
             {timeEntries.length > 0 ? (
               <div className="space-y-2">
-                {timeEntries.slice(0, 5).map((entry) => (
-                  <div 
-                    key={entry.id} 
-                    className="text-sm border rounded-md p-3 cursor-pointer hover:bg-muted/30 transition-colors"
-                    onClick={() => handleTimeEntryClick(entry.id)}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      {/* User Avatar and Name */}
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage 
-                            src={entry.profiles?.avatar_url || undefined} 
-                            alt={getUserDisplayName(entry.profiles)}
-                          />
-                          <AvatarFallback className="text-xs">
-                            {getUserInitials(entry.profiles)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium text-muted-foreground">
-                          {getUserDisplayName(entry.profiles)}
-                        </span>
+                {timeEntries.slice(0, 5).map((entry) => {
+                  const isOwnEntry = currentUserId && entry.user_id === currentUserId;
+                  
+                  return (
+                    <div 
+                      key={entry.id} 
+                      className={`text-sm border rounded-md p-3 transition-colors ${
+                        isOwnEntry 
+                          ? 'cursor-pointer hover:bg-muted/30' 
+                          : 'cursor-default'
+                      }`}
+                      onClick={() => handleTimeEntryClick(entry.id, entry.user_id)}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        {/* User Avatar and Name */}
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage 
+                              src={entry.profiles?.avatar_url || undefined} 
+                              alt={getUserDisplayName(entry.profiles)}
+                            />
+                            <AvatarFallback className="text-xs">
+                              {getUserInitials(entry.profiles)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-medium text-muted-foreground">
+                            {getUserDisplayName(entry.profiles)}
+                          </span>
+                        </div>
+                        
+                        {/* Duration and Billable Status */}
+                        <div className="flex items-center gap-2 ml-auto">
+                          {entry.end_time ? (
+                            <span className="font-medium">
+                              {formatTime(Math.floor(
+                                (new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / 1000
+                              ))}
+                            </span>
+                          ) : (
+                            <Badge variant="outline" className="bg-green-100 text-green-800">
+                              Running
+                            </Badge>
+                          )}
+                          <Badge 
+                            variant={entry.is_billable ? "default" : "outline"}
+                            className={`flex items-center gap-1 ${
+                              entry.is_billable 
+                                ? 'bg-green-500 hover:bg-green-600 text-white' 
+                                : 'bg-gray-100 text-gray-700 border-gray-300'
+                            }`}
+                          >
+                            <DollarSign className="h-3 w-3" />
+                            {entry.is_billable ? 'Billable' : 'Non-billable'}
+                          </Badge>
+                        </div>
                       </div>
                       
-                      {/* Duration and Billable Status */}
-                      <div className="flex items-center gap-2 ml-auto">
-                        {entry.end_time ? (
-                          <span className="font-medium">
-                            {formatTime(Math.floor(
-                              (new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / 1000
-                            ))}
-                          </span>
-                        ) : (
-                          <Badge variant="outline" className="bg-green-100 text-green-800">
-                            Running
-                          </Badge>
+                      {/* Description and Timestamp */}
+                      <div className="flex justify-between items-center">
+                        {entry.description && (
+                          <p className="text-muted-foreground truncate flex-1 mr-2">{entry.description}</p>
                         )}
-                        <Badge 
-                          variant={entry.is_billable ? "default" : "outline"}
-                          className={`flex items-center gap-1 ${
-                            entry.is_billable 
-                              ? 'bg-green-500 hover:bg-green-600 text-white' 
-                              : 'bg-gray-100 text-gray-700 border-gray-300'
-                          }`}
-                        >
-                          <DollarSign className="h-3 w-3" />
-                          {entry.is_billable ? 'Billable' : 'Non-billable'}
-                        </Badge>
+                        <div className="text-muted-foreground text-xs">
+                          {formatDate(entry.start_time)}
+                        </div>
                       </div>
                     </div>
-                    
-                    {/* Description and Timestamp */}
-                    <div className="flex justify-between items-center">
-                      {entry.description && (
-                        <p className="text-muted-foreground truncate flex-1 mr-2">{entry.description}</p>
-                      )}
-                      <div className="text-muted-foreground text-xs">
-                        {formatDate(entry.start_time)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-4 text-sm text-muted-foreground">
