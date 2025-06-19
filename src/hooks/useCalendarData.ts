@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, isBefore } from 'date-fns';
@@ -79,7 +80,7 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Fetch campaigns with start dates where user is the associated user (not ongoing)
+  // Fetch campaigns with start dates where user is the associated user (only draft and in-progress)
   const { data: allCampaigns, isLoading: campaignsLoading } = useQuery({
     queryKey: ['calendar-campaigns', user?.id],
     queryFn: async () => {
@@ -99,6 +100,7 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
         .not('start_date', 'is', null)
         .eq('is_ongoing', false)
         .eq('associated_user_id', user.id)
+        .in('status', ['draft', 'in-progress'])
         .order('start_date', { ascending: true });
 
       if (error) {
@@ -213,11 +215,12 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     
     monthlyStats.totalCampaigns = monthCampaigns.length;
     
-    // Overdue campaigns (past start date)
+    // Overdue campaigns (draft or in-progress status and past start date)
     monthlyStats.overdueCampaigns = campaigns.filter(campaign => {
       if (!campaign.start_date) return false;
       const startDate = new Date(campaign.start_date);
-      return isBefore(startDate, today);
+      // Campaign is overdue if it's draft or in-progress and start date has passed
+      return isBefore(startDate, today) && (campaign.status === 'draft' || campaign.status === 'in-progress');
     }).length;
   }
 
