@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Clock, Play, Pause, Save, DollarSign } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useRealtimeTimeEntries } from '@/hooks/realtime/useRealtimeTimeEntries';
 
 interface TaskTimerProps {
   taskId: string;
@@ -37,6 +38,9 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  
+  // Enable real-time updates for this task's time entries
+  useRealtimeTimeEntries({ taskId, enabled: true });
   
   const [isRunning, setIsRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -217,7 +221,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
       setIsRunning(true);
       setSeconds(0);
       setActiveEntry(data);
-      queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
+      // Note: Real-time updates will handle query invalidation automatically
     },
     onError: (error: any) => {
       toast({
@@ -260,7 +264,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
       setActiveEntry(null);
       setPendingTimeEntry(data);
       setShowBillableDialog(true);
-      queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
+      // Note: Real-time updates will handle query invalidation automatically
     },
     onError: (error: any) => {
       toast({
@@ -293,8 +297,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ taskId }) => {
       setShowBillableDialog(false);
       setPendingTimeEntry(null);
       setDescription('');
-      queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
-      queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
+      // Note: Real-time updates will handle query invalidation automatically
       toast({
         title: 'Timer stopped',
         description: 'Your time has been logged successfully',

@@ -1,13 +1,18 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FolderOpen, Activity, AlertTriangle } from 'lucide-react';
+import { useRealtimeMilestones } from '@/hooks/realtime/useRealtimeMilestones';
+import { useRealtimeProjects } from '@/hooks/realtime/useRealtimeProjects';
 
 export const MyProjectsCard = () => {
   const { user } = useAuth();
+
+  // Enable real-time updates for projects and milestones
+  useRealtimeProjects({ enabled: !!user?.id });
+  useRealtimeMilestones({ enabled: !!user?.id });
 
   const { data: projectStats, isLoading } = useQuery({
     queryKey: ['user-project-stats', user?.id],

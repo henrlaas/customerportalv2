@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -13,6 +13,10 @@ import { ProjectMilestonesPanel } from './ProjectMilestonesPanel';
 import { ProjectContractCard } from './ProjectContractCard';
 import { ProjectDocumentsCard } from './ProjectDocumentsCard';
 import { getProjectStatus, getProjectStatusBadge } from '@/utils/projectStatus';
+import { useRealtimeTimeEntries } from '@/hooks/realtime/useRealtimeTimeEntries';
+import { useRealtimeTasks } from '@/hooks/realtime/useRealtimeTasks';
+import { useRealtimeMilestones } from '@/hooks/realtime/useRealtimeMilestones';
+import { useRealtimeContracts } from '@/hooks/realtime/useRealtimeContracts';
 
 interface ProjectOverviewTabProps {
   project: any;
@@ -36,6 +40,12 @@ export const ProjectOverviewTab: React.FC<ProjectOverviewTabProps> = ({
   isAdmin
 }) => {
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
+
+  // Enable real-time updates for project overview data
+  useRealtimeTimeEntries({ projectId, enabled: !!projectId });
+  useRealtimeTasks({ projectId, enabled: !!projectId });
+  useRealtimeMilestones({ projectId, enabled: !!projectId });
+  useRealtimeContracts({ projectId, enabled: !!projectId });
 
   const formatCurrency = (value: number | null) => {
     if (value === null) return 'Not specified';

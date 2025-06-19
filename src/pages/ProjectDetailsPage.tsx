@@ -34,6 +34,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimeTimeEntries } from '@/hooks/realtime/useRealtimeTimeEntries';
+import { useRealtimeTasks } from '@/hooks/realtime/useRealtimeTasks';
+import { useRealtimeMilestones } from '@/hooks/realtime/useRealtimeMilestones';
+import { useRealtimeProjects } from '@/hooks/realtime/useRealtimeProjects';
+import { useRealtimeContracts } from '@/hooks/realtime/useRealtimeContracts';
 
 const ProjectDetailsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -56,6 +61,13 @@ const ProjectDetailsPage = () => {
 
   // Get project operations hook
   const { updateProject, deleteProject } = useProjectOperations();
+
+  // Enable real-time updates for this project
+  useRealtimeTimeEntries({ projectId: projectId || undefined, enabled: !!projectId });
+  useRealtimeTasks({ projectId: projectId || undefined, enabled: !!projectId });
+  useRealtimeMilestones({ projectId: projectId || undefined, enabled: !!projectId });
+  useRealtimeProjects({ projectId: projectId || undefined, enabled: !!projectId });
+  useRealtimeContracts({ projectId: projectId || undefined, enabled: !!projectId });
 
   // Find the selected project from the projects array
   const selectedProject = projects?.find(project => project.id === projectId);
