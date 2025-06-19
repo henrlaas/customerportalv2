@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Select from 'react-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -24,7 +23,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
 
   // Format options for react-select
   const options = [
-    { value: null, label: 'All Users', isAllUsers: true },
+    { value: null, label: 'All deals', isAllUsers: true },
     ...profiles.map(profile => ({
       value: profile.id,
       label: getUserDisplayName(profile),
@@ -42,7 +41,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
     if (option.isAllUsers) {
       return (
         <div className="flex items-center gap-2">
-          <span className="text-sm">All Users</span>
+          <span className="text-sm">All deals</span>
         </div>
       );
     }
