@@ -122,6 +122,17 @@ export const TasksPage = () => {
   // Current user ID for task filtering
   const currentUserId = user?.id || '';
   
+  // Helper function to check if a completed task is older than 3 days
+  const isOldCompletedTask = (task: Task) => {
+    if (task.status !== 'completed') return false;
+    
+    const updatedAt = new Date(task.updated_at);
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    
+    return updatedAt < threeDaysAgo;
+  };
+  
   // Fetch tasks with filtering
   const { data: allTasks = [], isLoading: isLoadingTasks } = useQuery({
     queryKey: ['tasks', filters],
@@ -168,23 +179,25 @@ export const TasksPage = () => {
     },
   });
 
-  // Filter tasks based on the showOnlyMyTasks filter and assignee filter
-  const tasks = allTasks.filter(task => {
-    // First apply the assignee filter if it's set
-    if (filters.assignee && filters.assignee !== 'all') {
-      const isAssignedToFilteredUser = task.assignees?.some(assignee => assignee.user_id === filters.assignee);
-      if (!isAssignedToFilteredUser) {
-        return false;
+  // Filter tasks based on the showOnlyMyTasks filter, assignee filter, and hide old completed tasks
+  const tasks = allTasks
+    .filter(task => !isOldCompletedTask(task)) // Hide old completed tasks
+    .filter(task => {
+      // First apply the assignee filter if it's set
+      if (filters.assignee && filters.assignee !== 'all') {
+        const isAssignedToFilteredUser = task.assignees?.some(assignee => assignee.user_id === filters.assignee);
+        if (!isAssignedToFilteredUser) {
+          return false;
+        }
       }
-    }
-    
-    // Then apply the showOnlyMyTasks filter
-    if (filters.showOnlyMyTasks) {
-      return task.assignees?.some(assignee => assignee.user_id === currentUserId);
-    }
-    
-    return true;
-  });
+      
+      // Then apply the showOnlyMyTasks filter
+      if (filters.showOnlyMyTasks) {
+        return task.assignees?.some(assignee => assignee.user_id === currentUserId);
+      }
+      
+      return true;
+    });
 
   // Fetch profiles for assignees and creator - updated to only include admin and employee users
   const { data: profiles = [] } = useQuery({
