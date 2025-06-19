@@ -50,17 +50,19 @@ const DealsPage = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [recurringFilter, setRecurringFilter] = useState<string>('all');
   const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
+  const [hasInitializedUser, setHasInitializedUser] = useState(false);
 
   const { toast } = useToast();
   const { isAdmin, isEmployee, user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Set default user filter to current user on mount
+  // Set default user filter to current user on initial mount only
   React.useEffect(() => {
-    if (user?.id && selectedUserId === null) {
+    if (user?.id && !hasInitializedUser) {
       setSelectedUserId(user.id);
+      setHasInitializedUser(true);
     }
-  }, [user?.id, selectedUserId]);
+  }, [user?.id, hasInitializedUser]);
 
   // Fetch deals
   const { data: deals = [], isLoading: isLoadingDeals } = useQuery({
