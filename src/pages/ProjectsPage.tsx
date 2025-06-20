@@ -15,6 +15,9 @@ import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getProjectStatus } from '@/utils/projectStatus';
+import { useRealtimeProjects } from '@/hooks/realtime/useRealtimeProjects';
+import { useRealtimeProjectAssignees } from '@/hooks/realtime/useRealtimeProjectAssignees';
+import { useRealtimeMilestones } from '@/hooks/realtime/useRealtimeMilestones';
 import { 
   Pagination, 
   PaginationContent, 
@@ -33,15 +36,14 @@ const ProjectsPage = () => {
   const [showMyProjects, setShowMyProjects] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const { projects, isLoading: projectsLoading, refetch, deleteProject } = useProjects();
+  const { projects, isLoading: projectsLoading, deleteProject } = useProjects();
 
   console.log('ProjectsPage render - projects:', projects?.length || 0, 'loading:', projectsLoading);
 
-  // Force refetch when returning to this page
-  useEffect(() => {
-    console.log('ProjectsPage mounted, refreshing data...');
-    refetch();
-  }, [refetch]);
+  // Enable real-time updates for projects and related tables
+  useRealtimeProjects({ enabled: true });
+  useRealtimeProjectAssignees({ enabled: true });
+  useRealtimeMilestones({ enabled: true });
 
   // Fetch user's assigned projects with better error handling
   const { data: userProjectIds = [], isLoading: userProjectsLoading, error: userProjectsError } = useQuery({
@@ -247,10 +249,6 @@ const ProjectsPage = () => {
     try {
       await deleteProject(projectId);
       toast.success('Project and associated contracts successfully deleted');
-      // Invalidate related caches to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ['projects-complete'] });
-      queryClient.invalidateQueries({ queryKey: ['user-project-assignments'] });
-      queryClient.invalidateQueries({ queryKey: ['all-project-milestones'] });
       return Promise.resolve();
     } catch (error) {
       console.error('Error deleting project:', error);
@@ -261,12 +259,6 @@ const ProjectsPage = () => {
 
   const handleCreateDialogClose = () => {
     setShowCreateDialog(false);
-    // Force refresh data after dialog closes
-    setTimeout(() => {
-      console.log('Refreshing data after dialog close...');
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ['projects-complete'] });
-    }, 100);
   };
 
   const getEmptyStateMessage = () => {

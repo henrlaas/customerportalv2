@@ -3,12 +3,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRealtime } from '../useRealtime';
 
 interface UseRealtimeTasksOptions {
-  projectId?: string;
+  taskId?: string;
   enabled?: boolean;
 }
 
 export const useRealtimeTasks = ({
-  projectId,
+  taskId,
   enabled = true
 }: UseRealtimeTasksOptions = {}) => {
   const queryClient = useQueryClient();
@@ -16,14 +16,14 @@ export const useRealtimeTasks = ({
   const handleTaskChange = () => {
     // Invalidate task-related queries
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['user-task-stats'] });
     
-    if (projectId) {
-      queryClient.invalidateQueries({ queryKey: ['project-tasks', projectId] });
+    if (taskId) {
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
     }
   };
 
-  const filter = projectId ? `project_id=eq.${projectId}` : undefined;
+  const filter = taskId ? `id=eq.${taskId}` : undefined;
 
   useRealtime({
     table: 'tasks',

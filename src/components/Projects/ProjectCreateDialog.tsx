@@ -160,9 +160,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
       
       toast.success("Project created successfully");
       
-      // Invalidate projects query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      
+      // No need for manual invalidation - real-time listeners will handle it
       onClose();
     } catch (error) {
       console.error('Error in project creation:', error);

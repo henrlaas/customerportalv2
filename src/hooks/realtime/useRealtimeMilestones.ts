@@ -15,8 +15,8 @@ export const useRealtimeMilestones = ({
 
   const handleMilestoneChange = () => {
     // Invalidate milestone-related queries
-    queryClient.invalidateQueries({ queryKey: ['project-milestones'] });
     queryClient.invalidateQueries({ queryKey: ['milestones'] });
+    queryClient.invalidateQueries({ queryKey: ['all-project-milestones'] });
     
     if (projectId) {
       queryClient.invalidateQueries({ queryKey: ['project-milestones', projectId] });
