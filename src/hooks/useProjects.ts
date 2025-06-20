@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -127,8 +128,26 @@ export const useProjects = () => {
       return data;
     },
     onSuccess: () => {
-      // Real-time updates will handle query invalidation
-      console.log('Project created, real-time updates will refresh the list');
+      console.log('Project created, invalidating queries for immediate update');
+      
+      // Immediately invalidate the main projects query for instant UI update
+      queryClient.invalidateQueries({ queryKey: ['projects-complete'] });
+      
+      // Also invalidate related queries that might be affected
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return query.queryKey[0] === 'user-project-assignments';
+        }
+      });
+      
+      // Invalidate all project milestones as they affect project status
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return query.queryKey[0] === 'all-project-milestones';
+        }
+      });
+      
+      toast.success('Project created successfully');
     },
     onError: (error) => {
       console.error('Error creating project:', error);
