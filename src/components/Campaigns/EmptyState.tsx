@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { PlusCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
   onCreateClick: () => void;
@@ -20,10 +18,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     <div className="text-center p-12 rounded-xl bg-muted/50 shadow-[rgba(145,158,171,0.2)_0px_0px_2px_0px,rgba(145,158,171,0.12)_0px_12px_24px_-4px]">
       <h3 className="text-lg font-medium mb-2">{title}</h3>
       <p className="text-muted-foreground mb-4">{description}</p>
-      <Button onClick={onCreateClick}>
-        <PlusCircle className="mr-2 h-4 w-4" />
-        {buttonText}
-      </Button>
     </div>
   );
 };
