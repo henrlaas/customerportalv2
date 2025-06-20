@@ -23,7 +23,7 @@ export interface ProjectWithRelations {
     first_name: string | null;
     last_name: string | null;
     avatar_url: string | null;
-  };
+  } | null;
 }
 
 export const useProjects = () => {
@@ -43,7 +43,7 @@ export const useProjects = () => {
             name,
             website
           ),
-          creator:profiles!projects_created_by_fkey (
+          creator:profiles!created_by (
             id,
             first_name,
             last_name,
