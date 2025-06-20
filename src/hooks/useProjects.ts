@@ -43,7 +43,7 @@ export const useProjects = () => {
             name,
             website
           ),
-          profiles!projects_created_by_fkey (
+          creator:profiles (
             id,
             first_name,
             last_name,
@@ -57,14 +57,8 @@ export const useProjects = () => {
         throw error;
       }
 
-      // Transform the data to match our interface
-      const transformedData = data?.map(project => ({
-        ...project,
-        creator: project.profiles || null
-      })) || [];
-
-      console.log('Projects fetched successfully:', transformedData?.length || 0);
-      return transformedData as ProjectWithRelations[];
+      console.log('Projects fetched successfully:', data?.length || 0);
+      return data as ProjectWithRelations[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
