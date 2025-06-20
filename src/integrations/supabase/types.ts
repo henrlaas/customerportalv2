@@ -1944,6 +1944,14 @@ export type Database = {
         Args: { admin_email: string }
         Returns: string
       }
+      create_folder_metadata: {
+        Args: {
+          p_bucket_id: string
+          p_folder_path: string
+          p_created_by: string
+        }
+        Returns: string
+      }
       create_notification: {
         Args: {
           p_user_id: string

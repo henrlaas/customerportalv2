@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MediaFile } from '@/types/media';
 import { TableCell, TableRow } from '@/components/ui/table';
@@ -135,6 +136,7 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
   };
 
   const renderUploader = () => {
+    // Show uploader for both files and folders now
     if (!item.uploadedBy) {
       return <span className="text-gray-400">—</span>;
     }
@@ -183,7 +185,7 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
               {item.name}
             </p>
           </div>
-          {item.favorited && !item.isFolder && (
+          {item.favorited && (
             <HeartIcon className="h-4 w-4 fill-red-500 text-red-500 flex-shrink-0" />
           )}
         </div>
@@ -205,7 +207,7 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
       </TableCell>
       
       <TableCell>
-        {!item.isFolder ? renderUploader() : <span className="text-gray-400">—</span>}
+        {renderUploader()}
       </TableCell>
       
       <TableCell>
@@ -222,17 +224,19 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              {/* Favorite option for both files and folders */}
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFavorite(filePath, item.favorited, e);
+                }}
+              >
+                <HeartIcon className="h-4 w-4 mr-2" />
+                {item.favorited ? 'Remove from favorites' : 'Add to favorites'}
+              </DropdownMenuItem>
+              
               {!item.isFolder && (
                 <>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onFavorite(filePath, item.favorited, e);
-                    }}
-                  >
-                    <HeartIcon className="h-4 w-4 mr-2" />
-                    {item.favorited ? 'Remove from favorites' : 'Add to favorites'}
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleShareLink}>
                     <Share className="h-4 w-4 mr-2" />
                     Get share link

@@ -86,7 +86,7 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
     },
   });
 
-  // Create folder mutation - Updated to support both internal and company folders
+  // Create folder mutation - Updated to also create folder metadata
   const createFolderMutation = useMutation({
     mutationFn: async (folderName: string) => {
       if (!session?.user?.id) {
@@ -106,18 +106,34 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
       }
       
       const folderPath = currentPath
-        ? `${currentPath}/${folderName}/.folder` 
-        : `${folderName}/.folder`;
+        ? `${currentPath}/${folderName}` 
+        : folderName;
       
+      const folderMarkerPath = `${folderPath}/.folder`;
+      
+      // Upload the folder marker file
       const { error } = await supabase
         .storage
         .from(bucketId)
-        .upload(folderPath, new Blob([''], { type: 'text/plain' }), {
+        .upload(folderMarkerPath, new Blob([''], { type: 'text/plain' }), {
           cacheControl: '3600',
           upsert: false
         });
         
       if (error) throw error;
+      
+      // Create folder metadata using the database function
+      const { error: metadataError } = await supabase
+        .rpc('create_folder_metadata', {
+          p_bucket_id: bucketId,
+          p_folder_path: folderPath,
+          p_created_by: session.user.id
+        });
+      
+      if (metadataError) {
+        console.warn('Failed to create folder metadata:', metadataError);
+        // Don't throw error here as folder creation succeeded
+      }
       
       return { folderName, bucketId };
     },
@@ -137,7 +153,7 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
     },
   });
 
-  // Delete file mutation
+  // Delete file mutation - Updated to handle folder metadata deletion
   const deleteFileMutation = useMutation({
     mutationFn: async ({ 
       path, 
@@ -198,6 +214,21 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
           .storage
           .from(bucketId)
           .remove([`${folderPath}/.folder`]);
+          
+        // Delete folder metadata
+        await supabase
+          .from('media_metadata')
+          .delete()
+          .eq('file_path', folderPath)
+          .eq('bucket_id', bucketId)
+          .eq('mime_type', 'application/folder');
+          
+        // Delete folder favorites
+        await supabase
+          .from('media_favorites')
+          .delete()
+          .eq('file_path', folderPath)
+          .eq('bucket_id', bucketId);
       } else {
         // Delete a regular file
         const filePath = path 
@@ -432,6 +463,28 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
         .move(oldFolderPath, newFolderPath);
 
       if (moveFolderError) throw moveFolderError;
+      
+      // Update folder metadata
+      const newFolderMetaPath = oldPath.includes('/')
+        ? `${oldPath.substring(0, oldPath.lastIndexOf('/'))}/${newName}`
+        : newName;
+          
+      await supabase
+        .from('media_metadata')
+        .update({ 
+          file_path: newFolderMetaPath,
+          original_name: newName
+        })
+        .eq('file_path', oldPath)
+        .eq('bucket_id', bucketId)
+        .eq('mime_type', 'application/folder');
+          
+      // Update folder favorites
+      await supabase
+        .from('media_favorites')
+        .update({ file_path: newFolderMetaPath })
+        .eq('file_path', oldPath)
+        .eq('bucket_id', bucketId);
     },
     onSuccess: () => {
       toast({
@@ -450,7 +503,7 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
     },
   });
 
-  // Toggle favorite mutation
+  // Toggle favorite mutation - Updated to work with both files and folders
   const toggleFavoriteMutation = useMutation({
     mutationFn: async ({ 
       filePath, 
@@ -470,7 +523,8 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
           .from('media_favorites')
           .delete()
           .eq('user_id', session.user.id)
-          .eq('file_path', filePath);
+          .eq('file_path', filePath)
+          .eq('bucket_id', bucketId);
           
         if (error) throw error;
       } else {
@@ -491,8 +545,8 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
       toast({
         title: data.isFavorited ? 'Added to favorites' : 'Removed from favorites',
         description: data.isFavorited 
-          ? 'File has been added to your favorites'
-          : 'File has been removed from your favorites',
+          ? 'Item has been added to your favorites'
+          : 'Item has been removed from your favorites',
       });
       queryClient.invalidateQueries({ queryKey: ['mediaFiles'] });
     },
