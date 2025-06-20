@@ -64,7 +64,7 @@ export function MetaAdFields({ form, aiGenerated }: Props) {
                   </FormControl>
                   <SelectContent className="bg-background border border-border shadow-lg z-50">
                     {CTA_BUTTON_OPTIONS.map((option) => (
-                      <SelectItem key={option} value={option === 'No button' ? '' : option}>
+                      <SelectItem key={option} value={option === 'No button' ? 'none' : option}>
                         {option}
                       </SelectItem>
                     ))}

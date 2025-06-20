@@ -75,7 +75,7 @@ export function UrlAndCtaStep({ form }: UrlAndCtaStepProps) {
                 </FormControl>
                 <SelectContent className="max-h-[200px] bg-background border border-border shadow-lg z-50">
                   {CTA_BUTTON_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option === 'No button' ? 'no-button' : option}>
+                    <SelectItem key={option} value={option === 'No button' ? 'none' : option}>
                       {option}
                     </SelectItem>
                   ))}
