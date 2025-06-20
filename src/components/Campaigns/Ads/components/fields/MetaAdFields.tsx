@@ -5,6 +5,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VariationManager } from '../VariationManager';
+import { CTA_BUTTON_OPTIONS } from '../../types/campaign';
 
 interface Props {
   form: any;
@@ -61,12 +62,12 @@ export function MetaAdFields({ form, aiGenerated }: Props) {
                       <SelectValue placeholder="Select CTA" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Learn More">Learn More</SelectItem>
-                    <SelectItem value="Shop Now">Shop Now</SelectItem>
-                    <SelectItem value="Sign Up">Sign Up</SelectItem>
-                    <SelectItem value="Download">Download</SelectItem>
-                    <SelectItem value="Contact Us">Contact Us</SelectItem>
+                  <SelectContent className="bg-background border border-border shadow-lg z-50">
+                    {CTA_BUTTON_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option === 'No button' ? '' : option}>
+                        {option}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
