@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -152,6 +151,7 @@ export const useMediaData = (
               url: '',
               size: 0,
               created_at: new Date().toISOString(),
+              uploadedBy: '', // Add uploadedBy property
               favorited: false,
               isFolder: true,
               fileCount: 0,
@@ -198,6 +198,7 @@ export const useMediaData = (
               url: '',
               size: 0,
               created_at: folder.created_at || new Date().toISOString(),
+              uploadedBy: '', // Add uploadedBy property
               favorited: false,
               isFolder: true,
               fileCount: 0,
@@ -384,6 +385,7 @@ export const useMediaData = (
             url: '',
             size: 0,
             created_at: folder.created_at || new Date().toISOString(),
+            uploadedBy: '', // Add uploadedBy property
             favorited: false,
             isFolder: true,
             fileCount: 0,
