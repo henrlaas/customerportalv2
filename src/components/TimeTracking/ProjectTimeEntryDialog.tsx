@@ -76,6 +76,8 @@ export const ProjectTimeEntryDialog = ({
     mutationFn: async (values: z.infer<typeof timeEntrySchema>) => {
       if (!user) throw new Error('You must be logged in to create time entries');
       
+      console.log('Creating time entry for project:', projectId);
+      
       // Prepare a clean object with time entry data
       const timeEntryData = {
         description: values.description,
@@ -93,9 +95,12 @@ export const ProjectTimeEntryDialog = ({
         .select();
       
       if (error) throw error;
+      console.log('Time entry created successfully:', data);
       return data;
     },
     onSuccess: () => {
+      console.log('Time entry creation successful, invalidating queries for project:', projectId);
+      
       // First close the dialog
       onClose();
       
@@ -105,10 +110,17 @@ export const ProjectTimeEntryDialog = ({
         description: 'Your time entry has been created successfully.',
       });
       
-      // Invalidate all time entry-related queries
+      // Invalidate the CORRECT query key used by ProjectTimeTrackingTab
+      queryClient.invalidateQueries({ queryKey: ['project-time-entries-enhanced', projectId] });
+      
+      // Also invalidate other time entry related queries for completeness
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       queryClient.invalidateQueries({ queryKey: ['project-time-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['project-time-entries', projectId] });
       queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
+      queryClient.invalidateQueries({ queryKey: ['monthly-time-entries'] });
+      
+      console.log('All time entry queries invalidated');
       
       // Reset the form
       form.reset({
@@ -119,6 +131,7 @@ export const ProjectTimeEntryDialog = ({
       });
     },
     onError: (error: any) => {
+      console.error('Error creating time entry:', error);
       toast({
         title: 'Error creating time entry',
         description: error.message,
@@ -129,6 +142,7 @@ export const ProjectTimeEntryDialog = ({
 
   // Submit handler for the form
   const onSubmit = (values: z.infer<typeof timeEntrySchema>) => {
+    console.log('Submitting time entry form with values:', values);
     createMutation.mutate(values);
   };
 

@@ -84,8 +84,8 @@ export const useProjectTimeData = (projectId?: string) => {
           throw taskError;
         }
 
-        console.log('Direct entries:', directEntries?.length || 0);
-        console.log('Task entries:', taskEntries?.length || 0);
+        console.log('Direct entries found:', directEntries?.length || 0);
+        console.log('Task entries found:', taskEntries?.length || 0);
 
         // Combine and format entries
         const allEntries = [
@@ -100,6 +100,8 @@ export const useProjectTimeData = (projectId?: string) => {
             task_name: (entry as any).tasks?.title || 'Unknown Task'
           }))
         ];
+
+        console.log('Total entries to process:', allEntries.length);
 
         // Get all unique user IDs for profile data
         const userIds = Array.from(new Set(allEntries.map(entry => entry.user_id)));
@@ -124,7 +126,7 @@ export const useProjectTimeData = (projectId?: string) => {
           })
         );
 
-        console.log('Total enhanced entries processed:', entriesWithEmployeeData.length);
+        console.log('Enhanced entries processed successfully:', entriesWithEmployeeData.length);
         return entriesWithEmployeeData;
       } catch (error) {
         console.error('Error in enhanced project time data fetch:', error);
