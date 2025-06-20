@@ -104,17 +104,37 @@ export const ProjectMilestonesPanel: React.FC<ProjectMilestonesPanelProps> = ({
           duration: 3000
         });
       } else {
-        // For marking as completed, just update this single milestone
-        await completeMilestone({
-          milestoneId: milestoneId,
-          status: status
-        });
+        // For marking as completed - implement cascading completion
+        const currentIndex = orderedMilestones.findIndex(m => m.id === milestoneId);
         
-        toast({
-          title: "Milestone completed",
-          description: "The milestone has been marked as completed.",
-          duration: 3000
-        });
+        // Get all milestones from the beginning up to and including the clicked milestone
+        const milestonesToComplete = orderedMilestones
+          .filter((_, index) => index <= currentIndex)
+          .filter(m => m.status === 'created')
+          .map(m => m.id);
+        
+        // Update each milestone status sequentially
+        for (const mId of milestonesToComplete) {
+          await completeMilestone({
+            milestoneId: mId,
+            status: 'completed'
+          });
+        }
+        
+        const completedCount = milestonesToComplete.length;
+        if (completedCount > 1) {
+          toast({
+            title: "Milestones completed",
+            description: `${completedCount} milestones have been marked as completed in sequence.`,
+            duration: 3000
+          });
+        } else {
+          toast({
+            title: "Milestone completed",
+            description: "The milestone has been marked as completed.",
+            duration: 3000
+          });
+        }
       }
     } catch (error) {
       console.error("Error updating milestone status:", error);
