@@ -79,7 +79,7 @@ export function AdCommentMarker({
               isResolved && "bg-green-50 border-green-200 text-green-800"
             )}>
               {comment}
-              {is‌Resolved && (
+              {isResolved && (
                 <div className="text-xs text-green-600 mt-1 font-medium">
                   ✓ Resolved
                 </div>
