@@ -25,12 +25,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useMediaOperations } from '@/hooks/useMediaOperations';
 import { useMediaData } from '@/hooks/useMediaData';
-import { FilterOptions } from '@/types/media';
+import { FilterOptions, MediaFile } from '@/types/media';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { MediaHeader } from '@/components/media/MediaHeader';
 import { MediaTabs } from '@/components/media/MediaTabs';
+import { MediaPreviewDialog } from '@/components/media/MediaPreviewDialog';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { useMediaDragAndDrop } from '@/hooks/useMediaDragAndDrop';
 import { MediaGridItem } from '@/components/media/MediaGridItem';
@@ -50,6 +51,7 @@ const MediaPage: React.FC = () => {
   const [folderToRename, setFolderToRename] = useState<string | null>(null);
   const [newFolderNameForRename, setNewFolderNameForRename] = useState('');
   const [userNamesCache, setUserNamesCache] = React.useState<{[userId: string]: string}>({});
+  const [previewFile, setPreviewFile] = useState<MediaFile | null>(null);
   const { toast } = useToast();
   
   const [filters, setFilters] = useState<FilterOptions>({
@@ -121,6 +123,15 @@ const MediaPage: React.FC = () => {
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setCurrentPath('');
+  };
+
+  // Add preview handlers
+  const handleFilePreview = (file: MediaFile) => {
+    setPreviewFile(file);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewFile(null);
   };
 
   // Helper for rendering uploader display name with cache
@@ -307,6 +318,7 @@ const MediaPage: React.FC = () => {
               setFolderToRename(name);
               setNewFolderNameForRename(name);
             } : undefined}
+            onFilePreview={handleFilePreview}
             onUpload={() => setIsUploadDialogOpen(true)}
             onNewFolder={() => setIsFolderDialogOpen(true)}
             onSearchChange={setSearchQuery}
@@ -332,6 +344,13 @@ const MediaPage: React.FC = () => {
             </div>
           )}
         </DragOverlay>
+        
+        {/* Media Preview Dialog */}
+        <MediaPreviewDialog
+          isOpen={!!previewFile}
+          onClose={handleClosePreview}
+          file={previewFile}
+        />
         
         {/* Create Folder Dialog */}
         <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
