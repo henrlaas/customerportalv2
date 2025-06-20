@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,7 @@ const ProjectsPage = () => {
 
   console.log('ProjectsPage render - projects:', projects?.length || 0, 'loading:', projectsLoading);
 
-  // Enable real-time updates for projects and related tables
+  // CRITICAL: Enable real-time updates for projects and related data
   useRealtimeProjects({ enabled: true });
   useRealtimeProjectAssignees({ enabled: true });
   useRealtimeMilestones({ enabled: true });
@@ -249,6 +248,7 @@ const ProjectsPage = () => {
     try {
       await deleteProject(projectId);
       toast.success('Project and associated contracts successfully deleted');
+      // Real-time updates will handle list refresh
       return Promise.resolve();
     } catch (error) {
       console.error('Error deleting project:', error);
@@ -259,32 +259,7 @@ const ProjectsPage = () => {
 
   const handleCreateDialogClose = () => {
     setShowCreateDialog(false);
-  };
-
-  const getEmptyStateMessage = () => {
-    if (showMyProjects && userProjectIds.length === 0 && !userProjectsLoading) {
-      return 'You are not assigned to any projects yet.';
-    }
-    
-    if (searchQuery.trim()) {
-      return 'No matching projects found. Try a different search term.';
-    }
-    
-    if (filter === 'all') {
-      return showMyProjects 
-        ? 'No assigned projects found.' 
-        : 'No projects created yet. Projects will appear here once created.';
-    }
-    
-    if (filter === 'completed') {
-      return showMyProjects 
-        ? 'No assigned completed projects found.' 
-        : 'No completed projects found.';
-    }
-    
-    return showMyProjects 
-      ? 'No assigned projects in progress found.' 
-      : 'No projects in progress found.';
+    // Real-time updates will handle list refresh
   };
 
   // Check if we're still loading critical data
@@ -299,7 +274,7 @@ const ProjectsPage = () => {
         </div>
       </div>
       
-      {/* Summary Cards */}
+      {/* Summary Cards - will update in real-time */}
       <ProjectsSummaryCards 
         projects={projects || []} 
         isLoading={projectsLoading}
