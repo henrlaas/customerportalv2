@@ -14,15 +14,16 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreateMilestone } from "@/hooks/useCreateMilestone";
+import { useProjects } from "@/hooks/useProjects";
 import Select from "react-select";
 import { ProgressStepper } from "@/components/ui/progress-stepper";
 import { useCompanyList } from "@/hooks/useCompanyList";
 import { CompanyFavicon } from "@/components/CompanyFavicon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from "@/integrations/supabase/client";
 
 // Define the form schema with updated validation
 const projectSchema = z.object({
@@ -51,11 +52,11 @@ interface ProjectCreateDialogProps {
 
 export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProps) => {
   const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const { profile } = useAuth();
   const { createMilestone } = useCreateMilestone();
-  const { companies = [], isLoading: companiesLoading } = useCompanyList(true); // Always show subsidiaries
+  const { companies = [], isLoading: companiesLoading } = useCompanyList(true);
+  const { createProjectAsync, isCreating } = useProjects();
   const queryClient = useQueryClient();
   
   const totalSteps = 2;
@@ -104,31 +105,18 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
       return;
     }
     
-    setIsSubmitting(true);
-    
     try {
-      // Create project in Supabase
-      const { data: projectData, error } = await supabase
-        .from('projects')
-        .insert({
-          name: data.name,
-          description: data.description || null,
-          company_id: data.company_id,
-          value: data.value,
-          price_type: data.price_type,
-          deadline: data.deadline ? data.deadline.toISOString() : null,
-          created_by: profile.id
-        })
-        .select()
-        .single();
+      // Use the useProjects hook's createProjectAsync method
+      const projectData = await createProjectAsync({
+        name: data.name,
+        description: data.description || undefined,
+        company_id: data.company_id,
+        value: data.value,
+        price_type: data.price_type,
+        deadline: data.deadline ? data.deadline.toISOString() : undefined,
+      });
       
-      if (error) {
-        console.error('Error creating project:', error);
-        toast.error("Failed to create project");
-        return;
-      }
-      
-      // Create initial milestone (Started) - changed from Created to Started
+      // Create initial milestone (Started)
       await createMilestone({
         projectId: projectData.id,
         name: "Started",
@@ -158,15 +146,14 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
         }
       }
       
-      toast.success("Project created successfully");
+      // Additional cache invalidation as backup
+      queryClient.invalidateQueries({ queryKey: ['projects-complete'] });
+      queryClient.invalidateQueries({ queryKey: ['user-project-assignments'] });
       
-      // No need for manual invalidation - real-time listeners will handle it
       onClose();
     } catch (error) {
       console.error('Error in project creation:', error);
       toast.error("An error occurred while creating the project");
-    } finally {
-      setIsSubmitting(false);
     }
   };
   
@@ -504,10 +491,10 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
               <Button 
                 type="button"
                 onClick={handleSubmit(onSubmit)} 
-                disabled={isSubmitting || selectedUserIds.length === 0} 
+                disabled={isCreating || selectedUserIds.length === 0} 
                 className="bg-evergreen hover:bg-evergreen/90"
               >
-                {isSubmitting ? "Creating..." : "Create Project"}
+                {isCreating ? "Creating..." : "Create Project"}
               </Button>
             )}
           </DialogFooter>
