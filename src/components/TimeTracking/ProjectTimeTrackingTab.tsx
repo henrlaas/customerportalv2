@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,8 +20,24 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
   const { timeEntries, isLoading, timeStats } = useProjectTimeData(projectId);
   const [isEntryDialogOpen, setIsEntryDialogOpen] = useState(false);
 
-  // Add debugging to track when component renders and data changes
-  console.log('ProjectTimeTrackingTab rendered for project:', projectId, 'with', timeEntries?.length || 0, 'entries');
+  // Enhanced debugging to track data flow
+  console.log('=== ProjectTimeTrackingTab Debug Info ===');
+  console.log('Project ID:', projectId);
+  console.log('Raw timeEntries from hook:', timeEntries);
+  console.log('Total entries count:', timeEntries?.length || 0);
+  console.log('Time stats:', timeStats);
+  
+  // Debug each entry type
+  if (timeEntries && timeEntries.length > 0) {
+    const directEntries = timeEntries.filter(entry => entry.entry_source === 'direct');
+    const taskEntries = timeEntries.filter(entry => entry.entry_source === 'task');
+    
+    console.log('Direct entries count:', directEntries.length);
+    console.log('Task entries count:', taskEntries.length);
+    
+    console.log('Sample direct entries:', directEntries.slice(0, 2));
+    console.log('Sample task entries:', taskEntries.slice(0, 2));
+  }
 
   if (isLoading) {
     return (
@@ -37,6 +54,22 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
     const minutes = Math.round((hours - wholeHours) * 60);
     return `${wholeHours}h ${minutes}m`;
   };
+
+  // Process and sort entries properly
+  const processedEntries = timeEntries ? [...timeEntries].sort((a, b) => {
+    const dateA = new Date(a.start_time);
+    const dateB = new Date(b.start_time);
+    return dateB.getTime() - dateA.getTime(); // Most recent first
+  }) : [];
+
+  console.log('Processed entries for display:', processedEntries.length);
+  console.log('First 5 processed entries:', processedEntries.slice(0, 5).map(e => ({
+    id: e.id,
+    source: e.entry_source,
+    description: e.description,
+    task_name: e.task_name,
+    start_time: e.start_time
+  })));
 
   return (
     <div className="space-y-6">
@@ -86,7 +119,7 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
         </CardContent>
       </Card>
 
-      {!timeEntries || timeEntries.length === 0 ? (
+      {!processedEntries || processedEntries.length === 0 ? (
         <div className="text-center p-8 text-gray-500 rounded-xl bg-muted/50">
           <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p>No time entries found for this project yet.</p>
@@ -139,10 +172,10 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
             </CardContent>
           </Card>
 
-          {/* Enhanced Recent Time Entries */}
+          {/* Enhanced Recent Time Entries - Fixed display logic */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Time Entries</CardTitle>
+              <CardTitle>Recent Time Entries ({processedEntries.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -156,7 +189,14 @@ export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrac
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {timeEntries.slice(0, 10).map((entry) => {
+                  {processedEntries.slice(0, 10).map((entry) => {
+                    console.log('Rendering entry:', {
+                      id: entry.id,
+                      source: entry.entry_source,
+                      description: entry.description,
+                      task_name: entry.task_name
+                    });
+                    
                     const startTime = new Date(entry.start_time);
                     const endTime = entry.end_time ? new Date(entry.end_time) : new Date();
                     const durationMs = endTime.getTime() - startTime.getTime();
