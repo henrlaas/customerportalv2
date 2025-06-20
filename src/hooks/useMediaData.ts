@@ -113,9 +113,11 @@ export const useMediaData = (
 
             favoritedItems.push(...favoritedFiles);
             
-            // Handle favorited folders - IMPROVED LOGIC
-            // First check folders with metadata
-            const favoritedFoldersWithMeta = mediaMetadata
+            // Handle favorited folders - SIMPLIFIED LOGIC
+            const favoritedFolders = [];
+            
+            // Get folders with metadata
+            const foldersWithMetadata = mediaMetadata
               ?.filter(meta => 
                 meta.mime_type === 'application/folder' && 
                 meta.bucket_id === bucketId &&
@@ -137,47 +139,37 @@ export const useMediaData = (
                 bucketId: bucketId
               })) || [];
 
-            // Then check for favorited folders that don't have metadata entries
-            const favoritedFoldersWithoutMeta = [];
+            favoritedFolders.push(...foldersWithMetadata);
+
+            // Get folders without metadata - create basic folder objects from favorites
+            const foldersWithoutMetadata = [];
             for (const fav of favorites || []) {
               if (fav.bucket_id === bucketId) {
-                // Check if this is a folder by looking for the .folder marker
-                const { data: folderCheck } = await supabase
-                  .storage
-                  .from(bucketId)
-                  .list(fav.file_path, { limit: 1 });
-                
-                // If the path exists as a folder and we don't already have it in metadata
-                if (folderCheck && !favoritedFoldersWithMeta.some(f => f.id === fav.file_path)) {
-                  // Check if it's actually a folder by looking for the .folder marker
-                  const { data: folderMarker } = await supabase
-                    .storage
-                    .from(bucketId)
-                    .list(fav.file_path, { search: '.folder' });
-                  
-                  if (folderMarker && folderMarker.length > 0) {
-                    favoritedFoldersWithoutMeta.push({
-                      id: fav.file_path,
-                      name: fav.file_path.split('/').pop() || '',
-                      fileType: 'folder',
-                      url: '',
-                      size: 0,
-                      created_at: fav.created_at || new Date().toISOString(),
-                      uploadedBy: '',
-                      favorited: true,
-                      isFolder: true,
-                      fileCount: 0,
-                      bucketId: bucketId
-                    });
-                  }
+                // Check if we don't already have this folder from metadata
+                const alreadyExists = foldersWithMetadata.some(f => f.id === fav.file_path);
+                if (!alreadyExists) {
+                  // Create a basic folder object from the favorite entry
+                  foldersWithoutMetadata.push({
+                    id: fav.file_path,
+                    name: fav.file_path.split('/').pop() || '',
+                    fileType: 'folder',
+                    url: '',
+                    size: 0,
+                    created_at: fav.created_at || new Date().toISOString(),
+                    uploadedBy: '',
+                    favorited: true,
+                    isFolder: true,
+                    fileCount: 0,
+                    bucketId: bucketId
+                  });
                 }
               }
             }
 
-            const allFavoritedFolders = [...favoritedFoldersWithMeta, ...favoritedFoldersWithoutMeta];
-            favoritedItems.push(...allFavoritedFolders);
+            favoritedFolders.push(...foldersWithoutMetadata);
+            favoritedItems.push(...favoritedFolders);
 
-            return { folders: allFavoritedFolders, files: favoritedFiles };
+            return { folders: favoritedFolders, files: favoritedFiles };
           }
           
           // At root level, return company folders
@@ -380,9 +372,11 @@ export const useMediaData = (
 
           favoritedItems.push(...favoritedFiles);
           
-          // Handle favorited folders - IMPROVED LOGIC FOR MEDIA BUCKET
-          // First check folders with metadata
-          const favoritedFoldersWithMeta = mediaMetadata
+          // Handle favorited folders - SIMPLIFIED LOGIC FOR MEDIA BUCKET
+          const favoritedFolders = [];
+          
+          // Get folders with metadata
+          const foldersWithMetadata = mediaMetadata
             ?.filter(meta => 
               meta.mime_type === 'application/folder' && 
               meta.bucket_id === bucketId &&
@@ -404,47 +398,37 @@ export const useMediaData = (
               bucketId: bucketId
             })) || [];
 
-          // Then check for favorited folders that don't have metadata entries
-          const favoritedFoldersWithoutMeta = [];
+          favoritedFolders.push(...foldersWithMetadata);
+
+          // Get folders without metadata - create basic folder objects from favorites
+          const foldersWithoutMetadata = [];
           for (const fav of favorites || []) {
             if (fav.bucket_id === bucketId) {
-              // Check if this is a folder by looking for the .folder marker
-              const { data: folderCheck } = await supabase
-                .storage
-                .from(bucketId)
-                .list(fav.file_path, { limit: 1 });
-              
-              // If the path exists as a folder and we don't already have it in metadata
-              if (folderCheck && !favoritedFoldersWithMeta.some(f => f.id === fav.file_path)) {
-                // Check if it's actually a folder by looking for the .folder marker
-                const { data: folderMarker } = await supabase
-                  .storage
-                  .from(bucketId)
-                  .list(fav.file_path, { search: '.folder' });
-                
-                if (folderMarker && folderMarker.length > 0) {
-                  favoritedFoldersWithoutMeta.push({
-                    id: fav.file_path,
-                    name: fav.file_path.split('/').pop() || '',
-                    fileType: 'folder',
-                    url: '',
-                    size: 0,
-                    created_at: fav.created_at || new Date().toISOString(),
-                    uploadedBy: '',
-                    favorited: true,
-                    isFolder: true,
-                    fileCount: 0,
-                    bucketId: bucketId
-                  });
-                }
+              // Check if we don't already have this folder from metadata
+              const alreadyExists = foldersWithMetadata.some(f => f.id === fav.file_path);
+              if (!alreadyExists) {
+                // Create a basic folder object from the favorite entry
+                foldersWithoutMetadata.push({
+                  id: fav.file_path,
+                  name: fav.file_path.split('/').pop() || '',
+                  fileType: 'folder',
+                  url: '',
+                  size: 0,
+                  created_at: fav.created_at || new Date().toISOString(),
+                  uploadedBy: '',
+                  favorited: true,
+                  isFolder: true,
+                  fileCount: 0,
+                  bucketId: bucketId
+                });
               }
             }
           }
 
-          const allFavoritedFolders = [...favoritedFoldersWithMeta, ...favoritedFoldersWithoutMeta];
-          favoritedItems.push(...allFavoritedFolders);
+          favoritedFolders.push(...foldersWithoutMetadata);
+          favoritedItems.push(...favoritedFolders);
 
-          return { folders: allFavoritedFolders, files: favoritedFiles };
+          return { folders: favoritedFolders, files: favoritedFiles };
         }
 
         // Normal internal media browsing (not favorites mode)
