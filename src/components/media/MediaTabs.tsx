@@ -24,6 +24,7 @@ interface MediaTabsProps {
   onFavorite: (filePath: string, isFavorited: boolean, event?: React.MouseEvent) => void;
   onDelete: (name: string, isFolder: boolean, bucketId?: string) => void;
   onRename?: (name: string) => void;
+  onFilePreview?: (file: MediaFile) => void;
   onUpload: () => void;
   onNewFolder: () => void;
   onSearchChange: (value: string) => void;
@@ -49,6 +50,7 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
   onFavorite,
   onDelete,
   onRename,
+  onFilePreview,
   onUpload,
   onNewFolder,
   onSearchChange,
@@ -97,6 +99,7 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
               onFavorite={onFavorite}
               onDelete={onDelete}
               onRename={onRename}
+              onFilePreview={onFilePreview}
               currentPath={currentPath}
               getUploaderDisplayName={getUploaderDisplayName}
               isLoading={isLoading}
@@ -121,6 +124,7 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
               onFavorite={onFavorite}
               onDelete={onDelete}
               onRename={onRename}
+              onFilePreview={onFilePreview}
               currentPath={currentPath}
               getUploaderDisplayName={getUploaderDisplayName}
               isLoading={isLoading}

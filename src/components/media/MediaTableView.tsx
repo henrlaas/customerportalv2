@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ interface MediaTableViewProps {
   onFavorite: (filePath: string, isFavorited: boolean, event?: React.MouseEvent) => void;
   onDelete: (name: string, isFolder: boolean, bucketId?: string) => void;
   onRename?: (name: string) => void;
+  onFilePreview?: (file: MediaFile) => void;
   currentPath: string;
   getUploaderDisplayName: (userId: string) => string;
   isLoading?: boolean;
@@ -30,6 +30,7 @@ export const MediaTableView: React.FC<MediaTableViewProps> = ({
   onFavorite,
   onDelete,
   onRename,
+  onFilePreview,
   currentPath,
   getUploaderDisplayName,
   isLoading,
@@ -133,6 +134,7 @@ export const MediaTableView: React.FC<MediaTableViewProps> = ({
               onFavorite={onFavorite}
               onDelete={onDelete}
               onRename={onRename}
+              onFilePreview={onFilePreview}
               currentPath={currentPath}
               getUploaderDisplayName={getUploaderDisplayName}
               getUserProfile={getUserProfile}

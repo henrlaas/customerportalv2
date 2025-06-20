@@ -22,6 +22,7 @@ import {
   Share,
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/mediaUtils';
+import { getFileAction } from '@/utils/fileTypeUtils';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,6 +32,7 @@ interface MediaTableRowProps {
   onFavorite: (filePath: string, isFavorited: boolean, event?: React.MouseEvent) => void;
   onDelete: (name: string, isFolder: boolean, bucketId?: string) => void;
   onRename?: (name: string) => void;
+  onFilePreview?: (file: MediaFile) => void;
   currentPath: string;
   getUploaderDisplayName: (userId: string) => string;
   getUserProfile: (userId: string) => { first_name?: string; avatar_url?: string } | null;
@@ -42,6 +44,7 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
   onFavorite,
   onDelete,
   onRename,
+  onFilePreview,
   currentPath,
   getUploaderDisplayName,
   getUserProfile,
@@ -53,6 +56,21 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
     : item.name;
     
   const isCompanyRootFolder = item.isCompanyFolder && !currentPath;
+
+  const handleRowClick = () => {
+    if (item.isFolder && onNavigate) {
+      onNavigate(item.name);
+    } else if (!item.isFolder) {
+      const fileAction = getFileAction(item.fileType);
+      
+      if (fileAction === 'preview' && onFilePreview) {
+        onFilePreview(item);
+      } else if (fileAction === 'open') {
+        window.open(item.url, '_blank');
+      }
+      // For 'none' action, do nothing
+    }
+  };
 
   const handleShareLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -143,7 +161,7 @@ export const MediaTableRow: React.FC<MediaTableRowProps> = ({
   return (
     <TableRow 
       className="hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-      onClick={() => item.isFolder && onNavigate?.(item.name)}
+      onClick={handleRowClick}
     >
       <TableCell className="py-3">
         <div className="flex items-center gap-3">
