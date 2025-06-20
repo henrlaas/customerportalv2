@@ -16,12 +16,12 @@ export const useRealtimeMilestones = ({
   const handleMilestoneChange = (payload: any) => {
     console.log('Real-time milestone change detected:', payload);
     
+    // Get the project ID from the changed milestone
+    const changedProjectId = payload.new?.project_id || payload.old?.project_id;
+    
     // Invalidate milestone-related queries
     queryClient.invalidateQueries({ queryKey: ['milestones'] });
     queryClient.invalidateQueries({ queryKey: ['all-project-milestones'] });
-    
-    // Get the project ID from the changed milestone
-    const changedProjectId = payload.new?.project_id || payload.old?.project_id;
     
     // Invalidate project-specific milestones
     if (changedProjectId) {
@@ -32,16 +32,23 @@ export const useRealtimeMilestones = ({
       queryClient.invalidateQueries({ queryKey: ['project-milestones', projectId] });
     }
     
-    // Invalidate all project milestones to ensure cross-project updates work
+    // CRITICAL: Invalidate the all-project-milestones query that's used by ProjectsPage
+    // This needs to be done with the exact same query key pattern used in ProjectsPage
     queryClient.invalidateQueries({ 
       predicate: (query) => {
-        return query.queryKey[0] === 'project-milestones' || 
-               query.queryKey[0] === 'all-project-milestones' ||
-               query.queryKey[0] === 'milestones';
+        // Match the exact query key pattern from ProjectsPage
+        return query.queryKey[0] === 'all-project-milestones';
       }
     });
 
-    console.log('Milestone queries invalidated');
+    // Also invalidate any cached project milestones queries with project arrays
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        return query.queryKey[0] === 'all-project-milestones' && Array.isArray(query.queryKey[1]);
+      }
+    });
+
+    console.log('Milestone queries invalidated, including all-project-milestones');
   };
 
   // Listen to all milestone changes to catch updates from any source

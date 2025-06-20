@@ -28,8 +28,22 @@ export const useCompleteMilestone = () => {
       return data;
     },
     onSuccess: (data) => {
+      console.log('Milestone status updated, invalidating queries');
+      
       // Invalidate the project-milestones query to refetch the data
       queryClient.invalidateQueries({ queryKey: ['project-milestones', data.project_id] });
+      
+      // CRITICAL: Also invalidate the all-project-milestones query used by ProjectsPage
+      queryClient.invalidateQueries({ queryKey: ['all-project-milestones'] });
+      
+      // Invalidate with predicate to catch all variations of the query
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return query.queryKey[0] === 'all-project-milestones';
+        }
+      });
+      
+      console.log('All milestone-related queries invalidated');
     }
   });
   
