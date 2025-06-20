@@ -15,21 +15,12 @@ import { Button } from '@/components/ui/button';
 import { ProjectWithRelations } from '@/hooks/useProjects';
 import { CompanyFavicon } from '@/components/CompanyFavicon';
 import { Trash2 } from 'lucide-react';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
 import { useOptimizedProjectAssignees } from '@/hooks/useOptimizedProjectAssignees';
 import { getProjectStatus, getProjectStatusBadge } from '@/utils/projectStatus';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DeleteProjectDialog } from './DeleteProjectDialog';
 
 interface ProjectListViewProps {
   projects: ProjectWithRelations[];
@@ -46,7 +37,8 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
 }) => {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const [projectToDelete, setProjectToDelete] = React.useState<string | null>(null);
+  const [projectToDelete, setProjectToDelete] = React.useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   console.log('ProjectListView render - projects:', projects.length, 'milestones keys:', Object.keys(projectMilestones).length);
 
@@ -99,26 +91,36 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
     }
   };
 
-  const handleDeleteClick = (e: React.MouseEvent, projectId: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, project: ProjectWithRelations) => {
     e.stopPropagation();
-    console.log('Delete clicked for project:', projectId);
-    setProjectToDelete(projectId);
+    console.log('Delete clicked for project:', project.id, project.name);
+    setProjectToDelete({ id: project.id, name: project.name });
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const handleDeleteConfirm = async () => {
     if (projectToDelete && onDeleteProject) {
+      setIsDeleting(true);
       try {
-        console.log('Confirming delete for project:', projectToDelete);
-        await onDeleteProject(projectToDelete);
+        console.log('Confirming delete for project:', projectToDelete.id);
+        await onDeleteProject(projectToDelete.id);
         toast.success("Project deleted successfully");
+        setDeleteDialogOpen(false);
+        setProjectToDelete(null);
       } catch (error) {
         console.error("Error deleting project:", error);
         toast.error("Failed to delete project");
+      } finally {
+        setIsDeleting(false);
       }
     }
-    setDeleteDialogOpen(false);
-    setProjectToDelete(null);
+  };
+
+  const handleDeleteDialogClose = () => {
+    if (!isDeleting) {
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
+    }
   };
 
   // Helper function to get project status badge
@@ -222,7 +224,7 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={(e) => handleDeleteClick(e, project.id)}
+                        onClick={(e) => handleDeleteClick(e, project)}
                       >
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Delete</span>
@@ -243,23 +245,14 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project and all associated data including contracts.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-            </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Enhanced Delete Confirmation Dialog */}
+      <DeleteProjectDialog
+        isOpen={deleteDialogOpen}
+        onClose={handleDeleteDialogClose}
+        onConfirm={handleDeleteConfirm}
+        projectName={projectToDelete?.name || ''}
+        isDeleting={isDeleting}
+      />
     </>
   );
 };
