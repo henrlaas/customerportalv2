@@ -7,6 +7,8 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
@@ -20,6 +22,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Form,
   FormControl,
@@ -29,12 +37,13 @@ import {
   FormMessage,
   FormDescription,
 } from '@/components/ui/form';
+import { cn } from '@/lib/utils';
 
-// Time entry form schema
+// Time entry form schema - updated to use Date objects
 const timeEntrySchema = z.object({
   description: z.string().min(1, { message: 'Description is required' }),
-  start_time: z.string().min(1, { message: 'Start time is required' }),
-  end_time: z.string().min(1, { message: 'End time is required' }),
+  start_time: z.date({ required_error: 'Start time is required' }),
+  end_time: z.date({ required_error: 'End time is required' }),
   is_billable: z.boolean().default(true),
 });
 
@@ -43,6 +52,97 @@ type ProjectTimeEntryDialogProps = {
   onClose: () => void;
   projectId: string;
   companyId?: string;
+};
+
+// Enhanced DateTimePicker component
+const DateTimePicker = ({ 
+  value, 
+  onChange, 
+  placeholder = "Select date and time" 
+}: { 
+  value?: Date; 
+  onChange: (date: Date | undefined) => void; 
+  placeholder?: string;
+}) => {
+  const [timeValue, setTimeValue] = useState(() => {
+    if (value) {
+      return format(value, 'HH:mm');
+    }
+    return '';
+  });
+
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (!selectedDate) {
+      onChange(undefined);
+      return;
+    }
+
+    // If we have a time value, apply it to the selected date
+    if (timeValue) {
+      const [hours, minutes] = timeValue.split(':').map(Number);
+      const newDate = new Date(selectedDate);
+      newDate.setHours(hours, minutes, 0, 0);
+      onChange(newDate);
+    } else {
+      // Use current time as default
+      const now = new Date();
+      const newDate = new Date(selectedDate);
+      newDate.setHours(now.getHours(), now.getMinutes(), 0, 0);
+      onChange(newDate);
+      setTimeValue(format(now, 'HH:mm'));
+    }
+  };
+
+  const handleTimeChange = (time: string) => {
+    setTimeValue(time);
+    
+    if (value && time) {
+      const [hours, minutes] = time.split(':').map(Number);
+      const newDate = new Date(value);
+      newDate.setHours(hours, minutes, 0, 0);
+      onChange(newDate);
+    }
+  };
+
+  const displayText = value 
+    ? `${format(value, 'MMM d, yyyy')} at ${format(value, 'HH:mm')}`
+    : placeholder;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            "w-full justify-start text-left font-normal",
+            !value && "text-muted-foreground"
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {displayText}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <div className="p-3">
+          <Calendar
+            mode="single"
+            selected={value}
+            onSelect={handleDateSelect}
+            className="pointer-events-auto"
+          />
+          <div className="mt-3 border-t pt-3">
+            <label className="block text-sm font-medium mb-2">Time</label>
+            <Input
+              type="time"
+              value={timeValue}
+              onChange={(e) => handleTimeChange(e.target.value)}
+              className="w-full"
+            />
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 };
 
 export const ProjectTimeEntryDialog = ({
@@ -55,18 +155,13 @@ export const ProjectTimeEntryDialog = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Format dates properly for input fields
-  const formatDateForInput = (date: Date): string => {
-    return date.toISOString().substring(0, 16);
-  };
-
-  // Form for creating time entries
+  // Form for creating time entries with updated default values
   const form = useForm({
     resolver: zodResolver(timeEntrySchema),
     defaultValues: {
       description: '',
-      start_time: formatDateForInput(new Date()),
-      end_time: formatDateForInput(new Date()),
+      start_time: new Date(),
+      end_time: new Date(),
       is_billable: true,
     },
   });
@@ -81,8 +176,8 @@ export const ProjectTimeEntryDialog = ({
       // Prepare a clean object with time entry data
       const timeEntryData = {
         description: values.description,
-        start_time: values.start_time,
-        end_time: values.end_time,
+        start_time: values.start_time.toISOString(),
+        end_time: values.end_time.toISOString(),
         user_id: user.id,
         is_billable: values.is_billable,
         project_id: projectId,
@@ -125,8 +220,8 @@ export const ProjectTimeEntryDialog = ({
       // Reset the form
       form.reset({
         description: '',
-        start_time: formatDateForInput(new Date()),
-        end_time: formatDateForInput(new Date()),
+        start_time: new Date(),
+        end_time: new Date(),
         is_billable: true,
       });
     },
@@ -174,7 +269,7 @@ export const ProjectTimeEntryDialog = ({
               )}
             />
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <FormField
                 control={form.control}
                 name="start_time"
@@ -182,7 +277,11 @@ export const ProjectTimeEntryDialog = ({
                   <FormItem>
                     <FormLabel>Start Time</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select start time"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -195,7 +294,11 @@ export const ProjectTimeEntryDialog = ({
                   <FormItem>
                     <FormLabel>End Time</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select end time"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
