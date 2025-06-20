@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -44,7 +43,7 @@ export const useProjects = () => {
             name,
             website
           ),
-          creator:profiles (
+          creator:profiles!projects_created_by_fkey (
             id,
             first_name,
             last_name,
