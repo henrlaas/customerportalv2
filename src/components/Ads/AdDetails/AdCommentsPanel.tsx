@@ -1,14 +1,14 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, CheckCircle, Clock, Reply } from 'lucide-react';
+import { MessageSquare, CheckCircle, Clock, Reply, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CommentsPanelProps {
   adId: string;
@@ -22,6 +22,10 @@ export function AdCommentsPanel({ adId, comments, isApproved = false }: Comments
   const [replyText, setReplyText] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  // Check if user can delete comments (admin or employee)
+  const canDeleteComments = profile?.role === 'admin' || profile?.role === 'employee';
 
   // Fetch user profiles for comments
   const userIds = comments.map(c => c.user_id).filter(Boolean);
@@ -106,6 +110,24 @@ export function AdCommentsPanel({ adId, comments, isApproved = false }: Comments
     },
     onError: (error: any) => {
       toast({ title: 'Failed to resolve comment', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase
+        .from('ad_comments')
+        .delete()
+        .eq('id', commentId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: 'Comment deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['ad_comments', adId] });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Failed to delete comment', description: error.message, variant: 'destructive' });
     }
   });
 
@@ -206,6 +228,17 @@ export function AdCommentsPanel({ adId, comments, isApproved = false }: Comments
                       >
                         <CheckCircle className={`h-4 w-4 ${comment.is_resolved ? 'text-green-600 fill-green-100' : 'hover:text-green-600'}`} />
                       </Button>
+                      {canDeleteComments && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:text-red-600"
+                          onClick={() => deleteCommentMutation.mutate(comment.id)}
+                          disabled={deleteCommentMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
 
@@ -216,14 +249,27 @@ export function AdCommentsPanel({ adId, comments, isApproved = false }: Comments
                         const replyUserProfile = getUserProfile(reply.user_id);
                         return (
                           <div key={reply.id} className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-4 w-4">
-                                <AvatarImage src={replyUserProfile.avatarUrl || undefined} />
-                                <AvatarFallback className="text-xs">{replyUserProfile.initials}</AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium text-sm">
-                                {replyUserProfile.firstName}
-                              </span>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-4 w-4">
+                                  <AvatarImage src={replyUserProfile.avatarUrl || undefined} />
+                                  <AvatarFallback className="text-xs">{replyUserProfile.initials}</AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium text-sm">
+                                  {replyUserProfile.firstName}
+                                </span>
+                              </div>
+                              {canDeleteComments && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:text-red-600"
+                                  onClick={() => deleteCommentMutation.mutate(reply.id)}
+                                  disabled={deleteCommentMutation.isPending}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
                             </div>
                             <p className="text-sm">{reply.comment || reply.text || 'No reply text'}</p>
                           </div>

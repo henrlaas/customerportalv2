@@ -4,11 +4,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AdCommentMarker } from './AdCommentMarker';
 import { useToast } from '@/components/ui/use-toast';
-import { Check, MessageSquare, ZoomIn } from 'lucide-react';
+import { Check, MessageSquare, ZoomIn, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,11 @@ export function AdMediaViewer({
   const [selectedComment, setSelectedComment] = useState<string | null>(null);
   const [showZoomDialog, setShowZoomDialog] = useState(false);
   const { toast } = useToast();
+  const { profile } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Check if user can delete comments (admin or employee)
+  const canDeleteComments = profile?.role === 'admin' || profile?.role === 'employee';
 
   // Fetch user profiles for comments
   const userIds = comments.map(c => c.user_id).filter(Boolean);
@@ -75,6 +81,24 @@ export function AdMediaViewer({
       initials: profile?.first_name ? profile.first_name.charAt(0).toUpperCase() : 'U'
     };
   };
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase
+        .from('ad_comments')
+        .delete()
+        .eq('id', commentId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: 'Comment deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['ad_comments', adId] });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Failed to delete comment', description: error.message, variant: 'destructive' });
+    }
+  });
 
   const handleMediaClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isCommenting || isApproved || isCampaignLocked) return;
@@ -239,17 +263,30 @@ export function AdMediaViewer({
                       } ${comment.isResolved ? 'bg-muted/50' : ''}`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm">{comment.text}</p>
-                        {!comment.isResolved && comment.id && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0"
-                            onClick={() => onCommentResolve(comment.id!)}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                        )}
+                        <p className="text-sm flex-1">{comment.text}</p>
+                        <div className="flex items-center gap-1">
+                          {!comment.isResolved && comment.id && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0"
+                              onClick={() => onCommentResolve(comment.id!)}
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {canDeleteComments && comment.id && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 hover:text-red-600"
+                              onClick={() => deleteCommentMutation.mutate(comment.id!)}
+                              disabled={deleteCommentMutation.isPending}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                         <Avatar className="h-4 w-4">
