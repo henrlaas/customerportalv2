@@ -244,6 +244,27 @@ const ProjectsPage = () => {
     return pages;
   };
 
+  // Helper function to get appropriate empty state message
+  const getEmptyStateMessage = () => {
+    if (showMyProjects && !userProjectsLoading && userProjectIds.length === 0) {
+      return "You are not assigned to any projects yet.";
+    }
+    
+    if (searchQuery.trim()) {
+      return `No projects found matching "${searchQuery}".`;
+    }
+    
+    if (filter === 'completed') {
+      return "No completed projects found.";
+    }
+    
+    if (filter === 'in_progress') {
+      return "No projects in progress found.";
+    }
+    
+    return "No projects found.";
+  };
+
   const handleDeleteProject = async (projectId: string) => {
     try {
       await deleteProject(projectId);

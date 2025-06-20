@@ -19,6 +19,12 @@ export interface ProjectWithRelations {
     name: string;
     website?: string;
   };
+  creator?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  };
 }
 
 export const useProjects = () => {
@@ -27,7 +33,7 @@ export const useProjects = () => {
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ['projects-complete'],
     queryFn: async () => {
-      console.log('Fetching projects with company data...');
+      console.log('Fetching projects with company and creator data...');
       
       const { data, error } = await supabase
         .from('projects')
@@ -37,6 +43,12 @@ export const useProjects = () => {
             id,
             name,
             website
+          ),
+          creator:profiles!projects_created_by_fkey (
+            id,
+            first_name,
+            last_name,
+            avatar_url
           )
         `)
         .order('created_at', { ascending: false });
