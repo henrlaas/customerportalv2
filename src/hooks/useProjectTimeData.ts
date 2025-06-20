@@ -54,7 +54,23 @@ export const useProjectTimeData = (projectId?: string) => {
       console.log('Fetching enhanced time entries for project:', projectId);
 
       try {
-        // First get direct project time entries
+        // Step 1: Get all task IDs that belong to this project
+        console.log('Step 1: Fetching task IDs for project:', projectId);
+        const { data: projectTasks, error: tasksError } = await supabase
+          .from('tasks')
+          .select('id, title')
+          .eq('project_id', projectId);
+
+        if (tasksError) {
+          console.error('Error fetching project tasks:', tasksError);
+          throw tasksError;
+        }
+
+        const taskIds = projectTasks?.map(task => task.id) || [];
+        console.log('Found task IDs for project:', taskIds.length, taskIds);
+
+        // Step 2: Get direct project time entries
+        console.log('Step 2: Fetching direct project time entries');
         const { data: directEntries, error: directError } = await supabase
           .from('time_entries')
           .select('*')
@@ -65,48 +81,51 @@ export const useProjectTimeData = (projectId?: string) => {
           throw directError;
         }
 
-        // Then get task-related time entries for this project
-        const { data: taskEntries, error: taskError } = await supabase
-          .from('time_entries')
-          .select(`
-            *,
-            tasks!inner(
-              id,
-              title,
-              project_id
-            )
-          `)
-          .eq('tasks.project_id', projectId)
-          .not('task_id', 'is', null);
+        console.log('Direct entries found:', directEntries?.length || 0);
 
-        if (taskError) {
-          console.error('Error fetching task time entries:', taskError);
-          throw taskError;
+        // Step 3: Get task-related time entries (if we have tasks)
+        let taskEntries: any[] = [];
+        if (taskIds.length > 0) {
+          console.log('Step 3: Fetching task-related time entries for task IDs:', taskIds);
+          const { data: taskTimeEntries, error: taskEntriesError } = await supabase
+            .from('time_entries')
+            .select('*')
+            .in('task_id', taskIds);
+
+          if (taskEntriesError) {
+            console.error('Error fetching task time entries:', taskEntriesError);
+            throw taskEntriesError;
+          }
+
+          taskEntries = taskTimeEntries || [];
+          console.log('Task-related entries found:', taskEntries.length);
         }
 
-        console.log('Direct entries found:', directEntries?.length || 0);
-        console.log('Task entries found:', taskEntries?.length || 0);
-
-        // Combine and format entries
+        // Step 4: Combine and format entries with task names
         const allEntries = [
           ...(directEntries || []).map(entry => ({
             ...entry,
             entry_source: 'direct' as const,
             task_name: null
           })),
-          ...(taskEntries || []).map(entry => ({
-            ...entry,
-            entry_source: 'task' as const,
-            task_name: (entry as any).tasks?.title || 'Unknown Task'
-          }))
+          ...taskEntries.map(entry => {
+            const relatedTask = projectTasks?.find(task => task.id === entry.task_id);
+            return {
+              ...entry,
+              entry_source: 'task' as const,
+              task_name: relatedTask?.title || 'Unknown Task'
+            };
+          })
         ];
 
         console.log('Total entries to process:', allEntries.length);
+        console.log('Entries breakdown - Direct:', directEntries?.length || 0, 'Task-related:', taskEntries.length);
 
-        // Get all unique user IDs for profile data
+        // Step 5: Get all unique user IDs for profile data
         const userIds = Array.from(new Set(allEntries.map(entry => entry.user_id)));
+        console.log('Fetching profiles for user IDs:', userIds);
         
-        // Fetch employee profiles
+        // Step 6: Fetch employee profiles in parallel
         const entriesWithEmployeeData = await Promise.all(
           allEntries.map(async (entry) => {
             const { data: profileData, error: profileError } = await supabase
@@ -116,7 +135,7 @@ export const useProjectTimeData = (projectId?: string) => {
               .single();
 
             if (profileError && profileError.code !== 'PGRST116') {
-              console.error('Error fetching employee profile:', profileError);
+              console.error('Error fetching employee profile for user:', entry.user_id, profileError);
             }
 
             return {
@@ -127,6 +146,13 @@ export const useProjectTimeData = (projectId?: string) => {
         );
 
         console.log('Enhanced entries processed successfully:', entriesWithEmployeeData.length);
+        console.log('Sample entries:', entriesWithEmployeeData.slice(0, 3).map(e => ({
+          id: e.id,
+          source: e.entry_source,
+          task_name: e.task_name,
+          description: e.description
+        })));
+        
         return entriesWithEmployeeData;
       } catch (error) {
         console.error('Error in enhanced project time data fetch:', error);
