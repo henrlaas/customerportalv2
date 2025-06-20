@@ -51,6 +51,9 @@ const ProjectDetailsPage = () => {
   const { isAdmin } = useAuth();
   const { toast: toastHook } = useToast();
   
+  // Add state for controlled tabs
+  const [activeTab, setActiveTab] = useState("overview");
+  
   // Add state for edit and delete dialogs
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -420,8 +423,8 @@ const ProjectDetailsPage = () => {
         </DropdownMenu>
       </div>
 
-      {/* Updated Tabs */}
-      <Tabs defaultValue="overview">
+      {/* Updated Tabs with controlled state */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="milestones">Milestones</TabsTrigger>
@@ -439,6 +442,7 @@ const ProjectDetailsPage = () => {
             projectId={projectId || ''}
             onCreateTask={() => setIsTaskDialogOpen(true)}
             onTaskClick={handleTaskClick}
+            onSwitchToTasksTab={() => setActiveTab("tasks")}
             isAdmin={isAdmin}
           />
         </TabsContent>
