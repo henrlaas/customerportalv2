@@ -16,21 +16,30 @@ export const useRealtimeTasks = ({
   const queryClient = useQueryClient();
 
   const handleTaskChange = () => {
-    // Invalidate task-related queries
+    // Invalidate all task-related queries
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
     queryClient.invalidateQueries({ queryKey: ['user-task-stats'] });
     queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
     
+    // Invalidate specific task
     if (taskId) {
       queryClient.invalidateQueries({ queryKey: ['task', taskId] });
     }
     
+    // Invalidate project-specific tasks (used by ProjectDetailsPage)
     if (projectId) {
       queryClient.invalidateQueries({ queryKey: ['project-tasks', projectId] });
     }
+    
+    // Invalidate all project tasks to catch cross-project updates
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        return query.queryKey[0] === 'project-tasks';
+      }
+    });
   };
 
-  // Create filter for both taskId and projectId
+  // Use broader filter or no filter to catch tasks created from other pages
   let filter: string | undefined;
   if (taskId && projectId) {
     filter = `id=eq.${taskId},project_id=eq.${projectId}`;
@@ -39,6 +48,7 @@ export const useRealtimeTasks = ({
   } else if (projectId) {
     filter = `project_id=eq.${projectId}`;
   }
+  // If no specific filters, listen to all task changes to ensure cross-page updates work
 
   useRealtime({
     table: 'tasks',

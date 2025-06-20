@@ -18,9 +18,18 @@ export const useRealtimeProjectAssignees = ({
     queryClient.invalidateQueries({ queryKey: ['project-assignees'] });
     queryClient.invalidateQueries({ queryKey: ['user-project-assignments'] });
     
+    // Invalidate specific project data
     if (projectId) {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-assignees', projectId] });
     }
+    
+    // Invalidate all project assignee queries to ensure cross-project updates
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        return query.queryKey[0] === 'project-assignees';
+      }
+    });
   };
 
   const filter = projectId ? `project_id=eq.${projectId}` : undefined;

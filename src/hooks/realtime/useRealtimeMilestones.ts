@@ -18,9 +18,18 @@ export const useRealtimeMilestones = ({
     queryClient.invalidateQueries({ queryKey: ['milestones'] });
     queryClient.invalidateQueries({ queryKey: ['all-project-milestones'] });
     
+    // Invalidate project-specific milestones
     if (projectId) {
       queryClient.invalidateQueries({ queryKey: ['project-milestones', projectId] });
     }
+    
+    // Invalidate all project milestones to ensure cross-project updates work
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        return query.queryKey[0] === 'project-milestones' || 
+               query.queryKey[0] === 'all-project-milestones';
+      }
+    });
   };
 
   const filter = projectId ? `project_id=eq.${projectId}` : undefined;
