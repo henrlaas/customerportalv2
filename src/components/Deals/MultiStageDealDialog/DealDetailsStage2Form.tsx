@@ -271,9 +271,27 @@ export const DealDetailsStage2Form: React.FC<DealDetailsStage2FormProps> = ({
               <FormControl>
                 <Input
                   type="number"
-                  placeholder="0"
-                  {...field}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  min="0"
+                  step="0.01"
+                  placeholder="Enter deal value"
+                  value={field.value === 0 ? '' : field.value}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                      field.onChange(0);
+                    } else {
+                      const numValue = parseFloat(value);
+                      if (!isNaN(numValue) && numValue >= 0) {
+                        field.onChange(numValue);
+                      }
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                      field.onChange(0);
+                    }
+                  }}
                 />
               </FormControl>
               <FormMessage />

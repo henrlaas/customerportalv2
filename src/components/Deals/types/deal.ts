@@ -98,11 +98,11 @@ export const dealDetailsStage1Schema = z.object({
   description: z.string().min(1, 'Deal description is required'),
 });
 
-// Schema for deal details stage 2
+// Schema for deal details stage 2 - Updated to handle value properly
 export const dealDetailsStage2Schema = z.object({
   deal_type: z.enum(['recurring', 'one-time']),
   client_deal_type: z.enum(['marketing', 'web']),
-  value: z.number().min(0, 'Value must be 0 or higher'),
+  value: z.number().min(0, 'Value cannot be negative'),
   price_type: z.enum(['MRR', 'Project']),
   assigned_to: z.string().optional(),
 });
