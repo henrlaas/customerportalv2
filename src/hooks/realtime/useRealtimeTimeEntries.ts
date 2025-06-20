@@ -15,39 +15,64 @@ export const useRealtimeTimeEntries = ({
 }: UseRealtimeTimeEntriesOptions = {}) => {
   const queryClient = useQueryClient();
 
-  const handleTimeEntryChange = () => {
+  const handleTimeEntryChange = (payload: any) => {
+    console.log('Real-time time entry change detected:', payload);
+    
     // Invalidate all time entry related queries
     queryClient.invalidateQueries({ queryKey: ['time-entries'] });
     queryClient.invalidateQueries({ queryKey: ['project-time-entries'] });
     queryClient.invalidateQueries({ queryKey: ['project-time-entries-enhanced'] });
     queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
+    queryClient.invalidateQueries({ queryKey: ['monthly-time-entries'] });
+    
+    // Get the project ID from the changed entry
+    const changedProjectId = payload.new?.project_id || payload.old?.project_id;
+    const changedTaskId = payload.new?.task_id || payload.old?.task_id;
     
     // Invalidate project-specific time entries (used by ProjectDetailsPage and overview cards)
+    if (changedProjectId) {
+      queryClient.invalidateQueries({ queryKey: ['project-time-entries-enhanced', changedProjectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-time-entries', changedProjectId] });
+    }
+    
+    // Invalidate current project if specified
     if (projectId) {
       queryClient.invalidateQueries({ queryKey: ['project-time-entries-enhanced', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-time-entries', projectId] });
     }
     
     // Invalidate task-specific time entries
+    if (changedTaskId) {
+      queryClient.invalidateQueries({ queryKey: ['time-entries', changedTaskId] });
+    }
     if (taskId) {
       queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
     }
     
-    // Invalidate all project time entries to ensure overview cards update
+    // Invalidate all project time entries to ensure overview cards and summary data update
     queryClient.invalidateQueries({ 
       predicate: (query) => {
-        return query.queryKey[0] === 'project-time-entries-enhanced' || 
-               query.queryKey[0] === 'project-time-entries';
+        const key = query.queryKey[0];
+        return key === 'project-time-entries-enhanced' || 
+               key === 'project-time-entries' ||
+               key === 'time-entries' ||
+               key === 'monthlyHours' ||
+               key === 'monthly-time-entries';
       }
     });
+
+    console.log('Time entry queries invalidated');
   };
 
-  // Create filter based on provided options, but allow broader listening
+  // Remove restrictive filters - listen to ALL time entry changes
+  // This ensures time entries created from any page are caught instantly
   let filter: string | undefined;
+  
   if (projectId && taskId) {
     filter = `project_id=eq.${projectId},task_id=eq.${taskId}`;
   } else if (projectId) {
-    filter = `project_id=eq.${projectId}`;
+    // For project pages, listen to all changes to catch entries created elsewhere
+    filter = undefined; // Listen to all changes
   } else if (taskId) {
     filter = `task_id=eq.${taskId}`;
   }

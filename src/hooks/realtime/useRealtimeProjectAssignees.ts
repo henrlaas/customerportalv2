@@ -13,12 +13,22 @@ export const useRealtimeProjectAssignees = ({
 }: UseRealtimeProjectAssigneesOptions = {}) => {
   const queryClient = useQueryClient();
 
-  const handleAssigneeChange = () => {
+  const handleAssigneeChange = (payload: any) => {
+    console.log('Real-time project assignee change detected:', payload);
+    
     // Invalidate project assignee queries
     queryClient.invalidateQueries({ queryKey: ['project-assignees'] });
     queryClient.invalidateQueries({ queryKey: ['user-project-assignments'] });
     
+    // Get the project ID from the changed assignee
+    const changedProjectId = payload.new?.project_id || payload.old?.project_id;
+    
     // Invalidate specific project data
+    if (changedProjectId) {
+      queryClient.invalidateQueries({ queryKey: ['project', changedProjectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-assignees', changedProjectId] });
+    }
+    
     if (projectId) {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-assignees', projectId] });
@@ -27,12 +37,16 @@ export const useRealtimeProjectAssignees = ({
     // Invalidate all project assignee queries to ensure cross-project updates
     queryClient.invalidateQueries({ 
       predicate: (query) => {
-        return query.queryKey[0] === 'project-assignees';
+        return query.queryKey[0] === 'project-assignees' ||
+               query.queryKey[0] === 'user-project-assignments';
       }
     });
+
+    console.log('Project assignee queries invalidated');
   };
 
-  const filter = projectId ? `project_id=eq.${projectId}` : undefined;
+  // Listen to all assignee changes to catch updates from any source
+  const filter = undefined; // Remove project-specific filter
 
   useRealtime({
     table: 'project_assignees',

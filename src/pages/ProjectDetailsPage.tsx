@@ -62,7 +62,8 @@ const ProjectDetailsPage = () => {
   // Get project operations hook
   const { updateProject, deleteProject } = useProjectOperations();
 
-  // Enable real-time updates for this project
+  // Enable real-time updates for this project - with enhanced logging
+  console.log('Setting up real-time listeners for project:', projectId);
   useRealtimeTimeEntries({ projectId: projectId || undefined, enabled: !!projectId });
   useRealtimeTasks({ projectId: projectId || undefined, enabled: !!projectId });
   useRealtimeMilestones({ projectId: projectId || undefined, enabled: !!projectId });

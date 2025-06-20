@@ -23,10 +23,14 @@ export const useRealtime = ({
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      console.log(`Real-time disabled for table: ${table}`);
+      return;
+    }
 
     // Create a unique channel name
     const channelName = `realtime-${table}-${Date.now()}`;
+    console.log(`Setting up real-time channel: ${channelName} for table: ${table} with filter:`, filter);
     
     const channel = supabase
       .channel(channelName)
@@ -69,12 +73,15 @@ export const useRealtime = ({
           onDelete?.(payload);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Real-time subscription status for ${table}:`, status);
+      });
 
     channelRef.current = channel;
 
     return () => {
       if (channelRef.current) {
+        console.log(`Cleaning up real-time channel for ${table}`);
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
