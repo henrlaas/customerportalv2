@@ -86,7 +86,7 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
     },
   });
 
-  // Create folder mutation - Updated to also create folder metadata
+  // Create folder mutation - Updated to properly use create_folder_metadata function
   const createFolderMutation = useMutation({
     mutationFn: async (folderName: string) => {
       if (!session?.user?.id) {
@@ -122,7 +122,7 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
         
       if (error) throw error;
       
-      // Create folder metadata using the database function
+      // Create folder metadata using the database function - this is the key fix
       const { error: metadataError } = await supabase
         .rpc('create_folder_metadata', {
           p_bucket_id: bucketId,
@@ -131,8 +131,8 @@ export const useMediaOperations = (currentPath: string, session: Session | null,
         });
       
       if (metadataError) {
-        console.warn('Failed to create folder metadata:', metadataError);
-        // Don't throw error here as folder creation succeeded
+        console.error('Failed to create folder metadata:', metadataError);
+        // Don't throw error here as folder creation succeeded, but log the issue
       }
       
       return { folderName, bucketId };
