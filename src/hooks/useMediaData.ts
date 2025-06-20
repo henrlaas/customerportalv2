@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -54,26 +53,59 @@ export const useMediaData = (
       }
       
       try {
-        // Get favorites for the current user - Make sure to select the bucket_id column
+        // Get favorites for the current user
         const { data: favorites } = await supabase
           .from('media_favorites')
           .select('id, user_id, file_path, created_at, bucket_id')
           .eq('user_id', session.user.id);
 
+        console.log('Debug - Favorites data:', favorites);
+
         // Handle company files tab
         if (activeTab === 'company') {
-          // If favorites filter is active, fetch all favorited files recursively
+          // If favorites filter is active, fetch all favorited files and folders
           if (filters.favorites) {
             const bucketId = 'companymedia';
-            const allFiles = await fetchAllFilesRecursively(bucketId);
             
-            // Get metadata for all files
+            // Get metadata for favorited items
             const { data: mediaMetadata } = await supabase
               .from('media_metadata')
               .select('*')
               .eq('bucket_id', bucketId);
 
-            // Filter only favorited files
+            console.log('Debug - Company metadata:', mediaMetadata);
+
+            // Get favorited folders from metadata
+            const favoritedFolders = mediaMetadata
+              ?.filter(meta => {
+                const isFavorited = favorites?.some(fav => 
+                  fav.file_path === meta.file_path && fav.bucket_id === bucketId
+                );
+                const isFolder = meta.mime_type === 'application/folder';
+                console.log(`Debug - Checking ${meta.file_path}: isFolder=${isFolder}, isFavorited=${isFavorited}`);
+                return isFolder && isFavorited;
+              })
+              .map(folderMeta => {
+                console.log('Debug - Creating folder object for:', folderMeta.file_path);
+                return {
+                  id: folderMeta.file_path,
+                  name: folderMeta.original_name || folderMeta.file_path.split('/').pop() || '',
+                  fileType: 'folder',
+                  url: '',
+                  size: 0,
+                  created_at: folderMeta.upload_date || new Date().toISOString(),
+                  uploadedBy: folderMeta.uploaded_by || '',
+                  favorited: true,
+                  isFolder: true,
+                  fileCount: 0,
+                  bucketId: bucketId
+                };
+              }) || [];
+
+            console.log('Debug - Favorited folders result:', favoritedFolders);
+
+            // Fetch all files recursively and filter favorited ones
+            const allFiles = await fetchAllFilesRecursively(bucketId);
             const favoritedFiles = allFiles
               .filter(file => {
                 return favorites?.some(fav => 
@@ -109,29 +141,7 @@ export const useMediaData = (
                 };
               });
 
-            // Get favorited folders from metadata - SIMPLIFIED APPROACH
-            const favoritedFolders = mediaMetadata
-              ?.filter(meta => 
-                meta.mime_type === 'application/folder' && 
-                meta.bucket_id === bucketId &&
-                favorites?.some(fav => 
-                  fav.file_path === meta.file_path && fav.bucket_id === bucketId
-                )
-              )
-              .map(folderMeta => ({
-                id: folderMeta.file_path,
-                name: folderMeta.original_name || folderMeta.file_path.split('/').pop() || '',
-                fileType: 'folder',
-                url: '',
-                size: 0,
-                created_at: folderMeta.upload_date || new Date().toISOString(),
-                uploadedBy: folderMeta.uploaded_by || '',
-                favorited: true,
-                isFolder: true,
-                fileCount: 0,
-                bucketId: bucketId
-              })) || [];
-
+            console.log('Debug - Final favorites result for company:', { folders: favoritedFolders, files: favoritedFiles });
             return { folders: favoritedFolders, files: favoritedFiles };
           }
           
@@ -283,18 +293,49 @@ export const useMediaData = (
         }
 
         // Handle internal files tab (media bucket)
-        // If favorites filter is active, fetch all favorited files recursively
+        // If favorites filter is active, fetch all favorited files and folders
         if (filters.favorites) {
           const bucketId = 'media';
-          const allFiles = await fetchAllFilesRecursively(bucketId);
           
-          // Get metadata for all files
+          // Get metadata for favorited items
           const { data: mediaMetadata } = await supabase
             .from('media_metadata')
             .select('*')
             .eq('bucket_id', bucketId);
 
-          // Filter only favorited files
+          console.log('Debug - Internal metadata:', mediaMetadata);
+
+          // Get favorited folders from metadata
+          const favoritedFolders = mediaMetadata
+            ?.filter(meta => {
+              const isFavorited = favorites?.some(fav => 
+                fav.file_path === meta.file_path && fav.bucket_id === bucketId
+              );
+              const isFolder = meta.mime_type === 'application/folder';
+              console.log(`Debug - Checking ${meta.file_path}: isFolder=${isFolder}, isFavorited=${isFavorited}`);
+              return isFolder && isFavorited;
+            })
+            .map(folderMeta => {
+              console.log('Debug - Creating folder object for:', folderMeta.file_path);
+              return {
+                id: folderMeta.file_path,
+                name: folderMeta.original_name || folderMeta.file_path.split('/').pop() || '',
+                fileType: 'folder',
+                url: '',
+                size: 0,
+                created_at: folderMeta.upload_date || new Date().toISOString(),
+                uploadedBy: folderMeta.uploaded_by || '',
+                favorited: true,
+                isFolder: true,
+                fileCount: 0,
+                bucketId: bucketId
+              };
+            }) || [];
+
+          console.log('Debug - Favorited folders result:', favoritedFolders);
+
+          // Fetch all files recursively and filter favorited ones
+          const allFiles = await fetchAllFilesRecursively(bucketId);
           const favoritedFiles = allFiles
             .filter(file => {
               return favorites?.some(fav => 
@@ -330,29 +371,7 @@ export const useMediaData = (
               };
             });
 
-          // Get favorited folders from metadata - SIMPLIFIED APPROACH
-          const favoritedFolders = mediaMetadata
-            ?.filter(meta => 
-              meta.mime_type === 'application/folder' && 
-              meta.bucket_id === bucketId &&
-              favorites?.some(fav => 
-                fav.file_path === meta.file_path && fav.bucket_id === bucketId
-              )
-            )
-            .map(folderMeta => ({
-              id: folderMeta.file_path,
-              name: folderMeta.original_name || folderMeta.file_path.split('/').pop() || '',
-              fileType: 'folder',
-              url: '',
-              size: 0,
-              created_at: folderMeta.upload_date || new Date().toISOString(),
-              uploadedBy: folderMeta.uploaded_by || '',
-              favorited: true,
-              isFolder: true,
-              fileCount: 0,
-              bucketId: bucketId
-            })) || [];
-
+          console.log('Debug - Final favorites result for internal:', { folders: favoritedFolders, files: favoritedFiles });
           return { folders: favoritedFolders, files: favoritedFiles };
         }
 
