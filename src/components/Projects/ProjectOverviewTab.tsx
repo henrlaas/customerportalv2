@@ -26,6 +26,7 @@ interface ProjectOverviewTabProps {
   projectId: string;
   onCreateTask: () => void;
   onTaskClick: (taskId: string) => void;
+  onSwitchToTasksTab?: () => void;
   isAdmin: boolean;
 }
 
@@ -37,6 +38,7 @@ export const ProjectOverviewTab: React.FC<ProjectOverviewTabProps> = ({
   projectId,
   onCreateTask,
   onTaskClick,
+  onSwitchToTasksTab,
   isAdmin
 }) => {
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
@@ -119,6 +121,7 @@ export const ProjectOverviewTab: React.FC<ProjectOverviewTabProps> = ({
               tasks={tasks} 
               onTaskClick={onTaskClick}
               onCreateTask={onCreateTask}
+              onViewAllTasks={onSwitchToTasksTab}
             />
           </CardContent>
         </Card>

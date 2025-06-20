@@ -10,12 +10,14 @@ interface RecentTasksListProps {
   tasks: any[];
   onTaskClick: (taskId: string) => void;
   onCreateTask: () => void;
+  onViewAllTasks?: () => void;
 }
 
 export const RecentTasksList: React.FC<RecentTasksListProps> = ({
   tasks,
   onTaskClick,
-  onCreateTask
+  onCreateTask,
+  onViewAllTasks
 }) => {
   // Show only the 5 most recent tasks
   const recentTasks = tasks.slice(0, 5);
@@ -113,7 +115,7 @@ export const RecentTasksList: React.FC<RecentTasksListProps> = ({
       
       {tasks.length > 5 && (
         <div className="text-center pt-2">
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={onViewAllTasks}>
             View All Tasks
           </Button>
         </div>
