@@ -32,9 +32,10 @@ export const useProjects = () => {
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ['projects-complete'],
     queryFn: async () => {
-      console.log('Fetching projects with company and creator data...');
+      console.log('Fetching projects with company data...');
       
-      const { data, error } = await supabase
+      // First, fetch projects with company data only
+      const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select(`
           *,
@@ -42,23 +43,59 @@ export const useProjects = () => {
             id,
             name,
             website
-          ),
-          creator:profiles (
-            id,
-            first_name,
-            last_name,
-            avatar_url
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching projects:', error);
-        throw error;
+      if (projectsError) {
+        console.error('Error fetching projects:', projectsError);
+        throw projectsError;
       }
 
-      console.log('Projects fetched successfully:', data?.length || 0);
-      return data as ProjectWithRelations[];
+      if (!projectsData || projectsData.length === 0) {
+        console.log('No projects found');
+        return [];
+      }
+
+      // Collect unique creator IDs
+      const creatorIds = [...new Set(
+        projectsData
+          .map(project => project.created_by)
+          .filter(Boolean)
+      )] as string[];
+
+      console.log('Fetching creator profiles for IDs:', creatorIds);
+
+      // Fetch creator profiles separately if we have any creator IDs
+      let creatorsData: any[] = [];
+      if (creatorIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .in('id', creatorIds);
+
+        if (profilesError) {
+          console.error('Error fetching creator profiles:', profilesError);
+          // Don't throw here, just log the error and continue without creator data
+        } else {
+          creatorsData = profiles || [];
+        }
+      }
+
+      // Create a map of creator ID to creator data for easy lookup
+      const creatorsMap = new Map();
+      creatorsData.forEach(creator => {
+        creatorsMap.set(creator.id, creator);
+      });
+
+      // Map projects with their creators
+      const projectsWithRelations: ProjectWithRelations[] = projectsData.map(project => ({
+        ...project,
+        creator: project.created_by ? creatorsMap.get(project.created_by) || null : null
+      }));
+
+      console.log('Projects fetched successfully:', projectsWithRelations.length);
+      return projectsWithRelations;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
