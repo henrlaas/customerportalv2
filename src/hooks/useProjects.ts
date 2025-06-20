@@ -44,7 +44,7 @@ export const useProjects = () => {
             name,
             website
           ),
-          creator:profiles!projects_created_by_fkey (
+          creator:profiles (
             id,
             first_name,
             last_name,
