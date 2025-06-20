@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +18,9 @@ type ProjectTimeTrackingTabProps = {
 export const ProjectTimeTrackingTab = ({ projectId, companyId }: ProjectTimeTrackingTabProps) => {
   const { timeEntries, isLoading, timeStats } = useProjectTimeData(projectId);
   const [isEntryDialogOpen, setIsEntryDialogOpen] = useState(false);
+
+  // Add debugging to track when component renders and data changes
+  console.log('ProjectTimeTrackingTab rendered for project:', projectId, 'with', timeEntries?.length || 0, 'entries');
 
   if (isLoading) {
     return (

@@ -70,6 +70,9 @@ const ProjectDetailsPage = () => {
   useRealtimeProjects({ projectId: projectId || undefined, enabled: !!projectId });
   useRealtimeContracts({ projectId: projectId || undefined, enabled: !!projectId });
 
+  // Log when real-time setup is complete
+  console.log('Real-time listeners configured for project:', projectId);
+
   // Find the selected project from the projects array
   const selectedProject = projects?.find(project => project.id === projectId);
 

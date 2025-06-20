@@ -18,38 +18,54 @@ export const useRealtimeTimeEntries = ({
   const handleTimeEntryChange = (payload: any) => {
     console.log('Real-time time entry change detected:', payload);
     
-    // Invalidate all time entry related queries
+    // Get the changed entry's associations
+    const changedProjectId = payload.new?.project_id || payload.old?.project_id;
+    const changedTaskId = payload.new?.task_id || payload.old?.task_id;
+    const entryId = payload.new?.id || payload.old?.id;
+    
+    console.log('Changed entry - Project ID:', changedProjectId, 'Task ID:', changedTaskId, 'Entry ID:', entryId);
+    
+    // Always invalidate general time entry queries
     queryClient.invalidateQueries({ queryKey: ['time-entries'] });
-    queryClient.invalidateQueries({ queryKey: ['project-time-entries'] });
-    queryClient.invalidateQueries({ queryKey: ['project-time-entries-enhanced'] });
     queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
     queryClient.invalidateQueries({ queryKey: ['monthly-time-entries'] });
     
-    // Get the project ID from the changed entry
-    const changedProjectId = payload.new?.project_id || payload.old?.project_id;
-    const changedTaskId = payload.new?.task_id || payload.old?.task_id;
-    
-    // Invalidate project-specific time entries (used by ProjectDetailsPage and overview cards)
+    // CRITICAL: Always invalidate project-specific queries when time entry has project_id
+    // This ensures time entries created from /time-tracking page appear instantly in ProjectDetailsPage
     if (changedProjectId) {
+      console.log('Invalidating project-specific time queries for project:', changedProjectId);
       queryClient.invalidateQueries({ queryKey: ['project-time-entries-enhanced', changedProjectId] });
       queryClient.invalidateQueries({ queryKey: ['project-time-entries', changedProjectId] });
     }
     
-    // Invalidate current project if specified
-    if (projectId) {
+    // ALSO handle time entries associated with tasks that belong to projects
+    // This is important for task-related time entries that should update project views
+    if (changedTaskId) {
+      console.log('Time entry associated with task:', changedTaskId, '- checking for project association');
+      queryClient.invalidateQueries({ queryKey: ['time-entries', changedTaskId] });
+      
+      // We need to invalidate project queries in case this task belongs to a project
+      // The task might have a project_id that we need to refresh
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return query.queryKey[0] === 'project-time-entries-enhanced';
+        }
+      });
+    }
+    
+    // Also invalidate for the current project being viewed (if specified)
+    if (projectId && projectId !== changedProjectId) {
+      console.log('Also invalidating current project time queries:', projectId);
       queryClient.invalidateQueries({ queryKey: ['project-time-entries-enhanced', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-time-entries', projectId] });
     }
     
-    // Invalidate task-specific time entries
-    if (changedTaskId) {
-      queryClient.invalidateQueries({ queryKey: ['time-entries', changedTaskId] });
-    }
+    // Invalidate specific task time entries if monitoring specific task
     if (taskId) {
       queryClient.invalidateQueries({ queryKey: ['time-entries', taskId] });
     }
     
-    // Invalidate all project time entries to ensure overview cards and summary data update
+    // Broad invalidation to ensure all time entry related views update
     queryClient.invalidateQueries({ 
       predicate: (query) => {
         const key = query.queryKey[0];
@@ -61,22 +77,12 @@ export const useRealtimeTimeEntries = ({
       }
     });
 
-    console.log('Time entry queries invalidated');
+    console.log('Time entry queries invalidated successfully');
   };
 
-  // Remove restrictive filters - listen to ALL time entry changes
-  // This ensures time entries created from any page are caught instantly
-  let filter: string | undefined;
-  
-  if (projectId && taskId) {
-    filter = `project_id=eq.${projectId},task_id=eq.${taskId}`;
-  } else if (projectId) {
-    // For project pages, listen to all changes to catch entries created elsewhere
-    filter = undefined; // Listen to all changes
-  } else if (taskId) {
-    filter = `task_id=eq.${taskId}`;
-  }
-  // If no specific filters, listen to all time entry changes
+  // REMOVE RESTRICTIVE FILTERS - Listen to ALL time entry changes
+  // This is crucial for catching time entries created from any page
+  const filter = undefined; // No filtering - catch all time entry changes
 
   useRealtime({
     table: 'time_entries',

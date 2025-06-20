@@ -41,11 +41,15 @@ export const ProjectOverviewTab: React.FC<ProjectOverviewTabProps> = ({
 }) => {
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
 
-  // Enable real-time updates for project overview data
+  // Enable real-time updates for project overview data with enhanced logging
+  console.log('ProjectOverviewTab setting up real-time for project:', projectId);
   useRealtimeTimeEntries({ projectId, enabled: !!projectId });
   useRealtimeTasks({ projectId, enabled: !!projectId });
   useRealtimeMilestones({ projectId, enabled: !!projectId });
   useRealtimeContracts({ projectId, enabled: !!projectId });
+
+  // Add debugging to track data changes
+  console.log('ProjectOverviewTab rendered with:', tasks?.length || 0, 'tasks for project:', projectId);
 
   const formatCurrency = (value: number | null) => {
     if (value === null) return 'Not specified';
