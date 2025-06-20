@@ -232,11 +232,6 @@ const MediaPage: React.FC = () => {
     let folders = mediaData?.folders || [];
     let files = mediaData?.files || [];
 
-    // When favorites filter is active, don't show any folders
-    if (filters.favorites) {
-      folders = [];
-    }
-
     // Apply search filter if provided
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
