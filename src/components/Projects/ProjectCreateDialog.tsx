@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,12 +25,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 
-// Define the form schema with updated validation
+// Define the form schema with updated validation - allow empty strings for value
 const projectSchema = z.object({
   name: z.string().min(1, "Project name is required"),
   description: z.string().min(1, "Project description is required"),
   company_id: z.string().min(1, "Company is required"),
-  value: z.coerce.number().min(0, "Value must be 0 or higher"),
+  value: z.union([
+    z.string().min(0), // Allow empty string
+    z.number().min(0, "Value must be 0 or higher")
+  ]),
   price_type: z.enum(["fixed", "estimated"]),
   deadline: z.date().optional(),
 });
@@ -66,12 +69,12 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
     defaultValues: {
       name: "",
       description: "",
-      value: 0,
+      value: "", // Start with empty string instead of 0
       price_type: "fixed",
     },
   });
   
-  const { register, handleSubmit, formState: { errors }, watch, setValue, control } = form;
+  const { register, handleSubmit, formState: { errors }, watch, setValue, control, trigger } = form;
 
   // Fetch users with admin or employee roles
   const { data: users = [] } = useQuery({
@@ -90,6 +93,30 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
       return data as User[];
     }
   });
+
+  // Auto-assign the logged-in user when dialog opens
+  useEffect(() => {
+    if (isOpen && profile?.id && selectedUserIds.length === 0) {
+      setSelectedUserIds([profile.id]);
+    }
+  }, [isOpen, profile?.id]);
+
+  // Reset form and state when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        name: "",
+        description: "",
+        value: "",
+        price_type: "fixed",
+      });
+      setStep(1);
+      // Auto-assign current user
+      if (profile?.id) {
+        setSelectedUserIds([profile.id]);
+      }
+    }
+  }, [isOpen, form, profile?.id]);
   
   const handleUsersChange = (selectedOptions: any[]) => {
     const userIds = selectedOptions ? selectedOptions.map(option => option.value) : [];
@@ -106,12 +133,15 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
     }
     
     try {
+      // Convert value to number for submission, handling empty string
+      const projectValue = data.value === "" || data.value === null ? 0 : Number(data.value);
+      
       // Use the useProjects hook's createProjectAsync method
       const projectData = await createProjectAsync({
         name: data.name,
         description: data.description || undefined,
         company_id: data.company_id,
-        value: data.value,
+        value: projectValue,
         price_type: data.price_type,
         deadline: data.deadline ? data.deadline.toISOString() : undefined,
       });
@@ -157,13 +187,32 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
     }
   };
   
-  const nextStep = () => {
+  const nextStep = async () => {
     if (step === 1) {
-      form.trigger(['name', 'company_id', 'price_type', 'value']).then(isValid => {
-        if (isValid) {
-          setStep(2);
-        }
-      });
+      // Custom validation for step 1 with special handling for value field
+      const currentValue = watch("value");
+      
+      // Convert empty string to 0 for validation
+      const valueForValidation = currentValue === "" ? 0 : Number(currentValue);
+      
+      // Check if value is negative
+      if (valueForValidation < 0) {
+        // Set a custom error for the value field
+        form.setError("value", {
+          type: "manual",
+          message: "Value must be 0 or higher"
+        });
+        return;
+      }
+      
+      // Clear any existing value error
+      form.clearErrors("value");
+      
+      // Validate other required fields for step 1
+      const isValid = await trigger(['name', 'company_id', 'price_type']);
+      if (isValid) {
+        setStep(2);
+      }
     }
   };
   
@@ -189,7 +238,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
     isSubsidiary: !!company.parent_id
   }));
 
-  // Format users for react-select
+  // Format users for react-select with pre-selected current user
   const userOptions = users.map(user => ({
     value: user.id,
     label: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User',
@@ -197,6 +246,11 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
     first_name: user.first_name,
     last_name: user.last_name
   }));
+
+  // Get the selected user options for the multi-select
+  const selectedUserOptions = userOptions.filter(option => 
+    selectedUserIds.includes(option.value)
+  );
 
   // Custom components for react-select
   const CompanyOption = ({ data, ...props }: any) => (
@@ -396,7 +450,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
                 <Input 
                   id="value" 
                   type="number" 
-                  placeholder="0" 
+                  placeholder="Enter project value" 
                   {...register("value")} 
                   className="w-full"
                 />
@@ -456,6 +510,7 @@ export const ProjectCreateDialog = ({ isOpen, onClose }: ProjectCreateDialogProp
                   className="react-select-container"
                   classNamePrefix="react-select"
                   options={userOptions}
+                  value={selectedUserOptions}
                   placeholder="Select team members for this project"
                   isClearable
                   isSearchable
