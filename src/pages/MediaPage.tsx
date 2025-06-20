@@ -106,6 +106,10 @@ const MediaPage: React.FC = () => {
 
   // Navigate to folder
   const navigateToFolder = (folderName: string) => {
+    // Turn off favorites filter when navigating into a folder
+    if (filters.favorites) {
+      setFilters(prev => ({ ...prev, favorites: false }));
+    }
     setCurrentPath(currentPath ? `${currentPath}/${folderName}` : folderName);
   };
 
