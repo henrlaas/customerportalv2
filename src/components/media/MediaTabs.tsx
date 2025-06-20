@@ -84,11 +84,13 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
       <Tabs value={activeTab}>
         <TabsContent value="internal" className="mt-0">
           <div className="space-y-6">
-            <MediaRecentlyUsed
-              recentItems={recentItems}
-              onNavigate={onNavigate}
-              onFileOpen={(file) => window.open(file.url, '_blank')}
-            />
+            {!filters.favorites && (
+              <MediaRecentlyUsed
+                recentItems={recentItems}
+                onNavigate={onNavigate}
+                onFileOpen={(file) => window.open(file.url, '_blank')}
+              />
+            )}
             
             <MediaTableView
               items={allItems}
@@ -109,11 +111,13 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
         
         <TabsContent value="company" className="mt-0">
           <div className="space-y-6">
-            <MediaRecentlyUsed
-              recentItems={recentItems}
-              onNavigate={onNavigate}
-              onFileOpen={(file) => window.open(file.url, '_blank')}
-            />
+            {!filters.favorites && (
+              <MediaRecentlyUsed
+                recentItems={recentItems}
+                onNavigate={onNavigate}
+                onFileOpen={(file) => window.open(file.url, '_blank')}
+              />
+            )}
             
             <MediaTableView
               items={allItems}

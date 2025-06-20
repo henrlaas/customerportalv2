@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -72,10 +73,7 @@ export const useMediaData = (
               .select('*')
               .eq('bucket_id', bucketId);
 
-            // Filter only favorited files and folders
-            const favoritedItems = [];
-            
-            // Handle favorited files
+            // Filter only favorited files
             const favoritedFiles = allFiles
               .filter(file => {
                 return favorites?.some(fav => 
@@ -111,13 +109,8 @@ export const useMediaData = (
                 };
               });
 
-            favoritedItems.push(...favoritedFiles);
-            
-            // Handle favorited folders - SIMPLIFIED LOGIC
-            const favoritedFolders = [];
-            
-            // Get folders with metadata
-            const foldersWithMetadata = mediaMetadata
+            // Get favorited folders from metadata - SIMPLIFIED APPROACH
+            const favoritedFolders = mediaMetadata
               ?.filter(meta => 
                 meta.mime_type === 'application/folder' && 
                 meta.bucket_id === bucketId &&
@@ -138,36 +131,6 @@ export const useMediaData = (
                 fileCount: 0,
                 bucketId: bucketId
               })) || [];
-
-            favoritedFolders.push(...foldersWithMetadata);
-
-            // Get folders without metadata - create basic folder objects from favorites
-            const foldersWithoutMetadata = [];
-            for (const fav of favorites || []) {
-              if (fav.bucket_id === bucketId) {
-                // Check if we don't already have this folder from metadata
-                const alreadyExists = foldersWithMetadata.some(f => f.id === fav.file_path);
-                if (!alreadyExists) {
-                  // Create a basic folder object from the favorite entry
-                  foldersWithoutMetadata.push({
-                    id: fav.file_path,
-                    name: fav.file_path.split('/').pop() || '',
-                    fileType: 'folder',
-                    url: '',
-                    size: 0,
-                    created_at: fav.created_at || new Date().toISOString(),
-                    uploadedBy: '',
-                    favorited: true,
-                    isFolder: true,
-                    fileCount: 0,
-                    bucketId: bucketId
-                  });
-                }
-              }
-            }
-
-            favoritedFolders.push(...foldersWithoutMetadata);
-            favoritedItems.push(...favoritedFolders);
 
             return { folders: favoritedFolders, files: favoritedFiles };
           }
@@ -331,10 +294,7 @@ export const useMediaData = (
             .select('*')
             .eq('bucket_id', bucketId);
 
-          // Filter only favorited files and folders
-          const favoritedItems = [];
-          
-          // Handle favorited files
+          // Filter only favorited files
           const favoritedFiles = allFiles
             .filter(file => {
               return favorites?.some(fav => 
@@ -370,13 +330,8 @@ export const useMediaData = (
               };
             });
 
-          favoritedItems.push(...favoritedFiles);
-          
-          // Handle favorited folders - SIMPLIFIED LOGIC FOR MEDIA BUCKET
-          const favoritedFolders = [];
-          
-          // Get folders with metadata
-          const foldersWithMetadata = mediaMetadata
+          // Get favorited folders from metadata - SIMPLIFIED APPROACH
+          const favoritedFolders = mediaMetadata
             ?.filter(meta => 
               meta.mime_type === 'application/folder' && 
               meta.bucket_id === bucketId &&
@@ -397,36 +352,6 @@ export const useMediaData = (
               fileCount: 0,
               bucketId: bucketId
             })) || [];
-
-          favoritedFolders.push(...foldersWithMetadata);
-
-          // Get folders without metadata - create basic folder objects from favorites
-          const foldersWithoutMetadata = [];
-          for (const fav of favorites || []) {
-            if (fav.bucket_id === bucketId) {
-              // Check if we don't already have this folder from metadata
-              const alreadyExists = foldersWithMetadata.some(f => f.id === fav.file_path);
-              if (!alreadyExists) {
-                // Create a basic folder object from the favorite entry
-                foldersWithoutMetadata.push({
-                  id: fav.file_path,
-                  name: fav.file_path.split('/').pop() || '',
-                  fileType: 'folder',
-                  url: '',
-                  size: 0,
-                  created_at: fav.created_at || new Date().toISOString(),
-                  uploadedBy: '',
-                  favorited: true,
-                  isFolder: true,
-                  fileCount: 0,
-                  bucketId: bucketId
-                });
-              }
-            }
-          }
-
-          favoritedFolders.push(...foldersWithoutMetadata);
-          favoritedItems.push(...favoritedFolders);
 
           return { folders: favoritedFolders, files: favoritedFiles };
         }
