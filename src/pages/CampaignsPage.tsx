@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CreateCampaignDialog } from '@/components/Campaigns/CreateCampaignDialog/CreateCampaignDialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRealtimeCampaigns } from '@/hooks/realtime/useRealtimeCampaigns';
+import { useRealtimeAds } from '@/hooks/realtime/useRealtimeAds';
+import { useRealtimeAdsets } from '@/hooks/realtime/useRealtimeAdsets';
 
 const CampaignsPage: React.FC = () => {
   const { toast } = useToast();
@@ -19,8 +20,10 @@ const CampaignsPage: React.FC = () => {
   const [status, setStatus] = useState('all');
   const { user, session } = useAuth();
 
-  // Enable real-time updates for campaigns
+  // Enable real-time updates for campaigns, ads, and adsets
   useRealtimeCampaigns({ enabled: !!session?.user?.id });
+  useRealtimeAds({ enabled: !!session?.user?.id });
+  useRealtimeAdsets({ enabled: !!session?.user?.id });
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ['campaigns', session?.user?.id],

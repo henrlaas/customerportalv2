@@ -21,11 +21,18 @@ export const useRealtimeAds = ({
     
     if (adsetId) {
       queryClient.invalidateQueries({ queryKey: ['ads', adsetId] });
+      queryClient.invalidateQueries({ queryKey: ['ad_comments', adsetId] });
     }
     
     if (campaignId) {
+      // Invalidate campaign queries to update approval badges
       queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['adsets', campaignId] });
     }
+
+    // Also invalidate general campaigns query for the campaigns page
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
   };
 
   // Create filter based on provided options

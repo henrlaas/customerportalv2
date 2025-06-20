@@ -21,6 +21,9 @@ export const useRealtimeAdsets = ({
       queryClient.invalidateQueries({ queryKey: ['adsets', campaignId] });
       queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
     }
+
+    // Invalidate campaigns query to update campaign cards
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
   };
 
   const filter = campaignId ? `campaign_id=eq.${campaignId}` : undefined;

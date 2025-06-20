@@ -30,6 +30,8 @@ import { EditCampaignDialog } from './EditCampaignDialog/EditCampaignDialog';
 import { DeleteCampaignDialog } from './DeleteCampaignDialog/DeleteCampaignDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
+import { useRealtimeAds } from '@/hooks/realtime/useRealtimeAds';
+import { useRealtimeAdsets } from '@/hooks/realtime/useRealtimeAdsets';
 
 interface CampaignCardEnhancedProps {
   campaign: Campaign;
@@ -38,6 +40,10 @@ interface CampaignCardEnhancedProps {
 export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ campaign }) => {
   const [expanded, setExpanded] = useState(false);
   const [companyFavicon, setCompanyFavicon] = useState<string | null>(null);
+
+  // Enable real-time updates for this specific campaign's ads and adsets
+  useRealtimeAds({ campaignId: campaign.id });
+  useRealtimeAdsets({ campaignId: campaign.id });
 
   // Fetch favicon for the company
   React.useEffect(() => {
@@ -126,6 +132,7 @@ export const CampaignCardEnhanced: React.FC<CampaignCardEnhancedProps> = ({ camp
       
       return data || [];
     },
+    staleTime: 0, // Always fetch fresh data for real-time updates
   });
 
   // Calculate approval status for all ads in the campaign
