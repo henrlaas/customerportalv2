@@ -1,6 +1,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRealtime } from '../useRealtime';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UseRealtimeTimeEntriesOptions {
   projectId?: string;
@@ -14,6 +15,7 @@ export const useRealtimeTimeEntries = ({
   enabled = true
 }: UseRealtimeTimeEntriesOptions = {}) => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const handleTimeEntryChange = (payload: any) => {
     console.log('Real-time time entry change detected:', payload);
@@ -21,14 +23,27 @@ export const useRealtimeTimeEntries = ({
     // Get the changed entry's associations
     const changedProjectId = payload.new?.project_id || payload.old?.project_id;
     const changedTaskId = payload.new?.task_id || payload.old?.task_id;
+    const changedUserId = payload.new?.user_id || payload.old?.user_id;
     const entryId = payload.new?.id || payload.old?.id;
     
-    console.log('Changed entry - Project ID:', changedProjectId, 'Task ID:', changedTaskId, 'Entry ID:', entryId);
+    console.log('Changed entry - Project ID:', changedProjectId, 'Task ID:', changedTaskId, 'User ID:', changedUserId, 'Entry ID:', entryId);
     
     // Always invalidate general time entry queries
     queryClient.invalidateQueries({ queryKey: ['time-entries'] });
     queryClient.invalidateQueries({ queryKey: ['monthlyHours'] });
     queryClient.invalidateQueries({ queryKey: ['monthly-time-entries'] });
+    
+    // CRITICAL: Invalidate user-specific time stats for dashboard updates
+    if (changedUserId) {
+      console.log('Invalidating user time stats for user:', changedUserId);
+      queryClient.invalidateQueries({ queryKey: ['user-time-stats', changedUserId] });
+      
+      // Also invalidate for current user if they're viewing dashboard
+      if (user?.id && user.id === changedUserId) {
+        console.log('Invalidating current user dashboard stats');
+        queryClient.invalidateQueries({ queryKey: ['user-time-stats', user.id] });
+      }
+    }
     
     // CRITICAL: Always invalidate project-specific queries when time entry has project_id
     // This ensures time entries created from /time-tracking page appear instantly in ProjectDetailsPage
@@ -73,7 +88,8 @@ export const useRealtimeTimeEntries = ({
                key === 'project-time-entries' ||
                key === 'time-entries' ||
                key === 'monthlyHours' ||
-               key === 'monthly-time-entries';
+               key === 'monthly-time-entries' ||
+               key === 'user-time-stats';
       }
     });
 

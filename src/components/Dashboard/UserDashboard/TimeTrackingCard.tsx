@@ -14,6 +14,8 @@ export const TimeTrackingCard = () => {
     queryFn: async () => {
       if (!user?.id) return { hoursThisMonth: 0, estimatedSalary: 0, progressPercentage: 0, dailyAverage: 0 };
 
+      console.log('TimeTrackingCard: Fetching time stats for user:', user.id);
+
       // Get current month start and end
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -28,7 +30,12 @@ export const TimeTrackingCard = () => {
         .lte('start_time', monthEnd.toISOString())
         .not('end_time', 'is', null);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching time entries:', error);
+        throw error;
+      }
+
+      console.log('TimeTrackingCard: Found', timeEntries?.length || 0, 'time entries for current month');
 
       // Calculate total hours
       let hoursThisMonth = 0;
@@ -62,14 +69,19 @@ export const TimeTrackingCard = () => {
       const daysInMonth = now.getDate();
       const dailyAverage = daysInMonth > 0 ? hoursThisMonth / daysInMonth : 0;
 
-      return { 
+      const result = { 
         hoursThisMonth: Number(hoursThisMonth.toFixed(1)), 
         estimatedSalary: Number(estimatedSalary.toFixed(0)),
         progressPercentage: Number(progressPercentage.toFixed(1)),
         dailyAverage: Number(dailyAverage.toFixed(1))
       };
+
+      console.log('TimeTrackingCard: Calculated stats:', result);
+      return result;
     },
     enabled: !!user?.id,
+    staleTime: 30000, // Reduced from default to make updates more responsive
+    refetchInterval: 60000, // Refetch every minute as backup
   });
 
   if (isLoading) {

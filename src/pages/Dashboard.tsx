@@ -13,6 +13,7 @@ import { CompaniesSummary } from '@/components/Dashboard/CompaniesSummary';
 import { DealsSummary } from '@/components/Dashboard/DealsSummary';
 import { MrrChart } from '@/components/Dashboard/MrrChart';
 import { UserDashboard } from '@/components/Dashboard/UserDashboard/UserDashboard';
+import { useRealtimeTimeEntries } from '@/hooks/realtime/useRealtimeTimeEntries';
 import { ArrowDownIcon, ArrowUpIcon, BarChart3, CheckIcon, ChartBarIcon, CircleDollarSignIcon, LayoutDashboard, SquareCheckIcon, SquareCode } from 'lucide-react';
 
 // Types for our dashboard data
@@ -35,8 +36,13 @@ interface DashboardCounts {
 }
 
 const Dashboard = () => {
-  const { profile, isAdmin, isEmployee, isClient } = useAuth();
+  const { profile, isAdmin, isEmployee, isClient, user } = useAuth();
   const t = useTranslation();
+  
+  // Add real-time monitoring for time entries to keep dashboard updated
+  useRealtimeTimeEntries({ 
+    enabled: !!(isAdmin || isEmployee) && !!user?.id 
+  });
   
   // If user is admin or employee, show the new user-specific dashboard
   if (isAdmin || isEmployee) {
