@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, Eye } from 'lucide-react';
+import { FileText, Plus } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -91,28 +91,19 @@ export const ProjectContractCard: React.FC<ProjectContractCardProps> = ({
             <p className="text-gray-500">Loading contract...</p>
           </div>
         ) : contract ? (
-          <div className="space-y-4">
-            <div className="p-3 border rounded-lg">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <h4 className="font-medium text-sm">{contract.title}</h4>
-                {getContractStatusBadge(contract.status)}
-              </div>
-              
-              <div className="text-xs text-gray-600 space-y-1">
-                <p>Created: {formatDate(contract.created_at)}</p>
-                <p>Company: {contract.company?.name}</p>
-              </div>
+          <div 
+            className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
+            onClick={handleContractClick}
+          >
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <h4 className="font-medium text-sm">{contract.title}</h4>
+              {getContractStatusBadge(contract.status)}
             </div>
             
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleContractClick}
-              className="w-full"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              View Contract
-            </Button>
+            <div className="text-xs text-gray-600 space-y-1">
+              <p>Created: {formatDate(contract.created_at)}</p>
+              <p>Company: {contract.company?.name}</p>
+            </div>
           </div>
         ) : (
           <div className="text-center py-6">
