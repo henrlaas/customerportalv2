@@ -20,43 +20,40 @@ export const MonthlyOverviewCards: React.FC<MonthlyOverviewCardsProps> = ({ mont
       title: 'Total Tasks',
       value: monthlyStats.totalTasks,
       icon: CheckSquare,
-      className: 'bg-blue-50 text-blue-700 border-blue-200',
-      iconClassName: 'text-blue-500'
+      type: 'total',
+      overdue: monthlyStats.overdueTasks
     },
     {
       title: 'Total Projects',
       value: monthlyStats.totalProjects,
       icon: Calendar,
-      className: 'bg-green-50 text-green-700 border-green-200',
-      iconClassName: 'text-green-500'
+      type: 'total',
+      overdue: monthlyStats.overdueProjects
     },
     {
       title: 'Total Campaigns',
       value: monthlyStats.totalCampaigns,
       icon: Megaphone,
-      className: 'bg-purple-50 text-purple-700 border-purple-200',
-      iconClassName: 'text-purple-500'
+      type: 'total',
+      overdue: monthlyStats.overdueCampaigns
     },
     {
       title: 'Overdue Tasks',
       value: monthlyStats.overdueTasks,
       icon: AlertTriangle,
-      className: 'bg-red-50 text-red-700 border-red-200',
-      iconClassName: 'text-red-500'
+      type: 'overdue'
     },
     {
       title: 'Overdue Projects',
       value: monthlyStats.overdueProjects,
       icon: Clock,
-      className: 'bg-orange-50 text-orange-700 border-orange-200',
-      iconClassName: 'text-orange-500'
+      type: 'overdue'
     },
     {
       title: 'Overdue Campaigns',
       value: monthlyStats.overdueCampaigns,
       icon: TrendingUp,
-      className: 'bg-pink-50 text-pink-700 border-pink-200',
-      iconClassName: 'text-pink-500'
+      type: 'overdue'
     }
   ];
 
@@ -64,15 +61,87 @@ export const MonthlyOverviewCards: React.FC<MonthlyOverviewCardsProps> = ({ mont
     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
       {cards.map((card, index) => {
         const Icon = card.icon;
+        const isOverdueCard = card.type === 'overdue';
+        const hasOverdue = card.type === 'total' && card.overdue && card.overdue > 0;
+        const isHealthy = card.type === 'total' && (!card.overdue || card.overdue === 0);
+
         return (
-          <Card key={index} className={`${card.className} border`}>
+          <Card 
+            key={index} 
+            className={`bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30 ${
+              isOverdueCard && card.value > 0 ? 'ring-1 ring-red-200' : ''
+            }`}
+          >
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium opacity-80">{card.title}</p>
-                  <p className="text-2xl font-bold mt-1">{card.value}</p>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${
+                    isOverdueCard && card.value > 0 
+                      ? 'text-red-500' 
+                      : 'text-[#004743]'
+                  }`} />
+                  {card.type === 'total' && (
+                    <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      isHealthy 
+                        ? 'bg-[#F2FCE2] text-[#004743]' 
+                        : 'bg-red-50 text-red-600'
+                    }`}>
+                      {isHealthy ? 'On Track' : 'Alert'}
+                    </div>
+                  )}
                 </div>
-                <Icon className={`h-8 w-8 ${card.iconClassName}`} />
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-600 opacity-80">
+                  {card.title}
+                </p>
+                
+                <div className="flex items-end justify-between">
+                  <div className={`text-3xl font-bold ${
+                    isOverdueCard && card.value > 0 
+                      ? 'text-red-600' 
+                      : 'text-[#004743]'
+                  }`}>
+                    {card.value}
+                  </div>
+                  
+                  {card.type === 'total' && card.overdue !== undefined && (
+                    <div className="text-right">
+                      <div className={`text-sm font-medium ${
+                        card.overdue > 0 ? 'text-red-600' : 'text-gray-400'
+                      }`}>
+                        {card.overdue}
+                      </div>
+                      <div className="text-xs text-gray-500">overdue</div>
+                    </div>
+                  )}
+                </div>
+                
+                {card.type === 'total' && card.value > 0 && (
+                  <div className="pt-2">
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div 
+                        className={`h-1.5 rounded-full transition-all duration-500 ${
+                          hasOverdue 
+                            ? 'bg-gradient-to-r from-red-400 to-red-500' 
+                            : 'bg-gradient-to-r from-[#004743] to-[#004743]/80'
+                        }`}
+                        style={{ 
+                          width: hasOverdue 
+                            ? `${Math.min((card.overdue! / card.value) * 100, 100)}%`
+                            : '100%'
+                        }}
+                      ></div>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {hasOverdue 
+                        ? `${Math.round((card.overdue! / card.value) * 100)}% overdue`
+                        : 'All on track'
+                      }
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
