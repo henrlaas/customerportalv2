@@ -24,6 +24,13 @@ export const useRealtimeProjects = ({
     // CRITICAL: Invalidate the correct query key used by ProjectsPage
     queryClient.invalidateQueries({ queryKey: ['projects-complete'] });
     
+    // CRITICAL: Invalidate calendar-specific queries for project changes
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        return query.queryKey[0] === 'calendar-projects';
+      }
+    });
+    
     // Also invalidate user project assignments since they affect filtering
     queryClient.invalidateQueries({ 
       predicate: (query) => {
@@ -48,7 +55,7 @@ export const useRealtimeProjects = ({
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
     }
     
-    console.log('Project queries invalidated successfully');
+    console.log('Project queries invalidated successfully, including calendar queries');
   };
 
   const filter = projectId ? `id=eq.${projectId}` : undefined;

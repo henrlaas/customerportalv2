@@ -23,7 +23,7 @@ export const useRealtimeTaskAssignees = ({
     queryClient.invalidateQueries({ queryKey: ['task-assignees'] });
     queryClient.invalidateQueries({ queryKey: ['user-task-assignments'] });
     
-    // Invalidate calendar queries for the affected user
+    // CRITICAL: Invalidate calendar queries for the affected user when assignments change
     if (changedUserId) {
       queryClient.invalidateQueries({ queryKey: ['calendar-tasks', changedUserId] });
     }
@@ -48,7 +48,7 @@ export const useRealtimeTaskAssignees = ({
       }
     });
 
-    console.log('Task assignee queries invalidated');
+    console.log('Task assignee queries invalidated, including calendar queries');
   };
 
   const filter = undefined; // Listen to all changes to catch cross-task updates

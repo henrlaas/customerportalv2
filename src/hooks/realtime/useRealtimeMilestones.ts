@@ -23,6 +23,14 @@ export const useRealtimeMilestones = ({
     queryClient.invalidateQueries({ queryKey: ['milestones'] });
     queryClient.invalidateQueries({ queryKey: ['all-project-milestones'] });
     
+    // CRITICAL: Invalidate calendar-specific queries that depend on milestones
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        return query.queryKey[0] === 'project-milestones-user' ||
+               query.queryKey[0] === 'calendar-projects';
+      }
+    });
+    
     // Invalidate project-specific milestones
     if (changedProjectId) {
       queryClient.invalidateQueries({ queryKey: ['project-milestones', changedProjectId] });
@@ -48,7 +56,7 @@ export const useRealtimeMilestones = ({
       }
     });
 
-    console.log('Milestone queries invalidated, including all-project-milestones');
+    console.log('Milestone queries invalidated, including calendar and milestone queries');
   };
 
   // Listen to all milestone changes to catch updates from any source

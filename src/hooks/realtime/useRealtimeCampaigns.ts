@@ -20,7 +20,13 @@ export const useRealtimeCampaigns = ({
     
     // Invalidate all campaign queries
     queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-    queryClient.invalidateQueries({ queryKey: ['calendar-campaigns'] });
+    
+    // CRITICAL: Invalidate calendar-specific queries for campaign changes
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        return query.queryKey[0] === 'calendar-campaigns';
+      }
+    });
     
     // Invalidate specific campaign if we have an ID
     if (changedCampaignId) {
@@ -41,7 +47,7 @@ export const useRealtimeCampaigns = ({
       }
     });
 
-    console.log('Campaign queries invalidated successfully');
+    console.log('Campaign queries invalidated successfully, including calendar queries');
   };
 
   const filter = campaignId ? `id=eq.${campaignId}` : undefined;

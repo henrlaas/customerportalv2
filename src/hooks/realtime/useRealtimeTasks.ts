@@ -28,6 +28,13 @@ export const useRealtimeTasks = ({
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
     queryClient.invalidateQueries({ queryKey: ['user-task-stats'] });
     
+    // CRITICAL: Invalidate calendar-specific queries for task changes
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        return query.queryKey[0] === 'calendar-tasks';
+      }
+    });
+    
     // Invalidate specific task if we have an ID
     if (changedTaskId) {
       queryClient.invalidateQueries({ queryKey: ['task', changedTaskId] });
@@ -59,11 +66,12 @@ export const useRealtimeTasks = ({
         return key === 'project-tasks' || 
                key === 'tasks' || 
                key === 'user-task-stats' ||
+               key === 'calendar-tasks' ||
                key === 'project-time-entries-enhanced'; // Task changes can affect time summaries
       }
     });
 
-    console.log('Task queries invalidated successfully');
+    console.log('Task queries invalidated successfully, including calendar queries');
   };
 
   // REMOVE RESTRICTIVE FILTERS - Listen to ALL task changes

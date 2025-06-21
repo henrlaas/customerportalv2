@@ -23,7 +23,7 @@ export const useRealtimeCampaignAssignees = ({
     queryClient.invalidateQueries({ queryKey: ['campaign-assignees'] });
     queryClient.invalidateQueries({ queryKey: ['user-campaign-assignments'] });
     
-    // Invalidate calendar queries for the affected user
+    // CRITICAL: Invalidate calendar queries for the affected user when assignments change
     if (changedUserId) {
       queryClient.invalidateQueries({ queryKey: ['calendar-campaigns', changedUserId] });
     }
@@ -48,7 +48,7 @@ export const useRealtimeCampaignAssignees = ({
       }
     });
 
-    console.log('Campaign assignee queries invalidated');
+    console.log('Campaign assignee queries invalidated, including calendar queries');
   };
 
   const filter = undefined; // Listen to all changes to catch cross-campaign updates
