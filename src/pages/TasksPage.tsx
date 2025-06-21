@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,7 +40,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Calendar, User, Edit, Share, Clock, Filter, X, ViewIcon, List, KanbanSquare } from 'lucide-react';
 import { TaskForm } from '@/components/Tasks/TaskForm';
-import { TaskFilters } from '@/components/Tasks/TaskFilters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { UserAvatarGroup } from '@/components/Tasks/UserAvatarGroup';
@@ -47,6 +47,9 @@ import { TaskDetailSheet } from '@/components/Tasks/TaskDetailSheet';
 import { Switch } from '@/components/ui/switch';
 import { TaskListView } from '@/components/Tasks/TaskListView';
 import { TaskKanbanView } from '@/components/Tasks/TaskKanbanView';
+import { TaskStatusSelect } from '@/components/Tasks/TaskStatusSelect';
+import { TaskPrioritySelect } from '@/components/Tasks/TaskPrioritySelect';
+import { UserSelect } from '@/components/Deals/UserSelect';
 import { useAuth } from '@/contexts/AuthContext';
 import { Company } from '@/types/company';
 
@@ -102,15 +105,10 @@ export const TasksPage = () => {
   const { user } = useAuth();
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    status: 'all',
-    priority: 'all',
-    search: '',
-    assignee: 'all',
-    campaign: 'all',
-    showOnlyMyTasks: true, // Default to showing only the current user's tasks
-  });
-  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedPriority, setSelectedPriority] = useState('all');
   
   // State for task detail sheet
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -121,6 +119,13 @@ export const TasksPage = () => {
 
   // Current user ID for task filtering
   const currentUserId = user?.id || '';
+
+  // Set current user as default selected user only on initial load
+  useEffect(() => {
+    if (user?.id && selectedUserId === null) {
+      setSelectedUserId(user.id);
+    }
+  }, [user?.id, selectedUserId]);
   
   // Helper function to check if a completed task is older than 3 days
   const isOldCompletedTask = (task: Task) => {
@@ -135,7 +140,7 @@ export const TasksPage = () => {
   
   // Fetch tasks with filtering
   const { data: allTasks = [], isLoading: isLoadingTasks } = useQuery({
-    queryKey: ['tasks', filters],
+    queryKey: ['tasks', searchTerm, selectedStatus, selectedPriority],
     queryFn: async () => {
       let query = supabase
         .from('tasks')
@@ -143,25 +148,14 @@ export const TasksPage = () => {
         .order('created_at', { ascending: false });
       
       // Apply filters
-      if (filters.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
+      if (selectedStatus && selectedStatus !== 'all') {
+        query = query.eq('status', selectedStatus);
       }
-      if (filters.priority && filters.priority !== 'all') {
-        query = query.eq('priority', filters.priority);
+      if (selectedPriority && selectedPriority !== 'all') {
+        query = query.eq('priority', selectedPriority);
       }
-      if (filters.search) {
-        query = query.ilike('title', `%${filters.search}%`);
-      }
-      
-      // Handle campaign/project filtering
-      if (filters.campaign && filters.campaign !== 'all') {
-        if (filters.campaign.startsWith('campaign_')) {
-          const campaignId = filters.campaign.replace('campaign_', '');
-          query = query.eq('campaign_id', campaignId);
-        } else if (filters.campaign.startsWith('project_')) {
-          const projectId = filters.campaign.replace('project_', '');
-          query = query.eq('project_id', projectId);
-        }
+      if (searchTerm) {
+        query = query.ilike('title', `%${searchTerm}%`);
       }
         
       const { data, error } = await query;
@@ -179,23 +173,14 @@ export const TasksPage = () => {
     },
   });
 
-  // Filter tasks based on the showOnlyMyTasks filter, assignee filter, and hide old completed tasks
+  // Filter tasks based on user selection and hide old completed tasks
   const tasks = allTasks
     .filter(task => !isOldCompletedTask(task)) // Hide old completed tasks
     .filter(task => {
-      // First apply the assignee filter if it's set
-      if (filters.assignee && filters.assignee !== 'all') {
-        const isAssignedToFilteredUser = task.assignees?.some(assignee => assignee.user_id === filters.assignee);
-        if (!isAssignedToFilteredUser) {
-          return false;
-        }
+      // Apply user filter if selected
+      if (selectedUserId) {
+        return task.assignees?.some(assignee => assignee.user_id === selectedUserId);
       }
-      
-      // Then apply the showOnlyMyTasks filter
-      if (filters.showOnlyMyTasks) {
-        return task.assignees?.some(assignee => assignee.user_id === currentUserId);
-      }
-      
       return true;
     });
 
@@ -335,18 +320,6 @@ export const TasksPage = () => {
     updateTaskMutation.mutate({ taskId, status: newStatus });
   };
   
-  // Function to reset all filters
-  const resetFilters = () => {
-    setFilters({
-      status: 'all',
-      priority: 'all',
-      search: '',
-      assignee: 'all',
-      campaign: 'all',
-      showOnlyMyTasks: true,
-    });
-  };
-  
   // Get assignees for a task
   const getTaskAssignees = (task: Task) => {
     if (!task.assignees) return [];
@@ -443,14 +416,6 @@ export const TasksPage = () => {
             </div>
           </div>
 
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? "bg-accent text-accent-foreground" : ""}
-          >
-            <Filter className="h-4 w-4" />
-          </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -475,43 +440,36 @@ export const TasksPage = () => {
         </div>
       </div>
       
-      {/* Search and filters */}
+      {/* New filter bar layout: [Search bar][User selector][Status selector][Priority selector] */}
       <div className="flex items-center gap-4 flex-wrap">
         <div className="relative flex-1 min-w-[250px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search tasks..."
             className="pl-10"
-            value={filters.search}
-            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         
-        {showFilters && (
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={resetFilters}>
-              <X className="h-4 w-4 mr-1" />
-              Clear
-            </Button>
-          </div>
-        )}
+        <UserSelect
+          profiles={profiles}
+          selectedUserId={selectedUserId}
+          onUserChange={setSelectedUserId}
+          currentUserId={user?.id}
+          allUsersLabel="All tasks"
+        />
+        
+        <TaskStatusSelect
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+        />
+        
+        <TaskPrioritySelect
+          selectedPriority={selectedPriority}
+          onPriorityChange={setSelectedPriority}
+        />
       </div>
-      
-      {/* Filter panel */}
-      {showFilters && (
-        <Card className="w-full">
-          <CardContent className="pt-6">
-            <TaskFilters 
-              filters={filters}
-              setFilters={setFilters}
-              profiles={profiles}
-              campaigns={campaigns}
-              projects={projects}
-              currentUserId={currentUserId}
-            />
-          </CardContent>
-        </Card>
-      )}
       
       {/* Tasks content based on view mode */}
       {viewMode === 'list' ? (
