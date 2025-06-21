@@ -1,270 +1,452 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase, insertWithUser, updateWithUser } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  Plus, Search, FileText,
+  Calendar, Building, DollarSign, Tag, MoreVertical,
+  Trash2, Edit, Download, Upload, AlertTriangle,
+  CheckCircle, Clock, XCircle, Repeat
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Card, CardContent, CardHeader, CardTitle,
+} from '@/components/ui/card';
+import {
+  Dialog, DialogClose, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
+} from '@/components/ui/form';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Filter, DollarSign, Target, TrendingUp, Clock } from 'lucide-react';
-import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { DealForm, DealFormValues } from '@/components/Deals/DealForm';
 import { DealKanbanView } from '@/components/Deals/DealKanbanView';
 import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog';
-import { DealDetailsSidebar } from '@/components/Deals/DealDetailsSidebar/DealDetailsSidebar';
+import { EditDealDialog } from '@/components/Deals/EditDealDialog';
+import { Deal, Stage, Profile } from '@/components/Deals/types/deal';
+import { Company } from '@/types/company';
 import { UserSelect } from '@/components/Deals/UserSelect';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAdminEmployeeProfiles } from '@/hooks/useAdminEmployeeProfiles';
-import { useRealtimeDeals } from '@/hooks/realtime/useRealtimeDeals';
-import { Deal } from '@/components/Deals/types/deal';
+import { DealTypeFilters } from '@/components/Deals/DealTypeFilters';
+import React from 'react';
 
 const DealsPage = () => {
-  const { user, profile } = useAuth();
-  const queryClient = useQueryClient();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentDeal, setCurrentDeal] = useState<Deal | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [userInitialized, setUserInitialized] = useState(false);
-  const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
-  const [isDealSheetOpen, setIsDealSheetOpen] = useState(false);
+  const [recurringFilter, setRecurringFilter] = useState<string>('all');
+  const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
+  const [hasInitializedUser, setHasInitializedUser] = useState(false);
 
-  console.log('💰 DealsPage: Setting up real-time monitoring for user:', user?.id);
+  const { toast } = useToast();
+  const { isAdmin, isEmployee, user } = useAuth();
+  const queryClient = useQueryClient();
 
-  // Enable real-time updates for deals
-  useRealtimeDeals({ enabled: !!user?.id });
-
-  // Fetch admin and employee profiles for user selector
-  const { data: adminEmployeeProfiles = [] } = useAdminEmployeeProfiles();
-  
-  // Initialize selected user to current user (if they are admin/employee)
+  // Set default user filter to current user on initial mount only
   React.useEffect(() => {
-    if (!userInitialized && user?.id && profile?.role && ['admin', 'employee'].includes(profile.role)) {
+    if (user?.id && !hasInitializedUser) {
       setSelectedUserId(user.id);
-      setUserInitialized(true);
+      setHasInitializedUser(true);
     }
-  }, [user?.id, profile?.role, userInitialized]);
+  }, [user?.id, hasInitializedUser]);
 
-  // Fetch deals data with proper typing
-  const { data: dealsData = [], isLoading } = useQuery({
+  // Helper function to check if a closed deal is older than 3 days
+  const isOldClosedDeal = (deal: Deal) => {
+    const closedWonStageId = "338e9b9c-bdd6-4ffb-8543-83cbeab7a7ae";
+    const closedLostStageId = "f276a956-5c5e-434f-ac30-8c1306d1a65e";
+    
+    if (deal.stage_id !== closedWonStageId && deal.stage_id !== closedLostStageId) return false;
+    
+    const updatedAt = new Date(deal.updated_at);
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    
+    return updatedAt < threeDaysAgo;
+  };
+
+  // Fetch deals
+  const { data: deals = [], isLoading: isLoadingDeals } = useQuery({
     queryKey: ['deals'],
     queryFn: async () => {
-      if (!user) return [];
-
-      let query = supabase
+      const { data, error } = await supabase
         .from('deals')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (selectedUserId) {
-        query = query.eq('user_id', selectedUserId);
-      }
-
-      const { data, error } = await query;
-
       if (error) {
-        toast.error('Error fetching deals: ' + error.message);
+        toast({
+          title: 'Error fetching deals',
+          description: error.message,
+          variant: 'destructive',
+        });
         return [];
       }
 
-      return data || [];
+      console.log('Fetched deals:', data?.length || 0);
+      return data as Deal[];
     },
   });
 
-  // Transform deals with proper type casting
-  const deals: Deal[] = React.useMemo(() => {
-    return dealsData.map(deal => ({
-      ...deal,
-      deal_type: deal.deal_type as 'recurring' | 'one-time' | null,
-      client_deal_type: deal.client_deal_type as 'marketing' | 'web' | null,
-      price_type: deal.price_type as 'MRR' | 'Project' | null,
-    }));
-  }, [dealsData]);
-
-  // Fetch deal stages
-  const { data: stages = [] } = useQuery({
-    queryKey: ['deal-stages'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('deal_stages')
-        .select('*')
-        .order('position');
-
-      if (error) {
-        console.error('Error fetching deal stages:', error);
-        return [];
-      }
-      return data;
-    },
-  });
-
-  // Fetch companies
-  const { data: companies = [] } = useQuery({
+  // Fetch companies for the dropdown - updated to get complete company data
+  const { data: companies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('companies')
-        .select('*');
+        .select('*')
+        .order('name');
 
       if (error) {
-        console.error('Error fetching companies:', error);
+        toast({
+          title: 'Error fetching companies',
+          description: error.message,
+          variant: 'destructive',
+        });
         return [];
       }
-      return data;
+
+      return data as Company[];
     },
   });
 
-  // Fetch profiles
-  const { data: profiles = [] } = useQuery({
+  // Fetch stages for the dropdown - use the correct table name
+  const { data: stages = [], isLoading: isLoadingStages } = useQuery({
+    queryKey: ['deal_stages'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('deal_stages')
+        .select('id, name, position')
+        .order('position');
+      
+      if (error) {
+        toast({
+          title: 'Error fetching stages',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return [];
+      }
+      
+      console.log('Fetched stages:', data?.length || 0);
+      return data as Stage[];
+    },
+  });
+
+  // Fetch profiles for assigned to dropdown - Updated to filter by admin and employee roles only
+  const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*');
+        .select('id, first_name, last_name, role, avatar_url')
+        .in('role', ['admin', 'employee'])
+        .order('first_name');
 
       if (error) {
-        console.error('Error fetching profiles:', error);
+        toast({
+          title: 'Error fetching profiles',
+          description: error.message,
+          variant: 'destructive',
+        });
         return [];
       }
-      return data;
+
+      return data as Profile[];
     },
   });
 
-  const filteredDeals = React.useMemo(() => {
-    if (!deals) return [];
+  // Update stage mutation
+  const updateStageMutation = useMutation({
+    mutationFn: async ({ dealId, stageId }: { dealId: string; stageId: string }) => {
+      console.log(`Updating deal ${dealId} to stage ${stageId}`);
+      const { data, error } = await updateWithUser('deals', dealId, {
+        stage_id: stageId,
+        updated_at: new Date().toISOString(),
+      });
 
-    const searchString = searchQuery.toLowerCase();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+      toast({
+        title: 'Deal updated',
+        description: 'Deal stage updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error updating deal stage',
+        description: error.message,
+        variant: 'destructive',
+      });
+      // Force re-fetch to ensure UI is in sync with database after error
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+    },
+  });
 
-    return deals.filter((deal) => {
-      const matchesSearch =
-        deal.title?.toLowerCase().includes(searchString) ||
-        deal.description?.toLowerCase().includes(searchString);
-      return matchesSearch;
-    });
-  }, [deals, searchQuery]);
+  // Create deal mutation
+  const createMutation = useMutation({
+    mutationFn: async (values: DealFormValues) => {
+      // Use the specific Lead stage ID provided
+      const leadStageId = "5ac493ab-84be-4203-bb92-b7c310bc2128";
+      
+      console.log(`Using Lead stage ID: ${leadStageId}`);
+      
+      const { data, error } = await insertWithUser('deals', {
+        title: values.title,
+        description: values.description || null,
+        company_id: values.company_id === 'none' ? null : values.company_id || null,
+        stage_id: leadStageId, // Set the specific Lead stage ID
+        value: values.value,
+        expected_close_date: null,
+        assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to || null,
+        is_recurring: values.is_recurring,
+        deal_type: values.deal_type || null,
+        client_deal_type: values.client_deal_type || null,
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Deal created',
+        description: 'The deal has been created successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+      setIsCreating(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error creating deal',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
-  const handleCreateDialogClose = () => {
-    setIsCreateDialogOpen(false);
-    // Real-time updates will handle list refresh
+  // Delete deal mutation 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('deals')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Deal deleted',
+        description: 'The deal has been deleted successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+      setCurrentDeal(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error deleting deal',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Handle deal stage change
+  const handleMoveStage = (dealId: string, newStageId: string) => {
+    console.log(`Moving deal ${dealId} to stage ${newStageId}`);
+    updateStageMutation.mutate({ dealId, stageId: newStageId });
   };
 
-  const handleDealEdit = (deal: any) => {
-    // Handle deal editing
-    console.log('Edit deal:', deal);
+  // Edit deal
+  const handleEdit = (deal: Deal) => {
+    console.log('Editing deal:', deal);
+    setCurrentDeal(deal);
+    setIsEditing(true);
   };
 
-  const handleDealDelete = (dealId: string) => {
-    // Handle deal deletion
-    console.log('Delete deal:', dealId);
+  // Delete deal
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
   };
 
-  const handleDealMove = (dealId: string, newStageId: string) => {
-    // Handle deal stage movement
-    console.log('Move deal:', dealId, 'to stage:', newStageId);
+  // Format currency
+  const formatCurrency = (value: number | null) => {
+    if (value === null) return 'N/A';
+    return new Intl.NumberFormat('no-NO', {
+      style: 'currency',
+      currency: 'NOK',
+    }).format(value);
   };
 
-  const handleDealClick = (dealId: string) => {
-    setSelectedDealId(dealId);
-    setIsDealSheetOpen(true);
+  // Format date
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    return format(new Date(dateString), 'MMM d, yyyy');
   };
 
-  // Find the selected deal for the sidebar
-  const selectedDeal = selectedDealId ? deals.find(deal => deal.id === selectedDealId) : null;
+  // Get company name by ID
+  const getCompanyName = (companyId: string | null) => {
+    if (!companyId) return 'No Company';
+    const company = companies.find(c => c.id === companyId);
+    return company ? company.name : 'Unknown Company';
+  };
 
-  // Check if user can modify deals
-  const canModify = profile?.role && ['admin', 'employee'].includes(profile.role);
+  // Get stage name by ID
+  const getStageName = (stageId: string | null) => {
+    if (!stageId) return 'No Stage';
+    const stage = stages.find(s => s.id === stageId);
+    return stage ? stage.name : 'Unknown Stage';
+  };
 
-  // Skeleton loader for Kanban board
-  const KanbanBoardSkeleton = () => (
-    <div className="flex gap-4 overflow-x-auto">
-      {Array(6).fill(null).map((_, i) => (
-        <Card key={i} className="w-80 flex-shrink-0">
-          <CardHeader>
-            <CardTitle><Skeleton className="h-6 w-24" /></CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {Array(3).fill(null).map((_, j) => (
-              <Card key={j} className="p-4">
-                <CardContent>
-                  <Skeleton className="h-4 w-32 mb-2" />
-                  <Skeleton className="h-4 w-24" />
-                </CardContent>
-              </Card>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+  // Get assigned to name by ID
+  const getAssignedToName = (assignedTo: string | null) => {
+    if (!assignedTo) return 'Unassigned';
+    const profile = profiles.find(p => p.id === assignedTo);
+    return profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.id : 'Unknown User';
+  };
+
+  // Filter deals based on all selected filters and hide old closed deals
+  const getFilteredDeals = () => {
+    let filtered = deals
+      .filter(deal => !isOldClosedDeal(deal)) // Hide old closed deals
+      .filter(deal => {
+        // Search filter
+        const matchesSearch =
+          deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          getCompanyName(deal.company_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          getStageName(deal.stage_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          getAssignedToName(deal.assigned_to).toLowerCase().includes(searchQuery.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        // User filter - only filter if a specific user is selected
+        if (selectedUserId) {
+          if (deal.assigned_to !== selectedUserId) return false;
+        }
+
+        // Recurring filter
+        if (recurringFilter !== 'all') {
+          const isRecurring = deal.is_recurring === true;
+          if (recurringFilter === 'recurring' && !isRecurring) return false;
+          if (recurringFilter === 'one-time' && isRecurring) return false;
+        }
+
+        // Client type filter
+        if (clientTypeFilter !== 'all') {
+          if (clientTypeFilter === 'marketing' && deal.client_deal_type !== 'marketing') return false;
+          if (clientTypeFilter === 'web' && deal.client_deal_type !== 'web') return false;
+        }
+
+        return true;
+      });
+
+    return filtered;
+  };
+
+  const filteredDeals = getFilteredDeals();
+
+  // Check if user can modify deals (admin or employee)
+  const canModify = isAdmin || isEmployee;
+
+  const isLoading = isLoadingDeals || isLoadingCompanies || isLoadingStages || isLoadingProfiles;
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Deals</h1>
-          <p className="text-muted-foreground mt-1">
-            Track and manage your sales pipeline
-          </p>
+    <div className="container mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 space-y-6 py-4 sm:py-8 max-w-full overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Deals</h1>
+        <div className="flex items-center gap-4">
+          {canModify && (
+            <Button onClick={() => setIsCreating(true)} className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" /> Add Deal
+            </Button>
+          )}
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Deal
-        </Button>
       </div>
 
-      <div className="flex items-center gap-4 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      {/* New filter bar with search, user select, and deal type filters */}
+      <div className="mb-6 flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
+            type="search"
             placeholder="Search deals..."
-            className="pl-10"
+            className="pl-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-
-        <UserSelect
-          profiles={adminEmployeeProfiles}
-          selectedUserId={selectedUserId}
-          onUserChange={setSelectedUserId}
-          allUsersLabel="All deals"
-        />
+        
+        <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+          <UserSelect
+            profiles={profiles}
+            selectedUserId={selectedUserId}
+            onUserChange={setSelectedUserId}
+            currentUserId={user?.id}
+          />
+          
+          <DealTypeFilters
+            recurringFilter={recurringFilter}
+            onRecurringFilterChange={setRecurringFilter}
+            clientTypeFilter={clientTypeFilter}
+            onClientTypeFilterChange={setClientTypeFilter}
+          />
+        </div>
       </div>
 
       {isLoading ? (
-        <KanbanBoardSkeleton />
+        <div className="flex justify-center p-8">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
       ) : (
-        <DealKanbanView
-          deals={filteredDeals}
-          stages={stages}
-          companies={companies}
-          profiles={profiles}
-          canModify={canModify || false}
-          onEdit={handleDealEdit}
-          onDelete={handleDealDelete}
-          onMove={handleDealMove}
-          onDealClick={handleDealClick}
-          isLoading={isLoading}
-        />
+        <div className="w-full overflow-hidden">
+          <DealKanbanView
+            deals={filteredDeals}
+            stages={stages}
+            companies={companies}
+            profiles={profiles}
+            canModify={canModify}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onMove={handleMoveStage}
+            isLoading={isLoading}
+          />
+        </div>
       )}
 
-      <MultiStageDealDialog
-        isOpen={isCreateDialogOpen}
-        onClose={handleCreateDialogClose}
+      {/* Multi-Stage Edit Dialog */}
+      <EditDealDialog
+        isOpen={isEditing}
+        onClose={() => {
+          setIsEditing(false);
+          setCurrentDeal(null);
+        }}
+        deal={currentDeal}
+        companies={companies}
+        stages={stages}
+        profiles={profiles}
       />
 
-      {selectedDeal && (
-        <DealDetailsSidebar
-          isOpen={isDealSheetOpen}
-          onClose={() => setIsDealSheetOpen(false)}
-          deal={selectedDeal}
-          companies={companies}
-          profiles={profiles}
-          stages={stages}
-          canModify={canModify || false}
-          onEdit={handleDealEdit}
-          onDelete={handleDealDelete}
-        />
-      )}
+      {/* Multi-Stage Deal Dialog */}
+      <MultiStageDealDialog
+        isOpen={isCreating}
+        onClose={() => setIsCreating(false)}
+      />
     </div>
   );
 };

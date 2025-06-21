@@ -2,15 +2,9 @@
 import React from 'react';
 import { ContractList } from '@/components/ContractList';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRealtimeContracts } from '@/hooks/realtime/useRealtimeContracts';
 
 const ContractsPage = () => {
-  const { profile, user } = useAuth();
-
-  console.log('📄 ContractsPage: Setting up real-time monitoring for user:', user?.id);
-
-  // Enable real-time updates for contracts
-  useRealtimeContracts({ enabled: !!user?.id });
+  const { profile } = useAuth();
 
   return (
     <div className="container p-6 mx-auto">

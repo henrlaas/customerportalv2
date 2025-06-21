@@ -51,8 +51,6 @@ import { TaskPrioritySelect } from '@/components/Tasks/TaskPrioritySelect';
 import { UserSelect } from '@/components/Deals/UserSelect';
 import { useAuth } from '@/contexts/AuthContext';
 import { Company } from '@/types/company';
-import { useRealtimeTasks } from '@/hooks/realtime/useRealtimeTasks';
-import { useRealtimeTaskAssignees } from '@/hooks/realtime/useRealtimeTaskAssignees';
 
 // Define the Task type to match our database schema
 type Task = {
@@ -124,12 +122,6 @@ export const TasksPage = () => {
   // Current user ID for task filtering
   const currentUserId = user?.id || '';
 
-  console.log('📋 TasksPage: Setting up real-time monitoring for user:', user?.id);
-
-  // Enable real-time updates for tasks and task assignees
-  useRealtimeTasks({ enabled: !!user?.id });
-  useRealtimeTaskAssignees({ enabled: !!user?.id });
-
   // Set current user as default selected user only on initial load
   useEffect(() => {
     if (user?.id && !hasSetInitialUser.current) {
@@ -149,7 +141,7 @@ export const TasksPage = () => {
     return updatedAt < threeDaysAgo;
   };
   
-  // Fetch tasks with filtering - updated with real-time friendly configuration
+  // Fetch tasks with filtering
   const { data: allTasks = [], isLoading: isLoadingTasks } = useQuery({
     queryKey: ['tasks', searchTerm, selectedStatus, selectedPriority],
     queryFn: async () => {
@@ -182,8 +174,6 @@ export const TasksPage = () => {
       
       return data as Task[];
     },
-    staleTime: 0, // Force fresh data for real-time updates
-    gcTime: 30 * 1000, // 30 seconds cache time
   });
 
   // Filter tasks based on user selection and hide old completed tasks

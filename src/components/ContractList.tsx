@@ -68,7 +68,7 @@ export const ContractList = () => {
     }
   }, [user?.id, profile?.role, userInitialized]);
   
-  // Fetch contracts with real-time friendly query configuration
+  // Fetch contracts with optimized query configuration
   const { data: contracts = [], isLoading } = useQuery({
     queryKey: ['contracts', user?.id, isClient],
     queryFn: async () => {
@@ -86,8 +86,8 @@ export const ContractList = () => {
       return result;
     },
     enabled: !!user,
-    staleTime: 0, // Force fresh data for real-time updates
-    gcTime: 30 * 1000, // 30 seconds cache time
+    staleTime: 5 * 60 * 1000, // 5 minutes before refetching
+    gcTime: 10 * 60 * 1000, // 10 minutes in cache
   });
   
   // Memoize filtered contracts 

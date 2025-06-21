@@ -1,30 +1,36 @@
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useRealtime } from '@/hooks/useRealtime';
+import { useRealtime } from '../useRealtime';
 
 interface UseRealtimeDealsOptions {
+  dealId?: string;
   enabled?: boolean;
 }
 
-export const useRealtimeDeals = ({ enabled = true }: UseRealtimeDealsOptions = {}) => {
+export const useRealtimeDeals = ({
+  dealId,
+  enabled = true
+}: UseRealtimeDealsOptions = {}) => {
   const queryClient = useQueryClient();
 
-  console.log('🔄 useRealtimeDeals: Setting up real-time subscription, enabled:', enabled);
+  const handleDealChange = () => {
+    // Invalidate deal-related queries
+    queryClient.invalidateQueries({ queryKey: ['deals'] });
+    queryClient.invalidateQueries({ queryKey: ['user-deal-stats'] });
+    
+    if (dealId) {
+      queryClient.invalidateQueries({ queryKey: ['deal', dealId] });
+    }
+  };
+
+  const filter = dealId ? `id=eq.${dealId}` : undefined;
 
   useRealtime({
     table: 'deals',
-    enabled,
-    onInsert: (payload) => {
-      console.log('🔄 useRealtimeDeals: Deal inserted:', payload.new);
-      queryClient.invalidateQueries({ queryKey: ['deals'] });
-    },
-    onUpdate: (payload) => {
-      console.log('🔄 useRealtimeDeals: Deal updated:', payload.new);
-      queryClient.invalidateQueries({ queryKey: ['deals'] });
-    },
-    onDelete: (payload) => {
-      console.log('🔄 useRealtimeDeals: Deal deleted:', payload.old);
-      queryClient.invalidateQueries({ queryKey: ['deals'] });
-    },
+    filter,
+    onInsert: handleDealChange,
+    onUpdate: handleDealChange,
+    onDelete: handleDealChange,
+    enabled
   });
 };

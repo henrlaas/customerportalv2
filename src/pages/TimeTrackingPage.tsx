@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +12,6 @@ import { MonthlyHoursSummary } from '@/components/TimeTracking/MonthlyHoursSumma
 import { CalendarView } from '@/components/TimeTracking/CalendarView';
 import { DeleteTimeEntryDialog } from '@/components/TimeTracking/DeleteTimeEntryDialog';
 import { useCurrentMonthTimeEntries } from '@/hooks/useMonthlyTimeEntries';
-import { useRealtimeTimeEntries } from '@/hooks/realtime/useRealtimeTimeEntries';
 
 const TimeTrackingPage = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -29,13 +27,8 @@ const TimeTrackingPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-
-  console.log('⏰ TimeTrackingPage: Setting up real-time monitoring for user:', user?.id);
-
-  // Enable real-time updates for time entries
-  useRealtimeTimeEntries({ enabled: !!user?.id });
   
-  // Fetch current month time entries only - with real-time friendly configuration
+  // Fetch current month time entries only
   const { data: timeEntries = [], isLoading } = useCurrentMonthTimeEntries();
   
   // Check for active tracking on mount
