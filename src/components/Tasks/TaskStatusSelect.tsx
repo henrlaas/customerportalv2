@@ -19,9 +19,9 @@ export const TaskStatusSelect: React.FC<TaskStatusSelectProps> = ({
 }) => {
   const statusOptions = [
     { value: 'all', label: 'All statuses', color: '#6B7280' },
-    { value: 'todo', label: 'Todo', bgColor: 'bg-gray-100', textColor: 'text-gray-800', borderColor: 'border-gray-200' },
-    { value: 'in_progress', label: 'In Progress', bgColor: 'bg-blue-100', textColor: 'text-blue-800', borderColor: 'border-blue-200' },
-    { value: 'completed', label: 'Completed', bgColor: 'bg-green-100', textColor: 'text-green-800', borderColor: 'border-green-200' },
+    { value: 'todo', label: 'Todo', bgColor: 'bg-gray-100', textColor: 'text-gray-800', borderColor: 'border-gray-200', color: '#6B7280' },
+    { value: 'in_progress', label: 'In Progress', bgColor: 'bg-blue-100', textColor: 'text-blue-800', borderColor: 'border-blue-200', color: '#3B82F6' },
+    { value: 'completed', label: 'Completed', bgColor: 'bg-green-100', textColor: 'text-green-800', borderColor: 'border-green-200', color: '#10B981' },
   ];
 
   const selectedOption = statusOptions.find(option => option.value === selectedStatus) || statusOptions[0];
@@ -38,7 +38,7 @@ export const TaskStatusSelect: React.FC<TaskStatusSelectProps> = ({
           <div className="flex items-center gap-2">
             <div 
               className="w-3 h-3 rounded-full flex-shrink-0"
-              style={{ backgroundColor: isAll ? '#6B7280' : selectedOption.color || '#6B7280' }}
+              style={{ backgroundColor: selectedOption.color }}
             />
             <span className="text-sm font-medium truncate">
               {selectedOption.label}
@@ -52,7 +52,7 @@ export const TaskStatusSelect: React.FC<TaskStatusSelectProps> = ({
             <div className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: option.color || '#6B7280' }}
+                style={{ backgroundColor: option.color }}
               />
               <span className="text-sm">{option.label}</span>
             </div>

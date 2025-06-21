@@ -19,9 +19,9 @@ export const TaskPrioritySelect: React.FC<TaskPrioritySelectProps> = ({
 }) => {
   const priorityOptions = [
     { value: 'all', label: 'All priorities', color: '#6B7280' },
-    { value: 'low', label: 'Low', bgColor: 'bg-green-100', textColor: 'text-green-800', borderColor: 'border-green-200', color: '#166534' },
-    { value: 'medium', label: 'Medium', bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', borderColor: 'border-yellow-200', color: '#92400E' },
-    { value: 'high', label: 'High', bgColor: 'bg-red-100', textColor: 'text-red-800', borderColor: 'border-red-200', color: '#DC2626' },
+    { value: 'low', label: 'Low', bgColor: 'bg-green-100', textColor: 'text-green-800', borderColor: 'border-green-200', color: '#10B981' },
+    { value: 'medium', label: 'Medium', bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', borderColor: 'border-yellow-200', color: '#F59E0B' },
+    { value: 'high', label: 'High', bgColor: 'bg-red-100', textColor: 'text-red-800', borderColor: 'border-red-200', color: '#EF4444' },
   ];
 
   const selectedOption = priorityOptions.find(option => option.value === selectedPriority) || priorityOptions[0];
