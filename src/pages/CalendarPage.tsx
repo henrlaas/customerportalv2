@@ -10,6 +10,7 @@ import { CalendarListView } from '@/components/Calendar/CalendarListView';
 import { MonthlyOverviewCards } from '@/components/Calendar/MonthlyOverviewCards';
 import { CalendarPageSkeleton } from '@/components/Calendar/CalendarPageSkeleton';
 import { useCalendarData } from '@/hooks/useCalendarData';
+import { useRealtimeCalendar } from '@/hooks/realtime/useRealtimeCalendar';
 
 type ViewMode = 'calendar' | 'list';
 
@@ -21,6 +22,11 @@ const CalendarPage = () => {
   const navigate = useNavigate();
 
   const { tasks, projects, campaigns, monthlyStats, isLoading } = useCalendarData(currentDate);
+
+  // Enable real-time updates for calendar data
+  useRealtimeCalendar({
+    enabled: true
+  });
 
   // Generate calendar days
   const monthStart = startOfMonth(currentDate);

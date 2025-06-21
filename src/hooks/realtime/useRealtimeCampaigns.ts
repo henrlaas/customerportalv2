@@ -13,14 +13,35 @@ export const useRealtimeCampaigns = ({
 }: UseRealtimeCampaignsOptions = {}) => {
   const queryClient = useQueryClient();
 
-  const handleCampaignChange = () => {
-    // Invalidate campaign-related queries
+  const handleCampaignChange = (payload: any) => {
+    console.log('Real-time campaign change detected:', payload);
+    
+    const changedCampaignId = payload.new?.id || payload.old?.id;
+    
+    // Invalidate all campaign queries
     queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    queryClient.invalidateQueries({ queryKey: ['calendar-campaigns'] });
+    
+    // Invalidate specific campaign if we have an ID
+    if (changedCampaignId) {
+      queryClient.invalidateQueries({ queryKey: ['campaign', changedCampaignId] });
+    }
     
     if (campaignId) {
       queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
-      queryClient.invalidateQueries({ queryKey: ['adsets', campaignId] });
     }
+    
+    // Broad invalidation for campaign-related queries
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        const key = query.queryKey[0];
+        return key === 'campaigns' || 
+               key === 'calendar-campaigns' ||
+               key === 'user-campaigns';
+      }
+    });
+
+    console.log('Campaign queries invalidated successfully');
   };
 
   const filter = campaignId ? `id=eq.${campaignId}` : undefined;
