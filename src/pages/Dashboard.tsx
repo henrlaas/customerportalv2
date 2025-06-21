@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -47,7 +48,7 @@ const Dashboard = () => {
   // If user is admin or employee, show the new user-specific dashboard
   if (isAdmin || isEmployee) {
     return (
-      <div className="h-screen flex flex-col">
+      <div className="flex flex-col">
         <UserDashboard />
       </div>
     );
