@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO, isWithinInterval } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -32,6 +32,39 @@ const CalendarPage = () => {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  // Filter data by current month for list view
+  const filterByCurrentMonth = () => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    const monthInterval = { start: monthStart, end: monthEnd };
+
+    const filteredTasks = tasks?.filter(task => {
+      if (!task.due_date) return false;
+      const dueDate = parseISO(task.due_date);
+      return isWithinInterval(dueDate, monthInterval);
+    }) || [];
+
+    const filteredProjects = projects?.filter(project => {
+      if (!project.deadline) return false;
+      const deadline = parseISO(project.deadline);
+      return isWithinInterval(deadline, monthInterval);
+    }) || [];
+
+    const filteredCampaigns = campaigns?.filter(campaign => {
+      if (!campaign.start_date) return false;
+      const startDate = parseISO(campaign.start_date);
+      return isWithinInterval(startDate, monthInterval);
+    }) || [];
+
+    return {
+      tasks: filteredTasks,
+      projects: filteredProjects,
+      campaigns: filteredCampaigns
+    };
+  };
+
+  const monthFilteredData = filterByCurrentMonth();
 
   // Get events for a specific date
   const getEventsForDate = (date: Date) => {
@@ -180,9 +213,9 @@ const CalendarPage = () => {
         </Card>
       ) : (
         <CalendarListView
-          tasks={tasks || []}
-          projects={projects || []}
-          campaigns={campaigns || []}
+          tasks={monthFilteredData.tasks}
+          projects={monthFilteredData.projects}
+          campaigns={monthFilteredData.campaigns}
           onTaskClick={handleTaskClick}
           onProjectClick={handleProjectClick}
           onCampaignClick={handleCampaignClick}
