@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -117,15 +116,19 @@ export const TasksPage = () => {
   // State for view toggle (list or kanban) - Changed default to 'kanban'
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
 
+  // Track if this is the initial load to set default user only once
+  const hasSetInitialUser = useRef(false);
+
   // Current user ID for task filtering
   const currentUserId = user?.id || '';
 
   // Set current user as default selected user only on initial load
   useEffect(() => {
-    if (user?.id && selectedUserId === null) {
+    if (user?.id && !hasSetInitialUser.current) {
       setSelectedUserId(user.id);
+      hasSetInitialUser.current = true;
     }
-  }, [user?.id, selectedUserId]);
+  }, [user?.id]);
   
   // Helper function to check if a completed task is older than 3 days
   const isOldCompletedTask = (task: Task) => {
