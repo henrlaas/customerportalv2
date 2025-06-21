@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { PlusIcon, SearchIcon } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectCreateDialog } from '@/components/Projects/ProjectCreateDialog';
@@ -25,6 +25,8 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from '@/components/ui/pagination';
+import { UserSelect } from '@/components/Deals/UserSelect';
+import { useAdminEmployeeProfiles } from '@/hooks/useAdminEmployeeProfiles';
 
 const ProjectsPage = () => {
   const { profile } = useAuth();
@@ -32,12 +34,24 @@ const ProjectsPage = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filter, setFilter] = useState<'all' | 'in_progress' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showMyProjects, setShowMyProjects] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [userInitialized, setUserInitialized] = useState(false);
   const itemsPerPage = 10;
   const { projects, isLoading: projectsLoading, deleteProject } = useProjects();
 
   console.log('ProjectsPage render - projects:', projects?.length || 0, 'loading:', projectsLoading);
+
+  // Fetch admin and employee profiles for user selector
+  const { data: adminEmployeeProfiles = [] } = useAdminEmployeeProfiles();
+  
+  // Initialize selected user to current user (if they are admin/employee)
+  React.useEffect(() => {
+    if (!userInitialized && profile?.id && profile?.role && ['admin', 'employee'].includes(profile.role)) {
+      setSelectedUserId(profile.id);
+      setUserInitialized(true);
+    }
+  }, [profile?.id, profile?.role, userInitialized]);
 
   // CRITICAL: Enable real-time updates for projects and related data
   useRealtimeProjects({ enabled: true });
@@ -46,20 +60,20 @@ const ProjectsPage = () => {
 
   // Fetch user's assigned projects with better error handling
   const { data: userProjectIds = [], isLoading: userProjectsLoading, error: userProjectsError } = useQuery({
-    queryKey: ['user-project-assignments', profile?.id],
+    queryKey: ['user-project-assignments', selectedUserId],
     queryFn: async () => {
-      if (!profile?.id) {
-        console.log('No profile ID available for user project assignments');
+      if (!selectedUserId) {
+        console.log('No selected user ID for project assignments');
         return [];
       }
       
-      console.log('Fetching user project assignments for:', profile.id);
+      console.log('Fetching user project assignments for:', selectedUserId);
       
       try {
         const { data: assignmentsData, error } = await supabase
           .from('project_assignees')
           .select('project_id')
-          .eq('user_id', profile.id);
+          .eq('user_id', selectedUserId);
         
         if (error) {
           console.error('Error fetching user project assignments:', error);
@@ -74,7 +88,7 @@ const ProjectsPage = () => {
         return [];
       }
     },
-    enabled: !!profile?.id && showMyProjects,
+    enabled: !!selectedUserId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
@@ -149,11 +163,11 @@ const ProjectsPage = () => {
     let result = [...projects];
     console.log('Starting with', result.length, 'projects');
     
-    // First apply "my projects" filter
-    if (showMyProjects && userProjectIds.length > 0) {
+    // Apply user filter (only for admin/employee roles)
+    if (selectedUserId && userProjectIds.length > 0) {
       result = result.filter(project => userProjectIds.includes(project.id));
-      console.log('After my projects filter:', result.length, 'projects');
-    } else if (showMyProjects && !userProjectsLoading && userProjectIds.length === 0) {
+      console.log('After user filter:', result.length, 'projects');
+    } else if (selectedUserId && !userProjectsLoading && userProjectIds.length === 0) {
       console.log('No assigned projects found, showing empty list');
       return [];
     }
@@ -187,7 +201,7 @@ const ProjectsPage = () => {
     
     console.log('Final filtered projects:', result.length);
     return result;
-  }, [projects, userProjectIds, userProjectsLoading, projectMilestones, filter, searchQuery, showMyProjects]);
+  }, [projects, userProjectIds, userProjectsLoading, projectMilestones, filter, searchQuery, selectedUserId]);
 
   // Calculate pagination
   const totalPages = Math.max(1, Math.ceil(filteredProjects.length / itemsPerPage));
@@ -201,7 +215,7 @@ const ProjectsPage = () => {
   useEffect(() => {
     console.log('Filters changed, resetting to page 1');
     setCurrentPage(1);
-  }, [filter, searchQuery, showMyProjects]);
+  }, [filter, searchQuery, selectedUserId]);
 
   const handlePageChange = (page: number) => {
     console.log('Changing to page:', page);
@@ -246,7 +260,7 @@ const ProjectsPage = () => {
 
   // Helper function to get appropriate empty state message
   const getEmptyStateMessage = () => {
-    if (showMyProjects && !userProjectsLoading && userProjectIds.length === 0) {
+    if (selectedUserId && !userProjectsLoading && userProjectIds.length === 0) {
       return "You are not assigned to any projects yet.";
     }
     
@@ -284,7 +298,7 @@ const ProjectsPage = () => {
   };
 
   // Check if we're still loading critical data
-  const isLoading = projectsLoading || (showMyProjects && userProjectsLoading);
+  const isLoading = projectsLoading || (selectedUserId && userProjectsLoading);
 
   return (
     <div className="container p-6 mx-auto">
@@ -303,8 +317,8 @@ const ProjectsPage = () => {
       />
       
       {/* Search and Filters row */}
-      <div className="flex justify-between items-center my-6">
-        <div className="flex items-center gap-6 flex-1 max-w-2xl min-w-0">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 my-6">
+        <div className="flex-grow max-w-md">
           <div className="relative w-full max-w-lg">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
             <Input
@@ -316,21 +330,16 @@ const ProjectsPage = () => {
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          {/* Show My Projects Toggle */}
-          <div className="flex items-center gap-3">
-            <Switch
-              id="show-my-projects"
-              checked={showMyProjects}
-              onCheckedChange={setShowMyProjects}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {/* User Selector - only show for admin/employee users */}
+          {(profile?.role === 'admin' || profile?.role === 'employee') && (
+            <UserSelect
+              profiles={adminEmployeeProfiles}
+              selectedUserId={selectedUserId}
+              onUserChange={setSelectedUserId}
+              allUsersLabel="All projects"
             />
-            <label 
-              htmlFor="show-my-projects" 
-              className="text-sm font-medium text-foreground cursor-pointer"
-            >
-              Show my projects
-            </label>
-          </div>
+          )}
           
           {/* Filter tabs */}
           <div className="border-b border-border">
