@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, List } from 'lucide-react';
@@ -9,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { CalendarEvents } from '@/components/Calendar/CalendarEvents';
 import { CalendarListView } from '@/components/Calendar/CalendarListView';
 import { MonthlyOverviewCards } from '@/components/Calendar/MonthlyOverviewCards';
+import { CalendarPageSkeleton } from '@/components/Calendar/CalendarPageSkeleton';
 import { useCalendarData } from '@/hooks/useCalendarData';
 
 type ViewMode = 'calendar' | 'list';
@@ -75,13 +75,7 @@ const CalendarPage = () => {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   if (isLoading) {
-    return (
-      <div className="container p-6 mx-auto">
-        <div className="flex justify-center items-center h-96">
-          <div className="text-lg">Loading calendar...</div>
-        </div>
-      </div>
-    );
+    return <CalendarPageSkeleton viewMode={viewMode} />;
   }
 
   return (
