@@ -14,6 +14,8 @@ import { useRealtimeAds } from '@/hooks/realtime/useRealtimeAds';
 import { useRealtimeAdsets } from '@/hooks/realtime/useRealtimeAdsets';
 import { UserSelect } from '@/components/Deals/UserSelect';
 import { StatusSelect } from '@/components/Campaigns/StatusSelect';
+import { PlatformSelector } from '@/components/Campaigns/PlatformSelector';
+import { Platform } from '@/components/Campaigns/types/campaign';
 
 const CampaignsPage: React.FC = () => {
   const { toast } = useToast();
@@ -21,6 +23,7 @@ const CampaignsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [status, setStatus] = useState('all');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(['Meta', 'Google', 'LinkedIn', 'Snapchat', 'Tiktok']);
   const { user, session } = useAuth();
   const hasSetInitialUser = useRef(false);
 
@@ -107,7 +110,7 @@ const CampaignsPage: React.FC = () => {
     staleTime: 0, // Always fetch fresh data for real-time updates
   });
 
-  // Filter campaigns based on search term, status, and selected user
+  // Filter campaigns based on search term, status, selected user, and selected platforms
   const filteredCampaigns = campaigns.filter(campaign => {
     // Helper function to safely check if profiles exist and are not an error object
     const isValidProfile = (profile: any): profile is { first_name: string | null, last_name: string | null } => {
@@ -125,7 +128,10 @@ const CampaignsPage: React.FC = () => {
     // User filter logic - show all campaigns when selectedUserId is null
     const matchesUser = selectedUserId === null || campaign.associated_user_id === selectedUserId;
     
-    return matchesSearch && matchesStatus && matchesUser;
+    // Platform filter logic - show campaigns whose platform is in selectedPlatforms
+    const matchesPlatform = selectedPlatforms.includes(campaign.platform);
+    
+    return matchesSearch && matchesStatus && matchesUser && matchesPlatform;
   });
 
   const handleCreateClick = () => {
@@ -173,6 +179,10 @@ const CampaignsPage: React.FC = () => {
           <StatusSelect
             selectedStatus={status}
             onStatusChange={setStatus}
+          />
+          <PlatformSelector
+            selectedPlatforms={selectedPlatforms}
+            onPlatformsChange={setSelectedPlatforms}
           />
         </div>
       </div>
