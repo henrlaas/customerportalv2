@@ -10,13 +10,15 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
   const monthEnd = endOfMonth(currentDate);
   const today = new Date();
 
+  console.log('🔍 useCalendarData called for user:', user?.id, 'month:', currentDate.toISOString().slice(0, 7));
+
   // Fetch tasks assigned to the current user through task_assignees table - exclude completed tasks
   const { data: allTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ['calendar-tasks', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       
-      console.log('Fetching calendar tasks for user:', user.id);
+      console.log('📊 Fetching calendar tasks for user:', user.id);
       
       const { data, error } = await supabase
         .from('tasks')
@@ -34,16 +36,16 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
         .order('due_date', { ascending: true });
 
       if (error) {
-        console.error('Error fetching calendar tasks:', error);
+        console.error('❌ Error fetching calendar tasks:', error);
         throw error;
       }
 
-      console.log('Calendar tasks found:', data);
+      console.log('📋 Calendar tasks found:', data?.length || 0, 'tasks:', data);
       return data || [];
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0, // Force fresh data
+    gcTime: 1 * 60 * 1000, // 1 minute
   });
 
   // Fetch projects with deadlines where user is assigned
@@ -52,7 +54,7 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      console.log('Fetching calendar projects for user:', user.id);
+      console.log('📊 Fetching calendar projects for user:', user.id);
       
       const { data, error } = await supabase
         .from('projects')
@@ -68,16 +70,16 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
         .order('deadline', { ascending: true });
 
       if (error) {
-        console.error('Error fetching calendar projects:', error);
+        console.error('❌ Error fetching calendar projects:', error);
         throw error;
       }
 
-      console.log('Calendar projects found:', data);
+      console.log('📁 Calendar projects found:', data?.length || 0, 'projects:', data);
       return data || [];
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0, // Force fresh data
+    gcTime: 1 * 60 * 1000, // 1 minute
   });
 
   // Fetch campaigns with start dates where user is the associated user (only draft and in-progress)
@@ -86,7 +88,7 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      console.log('Fetching calendar campaigns for user:', user.id);
+      console.log('📊 Fetching calendar campaigns for user:', user.id);
       
       const { data, error } = await supabase
         .from('campaigns')
@@ -104,16 +106,16 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
         .order('start_date', { ascending: true });
 
       if (error) {
-        console.error('Error fetching calendar campaigns:', error);
+        console.error('❌ Error fetching calendar campaigns:', error);
         throw error;
       }
 
-      console.log('Calendar campaigns found:', data);
+      console.log('📢 Calendar campaigns found:', data?.length || 0, 'campaigns:', data);
       return data || [];
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0, // Force fresh data
+    gcTime: 1 * 60 * 1000, // 1 minute
   });
 
   // Fetch project milestones for the user's assigned projects to determine completion status
@@ -130,27 +132,26 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
         .in('project_id', projectIds);
 
       if (error) {
-        console.error('Error fetching milestones:', error);
+        console.error('❌ Error fetching milestones:', error);
         throw error;
       }
 
+      console.log('🎯 Milestones found:', data?.length || 0);
       return data || [];
     },
     enabled: !!user?.id && !!allProjects?.length,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0, // Force fresh data
+    gcTime: 1 * 60 * 1000, // 1 minute
   });
 
   // Filter out completed projects
   const projects = allProjects?.filter(project => {
-    if (!milestones) return true; // If milestones not loaded yet, include all projects
+    if (!milestones) return true;
     
     const projectMilestones = milestones.filter(m => m.project_id === project.id);
     
-    // If no milestones, project is not completed
     if (projectMilestones.length === 0) return true;
     
-    // If not all milestones are completed, project is not completed
     const allCompleted = projectMilestones.every(m => m.status === 'completed');
     return !allCompleted;
   }) || [];
@@ -219,17 +220,17 @@ export const useCalendarData = (currentDate: Date = new Date()) => {
     monthlyStats.overdueCampaigns = campaigns.filter(campaign => {
       if (!campaign.start_date) return false;
       const startDate = new Date(campaign.start_date);
-      // Campaign is overdue if it's draft or in-progress and start date has passed
       return isBefore(startDate, today) && (campaign.status === 'draft' || campaign.status === 'in-progress');
     }).length;
   }
 
-  console.log('Calendar data summary:', {
+  console.log('📊 Calendar data summary:', {
     userId: user?.id,
     tasksCount: tasks.length,
     projectsCount: projects.length,
     campaignsCount: campaigns.length,
-    monthlyStats
+    monthlyStats,
+    isLoading: tasksLoading || projectsLoading || campaignsLoading || milestonesLoading || !user
   });
 
   return {
