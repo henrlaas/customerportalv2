@@ -86,15 +86,15 @@ export const TimeTrackingCard = () => {
 
   if (isLoading) {
     return (
-      <Card className="h-full border-l-4 border-l-[#004743]">
-        <CardHeader className="pb-4">
+      <Card className="h-full">
+        <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <Clock className="h-5 w-5 text-[#004743]" />
             Time Tracking
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
+          <div className="animate-pulse space-y-3">
             <div className="bg-gray-200 h-16 rounded-lg"></div>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gray-200 h-12 rounded-lg"></div>
@@ -111,8 +111,8 @@ export const TimeTrackingCard = () => {
   const isExceeding = stats.progressPercentage >= 100;
 
   return (
-    <Card className="h-full border-l-4 border-l-[#004743] bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group">
-      <CardHeader className="pb-4">
+    <Card className="h-full bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2 text-[#004743]">
             <Clock className="h-6 w-6 transition-transform group-hover:scale-110" />
@@ -128,7 +128,7 @@ export const TimeTrackingCard = () => {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-3">
         {/* Monthly Hours Hero */}
         <div className="relative">
           <div className="text-center bg-gradient-to-br from-[#004743]/5 to-[#F2FCE2]/30 rounded-xl p-4 border border-[#F2FCE2]/50">
@@ -172,41 +172,6 @@ export const TimeTrackingCard = () => {
               <span className="text-lg font-bold text-[#004743]">{stats.dailyAverage}h</span>
             </div>
             <div className="text-xs text-gray-600">Daily Avg</div>
-          </div>
-        </div>
-
-        {/* Productivity Insights */}
-        <div className="bg-gradient-to-r from-[#F2FCE2]/20 to-[#F2FCE2]/10 rounded-lg p-3 border border-[#F2FCE2]/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Monthly Progress</span>
-            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-              stats.progressPercentage >= 100 ? 'bg-[#004743] text-white' :
-              stats.progressPercentage >= 75 ? 'bg-green-100 text-green-700' :
-              'bg-yellow-100 text-yellow-700'
-            }`}>
-              {stats.progressPercentage >= 100 ? 'Exceeded!' : 
-               stats.progressPercentage >= 75 ? 'On Track' : 
-               'Needs Focus'}
-            </div>
-          </div>
-          
-          <div className="text-xs text-gray-600">
-            {stats.progressPercentage >= 100 ? 
-              `${(stats.hoursThisMonth - 150).toFixed(1)}h above target - excellent work!` :
-              `${(150 - stats.hoursThisMonth).toFixed(1)}h remaining to reach monthly goal`
-            }
-          </div>
-        </div>
-
-        {/* Status Footer */}
-        <div className="flex items-center justify-center pt-2 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-sm text-[#004743]">
-            <Target className="h-4 w-4" />
-            <span className="font-medium">
-              {stats.progressPercentage >= 100 ? 'Outstanding performance!' : 
-               stats.progressPercentage >= 75 ? 'Great momentum!' : 
-               'Keep building momentum'}
-            </span>
           </div>
         </div>
       </CardContent>

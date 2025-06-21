@@ -51,15 +51,15 @@ export const MyDealsCard = () => {
 
   if (isLoading) {
     return (
-      <Card className="h-full border-l-4 border-l-[#004743]">
-        <CardHeader className="pb-4">
+      <Card className="h-full">
+        <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-[#004743]" />
             My Deals
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
+          <div className="animate-pulse space-y-3">
             <div className="bg-gray-200 h-16 rounded-lg"></div>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gray-200 h-12 rounded-lg"></div>
@@ -75,8 +75,8 @@ export const MyDealsCard = () => {
   const isPerformingWell = stats.successRate >= 70;
 
   return (
-    <Card className="h-full border-l-4 border-l-[#004743] bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group">
-      <CardHeader className="pb-4">
+    <Card className="h-full bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2 text-[#004743]">
             <TrendingUp className="h-6 w-6 transition-transform group-hover:scale-110" />
@@ -92,7 +92,7 @@ export const MyDealsCard = () => {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-3">
         {/* Pipeline Value Hero */}
         <div className="relative">
           <div className="text-center bg-gradient-to-br from-[#004743]/5 to-[#F2FCE2]/30 rounded-xl p-4 border border-[#F2FCE2]/50">
@@ -122,39 +122,6 @@ export const MyDealsCard = () => {
               <span className="text-xl font-bold text-[#004743]">{stats.closed}</span>
             </div>
             <div className="text-xs text-[#004743] font-medium">Closed Won</div>
-          </div>
-        </div>
-
-        {/* Success Rate with Progress */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-700">Success Rate</span>
-            <span className="text-lg font-bold text-[#004743]">{stats.successRate}%</span>
-          </div>
-          
-          <div className="w-full bg-gray-200 rounded-full h-3">
-            <div 
-              className="bg-gradient-to-r from-[#004743] to-[#004743]/80 h-3 rounded-full transition-all duration-500 relative"
-              style={{ width: `${Math.min(stats.successRate, 100)}%` }}
-            >
-              <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
-            </div>
-          </div>
-          
-          <div className="text-xs text-center text-gray-500">
-            {stats.successRate >= 80 ? 'Excellent performance!' : 
-             stats.successRate >= 60 ? 'Good performance' : 
-             'Room for improvement'}
-          </div>
-        </div>
-
-        {/* Status Footer */}
-        <div className="flex items-center justify-center pt-2 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-sm text-[#004743]">
-            <Award className="h-4 w-4" />
-            <span className="font-medium">
-              {stats.open > 0 ? `${stats.open} deals in pipeline` : 'Ready for new opportunities'}
-            </span>
           </div>
         </div>
       </CardContent>

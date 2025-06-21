@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FolderOpen, CheckCircle, AlertTriangle, Clock, TrendingUp } from 'lucide-react';
+import { FolderOpen, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
 import { useRealtimeMilestones } from '@/hooks/realtime/useRealtimeMilestones';
 import { useRealtimeProjects } from '@/hooks/realtime/useRealtimeProjects';
 
@@ -84,15 +84,15 @@ export const MyProjectsCard = () => {
 
   if (isLoading) {
     return (
-      <Card className="h-full border-l-4 border-l-[#004743]">
-        <CardHeader className="pb-4">
+      <Card className="h-full">
+        <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <FolderOpen className="h-5 w-5 text-[#004743]" />
             My Projects
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
+          <div className="animate-pulse space-y-3">
             <div className="bg-gray-200 h-16 rounded-lg"></div>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gray-200 h-12 rounded-lg"></div>
@@ -110,8 +110,8 @@ export const MyProjectsCard = () => {
   const completionRate = totalProjects > 0 ? Math.round((stats.completed / totalProjects) * 100) : 0;
 
   return (
-    <Card className="h-full border-l-4 border-l-[#004743] bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group">
-      <CardHeader className="pb-4">
+    <Card className="h-full bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2 text-[#004743]">
             <FolderOpen className="h-6 w-6 transition-transform group-hover:scale-110" />
@@ -127,7 +127,7 @@ export const MyProjectsCard = () => {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-3">
         {/* Active Projects Hero */}
         <div className="relative">
           <div className="text-center bg-gradient-to-br from-[#004743]/5 to-[#F2FCE2]/30 rounded-xl p-4 border border-[#F2FCE2]/50">
@@ -179,49 +179,6 @@ export const MyProjectsCard = () => {
             </div>
             <div className="text-xs text-gray-600">Overdue</div>
           </div>
-        </div>
-
-        {/* Project Health Summary */}
-        <div className="bg-gradient-to-r from-[#F2FCE2]/20 to-[#F2FCE2]/10 rounded-lg p-3 border border-[#F2FCE2]/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Project Health</span>
-            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-              stats.overdue === 0 ? 'bg-[#004743] text-white' :
-              stats.overdue <= 2 ? 'bg-yellow-100 text-yellow-700' :
-              'bg-red-100 text-red-700'
-            }`}>
-              {stats.overdue === 0 ? 'Excellent' : 
-               stats.overdue <= 2 ? 'Good' : 
-               'Needs Attention'}
-            </div>
-          </div>
-          
-          <div className="text-xs text-gray-600">
-            {stats.overdue === 0 ? 
-              'All projects are on track and meeting deadlines' :
-              `${stats.overdue} project${stats.overdue > 1 ? 's' : ''} require immediate attention`
-            }
-          </div>
-        </div>
-
-        {/* Status Footer */}
-        <div className="flex items-center justify-center pt-2 border-t border-gray-100">
-          {stats.overdue > 0 ? (
-            <div className="flex items-center gap-2 text-sm text-red-600">
-              <Clock className="h-4 w-4" />
-              <span className="font-medium">Review overdue projects</span>
-            </div>
-          ) : stats.active === 0 ? (
-            <div className="flex items-center gap-2 text-sm text-[#004743]">
-              <CheckCircle className="h-4 w-4" />
-              <span className="font-medium">Ready for new projects! 🚀</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-sm text-[#004743]">
-              <TrendingUp className="h-4 w-4" />
-              <span className="font-medium">All projects on track</span>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
