@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -33,6 +32,7 @@ import SetPassword from './pages/SetPassword';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import OKRPage from './pages/OKRPage';
+import UILibraryPage from './pages/UILibraryPage';
 
 import { ProtectedRoute } from './components/providers/ProtectedRoute';
 import { ClientProtectedRoute } from './components/ClientProtectedRoute';
@@ -137,6 +137,9 @@ function App() {
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/users" element={<UserManagementPage />} />
                   <Route path="/workspace" element={<WorkspaceManagementPage />} />
+                  
+                  {/* Add UI Library route */}
+                  <Route path="/ui" element={<UILibraryPage />} />
                 </Route>
               </Route>
               <Route element={<ClientProtectedRoute />}>
