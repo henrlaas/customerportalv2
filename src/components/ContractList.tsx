@@ -35,6 +35,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { UserSelect } from '@/components/Deals/UserSelect';
+import { useAdminEmployeeProfiles } from '@/hooks/useAdminEmployeeProfiles';
 
 const CONTRACTS_PER_PAGE = 10;
 
@@ -50,8 +52,21 @@ export const ContractList = () => {
   const [contractToDelete, setContractToDelete] = useState<ContractWithDetails | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [userInitialized, setUserInitialized] = useState(false);
   
   const isClient = profile?.role === 'client';
+  
+  // Fetch admin and employee profiles for user selector
+  const { data: adminEmployeeProfiles = [] } = useAdminEmployeeProfiles();
+  
+  // Initialize selected user to current user (if they are admin/employee)
+  React.useEffect(() => {
+    if (!userInitialized && user?.id && profile?.role && ['admin', 'employee'].includes(profile.role)) {
+      setSelectedUserId(user.id);
+      setUserInitialized(true);
+    }
+  }, [user?.id, profile?.role, userInitialized]);
   
   // Fetch contracts with optimized query configuration
   const { data: contracts = [], isLoading } = useQuery({
@@ -84,6 +99,11 @@ export const ContractList = () => {
     
     let result = [...contracts];
     
+    // Apply user filter (only for non-clients)
+    if (!isClient && selectedUserId) {
+      result = result.filter(contract => contract.created_by === selectedUserId);
+    }
+    
     // Apply status filter
     if (statusFilter !== 'all') {
       result = result.filter(contract => contract.status === statusFilter);
@@ -106,7 +126,7 @@ export const ContractList = () => {
         type.includes(searchString)
       );
     });
-  }, [contracts, searchTerm, statusFilter]);
+  }, [contracts, searchTerm, statusFilter, selectedUserId, isClient]);
   
   // Memoize contract groups for better performance
   const { unsignedContracts, signedContracts } = useMemo(() => {
@@ -133,7 +153,7 @@ export const ContractList = () => {
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, selectedUserId]);
 
   // Memoize action handlers to prevent unnecessary re-renders
   const downloadPdf = useCallback(async (contract: ContractWithDetails, e?: React.MouseEvent) => {
@@ -510,7 +530,7 @@ export const ContractList = () => {
         )
       )}
       
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
         <div className="flex-grow max-w-md">
           <Input
             placeholder="Search contracts..."
@@ -520,8 +540,19 @@ export const ContractList = () => {
           />
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {/* User Selector - only show for non-clients */}
+          {!isClient && (
+            <UserSelect
+              profiles={adminEmployeeProfiles}
+              selectedUserId={selectedUserId}
+              onUserChange={setSelectedUserId}
+              allUsersLabel="All contracts"
+            />
+          )}
+          
           <FilterToggle />
+          
           {!isClient && (
             <Button onClick={() => setCreateDialogOpen(true)}>
               <FilePlus className="h-4 w-4 mr-2" />
