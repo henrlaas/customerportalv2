@@ -6,6 +6,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays, isSameDay, parseISO } from 'date-fns';
 import { Calendar, CheckCircle, FolderOpen, Megaphone } from 'lucide-react';
+import { useRealtimeTasks } from '@/hooks/realtime/useRealtimeTasks';
+import { useRealtimeProjects } from '@/hooks/realtime/useRealtimeProjects';
+import { useRealtimeCampaigns } from '@/hooks/realtime/useRealtimeCampaigns';
+import { useRealtimeTaskAssignees } from '@/hooks/realtime/useRealtimeTaskAssignees';
+import { useRealtimeProjectAssignees } from '@/hooks/realtime/useRealtimeProjectAssignees';
+import { useRealtimeCampaignAssignees } from '@/hooks/realtime/useRealtimeCampaignAssignees';
 
 interface UpcomingDeadlinesCalendarProps {
   onTaskClick: (taskId: string) => void;
@@ -15,10 +21,22 @@ export const UpcomingDeadlinesCalendar = ({ onTaskClick }: UpcomingDeadlinesCale
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  console.log('📅 UpcomingDeadlinesCalendar: Setting up real-time monitoring for user:', user?.id);
+
+  // Enable real-time updates for tasks, projects, campaigns and their assignees
+  useRealtimeTasks({ enabled: !!user?.id });
+  useRealtimeProjects({ enabled: !!user?.id });
+  useRealtimeCampaigns({ enabled: !!user?.id });
+  useRealtimeTaskAssignees({ enabled: !!user?.id });
+  useRealtimeProjectAssignees({ enabled: !!user?.id });
+  useRealtimeCampaignAssignees({ enabled: !!user?.id });
+
   const { data: upcomingItems, isLoading } = useQuery({
     queryKey: ['upcoming-deadlines', user?.id],
     queryFn: async () => {
       if (!user?.id) return { tasks: [], projects: [], campaigns: [] };
+
+      console.log('📊 UpcomingDeadlinesCalendar: Fetching upcoming deadlines for user:', user.id);
 
       const now = new Date();
       const oneWeekFromNow = addDays(now, 7);
@@ -90,9 +108,17 @@ export const UpcomingDeadlinesCalendar = ({ onTaskClick }: UpcomingDeadlinesCale
 
       if (campaignsError) throw campaignsError;
 
+      console.log('📊 UpcomingDeadlinesCalendar: Found data:', {
+        tasks: tasks.length,
+        projects: projects.length,
+        campaigns: campaigns?.length || 0
+      });
+
       return { tasks, projects, campaigns: campaigns || [] };
     },
     enabled: !!user?.id,
+    staleTime: 0, // Force fresh data for real-time updates
+    gcTime: 30 * 1000, // 30 seconds cache time
   });
 
   const handleProjectClick = (projectId: string) => {
