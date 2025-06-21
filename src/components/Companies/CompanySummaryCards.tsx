@@ -38,60 +38,68 @@ export const CompanySummaryCards: React.FC<CompanySummaryCardsProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {/* Financial Card */}
-      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+      <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <DollarSign className="h-8 w-8 text-green-600" />
-            <div className="text-right">
-              <p className="text-sm text-green-700 font-medium">Financial</p>
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
+              <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#F2FCE2] text-[#004743]">
+                Financial
+              </div>
             </div>
           </div>
-          <div className="space-y-3">
-            {company.is_marketing_client && company.mrr !== null && (
-              <div>
-                <p className="text-xs text-green-600 uppercase tracking-wide">Monthly Revenue</p>
-                <p className="text-xl font-bold text-green-800">{formatCurrency(company.mrr)}</p>
+          
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-600 opacity-80">
+              Monthly Revenue
+            </p>
+            
+            {company.is_marketing_client && company.mrr !== null ? (
+              <div className="text-3xl font-bold text-[#004743]">
+                {formatCurrency(company.mrr)}
+              </div>
+            ) : (
+              <div className="text-3xl font-bold text-gray-400">
+                No data
               </div>
             )}
-            <div className="flex flex-wrap gap-1">
-              {!company.mrr && (
-                <p className="text-sm text-gray-500">No financial data</p>
-              )}
-            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Contact Card */}
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+      <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <Phone className="h-8 w-8 text-blue-600" />
-            <div className="text-right">
-              <p className="text-sm text-blue-700 font-medium">Contact</p>
+            <div className="flex items-center gap-2">
+              <Phone className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
+              <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#F2FCE2] text-[#004743]">
+                Contact
+              </div>
             </div>
           </div>
+          
           <div className="space-y-3">
             {company.phone && (
               <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-blue-500" />
-                <a href={`tel:${company.phone}`} className="text-sm hover:text-blue-600 transition-colors">
+                <Phone className="h-4 w-4 text-[#004743]" />
+                <a href={`tel:${company.phone}`} className="text-sm hover:text-[#004743] transition-colors text-gray-600">
                   {company.phone}
                 </a>
               </div>
             )}
             {company.invoice_email && (
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-blue-500" />
-                <a href={`mailto:${company.invoice_email}`} className="text-sm hover:text-blue-600 transition-colors truncate">
+                <Mail className="h-4 w-4 text-[#004743]" />
+                <a href={`mailto:${company.invoice_email}`} className="text-sm hover:text-[#004743] transition-colors truncate text-gray-600">
                   {company.invoice_email}
                 </a>
               </div>
             )}
             {company.website && (
               <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-blue-500" />
-                <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm hover:text-blue-600 transition-colors flex items-center gap-1">
+                <Globe className="h-4 w-4 text-[#004743]" />
+                <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm hover:text-[#004743] transition-colors flex items-center gap-1 text-gray-600">
                   <span className="truncate">{company.website.replace(/^https?:\/\//, '')}</span>
                   <ExternalLink className="h-3 w-3" />
                 </a>
@@ -105,23 +113,26 @@ export const CompanySummaryCards: React.FC<CompanySummaryCardsProps> = ({
       </Card>
 
       {/* Location Card */}
-      <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+      <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <MapPin className="h-8 w-8 text-purple-600" />
-            <div className="text-right">
-              <p className="text-sm text-purple-700 font-medium">Location</p>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
+              <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#F2FCE2] text-[#004743]">
+                Location
+              </div>
             </div>
           </div>
+          
           <div className="space-y-3">
             <div>
-              <p className="text-xs text-purple-600 uppercase tracking-wide">Address</p>
-              <p className="text-sm text-purple-800 leading-relaxed">{formatAddress()}</p>
+              <p className="text-xs text-gray-600 uppercase tracking-wide opacity-80">Address</p>
+              <p className="text-sm text-[#004743] leading-relaxed font-medium">{formatAddress()}</p>
             </div>
             {company.organization_number && (
               <div>
-                <p className="text-xs text-purple-600 uppercase tracking-wide">Org. Number</p>
-                <p className="text-sm font-mono text-purple-800">{company.organization_number}</p>
+                <p className="text-xs text-gray-600 uppercase tracking-wide opacity-80">Org. Number</p>
+                <p className="text-sm font-mono text-[#004743] font-medium">{company.organization_number}</p>
               </div>
             )}
           </div>
@@ -129,29 +140,32 @@ export const CompanySummaryCards: React.FC<CompanySummaryCardsProps> = ({
       </Card>
 
       {/* Status Card */}
-      <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+      <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <Users className="h-8 w-8 text-amber-600" />
-            <div className="text-right">
-              <p className="text-sm text-amber-700 font-medium">Status</p>
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
+              <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#F2FCE2] text-[#004743]">
+                Status
+              </div>
             </div>
           </div>
+          
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
               {company.is_partner && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                <Badge variant="outline" className="bg-[#F2FCE2] text-[#004743] border-[#004743]/30">
                   <Shield className="h-3 w-3 mr-1" />
                   Partner
                 </Badge>
               )}
               {company.is_marketing_client && (
-                <Badge variant="marketing" className="bg-green-50 text-green-700 border-green-300">
+                <Badge variant="outline" className="bg-[#F2FCE2] text-[#004743] border-[#004743]/30">
                   Marketing
                 </Badge>
               )}
               {company.is_web_client && (
-                <Badge variant="web" className="bg-purple-50 text-purple-700 border-purple-300">
+                <Badge variant="outline" className="bg-[#F2FCE2] text-[#004743] border-[#004743]/30">
                   Web
                 </Badge>
               )}
@@ -162,10 +176,10 @@ export const CompanySummaryCards: React.FC<CompanySummaryCardsProps> = ({
               )}
             </div>
             <div>
-              <p className="text-xs text-amber-600 uppercase tracking-wide">Created</p>
+              <p className="text-xs text-gray-600 uppercase tracking-wide opacity-80">Created</p>
               <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4 text-amber-500" />
-                <p className="text-sm text-amber-800">{new Date(company.created_at).toLocaleDateString()}</p>
+                <Calendar className="h-4 w-4 text-[#004743]" />
+                <p className="text-sm text-[#004743] font-medium">{new Date(company.created_at).toLocaleDateString()}</p>
               </div>
             </div>
           </div>
