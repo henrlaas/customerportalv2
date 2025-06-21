@@ -69,11 +69,7 @@ export const MediaPagination: React.FC<MediaPaginationProps> = ({
   const pageNumbers = generatePageNumbers();
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200">
-      <div className="text-sm text-muted-foreground">
-        Showing {startItem}-{endItem} of {totalItems} items
-      </div>
-      
+    <div className="flex flex-col items-center gap-4 pt-4 border-t border-gray-200">
       <Pagination>
         <PaginationContent>
           <PaginationItem>
@@ -107,6 +103,10 @@ export const MediaPagination: React.FC<MediaPaginationProps> = ({
           </PaginationItem>
         </PaginationContent>
       </Pagination>
+      
+      <div className="text-sm text-muted-foreground">
+        Showing {startItem}-{endItem} of {totalItems} items
+      </div>
     </div>
   );
 };
