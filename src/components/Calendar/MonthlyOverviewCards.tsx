@@ -62,7 +62,6 @@ export const MonthlyOverviewCards: React.FC<MonthlyOverviewCardsProps> = ({ mont
       {cards.map((card, index) => {
         const Icon = card.icon;
         const isOverdueCard = card.type === 'overdue';
-        const hasOverdue = card.type === 'total' && card.overdue && card.overdue > 0;
         const isHealthy = card.type === 'total' && (!card.overdue || card.overdue === 0);
 
         return (
@@ -97,51 +96,13 @@ export const MonthlyOverviewCards: React.FC<MonthlyOverviewCardsProps> = ({ mont
                   {card.title}
                 </p>
                 
-                <div className="flex items-end justify-between">
-                  <div className={`text-3xl font-bold ${
-                    isOverdueCard && card.value > 0 
-                      ? 'text-red-600' 
-                      : 'text-[#004743]'
-                  }`}>
-                    {card.value}
-                  </div>
-                  
-                  {card.type === 'total' && card.overdue !== undefined && (
-                    <div className="text-right">
-                      <div className={`text-sm font-medium ${
-                        card.overdue > 0 ? 'text-red-600' : 'text-gray-400'
-                      }`}>
-                        {card.overdue}
-                      </div>
-                      <div className="text-xs text-gray-500">overdue</div>
-                    </div>
-                  )}
+                <div className={`text-3xl font-bold ${
+                  isOverdueCard && card.value > 0 
+                    ? 'text-red-600' 
+                    : 'text-[#004743]'
+                }`}>
+                  {card.value}
                 </div>
-                
-                {card.type === 'total' && card.value > 0 && (
-                  <div className="pt-2">
-                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                      <div 
-                        className={`h-1.5 rounded-full transition-all duration-500 ${
-                          hasOverdue 
-                            ? 'bg-gradient-to-r from-red-400 to-red-500' 
-                            : 'bg-gradient-to-r from-[#004743] to-[#004743]/80'
-                        }`}
-                        style={{ 
-                          width: hasOverdue 
-                            ? `${Math.min((card.overdue! / card.value) * 100, 100)}%`
-                            : '100%'
-                        }}
-                      ></div>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {hasOverdue 
-                        ? `${Math.round((card.overdue! / card.value) * 100)}% overdue`
-                        : 'All on track'
-                      }
-                    </div>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
