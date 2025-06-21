@@ -52,19 +52,38 @@ export function EditCampaignDialog({ campaign, trigger }: EditCampaignDialogProp
   const form = useForm<z.infer<typeof campaignSchema>>({
     resolver: zodResolver(campaignSchema),
     defaultValues: {
-      name: campaign.name,
-      company_id: campaign.company_id,
-      platform: (campaign.platform as any) || 'Meta',
-      is_ongoing: campaign.is_ongoing,
-      start_date: campaign.start_date ? new Date(campaign.start_date) : null,
-      end_date: campaign.end_date ? new Date(campaign.end_date) : null,
-      budget: campaign.budget || null,
-      description: campaign.description || null,
-      include_subsidiaries: false, // Default value
-      associated_user_id: campaign.associated_user_id || user?.id || '',
-      status: (campaign.status as CampaignStatus) || 'draft',
+      name: '',
+      company_id: '',
+      platform: 'Meta',
+      is_ongoing: false,
+      start_date: null,
+      end_date: null,
+      budget: null,
+      description: null,
+      include_subsidiaries: false,
+      associated_user_id: '',
+      status: 'draft',
     },
   });
+
+  // Reset form with campaign data when dialog opens or campaign changes
+  React.useEffect(() => {
+    if (open && campaign) {
+      form.reset({
+        name: campaign.name,
+        company_id: campaign.company_id,
+        platform: (campaign.platform as any) || 'Meta',
+        is_ongoing: campaign.is_ongoing,
+        start_date: campaign.start_date ? new Date(campaign.start_date) : null,
+        end_date: campaign.end_date ? new Date(campaign.end_date) : null,
+        budget: campaign.budget || null,
+        description: campaign.description || null,
+        include_subsidiaries: false, // Default value
+        associated_user_id: campaign.associated_user_id || user?.id || '',
+        status: (campaign.status as CampaignStatus) || 'draft',
+      });
+    }
+  }, [open, campaign, form, user?.id]);
 
   const onSubmit = async (values: z.infer<typeof campaignSchema>) => {
     try {
@@ -122,20 +141,6 @@ export function EditCampaignDialog({ campaign, trigger }: EditCampaignDialogProp
   const handleClose = () => {
     setOpen(false);
     setStep(1);
-    // Reset form to campaign values
-    form.reset({
-      name: campaign.name,
-      company_id: campaign.company_id,
-      platform: (campaign.platform as any) || 'Meta',
-      is_ongoing: campaign.is_ongoing,
-      start_date: campaign.start_date ? new Date(campaign.start_date) : null,
-      end_date: campaign.end_date ? new Date(campaign.end_date) : null,
-      budget: campaign.budget || null,
-      description: campaign.description || null,
-      include_subsidiaries: false,
-      associated_user_id: campaign.associated_user_id || user?.id || '',
-      status: (campaign.status as CampaignStatus) || 'draft',
-    });
   };
 
   const totalSteps = 3;
