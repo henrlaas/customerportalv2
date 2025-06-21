@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Filter, DollarSign, Target, TrendingUp, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { DealsKanban } from '@/components/Deals/DealsKanban';
-import { CreateDealDialog } from '@/components/Deals/CreateDealDialog';
-import { DealDetailSheet } from '@/components/Deals/DealDetailSheet';
+import { DealKanbanView } from '@/components/Deals/DealKanbanView';
+import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog/MultiStageDealDialog';
+import { DealDetailsSidebar } from '@/components/Deals/DealDetailsSidebar/DealDetailsSidebar';
 import { UserSelect } from '@/components/Deals/UserSelect';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
@@ -69,11 +70,7 @@ const DealsPage = () => {
       const { data, error } = await query;
 
       if (error) {
-        toast({
-          title: 'Error fetching deals',
-          description: error.message,
-          variant: 'destructive',
-        });
+        toast.error('Error fetching deals: ' + error.message);
         return [];
       }
 
@@ -88,8 +85,8 @@ const DealsPage = () => {
 
     return deals.filter((deal) => {
       const matchesSearch =
-        deal.name.toLowerCase().includes(searchString) ||
-        deal.company_name.toLowerCase().includes(searchString);
+        deal.title?.toLowerCase().includes(searchString) ||
+        deal.description?.toLowerCase().includes(searchString);
       return matchesSearch;
     });
   }, [deals, searchQuery]);
@@ -164,15 +161,15 @@ const DealsPage = () => {
       {isLoading ? (
         <KanbanBoardSkeleton />
       ) : (
-        <DealsKanban deals={filteredDeals} onDealClick={handleDealClick} />
+        <DealKanbanView deals={filteredDeals} onDealClick={handleDealClick} />
       )}
 
-      <CreateDealDialog
+      <MultiStageDealDialog
         isOpen={isCreateDialogOpen}
         onClose={handleCreateDialogClose}
       />
 
-      <DealDetailSheet
+      <DealDetailsSidebar
         isOpen={isDealSheetOpen}
         onOpenChange={setIsDealSheetOpen}
         dealId={selectedDealId}
