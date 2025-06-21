@@ -154,7 +154,7 @@ const UILibraryPage = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button disabled>Disabled</Button>
-                    <Button loading>Loading</Button>
+                    <Button disabled>Loading...</Button>
                   </div>
                 </CardContent>
               </Card>
