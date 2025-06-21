@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -121,7 +119,7 @@ const CampaignsPage: React.FC = () => {
     
     const matchesStatus = status === 'all' || campaign.status.toLowerCase() === status.toLowerCase();
     
-    // User filter logic
+    // User filter logic - show all campaigns when selectedUserId is null
     const matchesUser = selectedUserId === null || campaign.associated_user_id === selectedUserId;
     
     return matchesSearch && matchesStatus && matchesUser;
@@ -179,6 +177,7 @@ const CampaignsPage: React.FC = () => {
             selectedUserId={selectedUserId}
             onUserChange={setSelectedUserId}
             currentUserId={user?.id}
+            allUsersLabel="Show all"
           />
         </div>
         
@@ -202,4 +201,3 @@ const CampaignsPage: React.FC = () => {
 };
 
 export default CampaignsPage;
-

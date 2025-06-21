@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Select from 'react-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,13 +9,15 @@ interface UserSelectProps {
   selectedUserId: string | null;
   onUserChange: (userId: string | null) => void;
   currentUserId?: string;
+  allUsersLabel?: string;
 }
 
 export const UserSelect: React.FC<UserSelectProps> = ({
   profiles,
   selectedUserId,
   onUserChange,
-  currentUserId
+  currentUserId,
+  allUsersLabel = 'All deals'
 }) => {
   const getUserDisplayName = (profile: Profile) => {
     const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
@@ -23,7 +26,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
 
   // Format options for react-select
   const options = [
-    { value: null, label: 'All deals', isAllUsers: true },
+    { value: null, label: allUsersLabel, isAllUsers: true },
     ...profiles.map(profile => ({
       value: profile.id,
       label: getUserDisplayName(profile),
@@ -34,14 +37,14 @@ export const UserSelect: React.FC<UserSelectProps> = ({
   // Find the selected option
   const selectedOption = selectedUserId 
     ? options.find(option => option.value === selectedUserId) 
-    : null; // Set to null when no user is selected to show placeholder
+    : options[0]; // Default to "All" option when null
 
   // Custom formatting for the dropdown options
   const formatOptionLabel = (option: any) => {
     if (option.isAllUsers) {
       return (
         <div className="flex items-center gap-2">
-          <span className="text-sm">All deals</span>
+          <span className="text-sm">{allUsersLabel}</span>
         </div>
       );
     }
