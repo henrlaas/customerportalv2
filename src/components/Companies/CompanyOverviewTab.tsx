@@ -53,200 +53,138 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
     return hours.toFixed(1) + 'h';
   };
 
-  if (metricsLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
-
-  if (!metrics) {
-    return (
-      <div className="text-center py-8">
-        <Activity className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-500">No metrics available</p>
-      </div>
-    );
-  }
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left side - Metric Cards (2/3 width) */}
+      {/* Left side - Main content (2/3 width) */}
       <div className="lg:col-span-2 space-y-6">
-        {/* Projects Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Projects Card */}
-          <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <FolderOpen className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
-                  <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#F2FCE2] text-[#004743]">
+        {/* Company Overview */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              Company Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {metricsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+              </div>
+            ) : metrics ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Projects Section */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                    <FolderOpen className="h-4 w-4 text-blue-600" />
                     Projects
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <span className="text-sm text-blue-700">Total Projects</span>
+                      <span className="font-semibold text-blue-800">{metrics.totalProjects}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <span className="text-sm text-blue-700">Completed</span>
+                      <span className="font-semibold text-blue-800">{metrics.completedProjects}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <span className="text-sm text-blue-700">Completed Value</span>
+                      <span className="font-semibold text-blue-800">{formatCurrency(metrics.completedProjectsValue)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <span className="text-sm text-blue-700">Overdue</span>
+                      <span className="font-semibold text-blue-800">{metrics.overdueProjects}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Projects</span>
-                  <span className="text-lg font-bold text-[#004743]">{metrics.totalProjects}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Completed</span>
-                  <span className="text-lg font-bold text-[#004743]">{metrics.completedProjects}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Overdue</span>
-                  <span className="text-lg font-bold text-[#004743]">{metrics.overdueProjects}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Project Value Card */}
-          <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
-                  <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#F2FCE2] text-[#004743]">
-                    Project Value
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">
-                  Completed Value
-                </p>
-                <div className="text-2xl font-bold text-[#004743]">
-                  {formatCurrency(metrics.completedProjectsValue)}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tasks and Contracts Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Tasks Card */}
-          <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <CheckSquare className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
-                  <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#F2FCE2] text-[#004743]">
-                    Tasks
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Tasks</span>
-                  <span className="text-lg font-bold text-[#004743]">{metrics.totalTasks}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Completed</span>
-                  <span className="text-lg font-bold text-[#004743]">{metrics.completedTasks}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Pending</span>
-                  <span className="text-lg font-bold text-[#004743]">{metrics.uncompletedTasks}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contracts Card */}
-          <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
-                  <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#F2FCE2] text-[#004743]">
+                {/* Contracts & Tasks Section */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-purple-600" />
                     Contracts
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <span className="text-sm text-purple-700">Total Contracts</span>
+                      <span className="font-semibold text-purple-800">{metrics.totalContracts}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <span className="text-sm text-purple-700">Unsigned</span>
+                      <span className="font-semibold text-purple-800">{metrics.unsignedContracts}</span>
+                    </div>
+                  </div>
+
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2 mt-4">
+                    <CheckSquare className="h-4 w-4 text-green-600" />
+                    Tasks
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <span className="text-sm text-green-700">Total Tasks</span>
+                      <span className="font-semibold text-green-800">{metrics.totalTasks}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <span className="text-sm text-green-700">Completed</span>
+                      <span className="font-semibold text-green-800">{metrics.completedTasks}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <span className="text-sm text-green-700">Pending</span>
+                      <span className="font-semibold text-green-800">{metrics.uncompletedTasks}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Contracts</span>
-                  <span className="text-lg font-bold text-[#004743]">{metrics.totalContracts}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Unsigned</span>
-                  <span className="text-lg font-bold text-[#004743]">{metrics.unsignedContracts}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Deals and Time Tracking Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Deals Card */}
-          <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
-                  <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#F2FCE2] text-[#004743]">
+                {/* Deals & Time Tracking Section */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                    <Target className="h-4 w-4 text-orange-600" />
                     Deals
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                      <span className="text-sm text-orange-700">Total Deals</span>
+                      <span className="font-semibold text-orange-800">{metrics.totalDeals}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                      <span className="text-sm text-orange-700">Total Value</span>
+                      <span className="font-semibold text-orange-800">{formatCurrency(metrics.totalDealsValue)}</span>
+                    </div>
                   </div>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Deals</span>
-                  <span className="text-lg font-bold text-[#004743]">{metrics.totalDeals}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Value</span>
-                  <span className="text-lg font-bold text-[#004743]">{formatCurrency(metrics.totalDealsValue)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Time Tracking Card */}
-          <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
-                  <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#F2FCE2] text-[#004743]">
-                    This Month
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2 mt-4">
+                    <Clock className="h-4 w-4 text-indigo-600" />
+                    Time This Month
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
+                      <span className="text-sm text-indigo-700">Total Hours</span>
+                      <span className="font-semibold text-indigo-800">{formatHours(metrics.totalHoursThisMonth)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
+                      <span className="text-sm text-indigo-700">Invoiceable</span>
+                      <span className="font-semibold text-indigo-800">{formatCurrency(metrics.invoiceableHoursThisMonth)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Hours</span>
-                  <span className="text-lg font-bold text-[#004743]">{formatHours(metrics.totalHoursThisMonth)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Invoiceable</span>
-                  <span className="text-lg font-bold text-[#004743]">{formatCurrency(metrics.invoiceableHoursThisMonth)}</span>
-                </div>
+            ) : (
+              <div className="text-center py-8">
+                <Activity className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No metrics available</p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Right side - Recent Activities (1/3 width) */}
       <div className="space-y-6">
         {/* Recent Activities Section */}
-        <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
+              <FileText className="h-5 w-5 text-primary" />
               Recent Activities
             </CardTitle>
           </CardHeader>
