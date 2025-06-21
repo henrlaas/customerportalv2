@@ -104,7 +104,7 @@ export const MediaPagination: React.FC<MediaPaginationProps> = ({
         </PaginationContent>
       </Pagination>
       
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground mb-4">
         Showing {startItem}-{endItem} of {totalItems} items
       </div>
     </div>
