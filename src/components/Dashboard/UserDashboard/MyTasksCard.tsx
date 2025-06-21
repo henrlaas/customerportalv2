@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, AlertTriangle, Activity } from 'lucide-react';
+import { CheckCircle, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
 import { useRealtimeTasks } from '@/hooks/realtime/useRealtimeTasks';
 
 export const MyTasksCard = () => {
@@ -80,7 +80,7 @@ export const MyTasksCard = () => {
       <Card className="h-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-blue-600" />
+            <CheckCircle className="h-5 w-5 text-[#004743]" />
             My Tasks
           </CardTitle>
         </CardHeader>
@@ -95,17 +95,20 @@ export const MyTasksCard = () => {
 
   if (isLoading) {
     return (
-      <Card className="h-full">
-        <CardHeader className="pb-3">
+      <Card className="h-full border-l-4 border-l-[#004743]">
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-blue-600" />
+            <CheckCircle className="h-5 w-5 text-[#004743]" />
             My Tasks
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center text-muted-foreground animate-pulse">
-            <div className="h-12 bg-gray-200 rounded-lg mb-4"></div>
-            <div className="h-8 bg-gray-200 rounded mb-2"></div>
+          <div className="animate-pulse space-y-4">
+            <div className="bg-gray-200 h-16 rounded-lg"></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-200 h-12 rounded-lg"></div>
+              <div className="bg-gray-200 h-12 rounded-lg"></div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -113,48 +116,94 @@ export const MyTasksCard = () => {
   }
 
   const stats = taskStats || { active: 0, overdue: 0, completed: 0 };
+  const totalTasks = stats.active + stats.completed;
+  const completionRate = totalTasks > 0 ? Math.round((stats.completed / totalTasks) * 100) : 0;
+  const isOnTrack = stats.overdue === 0;
 
   return (
-    <Card className="h-full hover:shadow-lg transition-all duration-200">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <CheckCircle className="h-5 w-5 text-blue-600" />
-          My Tasks
-        </CardTitle>
+    <Card className="h-full border-l-4 border-l-[#004743] bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2 text-[#004743]">
+            <CheckCircle className="h-6 w-6 transition-transform group-hover:scale-110" />
+            My Tasks
+          </CardTitle>
+          <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+            isOnTrack 
+              ? 'bg-[#F2FCE2] text-[#004743]' 
+              : 'bg-red-50 text-red-600'
+          }`}>
+            {isOnTrack ? 'On Track' : 'Needs Attention'}
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Hero Section */}
-        <div className="text-center">
-          <div className="text-4xl font-bold text-blue-600 mb-1">{stats.active}</div>
-          <div className="text-sm text-muted-foreground font-medium">Active Tasks</div>
+      
+      <CardContent className="space-y-5">
+        {/* Hero Section with Progress Ring */}
+        <div className="relative">
+          <div className="text-center">
+            <div className="text-4xl font-bold text-[#004743] mb-2">{stats.active}</div>
+            <div className="text-sm text-gray-600 font-medium mb-3">Active Tasks</div>
+            
+            {/* Completion Progress Bar */}
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+              <div 
+                className="bg-gradient-to-r from-[#004743] to-[#004743]/80 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${completionRate}%` }}
+              ></div>
+            </div>
+            <div className="text-xs text-gray-500">
+              {completionRate}% completion rate
+            </div>
+          </div>
         </div>
 
-        {/* Task Statistics Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center bg-green-50 rounded-lg p-3">
-            <div className="text-xl font-semibold text-green-600">{stats.completed}</div>
-            <div className="text-xs text-muted-foreground">Completed</div>
+        {/* Task Statistics */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-[#F2FCE2]/30 rounded-lg p-3 text-center border border-[#F2FCE2]/50 hover:bg-[#F2FCE2]/40 transition-colors">
+            <div className="flex items-center justify-center mb-1">
+              <CheckCircle className="h-4 w-4 text-[#004743] mr-1" />
+              <span className="text-lg font-bold text-[#004743]">{stats.completed}</span>
+            </div>
+            <div className="text-xs text-gray-600">Completed</div>
           </div>
-          <div className="text-center bg-red-50 rounded-lg p-3">
-            <div className="text-xl font-semibold text-red-600">{stats.overdue}</div>
-            <div className="text-xs text-muted-foreground">Overdue</div>
+          
+          <div className={`rounded-lg p-3 text-center border transition-colors ${
+            stats.overdue > 0 
+              ? 'bg-red-50 border-red-200 hover:bg-red-100' 
+              : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+          }`}>
+            <div className="flex items-center justify-center mb-1">
+              <AlertTriangle className={`h-4 w-4 mr-1 ${
+                stats.overdue > 0 ? 'text-red-600' : 'text-gray-400'
+              }`} />
+              <span className={`text-lg font-bold ${
+                stats.overdue > 0 ? 'text-red-600' : 'text-gray-400'
+              }`}>{stats.overdue}</span>
+            </div>
+            <div className="text-xs text-gray-600">Overdue</div>
           </div>
         </div>
 
-        {/* Status Indicator */}
-        {stats.overdue > 0 ? (
-          <div className="flex items-center justify-center gap-2 text-sm text-red-600">
-            <AlertTriangle className="h-4 w-4" />
-            <span>Attention needed</span>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Activity className="h-4 w-4" />
-            <span>
-              {stats.active === 0 ? 'All caught up!' : 'Keep it up!'}
-            </span>
-          </div>
-        )}
+        {/* Status Footer */}
+        <div className="flex items-center justify-center pt-2 border-t border-gray-100">
+          {stats.overdue > 0 ? (
+            <div className="flex items-center gap-2 text-sm text-red-600">
+              <Clock className="h-4 w-4" />
+              <span className="font-medium">Review overdue tasks</span>
+            </div>
+          ) : stats.active === 0 ? (
+            <div className="flex items-center gap-2 text-sm text-[#004743]">
+              <TrendingUp className="h-4 w-4" />
+              <span className="font-medium">All caught up! 🎉</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-[#004743]">
+              <TrendingUp className="h-4 w-4" />
+              <span className="font-medium">Keep up the great work!</span>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Award } from 'lucide-react';
+import { TrendingUp, Award, Target, DollarSign } from 'lucide-react';
 import { useRealtimeDeals } from '@/hooks/realtime/useRealtimeDeals';
 
 export const MyDealsCard = () => {
@@ -51,17 +51,20 @@ export const MyDealsCard = () => {
 
   if (isLoading) {
     return (
-      <Card className="h-full">
-        <CardHeader className="pb-3">
+      <Card className="h-full border-l-4 border-l-[#004743]">
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-emerald-600" />
+            <TrendingUp className="h-5 w-5 text-[#004743]" />
             My Deals
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center text-muted-foreground animate-pulse">
-            <div className="h-12 bg-gray-200 rounded-lg mb-4"></div>
-            <div className="h-16 bg-gray-200 rounded mb-2"></div>
+          <div className="animate-pulse space-y-4">
+            <div className="bg-gray-200 h-16 rounded-lg"></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-200 h-12 rounded-lg"></div>
+              <div className="bg-gray-200 h-12 rounded-lg"></div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -69,42 +72,90 @@ export const MyDealsCard = () => {
   }
 
   const stats = dealStats || { open: 0, closed: 0, totalValue: 0, successRate: 0 };
+  const isPerformingWell = stats.successRate >= 70;
 
   return (
-    <Card className="h-full hover:shadow-lg transition-all duration-200">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-emerald-600" />
-          My Deals
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Hero Section */}
-        <div className="text-center">
-          <div className="text-3xl font-bold text-emerald-600 mb-1">
-            kr {stats.totalValue.toLocaleString()}
+    <Card className="h-full border-l-4 border-l-[#004743] bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2 text-[#004743]">
+            <TrendingUp className="h-6 w-6 transition-transform group-hover:scale-110" />
+            My Deals
+          </CardTitle>
+          <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+            isPerformingWell 
+              ? 'bg-[#F2FCE2] text-[#004743]' 
+              : 'bg-yellow-50 text-yellow-700'
+          }`}>
+            {isPerformingWell ? 'Strong' : 'Growing'}
           </div>
-          <div className="text-sm text-muted-foreground font-medium">Pipeline Value</div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-5">
+        {/* Pipeline Value Hero */}
+        <div className="relative">
+          <div className="text-center bg-gradient-to-br from-[#004743]/5 to-[#F2FCE2]/30 rounded-xl p-4 border border-[#F2FCE2]/50">
+            <div className="flex items-center justify-center mb-2">
+              <DollarSign className="h-6 w-6 text-[#004743] mr-1" />
+              <div className="text-3xl font-bold text-[#004743]">
+                kr {stats.totalValue.toLocaleString()}
+              </div>
+            </div>
+            <div className="text-sm text-gray-600 font-medium">Total Pipeline Value</div>
+          </div>
         </div>
 
         {/* Deal Counts */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center bg-blue-50 rounded-lg p-3">
-            <div className="text-xl font-semibold text-blue-600">{stats.open}</div>
-            <div className="text-xs text-muted-foreground">Open</div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200 hover:bg-blue-100 transition-colors">
+            <div className="flex items-center justify-center mb-1">
+              <Target className="h-4 w-4 text-blue-600 mr-1" />
+              <span className="text-xl font-bold text-blue-600">{stats.open}</span>
+            </div>
+            <div className="text-xs text-blue-700 font-medium">Open Deals</div>
           </div>
-          <div className="text-center bg-green-50 rounded-lg p-3">
-            <div className="text-xl font-semibold text-green-600">{stats.closed}</div>
-            <div className="text-xs text-muted-foreground">Closed Won</div>
+          
+          <div className="bg-[#F2FCE2]/40 rounded-lg p-3 text-center border border-[#F2FCE2] hover:bg-[#F2FCE2]/60 transition-colors">
+            <div className="flex items-center justify-center mb-1">
+              <Award className="h-4 w-4 text-[#004743] mr-1" />
+              <span className="text-xl font-bold text-[#004743]">{stats.closed}</span>
+            </div>
+            <div className="text-xs text-[#004743] font-medium">Closed Won</div>
           </div>
         </div>
 
-        {/* Success Rate */}
-        <div className="flex items-center justify-center gap-2">
-          <Award className="h-4 w-4 text-emerald-600" />
-          <span className="text-sm font-medium text-muted-foreground">
-            {stats.successRate}% success rate
-          </span>
+        {/* Success Rate with Progress */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-700">Success Rate</span>
+            <span className="text-lg font-bold text-[#004743]">{stats.successRate}%</span>
+          </div>
+          
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div 
+              className="bg-gradient-to-r from-[#004743] to-[#004743]/80 h-3 rounded-full transition-all duration-500 relative"
+              style={{ width: `${Math.min(stats.successRate, 100)}%` }}
+            >
+              <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          
+          <div className="text-xs text-center text-gray-500">
+            {stats.successRate >= 80 ? 'Excellent performance!' : 
+             stats.successRate >= 60 ? 'Good performance' : 
+             'Room for improvement'}
+          </div>
+        </div>
+
+        {/* Status Footer */}
+        <div className="flex items-center justify-center pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-2 text-sm text-[#004743]">
+            <Award className="h-4 w-4" />
+            <span className="font-medium">
+              {stats.open > 0 ? `${stats.open} deals in pipeline` : 'Ready for new opportunities'}
+            </span>
+          </div>
         </div>
       </CardContent>
     </Card>
