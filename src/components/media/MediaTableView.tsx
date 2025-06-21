@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { MediaTableRow } from './MediaTableRow';
+import { MediaPagination } from './MediaPagination';
 import { MediaFile } from '@/types/media';
 import { useUserProfiles } from '@/hooks/useUserProfiles';
 
@@ -19,6 +21,11 @@ interface MediaTableViewProps {
   currentPath: string;
   getUploaderDisplayName: (userId: string) => string;
   isLoading?: boolean;
+  currentPage?: number;
+  totalPages?: number;
+  totalItems?: number;
+  itemsPerPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export const MediaTableView: React.FC<MediaTableViewProps> = ({
@@ -34,6 +41,11 @@ export const MediaTableView: React.FC<MediaTableViewProps> = ({
   currentPath,
   getUploaderDisplayName,
   isLoading,
+  currentPage = 1,
+  totalPages = 1,
+  totalItems = 0,
+  itemsPerPage = 20,
+  onPageChange,
 }) => {
   // Get unique uploader IDs for fetching profiles
   const uploaderIds = React.useMemo(() => {
@@ -65,7 +77,7 @@ export const MediaTableView: React.FC<MediaTableViewProps> = ({
     );
   }
 
-  if (items.length === 0) {
+  if (totalItems === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white">
         <div className="flex flex-col items-center justify-center h-64 text-gray-500">
@@ -142,6 +154,16 @@ export const MediaTableView: React.FC<MediaTableViewProps> = ({
           ))}
         </TableBody>
       </Table>
+      
+      {onPageChange && (
+        <MediaPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={onPageChange}
+        />
+      )}
     </div>
   );
 };

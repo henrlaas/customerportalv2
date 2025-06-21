@@ -34,6 +34,11 @@ interface MediaTabsProps {
   onNavigateToBreadcrumb: (index: number) => void;
   showFolderButton: boolean;
   showUploadButton: boolean;
+  currentPage?: number;
+  totalPages?: number;
+  totalItems?: number;
+  itemsPerPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export const MediaTabs: React.FC<MediaTabsProps> = ({
@@ -60,6 +65,11 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
   onNavigateToBreadcrumb,
   showFolderButton,
   showUploadButton,
+  currentPage,
+  totalPages,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
 }) => {
   const allItems = [...filteredMedia.folders, ...filteredMedia.files];
 
@@ -105,6 +115,11 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
               currentPath={currentPath}
               getUploaderDisplayName={getUploaderDisplayName}
               isLoading={isLoading}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={onPageChange}
             />
           </div>
         </TabsContent>
@@ -132,6 +147,11 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
               currentPath={currentPath}
               getUploaderDisplayName={getUploaderDisplayName}
               isLoading={isLoading}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={onPageChange}
             />
           </div>
         </TabsContent>

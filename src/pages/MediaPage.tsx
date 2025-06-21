@@ -46,6 +46,8 @@ const MediaPage: React.FC = () => {
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [activeTab, setActiveTab] = useState('internal');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
   const { user, session } = useAuth();
   const [folderToDelete, setFolderToDelete] = useState<{name: string, isFolder: boolean, bucketId?: string} | null>(null);
   const [folderToRename, setFolderToRename] = useState<string | null>(null);
@@ -111,6 +113,7 @@ const MediaPage: React.FC = () => {
       setFilters(prev => ({ ...prev, favorites: false }));
     }
     setCurrentPath(currentPath ? `${currentPath}/${folderName}` : folderName);
+    setCurrentPage(1); // Reset to first page when navigating
   };
 
   // Build breadcrumb from current path
@@ -121,12 +124,26 @@ const MediaPage: React.FC = () => {
       const breadcrumbs = currentPath.split('/').filter(Boolean);
       setCurrentPath(breadcrumbs.slice(0, index + 1).join('/'));
     }
+    setCurrentPage(1); // Reset to first page when navigating
   };
 
   // Handle tab changes and reset path
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setCurrentPath('');
+    setCurrentPage(1); // Reset to first page when changing tabs
+  };
+
+  // Handle search changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle filter changes
+  const handleFiltersChange = (newFilters: FilterOptions) => {
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
   // Add preview handlers
@@ -230,9 +247,11 @@ const MediaPage: React.FC = () => {
       setSortBy(column);
       setSortDirection('asc');
     }
+    setCurrentPage(1); // Reset to first page when sorting
   };
 
-  const filteredMedia = React.useMemo(() => {
+  // Filter, sort, and paginate media items
+  const { filteredMedia, totalItems, totalPages } = React.useMemo(() => {
     let folders = mediaData?.folders || [];
     let files = mediaData?.files || [];
 
@@ -273,11 +292,37 @@ const MediaPage: React.FC = () => {
       return 0;
     };
     
+    const sortedFolders = [...folders].sort(sortItems);
+    const sortedFiles = [...files].sort(sortItems);
+    
+    // Combine all items for pagination
+    const allItems = [...sortedFolders, ...sortedFiles];
+    const totalCount = allItems.length;
+    const totalPagesCount = Math.ceil(totalCount / itemsPerPage);
+    
+    // Apply pagination
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedItems = allItems.slice(startIndex, endIndex);
+    
+    // Separate paginated items back into folders and files
+    const paginatedFolders = paginatedItems.filter(item => item.isFolder);
+    const paginatedFiles = paginatedItems.filter(item => !item.isFolder);
+    
     return {
-      folders: [...folders].sort(sortItems),
-      files: [...files].sort(sortItems)
+      filteredMedia: {
+        folders: paginatedFolders,
+        files: paginatedFiles
+      },
+      totalItems: totalCount,
+      totalPages: totalPagesCount
     };
-  }, [mediaData, searchQuery, sortBy, sortDirection, filters.favorites]);
+  }, [mediaData, searchQuery, sortBy, sortDirection, currentPage, itemsPerPage]);
+
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // Determine if we can add rename functionality
   // Allow renaming folders for internal tab or inside company folders
@@ -320,13 +365,18 @@ const MediaPage: React.FC = () => {
             onFilePreview={handleFilePreview}
             onUpload={() => setIsUploadDialogOpen(true)}
             onNewFolder={() => setIsFolderDialogOpen(true)}
-            onSearchChange={setSearchQuery}
-            onFiltersChange={setFilters}
+            onSearchChange={handleSearchChange}
+            onFiltersChange={handleFiltersChange}
             onSort={handleSort}
             getUploaderDisplayName={getUploaderDisplayName}
             onNavigateToBreadcrumb={navigateToBreadcrumb}
             showFolderButton={showFolderButton}
             showUploadButton={showUploadButton}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
           />
         </div>
 
