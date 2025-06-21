@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +15,6 @@ import { useRealtimeCampaigns } from '@/hooks/realtime/useRealtimeCampaigns';
 import { useRealtimeAds } from '@/hooks/realtime/useRealtimeAds';
 import { useRealtimeAdsets } from '@/hooks/realtime/useRealtimeAdsets';
 import { UserSelect } from '@/components/Deals/UserSelect';
-import { useUserProfiles } from '@/hooks/useUserProfiles';
 
 const CampaignsPage: React.FC = () => {
   const { toast } = useToast();
@@ -23,7 +23,6 @@ const CampaignsPage: React.FC = () => {
   const [status, setStatus] = useState('all');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { user, session } = useAuth();
-  const { data: profiles = [] } = useUserProfiles();
 
   // Enable real-time updates for campaigns, ads, and adsets
   useRealtimeCampaigns({ enabled: !!session?.user?.id });
@@ -36,6 +35,25 @@ const CampaignsPage: React.FC = () => {
       setSelectedUserId(user.id);
     }
   }, [user?.id, selectedUserId]);
+
+  // Fetch all profiles for the user selector
+  const { data: allProfiles = [] } = useQuery({
+    queryKey: ['all-profiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .order('first_name', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        return [];
+      }
+      
+      return data || [];
+    },
+    enabled: !!session?.user?.id,
+  });
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ['campaigns', session?.user?.id],
@@ -157,7 +175,7 @@ const CampaignsPage: React.FC = () => {
             />
           </div>
           <UserSelect
-            profiles={profiles}
+            profiles={allProfiles}
             selectedUserId={selectedUserId}
             onUserChange={setSelectedUserId}
             currentUserId={user?.id}
@@ -184,3 +202,4 @@ const CampaignsPage: React.FC = () => {
 };
 
 export default CampaignsPage;
+
