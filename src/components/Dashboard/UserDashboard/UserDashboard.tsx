@@ -23,7 +23,7 @@ export const UserDashboard = () => {
 
   return (
     <div className="h-full">
-      <div className="flex">
+      <div className="flex min-h-screen">
         {/* Main Dashboard Content */}
         <div className="flex-1 p-6 pr-0">
           <div className="grid grid-cols-2 gap-6">
@@ -54,7 +54,7 @@ export const UserDashboard = () => {
         </div>
 
         {/* Vertical separator */}
-        <div className="w-px bg-border mx-6"></div>
+        <div className="w-px bg-border mx-6 h-full"></div>
 
         {/* Right Side Calendar */}
         <div className="w-80 py-6 pr-6">
