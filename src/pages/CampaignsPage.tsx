@@ -42,7 +42,7 @@ const CampaignsPage: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
+        .select('id, first_name, last_name, avatar_url, role')
         .order('first_name', { ascending: true });
       
       if (error) {
