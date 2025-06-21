@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Palette, Type, Layout, MousePointer, Bell, Grid, Layers, TrendingUp, Users, DollarSign, Target, Clock, Award, Activity, Building, Briefcase, CheckCircle, AlertCircle, ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
+import { Palette, Type, Layout, MousePointer, Bell, Grid, Layers, TrendingUp, Users, DollarSign, Target, Clock, Award, Activity, Building, Briefcase, CheckCircle, AlertCircle, ArrowUpIcon, ArrowDownIcon, CreditCard, Archive, GraduationCap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,7 @@ const UILibraryPage = () => {
     { id: 'foundations', label: 'Foundations', icon: Palette },
     { id: 'forms', label: 'Form Elements', icon: MousePointer },
     { id: 'display', label: 'Data Display', icon: Grid },
+    { id: 'cards', label: 'Cards', icon: CreditCard },
     { id: 'navigation', label: 'Navigation', icon: Layout },
     { id: 'feedback', label: 'Feedback', icon: Bell },
     { id: 'layout', label: 'Layout', icon: Layers },
@@ -62,7 +63,7 @@ const UILibraryPage = () => {
 
       {/* Navigation Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7 mb-8">
+        <TabsList className="grid w-full grid-cols-8 mb-8">
           {categories.map((category) => {
             const Icon = category.icon;
             return (
