@@ -151,28 +151,30 @@ const CampaignsPage: React.FC = () => {
         <CreateCampaignDialog />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             type="search"
             placeholder="Search campaigns..."
-            className="pl-9"
+            className="pl-9 h-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <UserSelect
-          profiles={allProfiles}
-          selectedUserId={selectedUserId}
-          onUserChange={setSelectedUserId}
-          currentUserId={user?.id}
-          allUsersLabel="Show all"
-        />
-        <StatusSelect
-          selectedStatus={status}
-          onStatusChange={setStatus}
-        />
+        <div className="flex gap-3 items-center flex-shrink-0">
+          <UserSelect
+            profiles={allProfiles}
+            selectedUserId={selectedUserId}
+            onUserChange={setSelectedUserId}
+            currentUserId={user?.id}
+            allUsersLabel="Show all"
+          />
+          <StatusSelect
+            selectedStatus={status}
+            onStatusChange={setStatus}
+          />
+        </div>
       </div>
 
       <CampaignList 

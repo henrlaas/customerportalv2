@@ -7,7 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { CAMPAIGN_STATUS_COLORS, CampaignStatus } from './types/campaign';
 
 interface StatusSelectProps {
@@ -28,15 +27,28 @@ export const StatusSelect: React.FC<StatusSelectProps> = ({
     { value: 'archived', label: 'Archived' },
   ];
 
-  const getStatusColors = (status: string) => {
+  const getStatusColor = (status: string) => {
     if (status === 'all') {
-      return {
-        bg: 'bg-gray-100',
-        text: 'text-gray-800',
-        border: 'border-gray-200'
-      };
+      return '#6B7280'; // gray-500
     }
-    return CAMPAIGN_STATUS_COLORS[status as CampaignStatus] || CAMPAIGN_STATUS_COLORS.draft;
+    const colors = CAMPAIGN_STATUS_COLORS[status as CampaignStatus];
+    if (!colors) return '#6B7280';
+    
+    // Convert Tailwind classes to actual colors
+    const colorMap: { [key: string]: string } = {
+      'bg-gray-100': '#F3F4F6',
+      'bg-blue-100': '#DBEAFE',
+      'bg-yellow-100': '#FEF3C7',
+      'bg-green-100': '#DCFCE7',
+      'bg-slate-100': '#F1F5F9',
+      'text-gray-800': '#1F2937',
+      'text-blue-800': '#1E40AF',
+      'text-yellow-800': '#92400E',
+      'text-green-800': '#166534',
+      'text-slate-800': '#1E293B',
+    };
+    
+    return colorMap[colors.text] || '#6B7280';
   };
 
   const formatStatusLabel = (status: string) => {
@@ -52,28 +64,28 @@ export const StatusSelect: React.FC<StatusSelectProps> = ({
 
   return (
     <Select value={selectedStatus} onValueChange={onStatusChange}>
-      <SelectTrigger className="min-w-[160px]">
+      <SelectTrigger className="w-[140px] h-10">
         <SelectValue>
           <div className="flex items-center gap-2">
-            <Badge 
-              className={`${getStatusColors(selectedStatus).bg} ${getStatusColors(selectedStatus).text} ${getStatusColors(selectedStatus).border} text-xs`}
-              variant="outline"
-            >
+            <div 
+              className="w-3 h-3 rounded-full flex-shrink-0"
+              style={{ backgroundColor: getStatusColor(selectedStatus) }}
+            />
+            <span className="text-sm font-medium truncate">
               {formatStatusLabel(selectedStatus)}
-            </Badge>
+            </span>
           </div>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="bg-background border border-border z-50">
+      <SelectContent className="bg-background border border-border z-50 min-w-[140px]">
         {statusOptions.map((option) => (
           <SelectItem key={option.value} value={option.value} className="cursor-pointer">
             <div className="flex items-center gap-2">
-              <Badge 
-                className={`${getStatusColors(option.value).bg} ${getStatusColors(option.value).text} ${getStatusColors(option.value).border} text-xs`}
-                variant="outline"
-              >
-                {option.label}
-              </Badge>
+              <div 
+                className="w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: getStatusColor(option.value) }}
+              />
+              <span className="text-sm">{option.label}</span>
             </div>
           </SelectItem>
         ))}
