@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -21,18 +21,20 @@ const CampaignsPage: React.FC = () => {
   const [status, setStatus] = useState('all');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { user, session } = useAuth();
+  const hasSetInitialUser = useRef(false);
 
   // Enable real-time updates for campaigns, ads, and adsets
   useRealtimeCampaigns({ enabled: !!session?.user?.id });
   useRealtimeAds({ enabled: !!session?.user?.id });
   useRealtimeAdsets({ enabled: !!session?.user?.id });
 
-  // Set current user as default selected user on mount
+  // Set current user as default selected user only on initial load
   React.useEffect(() => {
-    if (user?.id && selectedUserId === null) {
+    if (user?.id && !hasSetInitialUser.current) {
       setSelectedUserId(user.id);
+      hasSetInitialUser.current = true;
     }
-  }, [user?.id, selectedUserId]);
+  }, [user?.id]);
 
   // Fetch all profiles for the user selector
   const { data: allProfiles = [] } = useQuery({
