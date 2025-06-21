@@ -3,8 +3,11 @@ import React from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MediaBreadcrumb } from './MediaBreadcrumb';
 import { MediaToolbar } from './MediaToolbar';
+import { MediaToolbarSkeleton } from './MediaToolbarSkeleton';
 import { MediaRecentlyUsed } from './MediaRecentlyUsed';
+import { MediaRecentlyUsedSkeleton } from './MediaRecentlyUsedSkeleton';
 import { MediaTableView } from './MediaTableView';
+import { MediaTableSkeleton } from './MediaTableSkeleton';
 import { MediaFile, FilterOptions } from '@/types/media';
 
 interface MediaTabsProps {
@@ -73,6 +76,36 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
 }) => {
   const allItems = [...filteredMedia.folders, ...filteredMedia.files];
 
+  // Render loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <MediaBreadcrumb 
+          currentPath={currentPath}
+          onNavigate={onNavigateToBreadcrumb}
+        />
+
+        <MediaToolbarSkeleton />
+
+        <Tabs value={activeTab}>
+          <TabsContent value="internal" className="mt-0">
+            <div className="space-y-6">
+              {!filters.favorites && <MediaRecentlyUsedSkeleton />}
+              <MediaTableSkeleton />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="company" className="mt-0">
+            <div className="space-y-6">
+              {!filters.favorites && <MediaRecentlyUsedSkeleton />}
+              <MediaTableSkeleton />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <MediaBreadcrumb 
@@ -114,7 +147,7 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
               onFilePreview={onFilePreview}
               currentPath={currentPath}
               getUploaderDisplayName={getUploaderDisplayName}
-              isLoading={isLoading}
+              isLoading={false}
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={totalItems}
@@ -146,7 +179,7 @@ export const MediaTabs: React.FC<MediaTabsProps> = ({
               onFilePreview={onFilePreview}
               currentPath={currentPath}
               getUploaderDisplayName={getUploaderDisplayName}
-              isLoading={isLoading}
+              isLoading={false}
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={totalItems}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -66,16 +65,6 @@ export const MediaTableView: React.FC<MediaTableViewProps> = ({
     if (sortBy !== column) return <ArrowUpDown className="h-4 w-4" />;
     return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
   };
-
-  if (isLoading) {
-    return (
-      <div className="rounded-lg border border-gray-200 bg-white">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
-        </div>
-      </div>
-    );
-  }
 
   if (totalItems === 0) {
     return (
