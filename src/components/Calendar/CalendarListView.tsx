@@ -2,7 +2,7 @@
 import React from 'react';
 import { format, parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarEventItem } from './CalendarEventItem';
+import { Calendar, CheckSquare, Megaphone } from 'lucide-react';
 
 interface Task {
   id: string;
@@ -91,6 +91,36 @@ export const CalendarListView: React.FC<CalendarListViewProps> = ({
     }
   };
 
+  // Helper functions for styling and icons
+  const getPriorityColor = (priority?: string) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-700 border-red-200';
+      case 'medium':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'low':
+        return 'bg-green-100 text-green-700 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  const getEventStyle = (event: typeof sortedEvents[0]) => {
+    if (event.type === 'project') {
+      return 'bg-blue-100 text-blue-700 border-blue-200';
+    }
+    if (event.type === 'campaign') {
+      return 'bg-purple-100 text-purple-700 border-purple-200';
+    }
+    return getPriorityColor((event as any).priority);
+  };
+
+  const getEventIcon = (type: string) => {
+    if (type === 'project') return Calendar;
+    if (type === 'campaign') return Megaphone;
+    return CheckSquare;
+  };
+
   if (sortedEvents.length === 0) {
     return (
       <Card>
@@ -112,27 +142,22 @@ export const CalendarListView: React.FC<CalendarListViewProps> = ({
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-2">
-              {dayEvents.map((event) => (
-                <div
-                  key={`${event.type}-${event.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent cursor-pointer"
-                  onClick={() => handleEventClick(event)}
-                >
-                  <div className="flex items-center gap-3">
-                    <CalendarEventItem
-                      type={event.type}
-                      title={event.displayName}
-                      id={event.id}
-                      priority={event.type === 'task' ? (event as any).priority : undefined}
-                      platform={event.type === 'campaign' ? (event as any).platform : undefined}
-                      onClick={() => {}} // Handled by parent div
-                    />
+              {dayEvents.map((event) => {
+                const Icon = getEventIcon(event.type);
+                const eventStyle = getEventStyle(event);
+                
+                return (
+                  <div
+                    key={`${event.type}-${event.id}`}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:opacity-80 transition-opacity ${eventStyle}`}
+                    onClick={() => handleEventClick(event)}
+                    title={`${event.displayName}${event.type === 'campaign' && (event as any).platform ? ` (${(event as any).platform})` : ''}`}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="flex-1 font-medium">{event.displayName}</span>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {format(parseISO(event.date), 'HH:mm')}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
