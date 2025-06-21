@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminEmployeeProfiles } from '@/hooks/useAdminEmployeeProfiles';
 import { useRealtimeDeals } from '@/hooks/realtime/useRealtimeDeals';
+import { Deal } from '@/components/Deals/types/deal';
 
 const DealsPage = () => {
   const { user, profile } = useAuth();
@@ -44,8 +44,8 @@ const DealsPage = () => {
     }
   }, [user?.id, profile?.role, userInitialized]);
 
-  // Fetch deals data with simplified type handling
-  const { data: deals = [], isLoading } = useQuery({
+  // Fetch deals data with proper typing
+  const { data: dealsData = [], isLoading } = useQuery({
     queryKey: ['deals'],
     queryFn: async () => {
       if (!user) return [];
@@ -69,6 +69,16 @@ const DealsPage = () => {
       return data || [];
     },
   });
+
+  // Transform deals with proper type casting
+  const deals: Deal[] = React.useMemo(() => {
+    return dealsData.map(deal => ({
+      ...deal,
+      deal_type: deal.deal_type as 'recurring' | 'one-time' | null,
+      client_deal_type: deal.client_deal_type as 'marketing' | 'web' | null,
+      price_type: deal.price_type as 'MRR' | 'Project' | null,
+    }));
+  }, [dealsData]);
 
   // Fetch deal stages
   const { data: stages = [] } = useQuery({
