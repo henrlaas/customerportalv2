@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Palette, Type, Layout, MousePointer, Bell, Grid, Layers } from 'lucide-react';
+import { Palette, Type, Layout, MousePointer, Bell, Grid, Layers, TrendingUp, Users, DollarSign, Target, Clock, Award, Activity, Building, Briefcase, CheckCircle, AlertCircle, ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -249,6 +248,254 @@ const UILibraryPage = () => {
           <div>
             <h2 className="text-2xl font-bold mb-6">Data Display</h2>
             
+            {/* Information Cards Section */}
+            <div className="mb-12">
+              <h3 className="text-xl font-semibold mb-6 text-primary">Information Cards</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                {/* KPI/Metrics Card */}
+                <Card className="border-l-4 border-l-primary bg-gradient-to-br from-white to-primary/5">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium text-gray-600">Total Revenue</CardTitle>
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-primary mb-1">$124,573</div>
+                    <div className="flex items-center text-xs text-green-600">
+                      <ArrowUpIcon className="h-3 w-3 mr-1" />
+                      +12.5% from last month
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* User Profile Card */}
+                <Card className="bg-gradient-to-br from-white to-[#F2FCE2]/30">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback className="bg-primary text-white">JD</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="text-base">John Doe</CardTitle>
+                        <p className="text-sm text-gray-600">Senior Developer</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-xs text-gray-600">
+                      <span>Active Projects</span>
+                      <Badge className="bg-primary/10 text-primary">3</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Project Status Card */}
+                <Card className="border-primary/20 bg-[#F2FCE2]/20">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm">Website Redesign</CardTitle>
+                      <Badge className="bg-yellow-100 text-yellow-800">In Progress</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span className="text-primary font-medium">68%</span>
+                      </div>
+                      <Progress value={68} className="h-2" />
+                      <div className="text-xs text-gray-600">Due: Dec 15, 2024</div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Financial Summary Card */}
+                <Card className="bg-gradient-to-br from-primary/5 to-primary/10">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm text-gray-700">Monthly Recurring Revenue</CardTitle>
+                      <DollarSign className="h-5 w-5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-primary mb-2">$45,280</div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-green-600 flex items-center">
+                        <ArrowUpIcon className="h-3 w-3 mr-1" />
+                        +8.2%
+                      </span>
+                      <span className="text-gray-600">vs last month</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Alert/Notification Card */}
+                <Card className="border-l-4 border-l-orange-500 bg-orange-50/50">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="h-5 w-5 text-orange-600" />
+                      <CardTitle className="text-sm text-orange-800">Action Required</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-orange-700 mb-3">
+                      Contract renewal deadline approaching
+                    </p>
+                    <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
+                      Review Contract
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Feature Highlight Card */}
+                <Card className="bg-gradient-to-br from-[#F2FCE2] to-white border-primary/30">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-2">
+                      <Award className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-sm text-primary">New Feature</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-700 mb-3">
+                      AI-powered content generation is now available!
+                    </p>
+                    <Button size="sm" variant="outline" className="border-primary text-primary">
+                      Try It Now
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Activity Feed Card */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-2">
+                      <Activity className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-sm">Recent Activity</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2 text-xs">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        <span className="text-gray-600">Task completed</span>
+                        <span className="text-gray-400">2h ago</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-xs">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-gray-600">Meeting scheduled</span>
+                        <span className="text-gray-400">4h ago</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-xs">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-gray-600">Deal closed</span>
+                        <span className="text-gray-400">1d ago</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Company Information Card */}
+                <Card className="bg-gradient-to-br from-white to-gray-50">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-2">
+                      <Building className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-sm">Acme Corporation</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-xs text-gray-600">
+                      <div className="flex justify-between">
+                        <span>Industry:</span>
+                        <span>Technology</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Employees:</span>
+                        <span>250+</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Founded:</span>
+                        <span>2015</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Deal/Opportunity Card */}
+                <Card className="border-l-4 border-l-green-500 bg-green-50/30">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm">Enterprise Deal</CardTitle>
+                      <Badge className="bg-green-100 text-green-800">Hot Lead</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-lg font-semibold text-green-700 mb-1">$75,000</div>
+                    <div className="text-xs text-gray-600 mb-2">Expected close: Q1 2025</div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span>Probability:</span>
+                      <span className="font-medium text-green-600">85%</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Action Card */}
+                <Card className="bg-gradient-to-br from-primary/10 to-[#F2FCE2]/50 border-primary/20">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-2">
+                      <Target className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-sm text-primary">Quick Actions</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Button size="sm" className="w-full justify-start" variant="ghost">
+                        <Users className="h-4 w-4 mr-2" />
+                        Add Team Member
+                      </Button>
+                      <Button size="sm" className="w-full justify-start" variant="ghost">
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        Create Project
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Time Tracking Card */}
+                <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm text-blue-800">Time Logged Today</CardTitle>
+                      <Clock className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-700 mb-1">6h 45m</div>
+                    <div className="text-xs text-blue-600">Target: 8h 00m</div>
+                    <Progress value={84} className="h-2 mt-2" />
+                  </CardContent>
+                </Card>
+
+                {/* Success/Achievement Card */}
+                <Card className="bg-gradient-to-br from-[#F2FCE2] to-green-50 border-green-200">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <CardTitle className="text-sm text-green-800">Goal Achieved!</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-green-700 mb-2">
+                      Monthly sales target exceeded by 15%
+                    </p>
+                    <Badge className="bg-green-600 text-white">Congratulations!</Badge>
+                  </CardContent>
+                </Card>
+
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Cards */}
               <Card>
