@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Filter, DollarSign, Target, TrendingUp, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { DealKanbanView } from '@/components/Deals/DealKanbanView';
-import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog/MultiStageDealDialog';
+import { MultiStageDealDialog } from '@/components/Deals/MultiStageDealDialog';
 import { DealDetailsSidebar } from '@/components/Deals/DealDetailsSidebar/DealDetailsSidebar';
 import { UserSelect } from '@/components/Deals/UserSelect';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -53,7 +53,7 @@ const DealsPage = () => {
     'Closed Lost',
   ];
 
-  const { data: deals = [], isLoading } = useQuery({
+  const { data: rawDeals = [], isLoading } = useQuery({
     queryKey: ['deals'],
     queryFn: async () => {
       if (!user) return [];
@@ -77,6 +77,16 @@ const DealsPage = () => {
       return data;
     },
   });
+
+  // Transform raw deals to match Deal type
+  const deals = React.useMemo(() => {
+    return rawDeals.map(deal => ({
+      ...deal,
+      deal_type: deal.deal_type as 'recurring' | 'one-time' | null,
+      client_deal_type: deal.client_deal_type as 'marketing' | 'web' | null,
+      price_type: deal.price_type as 'MRR' | 'Project' | null,
+    }));
+  }, [rawDeals]);
 
   const filteredDeals = React.useMemo(() => {
     if (!deals) return [];
@@ -169,11 +179,13 @@ const DealsPage = () => {
         onClose={handleCreateDialogClose}
       />
 
-      <DealDetailsSidebar
-        isOpen={isDealSheetOpen}
-        onOpenChange={setIsDealSheetOpen}
-        dealId={selectedDealId}
-      />
+      {selectedDealId && (
+        <DealDetailsSidebar
+          isOpen={isDealSheetOpen}
+          onClose={() => setIsDealSheetOpen(false)}
+          dealId={selectedDealId}
+        />
+      )}
     </div>
   );
 };
