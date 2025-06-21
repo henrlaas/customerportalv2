@@ -44,15 +44,7 @@ const DealsPage = () => {
     }
   }, [user?.id, profile?.role, userInitialized]);
 
-  const dealStages = [
-    'Prospect',
-    'Qualified',
-    'Proposal',
-    'Negotiation',
-    'Closed Won',
-    'Closed Lost',
-  ];
-
+  // Fetch deals data
   const { data: rawDeals = [], isLoading } = useQuery({
     queryKey: ['deals'],
     queryFn: async () => {
@@ -78,15 +70,62 @@ const DealsPage = () => {
     },
   });
 
-  // Transform raw deals to match Deal type
-  const deals = React.useMemo(() => {
-    return rawDeals.map(deal => ({
-      ...deal,
-      deal_type: deal.deal_type as 'recurring' | 'one-time' | null,
-      client_deal_type: deal.client_deal_type as 'marketing' | 'web' | null,
-      price_type: deal.price_type as 'MRR' | 'Project' | null,
-    }));
-  }, [rawDeals]);
+  // Fetch deal stages
+  const { data: stages = [] } = useQuery({
+    queryKey: ['deal-stages'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('deal_stages')
+        .select('*')
+        .order('position');
+
+      if (error) {
+        console.error('Error fetching deal stages:', error);
+        return [];
+      }
+      return data;
+    },
+  });
+
+  // Fetch companies
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching companies:', error);
+        return [];
+      }
+      return data;
+    },
+  });
+
+  // Fetch profiles
+  const { data: profiles = [] } = useQuery({
+    queryKey: ['profiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        return [];
+      }
+      return data;
+    },
+  });
+
+  // Transform deals with proper typing
+  const deals = rawDeals.map(deal => ({
+    ...deal,
+    deal_type: deal.deal_type as 'recurring' | 'one-time' | null,
+    client_deal_type: deal.client_deal_type as 'marketing' | 'web' | null,
+    price_type: deal.price_type as 'MRR' | 'Project' | null,
+  }));
 
   const filteredDeals = React.useMemo(() => {
     if (!deals) return [];
@@ -106,22 +145,38 @@ const DealsPage = () => {
     // Real-time updates will handle list refresh
   };
 
-  const handleDealClick = (dealId: string) => {
-    setSelectedDealId(dealId);
-    setIsDealSheetOpen(true);
+  const handleDealEdit = (deal: any) => {
+    // Handle deal editing
+    console.log('Edit deal:', deal);
   };
+
+  const handleDealDelete = (dealId: string) => {
+    // Handle deal deletion
+    console.log('Delete deal:', dealId);
+  };
+
+  const handleDealMove = (dealId: string, newStageId: string) => {
+    // Handle deal stage movement
+    console.log('Move deal:', dealId, 'to stage:', newStageId);
+  };
+
+  // Find the selected deal for the sidebar
+  const selectedDeal = selectedDealId ? deals.find(deal => deal.id === selectedDealId) : null;
+
+  // Check if user can modify deals
+  const canModify = profile?.role && ['admin', 'employee'].includes(profile.role);
 
   // Skeleton loader for Kanban board
   const KanbanBoardSkeleton = () => (
     <div className="flex gap-4 overflow-x-auto">
-      {dealStages.map((stage) => (
-        <Card key={stage} className="w-80 flex-shrink-0">
+      {Array(6).fill(null).map((_, i) => (
+        <Card key={i} className="w-80 flex-shrink-0">
           <CardHeader>
             <CardTitle><Skeleton className="h-6 w-24" /></CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {Array(3).fill(null).map((_, i) => (
-              <Card key={i} className="p-4">
+            {Array(3).fill(null).map((_, j) => (
+              <Card key={j} className="p-4">
                 <CardContent>
                   <Skeleton className="h-4 w-32 mb-2" />
                   <Skeleton className="h-4 w-24" />
@@ -171,7 +226,17 @@ const DealsPage = () => {
       {isLoading ? (
         <KanbanBoardSkeleton />
       ) : (
-        <DealKanbanView deals={filteredDeals} onDealClick={handleDealClick} />
+        <DealKanbanView
+          deals={filteredDeals}
+          stages={stages}
+          companies={companies}
+          profiles={profiles}
+          canModify={canModify || false}
+          onEdit={handleDealEdit}
+          onDelete={handleDealDelete}
+          onMove={handleDealMove}
+          isLoading={isLoading}
+        />
       )}
 
       <MultiStageDealDialog
@@ -179,11 +244,17 @@ const DealsPage = () => {
         onClose={handleCreateDialogClose}
       />
 
-      {selectedDealId && (
+      {selectedDeal && (
         <DealDetailsSidebar
           isOpen={isDealSheetOpen}
           onClose={() => setIsDealSheetOpen(false)}
-          dealId={selectedDealId}
+          deal={selectedDeal}
+          companies={companies}
+          profiles={profiles}
+          stages={stages}
+          canModify={canModify || false}
+          onEdit={handleDealEdit}
+          onDelete={handleDealDelete}
         />
       )}
     </div>
