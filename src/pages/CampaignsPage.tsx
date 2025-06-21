@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,18 +13,29 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRealtimeCampaigns } from '@/hooks/realtime/useRealtimeCampaigns';
 import { useRealtimeAds } from '@/hooks/realtime/useRealtimeAds';
 import { useRealtimeAdsets } from '@/hooks/realtime/useRealtimeAdsets';
+import { UserSelect } from '@/components/Deals/UserSelect';
+import { useUserProfiles } from '@/hooks/useUserProfiles';
 
 const CampaignsPage: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [status, setStatus] = useState('all');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { user, session } = useAuth();
+  const { data: profiles = [] } = useUserProfiles();
 
   // Enable real-time updates for campaigns, ads, and adsets
   useRealtimeCampaigns({ enabled: !!session?.user?.id });
   useRealtimeAds({ enabled: !!session?.user?.id });
   useRealtimeAdsets({ enabled: !!session?.user?.id });
+
+  // Set current user as default selected user on mount
+  React.useEffect(() => {
+    if (user?.id && selectedUserId === null) {
+      setSelectedUserId(user.id);
+    }
+  }, [user?.id, selectedUserId]);
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ['campaigns', session?.user?.id],
@@ -76,7 +88,7 @@ const CampaignsPage: React.FC = () => {
     staleTime: 0, // Always fetch fresh data for real-time updates
   });
 
-  // Filter campaigns based on search term and status
+  // Filter campaigns based on search term, status, and selected user
   const filteredCampaigns = campaigns.filter(campaign => {
     // Helper function to safely check if profiles exist and are not an error object
     const isValidProfile = (profile: any): profile is { first_name: string | null, last_name: string | null } => {
@@ -90,7 +102,11 @@ const CampaignsPage: React.FC = () => {
         `${campaign.profiles.first_name || ''} ${campaign.profiles.last_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesStatus = status === 'all' || campaign.status.toLowerCase() === status.toLowerCase();
-    return matchesSearch && matchesStatus;
+    
+    // User filter logic
+    const matchesUser = selectedUserId === null || campaign.associated_user_id === selectedUserId;
+    
+    return matchesSearch && matchesStatus && matchesUser;
   });
 
   const handleCreateClick = () => {
@@ -128,18 +144,27 @@ const CampaignsPage: React.FC = () => {
         <CreateCampaignDialog />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            type="search"
-            placeholder="Search campaigns..."
-            className="pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              type="search"
+              placeholder="Search campaigns..."
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <UserSelect
+            profiles={profiles}
+            selectedUserId={selectedUserId}
+            onUserChange={setSelectedUserId}
+            currentUserId={user?.id}
           />
         </div>
-        <Tabs defaultValue="all" value={status} onValueChange={setStatus} className="w-full sm:w-auto">
+        
+        <Tabs defaultValue="all" value={status} onValueChange={setStatus} className="w-full">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="all">All</TabsTrigger>
             {['draft', 'in-progress', 'ready', 'published', 'archived'].map((s) => (
