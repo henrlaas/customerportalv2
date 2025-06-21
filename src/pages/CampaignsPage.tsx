@@ -40,13 +40,14 @@ const CampaignsPage: React.FC = () => {
     }
   }, [user?.id]);
 
-  // Fetch all profiles for the user selector
+  // Fetch profiles for users with employee or admin roles only
   const { data: allProfiles = [] } = useQuery({
     queryKey: ['all-profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_url, role')
+        .in('role', ['employee', 'admin'])
         .order('first_name', { ascending: true });
       
       if (error) {
