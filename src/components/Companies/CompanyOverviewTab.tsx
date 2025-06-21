@@ -58,112 +58,112 @@ export const CompanyOverviewTab = ({ company }: CompanyOverviewTabProps) => {
       {/* Left side - Main content (2/3 width) */}
       <div className="lg:col-span-2 space-y-6">
         {/* Company Overview */}
-        <Card>
+        <Card className="bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 hover:shadow-lg transition-all duration-300 group border border-[#F2FCE2]/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
+              <Activity className="h-5 w-5 text-[#004743] transition-transform group-hover:scale-110" />
               Company Overview
             </CardTitle>
           </CardHeader>
           <CardContent>
             {metricsLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                <div className="animate-spin h-6 w-6 border-2 border-[#004743] border-t-transparent rounded-full"></div>
               </div>
             ) : metrics ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Projects Section */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                    <FolderOpen className="h-4 w-4 text-blue-600" />
+                  <h4 className="font-medium text-[#004743] flex items-center gap-2">
+                    <FolderOpen className="h-4 w-4 text-[#004743]" />
                     Projects
                   </h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <span className="text-sm text-blue-700">Total Projects</span>
-                      <span className="font-semibold text-blue-800">{metrics.totalProjects}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Total Projects</span>
+                      <span className="font-semibold text-[#004743]">{metrics.totalProjects}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <span className="text-sm text-blue-700">Completed</span>
-                      <span className="font-semibold text-blue-800">{metrics.completedProjects}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Completed</span>
+                      <span className="font-semibold text-[#004743]">{metrics.completedProjects}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <span className="text-sm text-blue-700">Completed Value</span>
-                      <span className="font-semibold text-blue-800">{formatCurrency(metrics.completedProjectsValue)}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Completed Value</span>
+                      <span className="font-semibold text-[#004743]">{formatCurrency(metrics.completedProjectsValue)}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <span className="text-sm text-blue-700">Overdue</span>
-                      <span className="font-semibold text-blue-800">{metrics.overdueProjects}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Overdue</span>
+                      <span className="font-semibold text-[#004743]">{metrics.overdueProjects}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Contracts & Tasks Section */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-purple-600" />
+                  <h4 className="font-medium text-[#004743] flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-[#004743]" />
                     Contracts
                   </h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                      <span className="text-sm text-purple-700">Total Contracts</span>
-                      <span className="font-semibold text-purple-800">{metrics.totalContracts}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Total Contracts</span>
+                      <span className="font-semibold text-[#004743]">{metrics.totalContracts}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                      <span className="text-sm text-purple-700">Unsigned</span>
-                      <span className="font-semibold text-purple-800">{metrics.unsignedContracts}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Unsigned</span>
+                      <span className="font-semibold text-[#004743]">{metrics.unsignedContracts}</span>
                     </div>
                   </div>
 
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2 mt-4">
-                    <CheckSquare className="h-4 w-4 text-green-600" />
+                  <h4 className="font-medium text-[#004743] flex items-center gap-2 mt-4">
+                    <CheckSquare className="h-4 w-4 text-[#004743]" />
                     Tasks
                   </h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                      <span className="text-sm text-green-700">Total Tasks</span>
-                      <span className="font-semibold text-green-800">{metrics.totalTasks}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Total Tasks</span>
+                      <span className="font-semibold text-[#004743]">{metrics.totalTasks}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                      <span className="text-sm text-green-700">Completed</span>
-                      <span className="font-semibold text-green-800">{metrics.completedTasks}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Completed</span>
+                      <span className="font-semibold text-[#004743]">{metrics.completedTasks}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                      <span className="text-sm text-green-700">Pending</span>
-                      <span className="font-semibold text-green-800">{metrics.uncompletedTasks}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Pending</span>
+                      <span className="font-semibold text-[#004743]">{metrics.uncompletedTasks}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Deals & Time Tracking Section */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                    <Target className="h-4 w-4 text-orange-600" />
+                  <h4 className="font-medium text-[#004743] flex items-center gap-2">
+                    <Target className="h-4 w-4 text-[#004743]" />
                     Deals
                   </h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                      <span className="text-sm text-orange-700">Total Deals</span>
-                      <span className="font-semibold text-orange-800">{metrics.totalDeals}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Total Deals</span>
+                      <span className="font-semibold text-[#004743]">{metrics.totalDeals}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                      <span className="text-sm text-orange-700">Total Value</span>
-                      <span className="font-semibold text-orange-800">{formatCurrency(metrics.totalDealsValue)}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Total Value</span>
+                      <span className="font-semibold text-[#004743]">{formatCurrency(metrics.totalDealsValue)}</span>
                     </div>
                   </div>
 
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2 mt-4">
-                    <Clock className="h-4 w-4 text-indigo-600" />
+                  <h4 className="font-medium text-[#004743] flex items-center gap-2 mt-4">
+                    <Clock className="h-4 w-4 text-[#004743]" />
                     Time This Month
                   </h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
-                      <span className="text-sm text-indigo-700">Total Hours</span>
-                      <span className="font-semibold text-indigo-800">{formatHours(metrics.totalHoursThisMonth)}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Total Hours</span>
+                      <span className="font-semibold text-[#004743]">{formatHours(metrics.totalHoursThisMonth)}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
-                      <span className="text-sm text-indigo-700">Invoiceable</span>
-                      <span className="font-semibold text-indigo-800">{formatCurrency(metrics.invoiceableHoursThisMonth)}</span>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-br from-white via-white to-[#F2FCE2]/20 rounded-lg border border-[#F2FCE2]/30 hover:shadow-md transition-all duration-200">
+                      <span className="text-sm text-[#004743] opacity-80">Invoiceable</span>
+                      <span className="font-semibold text-[#004743]">{formatCurrency(metrics.invoiceableHoursThisMonth)}</span>
                     </div>
                   </div>
                 </div>
