@@ -44,8 +44,8 @@ const DealsPage = () => {
     }
   }, [user?.id, profile?.role, userInitialized]);
 
-  // Fetch deals data
-  const { data: rawDeals = [], isLoading } = useQuery({
+  // Fetch deals data with simplified type handling
+  const { data: deals = [], isLoading } = useQuery({
     queryKey: ['deals'],
     queryFn: async () => {
       if (!user) return [];
@@ -66,7 +66,7 @@ const DealsPage = () => {
         return [];
       }
 
-      return data;
+      return data || [];
     },
   });
 
@@ -119,14 +119,6 @@ const DealsPage = () => {
     },
   });
 
-  // Transform deals with proper typing
-  const deals = rawDeals.map(deal => ({
-    ...deal,
-    deal_type: deal.deal_type as 'recurring' | 'one-time' | null,
-    client_deal_type: deal.client_deal_type as 'marketing' | 'web' | null,
-    price_type: deal.price_type as 'MRR' | 'Project' | null,
-  }));
-
   const filteredDeals = React.useMemo(() => {
     if (!deals) return [];
 
@@ -158,6 +150,11 @@ const DealsPage = () => {
   const handleDealMove = (dealId: string, newStageId: string) => {
     // Handle deal stage movement
     console.log('Move deal:', dealId, 'to stage:', newStageId);
+  };
+
+  const handleDealClick = (dealId: string) => {
+    setSelectedDealId(dealId);
+    setIsDealSheetOpen(true);
   };
 
   // Find the selected deal for the sidebar
@@ -235,6 +232,7 @@ const DealsPage = () => {
           onEdit={handleDealEdit}
           onDelete={handleDealDelete}
           onMove={handleDealMove}
+          onDealClick={handleDealClick}
           isLoading={isLoading}
         />
       )}
