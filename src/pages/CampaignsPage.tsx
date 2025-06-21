@@ -13,6 +13,7 @@ import { useRealtimeCampaigns } from '@/hooks/realtime/useRealtimeCampaigns';
 import { useRealtimeAds } from '@/hooks/realtime/useRealtimeAds';
 import { useRealtimeAdsets } from '@/hooks/realtime/useRealtimeAdsets';
 import { UserSelect } from '@/components/Deals/UserSelect';
+import { StatusSelect } from '@/components/Campaigns/StatusSelect';
 
 const CampaignsPage: React.FC = () => {
   const { toast } = useToast();
@@ -143,18 +144,6 @@ const CampaignsPage: React.FC = () => {
     );
   }
 
-  // Helper function to format status for tabs
-  const formatStatus = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'draft': return 'Draft';
-      case 'in-progress': return 'In Progress';
-      case 'ready': return 'Ready';
-      case 'published': return 'Published';
-      case 'archived': return 'Archived';
-      default: return status;
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4 py-8">
       <div className="flex justify-between items-center">
@@ -162,35 +151,28 @@ const CampaignsPage: React.FC = () => {
         <CreateCampaignDialog />
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              type="search"
-              placeholder="Search campaigns..."
-              className="pl-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <UserSelect
-            profiles={allProfiles}
-            selectedUserId={selectedUserId}
-            onUserChange={setSelectedUserId}
-            currentUserId={user?.id}
-            allUsersLabel="Show all"
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            type="search"
+            placeholder="Search campaigns..."
+            className="pl-9"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
-        <Tabs defaultValue="all" value={status} onValueChange={setStatus} className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="all">All</TabsTrigger>
-            {['draft', 'in-progress', 'ready', 'published', 'archived'].map((s) => (
-              <TabsTrigger key={s} value={s}>{formatStatus(s)}</TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <UserSelect
+          profiles={allProfiles}
+          selectedUserId={selectedUserId}
+          onUserChange={setSelectedUserId}
+          currentUserId={user?.id}
+          allUsersLabel="Show all"
+        />
+        <StatusSelect
+          selectedStatus={status}
+          onStatusChange={setStatus}
+        />
       </div>
 
       <CampaignList 
