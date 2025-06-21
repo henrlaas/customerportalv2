@@ -51,6 +51,17 @@ export const StatusSelect: React.FC<StatusSelectProps> = ({
     return colorMap[colors.text] || '#6B7280';
   };
 
+  const getStatusClasses = (status: string) => {
+    if (status === 'all') {
+      return {
+        bg: 'bg-gray-100',
+        text: 'text-gray-800',
+        border: 'border-gray-200'
+      };
+    }
+    return CAMPAIGN_STATUS_COLORS[status as CampaignStatus] || CAMPAIGN_STATUS_COLORS.draft;
+  };
+
   const formatStatusLabel = (status: string) => {
     switch (status.toLowerCase()) {
       case 'draft': return 'Draft';
@@ -62,9 +73,11 @@ export const StatusSelect: React.FC<StatusSelectProps> = ({
     }
   };
 
+  const selectedClasses = getStatusClasses(selectedStatus);
+
   return (
     <Select value={selectedStatus} onValueChange={onStatusChange}>
-      <SelectTrigger className="w-[140px] h-10">
+      <SelectTrigger className={`w-[140px] h-10 ${selectedClasses.bg} ${selectedClasses.text} ${selectedClasses.border} border`}>
         <SelectValue>
           <div className="flex items-center gap-2">
             <div 
@@ -79,7 +92,7 @@ export const StatusSelect: React.FC<StatusSelectProps> = ({
       </SelectTrigger>
       <SelectContent className="bg-background border border-border z-50 min-w-[140px]">
         {statusOptions.map((option) => (
-          <SelectItem key={option.value} value={option.value} className="cursor-pointer">
+          <SelectItem key={option.value} value={option.value} className="cursor-pointer hover:bg-accent/50">
             <div className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded-full flex-shrink-0"
