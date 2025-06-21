@@ -1,36 +1,31 @@
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useRealtime } from '../useRealtime';
+import { useRealtime } from '@/hooks/useRealtime';
 
 interface UseRealtimeContractsOptions {
-  projectId?: string;
   enabled?: boolean;
 }
 
-export const useRealtimeContracts = ({
-  projectId,
-  enabled = true
-}: UseRealtimeContractsOptions = {}) => {
+export const useRealtimeContracts = ({ enabled = true }: UseRealtimeContractsOptions = {}) => {
   const queryClient = useQueryClient();
 
-  const handleContractChange = () => {
-    // Invalidate contract-related queries
-    queryClient.invalidateQueries({ queryKey: ['contracts'] });
-    queryClient.invalidateQueries({ queryKey: ['project-contracts'] });
-    
-    if (projectId) {
-      queryClient.invalidateQueries({ queryKey: ['project-contracts', projectId] });
-    }
-  };
-
-  const filter = projectId ? `project_id=eq.${projectId}` : undefined;
+  console.log('📄 useRealtimeContracts: Setting up real-time subscription, enabled:', enabled);
 
   useRealtime({
     table: 'contracts',
-    filter,
-    onInsert: handleContractChange,
-    onUpdate: handleContractChange,
-    onDelete: handleContractChange,
-    enabled
+    enabled,
+    onInsert: (payload) => {
+      console.log('📄 useRealtimeContracts: Contract inserted:', payload.new);
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+    },
+    onUpdate: (payload) => {
+      console.log('📄 useRealtimeContracts: Contract updated:', payload.new);
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contract', payload.new.id] });
+    },
+    onDelete: (payload) => {
+      console.log('📄 useRealtimeContracts: Contract deleted:', payload.old);
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+    },
   });
 };

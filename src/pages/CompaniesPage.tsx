@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredSpinner } from '@/components/ui/CenteredSpinner';
 import { useCompanyList } from '@/hooks/useCompanyList';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useRealtimeCompanies } from '@/hooks/realtime/useRealtimeCompanies';
+import { useRealtimeCompanyContacts } from '@/hooks/realtime/useRealtimeCompanyContacts';
 
 const CompaniesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -21,11 +23,17 @@ const CompaniesPage = () => {
   const [clientTypeFilter, setClientTypeFilter] = useState<string>('all');
   const [showSubsidiaries, setShowSubsidiaries] = useState(false);
   
-  const { isAdmin, isEmployee } = useAuth();
+  const { isAdmin, isEmployee, user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  console.log('🏢 CompaniesPage: Setting up real-time monitoring for user:', user?.id);
+
+  // Enable real-time updates for companies and company contacts
+  useRealtimeCompanies({ enabled: !!user?.id });
+  useRealtimeCompanyContacts({ enabled: !!user?.id });
   
-  // Use the proper hook for fetching companies with subsidiary filtering
+  // Use the proper hook for fetching companies with subsidiary filtering - with real-time friendly configuration
   const { companies, isLoading } = useCompanyList(showSubsidiaries);
   
   // Filter companies by search query and type
@@ -68,9 +76,7 @@ const CompaniesPage = () => {
   // Handle dialog close
   const handleDialogClose = () => {
     setIsCreating(false);
-    // Invalidate queries to refresh the list when dialog closes
-    queryClient.invalidateQueries({ queryKey: ['companyList'] });
-    queryClient.invalidateQueries({ queryKey: ['companies'] });
+    // Real-time updates will handle list refresh automatically
   };
   
   return (
